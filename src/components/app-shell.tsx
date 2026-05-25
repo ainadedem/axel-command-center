@@ -129,7 +129,7 @@ function Topbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const name = profile?.display_name || user?.email || "—";
   const initials = name.split(/\s+/).map((s) => s[0]).slice(0, 2).join("").toUpperCase();
-  const role = roles[0]?.replace("_", " ") ?? "no role";
+  const role = roles[0] ? ROLE_LABEL[roles[0]] : "No role";
 
   return (
     <header className="h-14 shrink-0 border-b border-border bg-background/70 backdrop-blur px-6 flex items-center gap-4 sticky top-0 z-30">
