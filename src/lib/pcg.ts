@@ -1,6 +1,8 @@
 // PCG Madagascar 2005 — Plan Comptable Général (coherent with IAS/IFRS)
 // Décret n°2004-272 du 18 février 2004
 // Applied to companies that use PCG: Logia Madagascar + Axiom Unlimited.
+import { createCollection, useCollection } from "./data-store";
+
 
 export type PcgClass = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 export type PcgNature = "actif" | "passif" | "charge" | "produit";
