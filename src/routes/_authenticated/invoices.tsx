@@ -50,6 +50,7 @@ function Body() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Invoice | null>(null);
   const [previewing, setPreviewing] = useState<Invoice | null>(null);
+  const [paying, setPaying] = useState<Invoice | null>(null);
 
   const totalOpen = list.filter((i) => i.status !== "paid").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
   const totalOverdue = list.filter((i) => i.status === "overdue").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
@@ -143,6 +144,9 @@ function Body() {
                       <td className="px-5 py-3.5 text-right">
                         <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
                           <button onClick={() => setPreviewing(inv)} title="Preview & export PDF" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
+                          {inv.status !== "paid" && (
+                            <button onClick={() => setPaying(inv)} title="Add payment" className="h-7 w-7 grid place-items-center rounded hover:bg-success/10 text-muted-foreground hover:text-success"><Wallet className="h-3.5 w-3.5" /></button>
+                          )}
                           <button onClick={() => { setEditing(inv); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
                           <button onClick={() => confirm(`Delete invoice ${inv.number}?`) && invoicesStore.remove(inv.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
                         </div>
@@ -165,6 +169,7 @@ function Body() {
         client={previewing ? clients.find((c) => c.id === previewing.clientId) : undefined}
         project={previewing?.projectId ? projects.find((p) => p.id === previewing.projectId) : undefined}
       />
+      <RecordPaymentDialog open={!!paying} onOpenChange={(v) => { if (!v) setPaying(null); }} invoice={paying} />
     </div>
   );
 }
