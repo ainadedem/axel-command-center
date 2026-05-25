@@ -89,6 +89,8 @@ function Body() {
                 {list.map((inv) => {
                   const co = companies.find((c) => c.id === inv.companyId);
                   const cl = clients.find((c) => c.id === inv.clientId);
+                  const proj = inv.projectId ? projects.find((p) => p.id === inv.projectId) : undefined;
+                  const salesRep = cl?.acquisition;
                   const days = differenceInDays(parseISO(inv.dueDate), new Date());
                   const balance = inv.amount - inv.paid;
                   const timing = inv.paidDate
@@ -98,6 +100,10 @@ function Body() {
                     <tr key={inv.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
                       <td className="px-5 py-3.5 font-tnum text-xs text-muted-foreground">{inv.number}</td>
                       <td className="px-5 py-3.5 font-medium">{cl?.name ?? "—"}</td>
+                      <td className="px-5 py-3.5 text-xs">
+                        {proj ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}
+                      </td>
+                      <td className="px-5 py-3.5 text-xs text-muted-foreground">{salesRep ?? <span className="text-muted-foreground/50">—</span>}</td>
                       <td className="px-5 py-3.5">
                         {co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}
                       </td>
