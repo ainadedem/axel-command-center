@@ -799,7 +799,7 @@ export function seedAxiomBankStatement(force = false) {
     balance: Math.round(closing),
   });
 
-  const categoryFor = (desc: string): string => {
+  const categoryFor = (desc: string, type: "income" | "expense"): string => {
     const d = desc.toLowerCase();
     if (d.startsWith("frais") || d.startsWith("tva")) return "Frais bancaires";
     if (d.includes("swift") || d.includes("virement recu") || d.includes("virement reçu"))
@@ -809,19 +809,17 @@ export function seedAxiomBankStatement(force = false) {
     if (d.startsWith("prelevement") || d.startsWith("prélèvement")) return "Prélèvements";
     if (d.includes("transfert compte a compte") || d.includes("transfert compte à compte"))
       return "Virements internes";
-    return r => r === "income" ? "Autres encaissements" : "Autres décaissements";
+    return type === "income" ? "Autres encaissements" : "Autres décaissements";
   };
 
   for (const r of rows) {
-    const cat = categoryFor(r.description);
-    const category = typeof cat === "string" ? cat : cat(r.type);
     transactionsStore.add({
       id: r.id,
       companyId: "axi",
       accountId: ACCOUNT_ID,
       date: r.date,
       type: r.type,
-      category,
+      category: categoryFor(r.description, r.type),
       description: r.reference ? `${r.description} · ${r.reference}` : r.description,
       amount: r.amount,
       currency: "MGA",
