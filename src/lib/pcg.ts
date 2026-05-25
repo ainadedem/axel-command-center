@@ -723,8 +723,14 @@ if (typeof window !== "undefined") {
       // Defer to ensure function declaration is hoisted in all bundling modes
       queueMicrotask(() => {
         reconcileAxiomInvoices();
-        localStorage.setItem("axiom-reconcile-key", reconcileKey);
       });
+    }
+
+    const axOppsCurrent = localStorage.getItem("axiom-opps-version");
+    const hasAxiomOpps = opportunitiesStore.items.some((o) => o.companyId === "axi");
+    if (axOppsCurrent !== AXIOM_OPPS_VERSION || !hasAxiomOpps) {
+      seedAxiomOpportunities();
+      localStorage.setItem("axiom-opps-version", AXIOM_OPPS_VERSION);
     }
   } catch { /* ignore */ }
 }
