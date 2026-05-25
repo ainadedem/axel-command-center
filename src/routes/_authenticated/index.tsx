@@ -15,7 +15,8 @@ import {
 import { format, subDays, subMonths, startOfMonth, endOfMonth, startOfYear, parseISO } from "date-fns";
 import { useState, useMemo } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, AlertOctagon, ShieldCheck } from "lucide-react";
+import { AlertTriangle, AlertOctagon, ShieldCheck, Rocket } from "lucide-react";
+import { FX, type Currency } from "@/lib/mock-data";
 
 const pct = (cur: number, prev: number) => {
   if (prev === 0) return cur === 0 ? 0 : cur > 0 ? 100 : -100;
@@ -190,6 +191,71 @@ function DashboardBody() {
 
   const totalClosed12mo = salesData.reduce((s, p) => s + p.closed, 0);
   const totalForecast3mo = salesData.reduce((s, p) => s + p.forecast, 0);
+
+  // ── Axiom pipeline — future expected revenue ───────────────────────────
+  // Match any company whose name contains "Axiom" (case-insensitive).
+  const axiomCompanyIds = useMemo(
+    () => new Set(companies.filter((c) => /axiom/i.test(c.name)).map((c) => c.id)),
+    [companies],
+  );
+  const axiomOpenOpp = useMemo(
+    () =>
+      opp.filter(
+        (o) =>
+          axiomCompanyIds.has(o.companyId) &&
+          o.stage !== "Closed" &&
+          o.stage !== "Lost",
+      ),
+    [opp, axiomCompanyIds],
+  );
+  const axiomGrossMGA = axiomOpenOpp.reduce(
+    (s, o) => s + toMGA(o.value, o.currency),
+    0,
+  );
+  const axiomWeightedMGA = axiomOpenOpp.reduce(
+    (s, o) => s + toMGA(o.value, o.currency) * stageProbability[o.stage],
+    0,
+  );
+  // Currency mix (gross, in MGA equivalent) for FX transparency.
+  const axiomByCurrency = axiomOpenOpp.reduce<Record<Currency, { native: number; mga: number }>>(
+    (m, o) => {
+      const cur = o.currency;
+      m[cur] ??= { native: 0, mga: 0 };
+      m[cur].native += o.value;
+      m[cur].mga += toMGA(o.value, o.currency);
+      return m;
+    },
+    {} as Record<Currency, { native: number; mga: number }>,
+  );
+  // 6-month forward weighted expected revenue, MGA equivalent.
+  const axiomForecast6mo = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 6 }).map((_, i) => {
+      const d = subMonths(now, -(i + 1));
+      const start = startOfMonth(d);
+      const end = endOfMonth(d);
+      const inMonth = axiomOpenOpp.filter((o) => {
+        const td = parseISO(o.expectedClose);
+        return td >= start && td <= end;
+      });
+      const weighted = inMonth.reduce(
+        (s, o) => s + toMGA(o.value, o.currency) * stageProbability[o.stage],
+        0,
+      );
+      const gross = inMonth.reduce(
+        (s, o) => s + toMGA(o.value, o.currency),
+        0,
+      );
+      return {
+        date: format(d, "MMM yy"),
+        weighted: weighted / 1_000_000,
+        gross: gross / 1_000_000,
+      };
+    });
+  }, [axiomOpenOpp]);
+  // Runway impact — if weighted expected revenue lands, how many extra months of runway?
+  const runwayWithPipeline = burnMGA > 0 ? (totalMGA + axiomWeightedMGA) / burnMGA : runwayMonths;
+  const runwayAddedMonths = runwayWithPipeline - runwayMonths;
 
   return (
     <div className="p-8 space-y-6">
@@ -366,6 +432,106 @@ function DashboardBody() {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* Axiom pipeline — future expected revenue */}
+      {axiomCompanyIds.size > 0 && (
+        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
+          <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                Axiom pipeline · future expected revenue
+              </div>
+              <div className="font-display text-lg font-semibold mt-1">
+                Open deals weighted by stage probability · FX-converted to MGA
+              </div>
+            </div>
+            <Link to="/pipeline" className="text-xs text-primary hover:underline">
+              Open pipeline →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+            <div className="rounded-lg border border-border/60 bg-card p-4">
+              <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                Gross open pipeline
+              </div>
+              <div className="font-display text-2xl font-bold tracking-tight font-tnum mt-1">
+                {fmtCompact(axiomGrossMGA, "MGA")}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {axiomOpenOpp.length} open deals
+              </div>
+            </div>
+            <div className="rounded-lg border border-primary/30 bg-accent/40 p-4">
+              <div className="text-[10px] uppercase tracking-[0.16em] text-primary">
+                Weighted expected revenue
+              </div>
+              <div className="font-display text-2xl font-bold tracking-tight font-tnum mt-1 text-primary">
+                {fmtCompact(axiomWeightedMGA, "MGA")}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {axiomGrossMGA > 0
+                  ? `${((axiomWeightedMGA / axiomGrossMGA) * 100).toFixed(0)}% blended win rate`
+                  : "—"}
+              </div>
+            </div>
+            <div className="rounded-lg border border-border/60 bg-card p-4">
+              <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                Runway impact
+              </div>
+              <div className="font-display text-2xl font-bold tracking-tight font-tnum mt-1 flex items-baseline gap-2">
+                <span>{runwayWithPipeline.toFixed(1)} mo</span>
+                <span className="text-xs font-medium text-success font-tnum">
+                  {runwayAddedMonths >= 0 ? "+" : ""}
+                  {runwayAddedMonths.toFixed(1)} mo
+                </span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                <Rocket className="h-3 w-3" />
+                from {runwayMonths.toFixed(1)} mo today
+              </div>
+            </div>
+          </div>
+
+          {/* Currency mix — shows the FX conversion that feeds the totals */}
+          {Object.keys(axiomByCurrency).length > 0 && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground mb-4">
+              <span className="uppercase tracking-[0.16em] text-[10px]">FX mix</span>
+              {(Object.entries(axiomByCurrency) as [Currency, { native: number; mga: number }][])
+                .sort((a, b) => b[1].mga - a[1].mga)
+                .map(([cur, v]) => (
+                  <span key={cur} className="inline-flex items-center gap-1.5 font-tnum">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    <span className="text-foreground">{fmtCompact(v.native, cur)}</span>
+                    <span className="text-muted-foreground">→ {fmtCompact(v.mga, "MGA")}</span>
+                    {cur !== "MGA" && (
+                      <span className="text-[10px] text-muted-foreground/70">
+                        @ {FX[cur].toLocaleString()} MGA/{cur}
+                      </span>
+                    )}
+                  </span>
+                ))}
+            </div>
+          )}
+
+          <div className="h-56">
+            <ResponsiveContainer>
+              <BarChart data={axiomForecast6mo} margin={{ top: 6, right: 8, left: -16, bottom: 0 }}>
+                <CartesianGrid stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="date" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                <Tooltip
+                  contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
+                  cursor={{ fill: "color-mix(in oklab, var(--primary) 6%, transparent)" }}
+                  formatter={(v) => `${Number(v).toFixed(1)} M MGA`}
+                />
+                <Bar dataKey="gross" radius={[4, 4, 0, 0]} fill="oklch(0.72 0.13 220)" fillOpacity={0.3} name="Gross" />
+                <Bar dataKey="weighted" radius={[6, 6, 0, 0]} fill="oklch(0.58 0.21 268)" name="Weighted" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
 
       {/* Pipeline + Recent */}
