@@ -179,7 +179,9 @@ import logiaOpportunitiesSeed from "./logia-opportunities-seed.json";
 import {
   companiesStore, accountsStore, clientsStore, suppliersStore,
   invoicesStore, transactionsStore, categoriesStore, opportunitiesStore,
+  teamMembersStore, salesMembersStore,
   type Account, type Client, type Supplier, type Invoice, type Transaction, type Category, type Opportunity,
+  type TeamMember, type SalesMember, type SalesRole,
 } from "./mock-data";
 
 export const journalEntriesStore = createCollection<JournalEntry>("journal-entries", []);
@@ -457,6 +459,46 @@ export function seedLogiaOpportunities() {
   const others = opportunitiesStore.items.filter((o) => o.companyId !== "log");
   const cleaned: Opportunity[] = seed.map(({ owner: _owner, ...rest }) => rest);
   opportunitiesStore.replaceAll([...others, ...cleaned]);
+
+  // 4) Derive Team + Sales-team from the names found across acquisitions and closers.
+  const acqNames = new Set<string>();
+  for (const v of acqByClient.values()) acqNames.add(v);
+  const closerNames = new Set<string>();
+  for (const o of cleaned) if (o.closer) closerNames.add(o.closer);
+
+  const allNames = new Set<string>([...acqNames, ...closerNames]);
+  const existingTeam = teamMembersStore.items;
+  const teamByName = new Map(existingTeam.map((t) => [t.name.toLowerCase(), t]));
+  const newTeam: TeamMember[] = [...existingTeam];
+  for (const name of allNames) {
+    if (!teamByName.has(name.toLowerCase())) {
+      const tm: TeamMember = { id: newId("tm"), name, department: "Sales" };
+      newTeam.push(tm);
+      teamByName.set(name.toLowerCase(), tm);
+    }
+  }
+  teamMembersStore.replaceAll(newTeam);
+
+  // Sales team membership (one row per team member that does sales).
+  const existingSales = salesMembersStore.items;
+  const salesByTm = new Map(existingSales.map((s) => [s.teamMemberId, s]));
+  const newSales: SalesMember[] = [...existingSales];
+  for (const name of allNames) {
+    const tm = teamByName.get(name.toLowerCase())!;
+    const isAcq = acqNames.has(name);
+    const isCloser = closerNames.has(name);
+    const role: SalesRole = isAcq && isCloser ? "both" : isAcq ? "acquisition" : "closer";
+    const existing = salesByTm.get(tm.id);
+    if (!existing) {
+      newSales.push({ id: newId("sm"), teamMemberId: tm.id, role });
+    } else if (existing.role !== role && existing.role !== "both") {
+      // Promote to "both" if a new role appears.
+      const idx = newSales.findIndex((s) => s.id === existing.id);
+      newSales[idx] = { ...existing, role: existing.role === role ? role : "both" };
+    }
+  }
+  salesMembersStore.replaceAll(newSales);
+
   return cleaned.length;
 }
 
