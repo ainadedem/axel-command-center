@@ -72,7 +72,10 @@ function Body() {
 
   return (
     <div className="p-8 space-y-5">
-      <CrudToolbar count={list.length} label="purchase orders" onCreate={openCreate} />
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <CrudToolbar count={list.length} label="purchase orders" onCreate={openCreate} />
+        <DataToolbar view={view} items={baseList} />
+      </div>
       {list.length === 0 ? (
         <EmptyState label="purchase orders" onCreate={openCreate} />
       ) : (
