@@ -3,7 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
   useQuotes, useCompanies, useClients, useProjects, quotesStore, purchaseOrdersStore,
-  fmt, fmtCompact, type Quote, type QuoteLine, type QuoteStatus, type Currency,
+  fmt, fmtCompact, type Quote, type QuoteLine, type QuoteStatus, type QuoteMode, type Currency,
 } from "@/lib/mock-data";
 import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
 import { newId } from "@/lib/data-store";
