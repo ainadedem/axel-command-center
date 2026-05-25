@@ -199,7 +199,9 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
 
   const submit = () => {
     if (!number.trim() || !companyId || !clientId) return;
-    const data = { number, clientReference: clientReference || undefined, companyId, clientId, projectId: projectId || undefined, quoteId: quoteId || undefined, issueDate, amount: Number(amount) || 0, currency, status, documentUrl, documentName, documentType };
+    // Stamp upload time when a document is present but doesn't have one yet (e.g. legacy data).
+    const uploadedAt = documentUrl ? (documentUploadedAt ?? new Date().toISOString()) : undefined;
+    const data = { number, clientReference: clientReference || undefined, companyId, clientId, projectId: projectId || undefined, quoteId: quoteId || undefined, issueDate, amount: Number(amount) || 0, currency, status, documentUrl, documentName, documentType, documentUploadedAt: uploadedAt, documentHistory: documentHistory.length ? documentHistory : undefined };
     if (editing) purchaseOrdersStore.update(editing.id, data);
     else purchaseOrdersStore.add({ id: newId("po"), ...data });
     onOpenChange(false);
