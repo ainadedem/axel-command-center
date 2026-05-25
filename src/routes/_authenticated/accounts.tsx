@@ -7,7 +7,7 @@ import {
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
-import { Landmark, Smartphone, Banknote, Pencil, Trash2 } from "lucide-react";
+import { Landmark, Smartphone, Banknote, Pencil, Trash2, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
+import { StatementImportDialog } from "@/components/statement-import-dialog";
+import { format, parseISO } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/accounts")({ component: AccountsPage });
 
@@ -37,6 +39,7 @@ function Body() {
   const totalMGA = list.reduce((s, a) => s + toMGA(a.balance, a.currency), 0);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Account | null>(null);
+  const [importing, setImporting] = useState<Account | null>(null);
 
   const openCreate = () => { setEditing(null); setOpen(true); };
   const openEdit = (a: Account) => { setEditing(a); setOpen(true); };
@@ -64,9 +67,10 @@ function Body() {
                   <th className="text-left font-medium px-5 py-3">Account</th>
                   <th className="text-left font-medium px-5 py-3">Company</th>
                   <th className="text-left font-medium px-5 py-3">Type</th>
+                  <th className="text-left font-medium px-5 py-3">Last statement</th>
                   <th className="text-right font-medium px-5 py-3">Balance</th>
                   <th className="text-right font-medium px-5 py-3">MGA equiv.</th>
-                  <th className="px-5 py-3 w-20" />
+                  <th className="px-5 py-3 w-28" />
                 </tr>
               </thead>
               <tbody>
@@ -88,10 +92,19 @@ function Body() {
                         {co ? <span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.name}</span> : <span className="text-muted-foreground">—</span>}
                       </td>
                       <td className="px-5 py-3.5 capitalize text-muted-foreground">{a.type}</td>
+                      <td className="px-5 py-3.5 text-xs text-muted-foreground">
+                        {a.statementUploadedAt ? (
+                          <div className="flex flex-col">
+                            <span className="font-tnum">{format(parseISO(a.statementUploadedAt), "MMM d, yyyy")}</span>
+                            {a.statementName && <span className="text-[10px] text-muted-foreground/70 truncate max-w-[180px]">{a.statementName}</span>}
+                          </div>
+                        ) : <span className="text-muted-foreground/40">—</span>}
+                      </td>
                       <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(a.balance, a.currency)}</td>
                       <td className="px-5 py-3.5 text-right font-tnum text-muted-foreground">{fmtCompact(toMGA(a.balance, a.currency), "MGA")}</td>
                       <td className="px-5 py-3.5 text-right">
                         <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
+                          <button onClick={() => setImporting(a)} title="Import bank statement CSV" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Upload className="h-3.5 w-3.5" /></button>
                           <button onClick={() => openEdit(a)} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
                           <button onClick={() => confirm(`Delete ${a.name}?`) && accountsStore.remove(a.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
                         </div>
@@ -106,6 +119,7 @@ function Body() {
       )}
 
       <AccountDialog open={open} onOpenChange={setOpen} editing={editing} />
+      <StatementImportDialog open={!!importing} onOpenChange={(v) => { if (!v) setImporting(null); }} account={importing} />
     </div>
   );
 }

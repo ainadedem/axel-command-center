@@ -48,6 +48,10 @@ export interface Account {
   type: "bank" | "mobile" | "cash";
   currency: Currency;
   balance: number;
+  /** ISO datetime of the last bank statement CSV upload. */
+  statementUploadedAt?: string;
+  /** Filename of the last uploaded statement (for display). */
+  statementName?: string;
 }
 
 export interface Client {
@@ -104,6 +108,10 @@ export interface Transaction {
   clientId?: string;
   supplierId?: string;
   projectId?: string;
+  /** When the transaction was matched against an invoice (payment). */
+  invoiceId?: string;
+  /** Source of the transaction (manual entry or imported statement). */
+  source?: "manual" | "statement";
 }
 
 /** A spending/income category, scoped per company. */
