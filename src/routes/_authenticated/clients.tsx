@@ -318,11 +318,15 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   );
 }
 
-function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function StatBold({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "good" | "warn" | "bad" }) {
+  const color =
+    tone === "good" ? "text-emerald-400" :
+    tone === "warn" ? "text-amber-400" :
+    tone === "bad" ? "text-destructive" : "text-foreground";
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className={`font-tnum font-medium mt-1 text-sm ${accent ? "text-primary font-display" : ""}`}>{value}</div>
+      <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground font-semibold">{label}</div>
+      <div className={`font-display font-bold tracking-tight font-tnum mt-1 text-lg ${color}`}>{value}</div>
     </div>
   );
 }
