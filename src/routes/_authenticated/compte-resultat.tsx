@@ -58,10 +58,10 @@ function CompteResultatPage() {
       <PageHeader title="Compte de résultat" description={`Présentation par nature — PCG Madagascar 2005 · ${co.name}`} />
       <div className="p-8 space-y-5">
         <div className="grid grid-cols-4 gap-3">
-          <Stat label="Produits totaux" value={fmtMoney(totProduits, co.baseCurrency)} />
-          <Stat label="Charges totales" value={fmtMoney(totCharges, co.baseCurrency)} />
-          <Stat label="Résultat d'exploitation" value={fmtMoney(resultatExpl, co.baseCurrency)} />
-          <Stat label="Résultat net" value={fmtMoney(resultatNet, co.baseCurrency)} highlight={resultatNet >= 0} />
+          <Stat label="Produits totaux" value={fmtMoney(totProduits, co.baseCurrency)} tone={totProduits > 0 ? "success" : totProduits < 0 ? "destructive" : undefined} />
+          <Stat label="Charges totales" value={fmtMoney(totCharges, co.baseCurrency)} tone="destructive" />
+          <Stat label="Résultat d'exploitation" value={fmtMoney(resultatExpl, co.baseCurrency)} tone={resultatExpl > 0 ? "success" : resultatExpl < 0 ? "destructive" : undefined} />
+          <Stat label="Résultat net" value={fmtMoney(resultatNet, co.baseCurrency)} tone={resultatNet > 0 ? "success" : resultatNet < 0 ? "destructive" : undefined} />
         </div>
 
         <Section title="Produits" rows={produitsRows} co={co} />
