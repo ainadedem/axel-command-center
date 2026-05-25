@@ -59,6 +59,12 @@ export interface Client {
   companyId: string;
   name: string;
   country: string;
+  /**
+   * "lead" = prospect captured via the pipeline (not yet won).
+   * "client" = active customer (won deal, invoiced, or manually promoted).
+   * Undefined is treated as "client" for backward compatibility.
+   */
+  status?: "lead" | "client";
   /** Client acquisition person — the one who brought this client. Single source of truth across all tables. */
   acquisition?: string;
   /** Referral — another team member credited for this client. */
