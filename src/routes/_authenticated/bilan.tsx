@@ -33,7 +33,16 @@ function sumPrefix(soldes: Map<string, number>, prefixes: string[]) {
 }
 
 function BilanPage() {
+  return (
+    <AppShell>
+      <BilanBody />
+    </AppShell>
+  );
+}
+
+function BilanBody() {
   const { soldes, co } = useSoldes();
+
 
   // ACTIF (débiteur normal)
   const immoIncorp = sumPrefix(soldes, ["20"]);
