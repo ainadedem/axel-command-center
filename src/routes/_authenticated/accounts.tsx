@@ -8,7 +8,7 @@ import {
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
 import { Landmark, Smartphone, Banknote, Pencil, Trash2, Upload } from "lucide-react";
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,8 +17,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { StatementImportDialog } from "@/components/statement-import-dialog";
 import { format, parseISO } from "date-fns";
-import { useDataView, type FieldDef } from "@/hooks/use-data-view";
-import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 
 export const Route = createFileRoute("/_authenticated/accounts")({ component: AccountsPage });
 
