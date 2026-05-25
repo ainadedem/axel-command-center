@@ -47,11 +47,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       if (s?.user) {
+        setLoading(true);
         // defer to avoid deadlock
-        setTimeout(() => loadUserData(s.user.id), 0);
+        setTimeout(() => {
+          loadUserData(s.user.id).finally(() => setLoading(false));
+        }, 0);
       } else {
         setProfile(null);
         setRoles([]);
+        setLoading(false);
       }
     });
 
