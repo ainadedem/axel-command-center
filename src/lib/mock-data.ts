@@ -114,9 +114,7 @@ export interface Opportunity {
   companyId: string;
   name: string;
   client: string;
-  /** Client acquisition person (a.k.a. account owner / hunter). */
-  owner: string;
-  /** Closer in charge of finalizing the deal (often different from acquisition). */
+  /** Closer in charge of finalizing the deal. Acquisition lives on the Client. */
   closer?: string;
   stage: Stage;
   value: number;
