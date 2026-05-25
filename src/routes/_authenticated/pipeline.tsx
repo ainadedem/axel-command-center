@@ -256,7 +256,7 @@ function ListView({ list, onEdit, acqOf }: { list: Opportunity[]; onEdit: (o: Op
         <div className="col-span-3">Opportunity</div>
         <div className="col-span-2">Stage</div>
         <div className="col-span-2">Acquisition</div>
-        <div className="col-span-1">Closer</div>
+        <div className="col-span-1">Deal Closer</div>
         <div className="col-span-2 text-right">Value</div>
         <div className="col-span-2 text-right">Close</div>
       </div>
@@ -309,7 +309,7 @@ function PeopleView({ list, onEdit, role, acqOf }: { list: Opportunity[]; onEdit
     });
   }, [list, role, acqOf]);
 
-  const roleLabel = role === "acquisition" ? "Acquisition" : "Closer";
+  const roleLabel = role === "acquisition" ? "Acquisition" : "Deal Closer";
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -564,7 +564,7 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
             </p>
           </div>
           <div>
-            <Label>Closer</Label>
+            <Label>Deal Closer</Label>
             {closerOptions.length === 0 ? (
               <div className="text-xs text-muted-foreground rounded-md border border-dashed border-border px-3 py-2">
                 No closers in the sales team yet — <Link to="/sales-team" className="text-primary underline">add one</Link>.
