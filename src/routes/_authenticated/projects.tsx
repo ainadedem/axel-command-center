@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useProjects, useClients, useCompanies, projectsStore,
+  useProjects, useClients, useCompanies, useInvoices, projectsStore,
   fmtCompact, type Project, type Currency,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
