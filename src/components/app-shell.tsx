@@ -5,7 +5,7 @@ import {
   ChevronDown, Check, LogOut,
   BookOpen, BookText, Scale, Library, Receipt,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CompanyProvider, useCompany } from "@/lib/company-context";
 import { useCompanies } from "@/lib/mock-data";
 import { useAuth } from "@/lib/auth-context";
