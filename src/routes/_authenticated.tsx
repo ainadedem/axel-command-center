@@ -1,6 +1,5 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
-import { AppShell } from "@/components/app-shell";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -23,9 +22,5 @@ function AuthenticatedLayout() {
     );
   }
   if (!isAuthenticated) return null;
-  return (
-    <AppShell>
-      <Outlet />
-    </AppShell>
-  );
+  return <Outlet />;
 }
