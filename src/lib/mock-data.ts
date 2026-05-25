@@ -39,6 +39,8 @@ export interface Client {
   country: string;
   /** Client acquisition person — the one who brought this client. Single source of truth across all tables. */
   acquisition?: string;
+  /** Referral — another team member credited for this client. */
+  referral?: string;
   /** ISO date (YYYY-MM-DD) when the client was acquired. */
   acquiredAt?: string;
   /** Year the client was acquired (used when only a year is known). */
