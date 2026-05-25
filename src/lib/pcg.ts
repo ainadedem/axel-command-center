@@ -1,7 +1,7 @@
 // PCG Madagascar 2005 — Plan Comptable Général (coherent with IAS/IFRS)
 // Décret n°2004-272 du 18 février 2004
 // Applied to companies that use PCG: Logia Madagascar + Axiom Unlimited.
-import { createCollection, useCollection } from "./data-store";
+import { createCollection, useCollection, newId } from "./data-store";
 
 
 export type PcgClass = 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -504,7 +504,7 @@ export function seedLogiaOpportunities() {
 
 // Auto-seed on first load (idempotent). Declared AFTER `accountLabels`
 // because seedLogiaDerivedData() reads from it.
-const DERIVED_VERSION = "7"; // bump to force re-derive on existing local data
+const DERIVED_VERSION = "8"; // bump to force re-derive on existing local data
 if (typeof window !== "undefined") {
   try {
     ensureSeedCompanies();
