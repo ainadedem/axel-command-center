@@ -167,6 +167,34 @@ function Body() {
                   return n;
                 },
               },
+              {
+                id: "tx-no-project-any",
+                label: "Transactions without a project (inferable)",
+                description: "Infers the project from a linked invoice, from the client's only project, or by matching the description against project names.",
+                count: scoped.filter((t) => !t.projectId && (
+                  (t.invoiceId && invoices.find((i) => i.id === t.invoiceId)?.projectId) ||
+                  (t.clientId && projects.filter((p) => p.companyId === t.companyId && p.clientId === t.clientId).length === 1) ||
+                  projects.some((p) => p.companyId === t.companyId && p.name && t.description.toLowerCase().includes(p.name.toLowerCase()))
+                )).length,
+                fix: () => {
+                  let n = 0;
+                  scoped.forEach((t) => {
+                    if (t.projectId) return;
+                    const inv = t.invoiceId ? invoices.find((i) => i.id === t.invoiceId) : undefined;
+                    let projId: string | undefined = inv?.projectId;
+                    if (!projId && t.clientId) {
+                      const candidates = projects.filter((p) => p.companyId === t.companyId && p.clientId === t.clientId);
+                      if (candidates.length === 1) projId = candidates[0].id;
+                    }
+                    if (!projId) {
+                      const desc = t.description.toLowerCase();
+                      projId = projects.find((p) => p.companyId === t.companyId && p.name && desc.includes(p.name.toLowerCase()))?.id;
+                    }
+                    if (projId) { transactionsStore.update(t.id, { projectId: projId }); n++; }
+                  });
+                  return n;
+                },
+              },
             ];
             return checks;
           })()} />
