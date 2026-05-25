@@ -222,11 +222,12 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
       setDescription(editing.description);
       setAmount(String(editing.amount)); setCurrency(editing.currency);
       setClientId(editing.clientId ?? ""); setSupplierId(editing.supplierId ?? "");
+      setProjectId(editing.projectId ?? "");
     } else {
       const c = companies[0]; setCompanyId(c?.id ?? ""); setAccountId(""); setDate(new Date().toISOString().slice(0, 10));
       setType("expense"); setCategoryId(""); setCategoryName(""); setDescription(""); setAmount("0");
       setCurrency(c?.baseCurrency ?? "MGA");
-      setClientId(""); setSupplierId("");
+      setClientId(""); setSupplierId(""); setProjectId("");
     }
   }, [open, editing, companies]);
 
