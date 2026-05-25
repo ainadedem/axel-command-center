@@ -94,11 +94,22 @@ export interface Opportunity {
   expectedClose: string;
 }
 
+export interface Supplier {
+  id: string;
+  companyId: string;
+  name: string;
+  /** PCG account number (e.g. 401000 external, 401200 internal). */
+  account: string;
+  /** "external" = vendor, "internal" = staff reimbursements / honoraires internes. */
+  kind: "external" | "internal";
+}
+
 /* ─── Stores (start empty) ──────────────────────────────────────────── */
 
 export const companiesStore = createCollection<Company>("companies", []);
 export const accountsStore = createCollection<Account>("accounts", []);
 export const clientsStore = createCollection<Client>("clients", []);
+export const suppliersStore = createCollection<Supplier>("suppliers", []);
 export const projectsStore = createCollection<Project>("projects", []);
 export const transactionsStore = createCollection<Transaction>("transactions", []);
 export const invoicesStore = createCollection<Invoice>("invoices", []);
@@ -109,6 +120,7 @@ export const opportunitiesStore = createCollection<Opportunity>("opportunities",
 export const companies = companiesStore.items;
 export const accounts = accountsStore.items;
 export const clients = clientsStore.items;
+export const suppliers = suppliersStore.items;
 export const projects = projectsStore.items;
 export const transactions = transactionsStore.items;
 export const invoices = invoicesStore.items;
@@ -119,6 +131,7 @@ export const opportunities = opportunitiesStore.items;
 export const useCompanies = () => useCollection(companiesStore);
 export const useAccounts = () => useCollection(accountsStore);
 export const useClients = () => useCollection(clientsStore);
+export const useSuppliers = () => useCollection(suppliersStore);
 export const useProjects = () => useCollection(projectsStore);
 export const useTransactions = () => useCollection(transactionsStore);
 export const useInvoices = () => useCollection(invoicesStore);
