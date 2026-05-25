@@ -5,7 +5,7 @@ import {
   useQuotes, useCompanies, useClients, useProjects, quotesStore, purchaseOrdersStore,
   fmt, fmtCompact, type Quote, type QuoteLine, type QuoteStatus, type Currency,
 } from "@/lib/mock-data";
-import { capabilities, levels, getRate, type Capability, type Level } from "@/lib/rate-card";
+import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO, addDays } from "date-fns";
@@ -177,9 +177,14 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     setLines((prev) => prev.map((l) => {
       if (l.id !== id) return l;
       const next = { ...l, ...patch };
+      if (patch.capability === "PROJECT") {
+        next.level = undefined;
+        next.unit = "fixed" as Unit;
+        next.description = next.description || "PROJECT — Fixed fee";
+      }
       // Recompute rate when capability/level/unit/currency drivers change.
-      if ((patch.level || patch.unit || patch.capability) && next.level) {
-        next.rate = getRate(next.level as Level, next.unit, currency);
+      if ((patch.level || patch.unit || patch.capability) && next.level && next.unit !== "fixed") {
+        next.rate = getRate(next.level as Level, next.unit as Unit, currency);
         if (patch.capability || patch.level) {
           const title = levels.find((x) => x.code === next.level)?.title ?? next.level;
           next.description = `${next.capability} — ${title}`;
@@ -303,17 +308,22 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                           </Select>
                         </td>
                         <td className="px-2 py-1.5">
-                          <Select value={l.level ?? "P7"} onValueChange={(v) => updateLine(l.id, { level: v })}>
-                            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                            <SelectContent>{levels.map((lv) => <SelectItem key={lv.code} value={lv.code}>{lv.code} · {lv.title}</SelectItem>)}</SelectContent>
-                          </Select>
+                          {l.capability === "PROJECT" ? (
+                            <span className="text-xs text-muted-foreground px-2 py-1.5 block">—</span>
+                          ) : (
+                            <Select value={l.level ?? "P7"} onValueChange={(v) => updateLine(l.id, { level: v })}>
+                              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent>{levels.map((lv) => <SelectItem key={lv.code} value={lv.code}>{lv.code} · {lv.title}</SelectItem>)}</SelectContent>
+                            </Select>
+                          )}
                         </td>
                         <td className="px-2 py-1.5">
-                          <Select value={l.unit} onValueChange={(v) => updateLine(l.id, { unit: v as "hour" | "day" })}>
+                          <Select value={l.unit} onValueChange={(v) => updateLine(l.id, { unit: v as Unit })}>
                             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="hour">Hour</SelectItem>
                               <SelectItem value="day">Day</SelectItem>
+                              <SelectItem value="fixed">Fixed</SelectItem>
                             </SelectContent>
                           </Select>
                         </td>

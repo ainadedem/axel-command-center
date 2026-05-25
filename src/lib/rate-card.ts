@@ -8,8 +8,8 @@
 //   daily     = fee / annualDays
 import { FX, type Currency } from "./mock-data";
 
-export type Capability = "CREATIVE" | "PR" | "PRODUCTION" | "MEDIA";
-export const capabilities: Capability[] = ["CREATIVE", "PR", "PRODUCTION", "MEDIA"];
+export type Capability = "CREATIVE" | "PR" | "PRODUCTION" | "MEDIA" | "PROJECT";
+export const capabilities: Capability[] = ["CREATIVE", "PR", "PRODUCTION", "MEDIA", "PROJECT"];
 
 export type Level =
   | "P1" | "P2" | "P3" | "P4" | "P5"
@@ -74,7 +74,7 @@ export function rateInCurrency(mga: number, currency: Currency) {
   return Math.round(mga / FX[currency]);
 }
 
-export type Unit = "hour" | "day";
+export type Unit = "hour" | "day" | "fixed";
 
 /** Full rate lookup helper used by quote line editors. */
 export function getRate(level: Level, unit: Unit, currency: Currency, p?: RateCardParams) {

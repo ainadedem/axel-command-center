@@ -160,7 +160,7 @@ export interface QuoteLine {
   capability?: string;
   /** Level code (P1…P10). */
   level?: string;
-  unit: "hour" | "day";
+  unit: "hour" | "day" | "fixed";
   quantity: number;
   /** Per-unit price in the quote's currency. */
   rate: number;
