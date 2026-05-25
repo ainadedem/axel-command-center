@@ -3,7 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
   useInvoices, useCompanies, useClients, useProjects, usePurchaseOrders, useQuotes, useAccounts,
-  invoicesStore, transactionsStore, projectsStore,
+  invoicesStore, transactionsStore, projectsStore, purchaseOrdersStore, quotesStore,
   fmtAmount, toMGA, FX, type Invoice, type Project, type Currency,
   getNumberFormat, setNumberFormat, type NumberFormatMode,
 } from "@/lib/mock-data";
@@ -292,6 +292,8 @@ function Body() {
         company={previewing ? companies.find((c) => c.id === previewing.companyId) : undefined}
         client={previewing ? clients.find((c) => c.id === previewing.clientId) : undefined}
         project={previewing?.projectId ? projects.find((p) => p.id === previewing.projectId) : undefined}
+        po={previewing?.poId ? purchaseOrdersStore.items.find((p) => p.id === previewing.poId) : undefined}
+        quote={previewing?.quoteId ? quotesStore.items.find((q) => q.id === previewing.quoteId) : undefined}
       />
       <RecordPaymentDialog open={!!paying} onOpenChange={(v) => { if (!v) setPaying(null); }} invoice={paying} />
       <CancelInvoiceDialog open={!!cancelling} onOpenChange={(v) => { if (!v) setCancelling(null); }} invoice={cancelling} />
