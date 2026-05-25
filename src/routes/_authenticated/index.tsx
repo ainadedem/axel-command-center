@@ -4,8 +4,8 @@ import { PageHeader } from "@/components/page-header";
 import { KpiCard } from "@/components/kpi-card";
 import { useCompany } from "@/lib/company-context";
 import {
-  accounts, transactions, invoices, opportunities,
-  toMGA, fmtCompact, stageProbability, companies,
+  useAccounts, useTransactions, useInvoices, useOpportunities, useCompanies,
+  toMGA, fmtCompact, stageProbability,
 } from "@/lib/mock-data";
 import { inScope } from "@/lib/company-context";
 import {
