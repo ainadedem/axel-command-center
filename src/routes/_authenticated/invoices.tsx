@@ -18,6 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Eye, Pencil, Trash2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { InvoicePreview } from "@/components/invoice-preview";
+import { RecordPaymentDialog } from "@/components/statement-import-dialog";
+import { Wallet } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage });
 
