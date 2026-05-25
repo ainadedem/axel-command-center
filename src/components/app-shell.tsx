@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { CompanyProvider, useCompany } from "@/lib/company-context";
-import { companies } from "@/lib/mock-data";
+import { useCompanies } from "@/lib/mock-data";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +34,7 @@ const compta = [
 
 function CompanySwitcher() {
   const { scope, setScope, label } = useCompany();
+  const companies = useCompanies();
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">
