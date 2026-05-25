@@ -169,6 +169,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
     const data = {
       companyId, name, country,
       acquisition: acquisition.trim() || undefined,
+      referral: referral.trim() || undefined,
       acquiredAt: acquiredAt || undefined,
       website: website.trim() || undefined,
       email: email.trim() || undefined,
@@ -187,6 +188,12 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
     const names = acqPeople.map((p) => p.name);
     if (acquisition && !names.includes(acquisition)) names.push(acquisition);
     return names.sort();
+  })();
+
+  const refOptions = (() => {
+    const names = teamMembers.map((t) => t.name).filter(Boolean);
+    if (referral && !names.includes(referral)) names.push(referral);
+    return Array.from(new Set(names)).sort();
   })();
 
   return (
