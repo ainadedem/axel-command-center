@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Building2, Wallet, ArrowLeftRight, FileText,
   Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus, Truck,
-  ChevronDown, Check, LogOut, Target, UserCog, Handshake,
+  ChevronDown, ChevronRight, Check, LogOut, Target, UserCog, Handshake,
   BookOpen, BookText, Scale, Library, Receipt,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -10,30 +10,60 @@ import { CompanyProvider, useCompany } from "@/lib/company-context";
 import { useCompanies } from "@/lib/mock-data";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-const nav = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/companies", label: "Companies", icon: Building2 },
-  { to: "/accounts", label: "Accounts", icon: Wallet },
-  { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-  { to: "/invoices", label: "Invoices", icon: FileText },
-  { to: "/clients", label: "Clients", icon: Users },
-  { to: "/suppliers", label: "Suppliers", icon: Truck },
-  { to: "/projects", label: "Projects", icon: Briefcase },
-  { to: "/pipeline", label: "Pipeline", icon: TrendingUp },
-  { to: "/sales-team", label: "Sales team", icon: Handshake },
-  { to: "/team", label: "Team", icon: UserCog },
-  { to: "/budgets", label: "Budgets", icon: Target },
-  { to: "/reports", label: "Reports", icon: BarChart3 },
-];
+interface NavItem { to: string; label: string; icon: React.ComponentType<{ className?: string }> }
 
-const compta = [
-  { to: "/plan-comptable", label: "Plan comptable", icon: Library },
-  { to: "/journal", label: "Journal", icon: BookOpen },
-  { to: "/grand-livre", label: "Grand-livre", icon: BookText },
-  { to: "/balance", label: "Balance", icon: Scale },
-  { to: "/bilan", label: "Bilan", icon: Receipt },
-  { to: "/compte-resultat", label: "Compte de résultat", icon: BarChart3 },
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
+
+const sections: NavSection[] = [
+  {
+    label: "Overview",
+    items: [
+      { to: "/", label: "Dashboard", icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: "Finance",
+    items: [
+      { to: "/accounts", label: "Accounts", icon: Wallet },
+      { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+      { to: "/invoices", label: "Invoices", icon: FileText },
+      { to: "/budgets", label: "Budgets", icon: Target },
+      { to: "/reports", label: "Reports", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "CRM",
+    items: [
+      { to: "/clients", label: "Clients", icon: Users },
+      { to: "/suppliers", label: "Suppliers", icon: Truck },
+      { to: "/pipeline", label: "Pipeline", icon: TrendingUp },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [
+      { to: "/companies", label: "Companies", icon: Building2 },
+      { to: "/projects", label: "Projects", icon: Briefcase },
+      { to: "/team", label: "Team", icon: UserCog },
+      { to: "/sales-team", label: "Sales team", icon: Handshake },
+    ],
+  },
+  {
+    label: "Comptabilité",
+    items: [
+      { to: "/plan-comptable", label: "Plan comptable", icon: Library },
+      { to: "/journal", label: "Journal", icon: BookOpen },
+      { to: "/grand-livre", label: "Grand-livre", icon: BookText },
+      { to: "/balance", label: "Balance", icon: Scale },
+      { to: "/bilan", label: "Bilan", icon: Receipt },
+      { to: "/compte-resultat", label: "Compte de résultat", icon: BarChart3 },
+    ],
+  },
 ];
 
 function CompanySwitcher() {
