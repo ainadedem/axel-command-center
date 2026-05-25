@@ -86,8 +86,9 @@ function BilanBody() {
   const totalPassif = totalCapitaux + totalDettesFin + totalDettesExpl;
 
   return (
-    <AppShell>
+    <>
       <PageHeader title="Bilan" description={`État du patrimoine — PCG Madagascar 2005 · ${co.name}`} />
+
       <div className="p-8 grid lg:grid-cols-2 gap-5">
         {/* ACTIF */}
         <Panel title="ACTIF">
