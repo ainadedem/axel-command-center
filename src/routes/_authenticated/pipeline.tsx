@@ -241,9 +241,10 @@ function ListView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportuni
   return (
     <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
       <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
-        <div className="col-span-4">Opportunity</div>
+        <div className="col-span-3">Opportunity</div>
         <div className="col-span-2">Stage</div>
-        <div className="col-span-2">Owner</div>
+        <div className="col-span-2">Acquisition</div>
+        <div className="col-span-1">Closer</div>
         <div className="col-span-2 text-right">Value</div>
         <div className="col-span-2 text-right">Close</div>
       </div>
@@ -253,7 +254,7 @@ function ListView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportuni
         const Icon = st.icon;
         return (
           <div key={o.id} className={`grid grid-cols-12 gap-2 px-4 py-3 items-center border-b border-border/40 last:border-0 border-l-2 ${st.ring} hover:bg-surface-elevated transition cursor-pointer`} onClick={() => onEdit(o)}>
-            <div className="col-span-4">
+            <div className="col-span-3">
               <div className="text-sm font-medium">{o.name}</div>
               <div className="text-xs text-muted-foreground">{o.client}</div>
             </div>
@@ -262,7 +263,8 @@ function ListView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportuni
                 <Icon className="h-3 w-3" /> {o.stage}
               </span>
             </div>
-            <div className="col-span-2 text-xs text-muted-foreground">{o.owner || "—"}</div>
+            <div className="col-span-2 text-xs text-muted-foreground truncate">{o.owner || "—"}</div>
+            <div className="col-span-1 text-xs text-muted-foreground truncate">{o.closer || "—"}</div>
             <div className="col-span-2 text-right font-tnum text-sm font-semibold">{fmtCompact(o.value, o.currency)}</div>
             <div className="col-span-2 text-right">
               {u ? (
@@ -278,13 +280,13 @@ function ListView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportuni
   );
 }
 
-/* ─── Owner view ──────────────────────────────────────────────────── */
+/* ─── People view (by acquisition or closer) ──────────────────────── */
 
-function OwnerView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportunity) => void }) {
+function PeopleView({ list, onEdit, role }: { list: Opportunity[]; onEdit: (o: Opportunity) => void; role: "acquisition" | "closer" }) {
   const grouped = useMemo(() => {
     const m = new Map<string, Opportunity[]>();
     list.forEach((o) => {
-      const k = o.owner || "Unassigned";
+      const k = (role === "acquisition" ? o.owner : o.closer) || "Unassigned";
       m.set(k, [...(m.get(k) ?? []), o]);
     });
     return Array.from(m.entries()).sort((a, b) => {
@@ -292,19 +294,23 @@ function OwnerView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportun
       const vb = b[1].reduce((s, o) => s + toMGA(o.value, o.currency), 0);
       return vb - va;
     });
-  }, [list]);
+  }, [list, role]);
+
+  const roleLabel = role === "acquisition" ? "Acquisition" : "Closer";
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-      {grouped.map(([owner, ops]) => {
+      {grouped.map(([person, ops]) => {
         const total = ops.reduce((s, o) => s + toMGA(o.value, o.currency), 0);
         const weighted = ops.reduce((s, o) => s + toMGA(o.value, o.currency) * stageProbability[o.stage], 0);
+        const won = ops.filter((o) => o.stage === "Won").reduce((s, o) => s + toMGA(o.value, o.currency), 0);
         return (
-          <div key={owner} className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4">
+          <div key={person} className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="font-semibold text-sm">{owner}</div>
-                <div className="text-[11px] text-muted-foreground font-tnum">{ops.length} · {fmtCompact(total, "MGA")} · ~{fmtCompact(weighted, "MGA")}</div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{roleLabel}</div>
+                <div className="font-semibold text-sm">{person}</div>
+                <div className="text-[11px] text-muted-foreground font-tnum mt-0.5">{ops.length} · {fmtCompact(total, "MGA")} · ~{fmtCompact(weighted, "MGA")} · won {fmtCompact(won, "MGA")}</div>
               </div>
             </div>
             <div className="space-y-1.5">
@@ -314,7 +320,11 @@ function OwnerView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportun
                   <button key={o.id} onClick={() => onEdit(o)} className={`w-full flex items-center justify-between gap-2 text-left rounded-md border-l-2 ${st.ring} bg-surface-elevated/60 hover:bg-surface-elevated px-2.5 py-2 transition`}>
                     <div className="min-w-0">
                       <div className="text-xs font-medium truncate">{o.name}</div>
-                      <div className="text-[10px] text-muted-foreground truncate">{o.client}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">
+                        {o.client}
+                        {role === "acquisition" && o.closer ? ` · closer: ${o.closer}` : ""}
+                        {role === "closer" && o.owner ? ` · acq: ${o.owner}` : ""}
+                      </div>
                     </div>
                     <div className="flex flex-col items-end shrink-0">
                       <span className={`text-[9px] px-1.5 py-0.5 rounded ${st.pill}`}>{o.stage}</span>
