@@ -143,8 +143,12 @@ export interface Supplier {
 /** A person in the organization (Team database, source of truth). */
 export interface TeamMember {
   id: string;
+  /** Full display name — kept in sync with firstName + lastName. */
   name: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
+  phone?: string;
   jobTitle?: string;
   department?: string;
   /** Profile picture (data URL or remote URL). */
