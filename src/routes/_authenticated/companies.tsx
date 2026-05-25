@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2 } from "lucide-react";
+import { AvatarUpload } from "@/components/avatar-upload";
 
 export const Route = createFileRoute("/_authenticated/companies")({ component: CompaniesPage });
 
@@ -97,6 +98,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [bankName, setBankName] = useState("");
   const [bankAccount, setBankAccount] = useState("");
   const [bankSwift, setBankSwift] = useState("");
+  const [logoUrl, setLogoUrl] = useState<string | undefined>();
 
   useEffect(() => {
     if (!open) return;
@@ -106,10 +108,12 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setEmail(editing.email ?? ""); setPhone(editing.phone ?? ""); setWebsite(editing.website ?? "");
       setNif(editing.nif ?? ""); setStat(editing.stat ?? ""); setRcs(editing.rcs ?? ""); setTaxId(editing.taxId ?? "");
       setBankName(editing.bankName ?? ""); setBankAccount(editing.bankAccount ?? ""); setBankSwift(editing.bankSwift ?? "");
+      setLogoUrl(editing.logoUrl);
     } else {
       setName(""); setShortName(""); setColor(PALETTE[0]); setBaseCurrency("MGA");
       setLegalName(""); setAddress(""); setEmail(""); setPhone(""); setWebsite("");
       setNif(""); setStat(""); setRcs(""); setTaxId(""); setBankName(""); setBankAccount(""); setBankSwift("");
+      setLogoUrl(undefined);
     }
   }, [open, editing]);
 
@@ -121,6 +125,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       email: email || undefined, phone: phone || undefined, website: website || undefined,
       nif: nif || undefined, stat: stat || undefined, rcs: rcs || undefined, taxId: taxId || undefined,
       bankName: bankName || undefined, bankAccount: bankAccount || undefined, bankSwift: bankSwift || undefined,
+      logoUrl,
     };
     if (editing) companiesStore.update(editing.id, data);
     else companiesStore.add({ id: newId("co"), ...data });
@@ -132,9 +137,16 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       <DialogContent className="max-h-[80vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{editing ? "Edit company" : "New company"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Trading name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Logia Madagascar" /></div>
-            <div><Label>Short name</Label><Input value={shortName} onChange={(e) => setShortName(e.target.value.toUpperCase().slice(0, 4))} placeholder="LOG" /></div>
+          <div className="flex items-start gap-4">
+            <div>
+              <Label>Logo</Label>
+              <div className="mt-2"><AvatarUpload value={logoUrl} onChange={setLogoUrl} name={name || "Logo"} size={72} square /></div>
+              <p className="text-[10px] text-muted-foreground mt-1">Shown on invoice / PO / quote PDFs.</p>
+            </div>
+            <div className="flex-1 grid grid-cols-2 gap-3">
+              <div><Label>Trading name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Logia Madagascar" /></div>
+              <div><Label>Short name</Label><Input value={shortName} onChange={(e) => setShortName(e.target.value.toUpperCase().slice(0, 4))} placeholder="LOG" /></div>
+            </div>
           </div>
           <div><Label>Legal name (on invoices)</Label><Input value={legalName} onChange={(e) => setLegalName(e.target.value)} placeholder="LOGIA SARL" /></div>
           <div><Label>Registered address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Lot II M 73 ter Antananarivo 101" /></div>

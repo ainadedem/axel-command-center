@@ -3,7 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
   useInvoices, useCompanies, useClients, useProjects, usePurchaseOrders, useQuotes, useAccounts,
-  invoicesStore, transactionsStore, projectsStore,
+  invoicesStore, transactionsStore, projectsStore, purchaseOrdersStore, quotesStore,
   fmtAmount, toMGA, FX, type Invoice, type Project, type Currency,
   getNumberFormat, setNumberFormat, type NumberFormatMode,
 } from "@/lib/mock-data";
@@ -292,6 +292,8 @@ function Body() {
         company={previewing ? companies.find((c) => c.id === previewing.companyId) : undefined}
         client={previewing ? clients.find((c) => c.id === previewing.clientId) : undefined}
         project={previewing?.projectId ? projects.find((p) => p.id === previewing.projectId) : undefined}
+        po={previewing?.poId ? purchaseOrdersStore.items.find((p) => p.id === previewing.poId) : undefined}
+        quote={previewing?.quoteId ? quotesStore.items.find((q) => q.id === previewing.quoteId) : undefined}
       />
       <RecordPaymentDialog open={!!paying} onOpenChange={(v) => { if (!v) setPaying(null); }} invoice={paying} />
       <CancelInvoiceDialog open={!!cancelling} onOpenChange={(v) => { if (!v) setCancelling(null); }} invoice={cancelling} />
@@ -412,12 +414,15 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     const a = Number(amount) || 0;
     const p = Number(paid) || 0;
     const finalStatus = status === "draft" ? "draft" : deriveStatus(a, p, dueDate);
+    // Inherit lines from PO (preferred) or directly from the linked quote.
+    const inheritedLines = selectedPO?.lines ?? linkedQuote?.lines;
     const data = {
       number, companyId, clientId,
       projectId: projectId || undefined,
       poId: poId || undefined,
       quoteId: linkedQuote?.id,
       issueDate, dueDate, amount: a, paid: p, currency, status: finalStatus,
+      lines: inheritedLines ? inheritedLines.map((l) => ({ ...l })) : (editing?.lines ?? undefined),
     };
     if (editing) invoicesStore.update(editing.id, data);
     else invoicesStore.add({ id: newId("inv"), ...data });
