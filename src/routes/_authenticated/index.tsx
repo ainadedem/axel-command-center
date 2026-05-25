@@ -89,10 +89,10 @@ function DashboardBody() {
     profitMGA < 0 ? "danger" : runwayMonths < 4 ? "warning" : runwayMonths >= 6 ? "success" : "default";
 
   const pipelineMGA = opp
-    .filter((o) => o.stage !== "Won" && o.stage !== "Lost")
+    .filter((o) => o.stage !== "Closed" && o.stage !== "Lost")
     .reduce((s, o) => s + toMGA(o.value, o.currency), 0);
   const weightedMGA = opp
-    .filter((o) => o.stage !== "Won" && o.stage !== "Lost")
+    .filter((o) => o.stage !== "Closed" && o.stage !== "Lost")
     .reduce((s, o) => s + toMGA(o.value, o.currency) * stageProbability[o.stage], 0);
 
 
