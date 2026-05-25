@@ -247,6 +247,25 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
               Sourced from the <Link to="/sales-team" className="text-primary underline">Sales team</Link>. Same person across all opportunities, invoices and projects for this client.
             </p>
           </div>
+          <div>
+            <Label>Referral</Label>
+            {refOptions.length === 0 ? (
+              <div className="text-xs text-muted-foreground rounded-md border border-dashed border-border px-3 py-2">
+                No team members yet — <Link to="/team" className="text-primary underline">add one</Link>.
+              </div>
+            ) : (
+              <Select value={referral || "__none__"} onValueChange={(v) => setReferral(v === "__none__" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Select referral" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— None —</SelectItem>
+                  {refOptions.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Another team member credited for bringing this client. Sourced from the <Link to="/team" className="text-primary underline">Team</Link>.
+            </p>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
