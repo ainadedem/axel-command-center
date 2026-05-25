@@ -330,20 +330,24 @@ function PeopleView({ list, onEdit, role, acqOf }: { list: Opportunity[]; onEdit
                 const st = STAGE_STYLES[o.stage];
                 const otherAcq = acqOf(o);
                 return (
-                  <button key={o.id} onClick={() => onEdit(o)} className={`w-full flex items-center justify-between gap-2 text-left rounded-md border-l-2 ${st.ring} bg-surface-elevated/60 hover:bg-surface-elevated px-2.5 py-2 transition`}>
-                    <div className="min-w-0">
-                      <div className="text-xs font-medium truncate">{o.name}</div>
-                      <div className="text-[10px] text-muted-foreground truncate">
-                        {o.client}
-                        {role === "acquisition" && o.closer ? ` · closer: ${o.closer}` : ""}
-                        {role === "closer" && otherAcq ? ` · acq: ${otherAcq}` : ""}
+                  <button key={o.id} onClick={() => onEdit(o)} className="w-full flex items-center justify-between gap-2 text-left rounded-md bg-surface-elevated/60 hover:bg-surface-elevated px-2.5 py-2 transition">
+                    <div className="min-w-0 flex items-center gap-2">
+                      <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${st.dot}`} />
+                      <div className="min-w-0">
+                        <div className="text-xs font-medium truncate">{o.name}</div>
+                        <div className="text-[10px] text-muted-foreground truncate">
+                          {o.client}
+                          {role === "acquisition" && o.closer ? ` · closer: ${o.closer}` : ""}
+                          {role === "closer" && otherAcq ? ` · acq: ${otherAcq}` : ""}
+                        </div>
                       </div>
                     </div>
                     <div className="flex flex-col items-end shrink-0">
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded ${st.pill}`}>{o.stage}</span>
+                      <span className={`text-[10px] ${st.text}`}>{o.stage}</span>
                       <span className="font-tnum text-xs mt-0.5">{fmtCompact(o.value, o.currency)}</span>
                     </div>
                   </button>
+
                 );
               })}
             </div>
