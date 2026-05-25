@@ -45,6 +45,7 @@ function Body() {
   const clients = useClients();
   const suppliers = useSuppliers();
   const projects = useProjects();
+  const invoices = useInvoices();
   const { q } = Route.useSearch();
   const [filter, setFilter] = useState<(typeof types)[number]>("all");
   const [open, setOpen] = useState(false);
