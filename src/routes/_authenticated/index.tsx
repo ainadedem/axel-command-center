@@ -127,7 +127,7 @@ function DashboardBody() {
 
       {/* Charts row */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <div className="xl:col-span-2 rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
+        <div className="xl:col-span-2 rounded-2xl bg-card shadow-[var(--shadow-elevated)] p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Cash flow · 30 days</div>
@@ -171,7 +171,7 @@ function DashboardBody() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
+        <div className="rounded-2xl bg-card shadow-[var(--shadow-elevated)] p-6">
           <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Profit by company</div>
           <div className="font-display text-lg font-semibold mt-1 mb-4">30-day net (M MGA)</div>
           <div className="h-64">
@@ -190,7 +190,7 @@ function DashboardBody() {
 
       {/* Pipeline + Recent */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
+        <div className="rounded-2xl bg-card shadow-[var(--shadow-elevated)] p-6">
           <div className="flex items-center justify-between mb-1">
             <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Pipeline</div>
             <a href="/pipeline" className="text-xs text-primary hover:underline">View →</a>
@@ -216,7 +216,7 @@ function DashboardBody() {
           </div>
         </div>
 
-        <div className="xl:col-span-2 rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
+        <div className="xl:col-span-2 rounded-2xl bg-card shadow-[var(--shadow-elevated)] p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Recent activity</div>
             <a href="/transactions" className="text-xs text-primary hover:underline">All transactions →</a>
