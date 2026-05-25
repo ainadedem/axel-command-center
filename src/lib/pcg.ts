@@ -1,6 +1,8 @@
 // PCG Madagascar 2005 — Plan Comptable Général (coherent with IAS/IFRS)
 // Décret n°2004-272 du 18 février 2004
 // Applied to companies that use PCG: Logia Madagascar + Axiom Unlimited.
+import { createCollection, useCollection } from "./data-store";
+
 
 export type PcgClass = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 export type PcgNature = "actif" | "passif" | "charge" | "produit";
@@ -168,16 +170,13 @@ export interface JournalEntry {
   lines: JournalLine[];
 }
 
-const today = new Date();
-const d = (offset: number) => {
-  const x = new Date(today);
-  x.setDate(x.getDate() - offset);
-  return x.toISOString().slice(0, 10);
-};
 
-// All amounts in MGA (or company base currency for axi: USD).
-// For audit clarity we use the company base currency.
-export const journalEntries: JournalEntry[] = [];
+
+
+export const journalEntriesStore = createCollection<JournalEntry>("journal-entries", []);
+export const journalEntries = journalEntriesStore.items;
+export const useJournalEntries = () => useCollection(journalEntriesStore);
+
 
 export const pcgCompanyIds = new Set(["log", "axi"]);
 export const usesPcg = (companyId: string) => pcgCompanyIds.has(companyId);

@@ -1,10 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
-import { invoices, companies, clients, fmtCompact, toMGA } from "@/lib/mock-data";
+import {
+  useInvoices, useCompanies, useClients, invoicesStore,
+  fmtCompact, toMGA, type Invoice, type Currency,
+} from "@/lib/mock-data";
+import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
+import { Pencil, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage });
 
@@ -27,70 +39,200 @@ function InvoicesPage() {
 
 function Body() {
   const { scope } = useCompany();
+  const invoices = useInvoices();
+  const companies = useCompanies();
+  const clients = useClients();
   const list = inScope(invoices, scope);
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Invoice | null>(null);
 
-  const totalOpen = list.filter(i => i.status !== "paid").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
-  const totalOverdue = list.filter(i => i.status === "overdue").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
-  const totalPaid = list.filter(i => i.status === "paid").reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
+  const totalOpen = list.filter((i) => i.status !== "paid").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
+  const totalOverdue = list.filter((i) => i.status === "overdue").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
+  const totalPaid = list.filter((i) => i.status === "paid").reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
+  const openCreate = () => { setEditing(null); setOpen(true); };
 
   return (
     <div className="p-8 space-y-5">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Stat label="Open receivables" value={fmtCompact(totalOpen, "MGA")} />
-        <Stat label="Overdue" value={fmtCompact(totalOverdue, "MGA")} danger />
-        <Stat label="Collected (period)" value={fmtCompact(totalPaid, "MGA")} good />
-      </div>
+      <CrudToolbar count={list.length} label="invoices" onCreate={openCreate} />
 
-      <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
-              <th className="text-left font-medium px-5 py-3">Number</th>
-              <th className="text-left font-medium px-5 py-3">Client</th>
-              <th className="text-left font-medium px-5 py-3">Company</th>
-              <th className="text-left font-medium px-5 py-3">Due</th>
-              <th className="text-left font-medium px-5 py-3">Status</th>
-              <th className="text-right font-medium px-5 py-3">Amount</th>
-              <th className="text-right font-medium px-5 py-3">Balance</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.map((inv) => {
-              const co = companies.find(c => c.id === inv.companyId)!;
-              const cl = clients.find(c => c.id === inv.clientId);
-              const days = differenceInDays(parseISO(inv.dueDate), new Date());
-              const balance = inv.amount - inv.paid;
-              return (
-                <tr key={inv.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40">
-                  <td className="px-5 py-3.5 font-tnum text-xs text-muted-foreground">{inv.number}</td>
-                  <td className="px-5 py-3.5 font-medium">{cl?.name}</td>
-                  <td className="px-5 py-3.5">
-                    <span className="inline-flex items-center gap-2 text-xs">
-                      <span className="h-2 w-2 rounded-full" style={{ background: co.color }} />
-                      {co.shortName}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">
-                    {format(parseISO(inv.dueDate), "MMM d")}
-                    {days < 0 && <span className="ml-2 text-destructive">{Math.abs(days)}d late</span>}
-                    {days >= 0 && days < 14 && <span className="ml-2 text-warning">in {days}d</span>}
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span className={cn("text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[inv.status])}>
-                      {inv.status}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(inv.amount, inv.currency)}</td>
-                  <td className="px-5 py-3.5 text-right font-tnum font-medium">
-                    {balance > 0 ? fmtCompact(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
-                  </td>
+      {list.length === 0 ? (
+        <EmptyState label="invoices" onCreate={openCreate} />
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Stat label="Open receivables" value={fmtCompact(totalOpen, "MGA")} />
+            <Stat label="Overdue" value={fmtCompact(totalOverdue, "MGA")} danger />
+            <Stat label="Collected (period)" value={fmtCompact(totalPaid, "MGA")} good />
+          </div>
+
+          <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                  <th className="text-left font-medium px-5 py-3">Number</th>
+                  <th className="text-left font-medium px-5 py-3">Client</th>
+                  <th className="text-left font-medium px-5 py-3">Company</th>
+                  <th className="text-left font-medium px-5 py-3">Due</th>
+                  <th className="text-left font-medium px-5 py-3">Status</th>
+                  <th className="text-right font-medium px-5 py-3">Amount</th>
+                  <th className="text-right font-medium px-5 py-3">Balance</th>
+                  <th className="px-5 py-3 w-20" />
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {list.map((inv) => {
+                  const co = companies.find((c) => c.id === inv.companyId);
+                  const cl = clients.find((c) => c.id === inv.clientId);
+                  const days = differenceInDays(parseISO(inv.dueDate), new Date());
+                  const balance = inv.amount - inv.paid;
+                  return (
+                    <tr key={inv.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
+                      <td className="px-5 py-3.5 font-tnum text-xs text-muted-foreground">{inv.number}</td>
+                      <td className="px-5 py-3.5 font-medium">{cl?.name ?? "—"}</td>
+                      <td className="px-5 py-3.5">
+                        {co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}
+                      </td>
+                      <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">
+                        {format(parseISO(inv.dueDate), "MMM d")}
+                        {days < 0 && <span className="ml-2 text-destructive">{Math.abs(days)}d late</span>}
+                        {days >= 0 && days < 14 && <span className="ml-2 text-warning">in {days}d</span>}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className={cn("text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[inv.status])}>{inv.status}</span>
+                      </td>
+                      <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(inv.amount, inv.currency)}</td>
+                      <td className="px-5 py-3.5 text-right font-tnum font-medium">
+                        {balance > 0 ? fmtCompact(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
+                          <button onClick={() => { setEditing(inv); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
+                          <button onClick={() => confirm(`Delete invoice ${inv.number}?`) && invoicesStore.remove(inv.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      <InvoiceDialog open={open} onOpenChange={setOpen} editing={editing} />
     </div>
+  );
+}
+
+function deriveStatus(amount: number, paid: number, dueDate: string): Invoice["status"] {
+  if (paid >= amount && amount > 0) return "paid";
+  if (paid > 0 && paid < amount) return "partial";
+  const days = differenceInDays(parseISO(dueDate), new Date());
+  if (days < 0) return "overdue";
+  return "sent";
+}
+
+function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Invoice | null }) {
+  const companies = useCompanies();
+  const clients = useClients();
+  const today = new Date().toISOString().slice(0, 10);
+  const [number, setNumber] = useState("");
+  const [companyId, setCompanyId] = useState("");
+  const [clientId, setClientId] = useState("");
+  const [issueDate, setIssueDate] = useState(today);
+  const [dueDate, setDueDate] = useState(today);
+  const [amount, setAmount] = useState("0");
+  const [paid, setPaid] = useState("0");
+  const [currency, setCurrency] = useState<Currency>("EUR");
+  const [status, setStatus] = useState<Invoice["status"]>("draft");
+
+  useEffect(() => {
+    if (!open) return;
+    if (editing) {
+      setNumber(editing.number); setCompanyId(editing.companyId); setClientId(editing.clientId);
+      setIssueDate(editing.issueDate); setDueDate(editing.dueDate);
+      setAmount(String(editing.amount)); setPaid(String(editing.paid));
+      setCurrency(editing.currency); setStatus(editing.status);
+    } else {
+      setNumber(`INV-${Date.now().toString().slice(-6)}`); setCompanyId(companies[0]?.id ?? ""); setClientId("");
+      setIssueDate(today); setDueDate(today); setAmount("0"); setPaid("0");
+      setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
+    }
+  }, [open, editing, companies, today]);
+
+  const companyClients = clients.filter((c) => c.companyId === companyId);
+
+  const submit = () => {
+    if (!number.trim() || !companyId || !clientId) return;
+    const a = Number(amount) || 0;
+    const p = Number(paid) || 0;
+    const finalStatus = status === "draft" ? "draft" : deriveStatus(a, p, dueDate);
+    const data = { number, companyId, clientId, issueDate, dueDate, amount: a, paid: p, currency, status: finalStatus };
+    if (editing) invoicesStore.update(editing.id, data);
+    else invoicesStore.add({ id: newId("inv"), ...data });
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>{editing ? "Edit invoice" : "New invoice"}</DialogTitle></DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Number</Label><Input value={number} onChange={(e) => setNumber(e.target.value)} /></div>
+            <div>
+              <Label>Status</Label>
+              <Select value={status} onValueChange={(v) => setStatus(v as Invoice["status"])}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="sent">Sent (auto)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Company</Label>
+              <Select value={companyId} onValueChange={(v) => { setCompanyId(v); setClientId(""); }}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Client</Label>
+              <Select value={clientId} onValueChange={setClientId}>
+                <SelectTrigger><SelectValue placeholder={companyClients.length ? "Select" : "Create client first"} /></SelectTrigger>
+                <SelectContent>{companyClients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Issue date</Label><Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
+            <div><Label>Due date</Label><Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div><Label>Amount</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
+            <div><Label>Paid</Label><Input type="number" value={paid} onChange={(e) => setPaid(e.target.value)} /></div>
+            <div>
+              <Label>Currency</Label>
+              <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MGA">MGA</SelectItem>
+                  <SelectItem value="EUR">EUR</SelectItem>
+                  <SelectItem value="USD">USD</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={submit}>{editing ? "Save" : "Create"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -98,11 +240,7 @@ function Stat({ label, value, danger, good }: { label: string; value: string; da
   return (
     <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
       <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
-      <div className={cn(
-        "font-display text-2xl font-bold mt-2 font-tnum",
-        danger && "text-destructive",
-        good && "text-success",
-      )}>{value}</div>
+      <div className={cn("font-display text-2xl font-bold mt-2 font-tnum", danger && "text-destructive", good && "text-success")}>{value}</div>
     </div>
   );
 }
