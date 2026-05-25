@@ -105,7 +105,7 @@ function Body() {
                   <td className="px-5 py-2 text-xs uppercase tracking-wider">Sous-total classe {cls}</td>
                   <td className="px-5 py-2 text-right font-tnum">{fmtMoney(subD, displayCo.baseCurrency)}</td>
                   <td className="px-5 py-2 text-right font-tnum">{fmtMoney(subC, displayCo.baseCurrency)}</td>
-                  <td className="px-5 py-2 text-right font-tnum">{fmtMoney(subD - subC, displayCo.baseCurrency)}</td>
+                  <td className={`px-5 py-2 text-right font-tnum ${(subD - subC) > 0 ? "text-success" : (subD - subC) < 0 ? "text-destructive" : ""}`}>{fmtMoney(subD - subC, displayCo.baseCurrency)}</td>
                 </tr>
               </tbody>
             </table>
