@@ -334,6 +334,22 @@ export function seedLogiaDerivedData(force = false) {
     // Counterpart line drives category + client/supplier linkage.
     const counter = e.lines.find((l) => l !== cashLine);
     const clientName = counter?.account.startsWith("411") ? counter.label?.trim() : undefined;
+    // Supplier link: prefer explicit 401 counterpart; otherwise try to match
+    // any 401 line in the same entry (BNQ payments often pair cash with the
+    // supplier account directly), then fall back to fuzzy name match against
+    // the entry description (e.g. "Règlement fact. JIRAMA …").
+    let supplierName: string | undefined;
+    if (counter?.account.startsWith("401")) supplierName = counter.label?.trim();
+    if (!supplierName) {
+      const supLine = e.lines.find((l) => l.account.startsWith("401") && l.label);
+      if (supLine) supplierName = supLine.label?.trim();
+    }
+    if (!supplierName && !isIncome) {
+      const desc = e.description.toUpperCase();
+      for (const name of supplierByName.keys()) {
+        if (name.length >= 3 && desc.includes(name.toUpperCase())) { supplierName = name; break; }
+      }
+    }
     const transfer = e.lines.some((l) => l.account === "580000"); // virement interne
     const tx: Transaction = {
       id: `tx_${e.id}`,
@@ -346,6 +362,7 @@ export function seedLogiaDerivedData(force = false) {
       amount,
       currency: "MGA",
       clientId: clientName ? clientByName.get(clientName)?.id : undefined,
+      supplierId: supplierName ? supplierByName.get(supplierName)?.id : undefined,
     };
     transactionsStore.add(tx);
   }
@@ -376,11 +393,15 @@ export const accountLabels = logiaAccountLabels as Record<string, string>;
 
 // Auto-seed on first load (idempotent). Declared AFTER `accountLabels`
 // because seedLogiaDerivedData() reads from it.
+const DERIVED_VERSION = "2"; // bump to force re-derive on existing local data
 if (typeof window !== "undefined") {
   try {
     ensureSeedCompanies();
     seedLogiaGrandLivre(false);
-    seedLogiaDerivedData(false);
+    const current = localStorage.getItem("logia-derived-version");
+    const force = current !== DERIVED_VERSION;
+    seedLogiaDerivedData(force);
+    if (force) localStorage.setItem("logia-derived-version", DERIVED_VERSION);
   } catch { /* ignore */ }
 }
 
