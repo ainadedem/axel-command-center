@@ -314,9 +314,26 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Status</Label>
+              <div className="inline-flex rounded-md border border-border overflow-hidden text-xs mt-1">
+                {(["lead", "client"] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setStatus(s)}
+                    className={`px-3 py-1.5 capitalize ${status === s ? (s === "lead" ? "bg-amber-500 text-white" : "bg-emerald-500 text-white") : "bg-transparent text-muted-foreground hover:bg-surface-elevated"} ${s === "client" ? "border-l border-border" : ""}`}
+                  >
+                    {s === "lead" ? "Lead" : "Client"}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div><Label>Country</Label><Input value={country} onChange={(e) => setCountry(e.target.value)} /></div>
-            <div><Label>Acquired on</Label><Input type="date" value={acquiredAt} onChange={(e) => setAcquiredAt(e.target.value)} /></div>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Acquired on</Label><Input type="date" value={acquiredAt} onChange={(e) => setAcquiredAt(e.target.value)} /></div>
+            <div /></div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Industry</Label><Input value={industry} onChange={(e) => setIndustry(e.target.value)} placeholder="Telecom, Finance, …" /></div>
             <div><Label>Website</Label><Input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://…" /></div>
