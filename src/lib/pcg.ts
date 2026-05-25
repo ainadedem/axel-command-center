@@ -180,9 +180,9 @@ import clientsEnrichmentSeed from "./clients-enrichment-seed.json";
 import {
   companiesStore, accountsStore, clientsStore, suppliersStore,
   invoicesStore, transactionsStore, categoriesStore, opportunitiesStore,
-  teamMembersStore, salesMembersStore,
+  teamMembersStore, salesMembersStore, projectsStore,
   type Account, type Client, type Supplier, type Invoice, type Transaction, type Category, type Opportunity,
-  type TeamMember, type SalesMember, type SalesRole,
+  type TeamMember, type SalesMember, type SalesRole, type Project,
 } from "./mock-data";
 
 export const journalEntriesStore = createCollection<JournalEntry>("journal-entries", []);
