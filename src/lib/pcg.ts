@@ -177,8 +177,8 @@ import logiaSeed from "./logia-grand-livre-seed.json";
 import logiaAccountLabels from "./logia-account-labels.json";
 import {
   companiesStore, accountsStore, clientsStore, suppliersStore,
-  invoicesStore, transactionsStore,
-  type Account, type Client, type Supplier, type Invoice, type Transaction,
+  invoicesStore, transactionsStore, categoriesStore,
+  type Account, type Client, type Supplier, type Invoice, type Transaction, type Category,
 } from "./mock-data";
 
 export const journalEntriesStore = createCollection<JournalEntry>("journal-entries", []);
