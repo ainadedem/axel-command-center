@@ -110,7 +110,10 @@ function Body() {
               </tr>
             </thead>
             <tbody>
-              {list.map((q) => {
+              {groups.map((g) => (
+                <Fragment key={g.key}>
+                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={9} />}
+                  {g.items.map((q) => {
                 const co = companies.find((c) => c.id === q.companyId);
                 const cl = clients.find((c) => c.id === q.clientId);
                 const proj = q.projectId ? projects.find((p) => p.id === q.projectId) : undefined;
