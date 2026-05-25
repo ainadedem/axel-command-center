@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as ApiAxelChatRouteImport } from './routes/api/axel-chat'
 import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
@@ -32,7 +33,10 @@ import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedBudgetsRouteImport } from './routes/_authenticated/budgets'
 import { Route as AuthenticatedBilanRouteImport } from './routes/_authenticated/bilan'
 import { Route as AuthenticatedBalanceRouteImport } from './routes/_authenticated/balance'
+import { Route as AuthenticatedAxelRouteImport } from './routes/_authenticated/axel'
 import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
+import { Route as AuthenticatedAxelIndexRouteImport } from './routes/_authenticated/axel.index'
+import { Route as AuthenticatedAxelThreadIdRouteImport } from './routes/_authenticated/axel.$threadId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -47,6 +51,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const ApiAxelChatRoute = ApiAxelChatRouteImport.update({
+  id: '/api/axel-chat',
+  path: '/api/axel-chat',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTransactionsRoute =
   AuthenticatedTransactionsRouteImport.update({
@@ -152,16 +161,33 @@ const AuthenticatedBalanceRoute = AuthenticatedBalanceRouteImport.update({
   path: '/balance',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAxelRoute = AuthenticatedAxelRouteImport.update({
+  id: '/axel',
+  path: '/axel',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAccountsRoute = AuthenticatedAccountsRouteImport.update({
   id: '/accounts',
   path: '/accounts',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAxelIndexRoute = AuthenticatedAxelIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAxelRoute,
+} as any)
+const AuthenticatedAxelThreadIdRoute =
+  AuthenticatedAxelThreadIdRouteImport.update({
+    id: '/$threadId',
+    path: '/$threadId',
+    getParentRoute: () => AuthenticatedAxelRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/accounts': typeof AuthenticatedAccountsRoute
+  '/axel': typeof AuthenticatedAxelRouteWithChildren
   '/balance': typeof AuthenticatedBalanceRoute
   '/bilan': typeof AuthenticatedBilanRoute
   '/budgets': typeof AuthenticatedBudgetsRoute
@@ -182,6 +208,9 @@ export interface FileRoutesByFullPath {
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/team': typeof AuthenticatedTeamRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
+  '/api/axel-chat': typeof ApiAxelChatRoute
+  '/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
+  '/axel/': typeof AuthenticatedAxelIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -206,13 +235,17 @@ export interface FileRoutesByTo {
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/team': typeof AuthenticatedTeamRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
+  '/api/axel-chat': typeof ApiAxelChatRoute
   '/': typeof AuthenticatedIndexRoute
+  '/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
+  '/axel': typeof AuthenticatedAxelIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/accounts': typeof AuthenticatedAccountsRoute
+  '/_authenticated/axel': typeof AuthenticatedAxelRouteWithChildren
   '/_authenticated/balance': typeof AuthenticatedBalanceRoute
   '/_authenticated/bilan': typeof AuthenticatedBilanRoute
   '/_authenticated/budgets': typeof AuthenticatedBudgetsRoute
@@ -233,7 +266,10 @@ export interface FileRoutesById {
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
+  '/api/axel-chat': typeof ApiAxelChatRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
+  '/_authenticated/axel/': typeof AuthenticatedAxelIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -241,6 +277,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/accounts'
+    | '/axel'
     | '/balance'
     | '/bilan'
     | '/budgets'
@@ -261,6 +298,9 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/team'
     | '/transactions'
+    | '/api/axel-chat'
+    | '/axel/$threadId'
+    | '/axel/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -285,12 +325,16 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/team'
     | '/transactions'
+    | '/api/axel-chat'
     | '/'
+    | '/axel/$threadId'
+    | '/axel'
   id:
     | '__root__'
     | '/_authenticated'
     | '/login'
     | '/_authenticated/accounts'
+    | '/_authenticated/axel'
     | '/_authenticated/balance'
     | '/_authenticated/bilan'
     | '/_authenticated/budgets'
@@ -311,12 +355,16 @@ export interface FileRouteTypes {
     | '/_authenticated/suppliers'
     | '/_authenticated/team'
     | '/_authenticated/transactions'
+    | '/api/axel-chat'
     | '/_authenticated/'
+    | '/_authenticated/axel/$threadId'
+    | '/_authenticated/axel/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiAxelChatRoute: typeof ApiAxelChatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -341,6 +389,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/api/axel-chat': {
+      id: '/api/axel-chat'
+      path: '/api/axel-chat'
+      fullPath: '/api/axel-chat'
+      preLoaderRoute: typeof ApiAxelChatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/transactions': {
       id: '/_authenticated/transactions'
@@ -482,6 +537,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBalanceRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/axel': {
+      id: '/_authenticated/axel'
+      path: '/axel'
+      fullPath: '/axel'
+      preLoaderRoute: typeof AuthenticatedAxelRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/accounts': {
       id: '/_authenticated/accounts'
       path: '/accounts'
@@ -489,11 +551,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/axel/': {
+      id: '/_authenticated/axel/'
+      path: '/'
+      fullPath: '/axel/'
+      preLoaderRoute: typeof AuthenticatedAxelIndexRouteImport
+      parentRoute: typeof AuthenticatedAxelRoute
+    }
+    '/_authenticated/axel/$threadId': {
+      id: '/_authenticated/axel/$threadId'
+      path: '/$threadId'
+      fullPath: '/axel/$threadId'
+      preLoaderRoute: typeof AuthenticatedAxelThreadIdRouteImport
+      parentRoute: typeof AuthenticatedAxelRoute
+    }
   }
 }
 
+interface AuthenticatedAxelRouteChildren {
+  AuthenticatedAxelThreadIdRoute: typeof AuthenticatedAxelThreadIdRoute
+  AuthenticatedAxelIndexRoute: typeof AuthenticatedAxelIndexRoute
+}
+
+const AuthenticatedAxelRouteChildren: AuthenticatedAxelRouteChildren = {
+  AuthenticatedAxelThreadIdRoute: AuthenticatedAxelThreadIdRoute,
+  AuthenticatedAxelIndexRoute: AuthenticatedAxelIndexRoute,
+}
+
+const AuthenticatedAxelRouteWithChildren =
+  AuthenticatedAxelRoute._addFileChildren(AuthenticatedAxelRouteChildren)
+
 interface AuthenticatedRouteChildren {
   AuthenticatedAccountsRoute: typeof AuthenticatedAccountsRoute
+  AuthenticatedAxelRoute: typeof AuthenticatedAxelRouteWithChildren
   AuthenticatedBalanceRoute: typeof AuthenticatedBalanceRoute
   AuthenticatedBilanRoute: typeof AuthenticatedBilanRoute
   AuthenticatedBudgetsRoute: typeof AuthenticatedBudgetsRoute
@@ -519,6 +609,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAccountsRoute: AuthenticatedAccountsRoute,
+  AuthenticatedAxelRoute: AuthenticatedAxelRouteWithChildren,
   AuthenticatedBalanceRoute: AuthenticatedBalanceRoute,
   AuthenticatedBilanRoute: AuthenticatedBilanRoute,
   AuthenticatedBudgetsRoute: AuthenticatedBudgetsRoute,
@@ -549,6 +640,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiAxelChatRoute: ApiAxelChatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

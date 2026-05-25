@@ -4,6 +4,7 @@ import {
   Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus, Truck,
   ChevronDown, ChevronRight, Check, LogOut, Target, UserCog, Handshake,
   BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList, RefreshCw,
+  Sparkles,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CompanyProvider, useCompany } from "@/lib/company-context";
@@ -25,6 +26,7 @@ const sections: NavSection[] = [
     label: "Overview",
     items: [
       { to: "/", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/axel", label: "Axel AI", icon: Sparkles },
     ],
   },
   {
