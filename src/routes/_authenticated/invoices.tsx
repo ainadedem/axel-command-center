@@ -47,6 +47,7 @@ function Body() {
   const list = inScope(invoices, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Invoice | null>(null);
+  const [previewing, setPreviewing] = useState<Invoice | null>(null);
 
   const totalOpen = list.filter((i) => i.status !== "paid").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
   const totalOverdue = list.filter((i) => i.status === "overdue").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
