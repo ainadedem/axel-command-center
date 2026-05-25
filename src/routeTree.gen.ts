@@ -33,7 +33,9 @@ import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedBudgetsRouteImport } from './routes/_authenticated/budgets'
 import { Route as AuthenticatedBilanRouteImport } from './routes/_authenticated/bilan'
 import { Route as AuthenticatedBalanceRouteImport } from './routes/_authenticated/balance'
+import { Route as AuthenticatedAxelRouteImport } from './routes/_authenticated/axel'
 import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
+import { Route as AuthenticatedAxelIndexRouteImport } from './routes/_authenticated/axel.index'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -158,16 +160,27 @@ const AuthenticatedBalanceRoute = AuthenticatedBalanceRouteImport.update({
   path: '/balance',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAxelRoute = AuthenticatedAxelRouteImport.update({
+  id: '/axel',
+  path: '/axel',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAccountsRoute = AuthenticatedAccountsRouteImport.update({
   id: '/accounts',
   path: '/accounts',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAxelIndexRoute = AuthenticatedAxelIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAxelRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/accounts': typeof AuthenticatedAccountsRoute
+  '/axel': typeof AuthenticatedAxelRouteWithChildren
   '/balance': typeof AuthenticatedBalanceRoute
   '/bilan': typeof AuthenticatedBilanRoute
   '/budgets': typeof AuthenticatedBudgetsRoute
@@ -189,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/team': typeof AuthenticatedTeamRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
+  '/axel/': typeof AuthenticatedAxelIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -215,12 +229,14 @@ export interface FileRoutesByTo {
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
   '/': typeof AuthenticatedIndexRoute
+  '/axel': typeof AuthenticatedAxelIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/accounts': typeof AuthenticatedAccountsRoute
+  '/_authenticated/axel': typeof AuthenticatedAxelRouteWithChildren
   '/_authenticated/balance': typeof AuthenticatedBalanceRoute
   '/_authenticated/bilan': typeof AuthenticatedBilanRoute
   '/_authenticated/budgets': typeof AuthenticatedBudgetsRoute
@@ -243,6 +259,7 @@ export interface FileRoutesById {
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/axel/': typeof AuthenticatedAxelIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -250,6 +267,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/accounts'
+    | '/axel'
     | '/balance'
     | '/bilan'
     | '/budgets'
@@ -271,6 +289,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/transactions'
     | '/api/axel-chat'
+    | '/axel/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -297,11 +316,13 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/api/axel-chat'
     | '/'
+    | '/axel'
   id:
     | '__root__'
     | '/_authenticated'
     | '/login'
     | '/_authenticated/accounts'
+    | '/_authenticated/axel'
     | '/_authenticated/balance'
     | '/_authenticated/bilan'
     | '/_authenticated/budgets'
@@ -324,6 +345,7 @@ export interface FileRouteTypes {
     | '/_authenticated/transactions'
     | '/api/axel-chat'
     | '/_authenticated/'
+    | '/_authenticated/axel/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -502,6 +524,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBalanceRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/axel': {
+      id: '/_authenticated/axel'
+      path: '/axel'
+      fullPath: '/axel'
+      preLoaderRoute: typeof AuthenticatedAxelRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/accounts': {
       id: '/_authenticated/accounts'
       path: '/accounts'
@@ -509,11 +538,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/axel/': {
+      id: '/_authenticated/axel/'
+      path: '/'
+      fullPath: '/axel/'
+      preLoaderRoute: typeof AuthenticatedAxelIndexRouteImport
+      parentRoute: typeof AuthenticatedAxelRoute
+    }
   }
 }
 
+interface AuthenticatedAxelRouteChildren {
+  AuthenticatedAxelIndexRoute: typeof AuthenticatedAxelIndexRoute
+}
+
+const AuthenticatedAxelRouteChildren: AuthenticatedAxelRouteChildren = {
+  AuthenticatedAxelIndexRoute: AuthenticatedAxelIndexRoute,
+}
+
+const AuthenticatedAxelRouteWithChildren =
+  AuthenticatedAxelRoute._addFileChildren(AuthenticatedAxelRouteChildren)
+
 interface AuthenticatedRouteChildren {
   AuthenticatedAccountsRoute: typeof AuthenticatedAccountsRoute
+  AuthenticatedAxelRoute: typeof AuthenticatedAxelRouteWithChildren
   AuthenticatedBalanceRoute: typeof AuthenticatedBalanceRoute
   AuthenticatedBilanRoute: typeof AuthenticatedBilanRoute
   AuthenticatedBudgetsRoute: typeof AuthenticatedBudgetsRoute
@@ -539,6 +587,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAccountsRoute: AuthenticatedAccountsRoute,
+  AuthenticatedAxelRoute: AuthenticatedAxelRouteWithChildren,
   AuthenticatedBalanceRoute: AuthenticatedBalanceRoute,
   AuthenticatedBilanRoute: AuthenticatedBilanRoute,
   AuthenticatedBudgetsRoute: AuthenticatedBudgetsRoute,
