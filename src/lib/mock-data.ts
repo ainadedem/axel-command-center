@@ -132,6 +132,26 @@ export interface Supplier {
   kind: "external" | "internal";
 }
 
+/* ─── Team & Sales team ─────────────────────────────────────────────── */
+
+/** A person in the organization (Team database, source of truth). */
+export interface TeamMember {
+  id: string;
+  name: string;
+  email?: string;
+  jobTitle?: string;
+  department?: string;
+}
+
+export type SalesRole = "acquisition" | "closer" | "both";
+
+/** Sales team is a curated subset of the Team database with a sales role. */
+export interface SalesMember {
+  id: string;
+  teamMemberId: string;
+  role: SalesRole;
+}
+
 /* ─── Stores (start empty) ──────────────────────────────────────────── */
 
 export const companiesStore = createCollection<Company>("companies", []);
