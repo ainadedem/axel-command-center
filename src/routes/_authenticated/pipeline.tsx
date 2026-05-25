@@ -64,14 +64,19 @@ function PipelinePage() {
   );
 }
 
-/** Map (companyId, client name) → acquisition person from the Clients table. */
+/** Resolve acquisition person for an opportunity — prefers clientId link, falls back to (companyId, client name). */
 function useAcqLookup(clients: Client[]): (o: Opportunity) => string {
   return useMemo(() => {
-    const map = new Map<string, string>();
+    const byId = new Map<string, Client>();
+    const byName = new Map<string, Client>();
     for (const c of clients) {
-      if (c.acquisition) map.set(`${c.companyId}::${c.name.toLowerCase()}`, c.acquisition);
+      byId.set(c.id, c);
+      byName.set(`${c.companyId}::${c.name.toLowerCase()}`, c);
     }
-    return (o: Opportunity) => map.get(`${o.companyId}::${(o.client || "").toLowerCase()}`) ?? "";
+    return (o: Opportunity) => {
+      const c = (o.clientId && byId.get(o.clientId)) || byName.get(`${o.companyId}::${(o.client || "").toLowerCase()}`);
+      return c?.acquisition ?? "";
+    };
   }, [clients]);
 }
 
