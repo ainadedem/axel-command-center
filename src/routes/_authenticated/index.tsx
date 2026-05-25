@@ -170,11 +170,12 @@ function DashboardBody() {
         return td >= start && td <= end;
       };
       const isFuture = i > 0;
-      const closed = isFuture
-        ? 0
-        : opp
-            .filter((o) => o.stage === "Closed" && inMonth(o.expectedClose))
-            .reduce((s, o) => s + toMGA(o.value, o.currency), 0);
+      // Always bucket closed-won by its expectedClose month, even if the date
+      // is in the future — otherwise newly won deals with a forward close date
+      // would disappear from both the closed bar and the forecast bar.
+      const closed = opp
+        .filter((o) => o.stage === "Closed" && inMonth(o.expectedClose))
+        .reduce((s, o) => s + toMGA(o.value, o.currency), 0);
       const forecast = isFuture
         ? opp
             .filter((o) => o.stage !== "Closed" && o.stage !== "Lost" && inMonth(o.expectedClose))
