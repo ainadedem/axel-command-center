@@ -76,9 +76,18 @@ function useAcqLookup(clients: Client[]): (o: Opportunity) => string {
 
 function Body() {
   const { scope } = useCompany();
-  const opportunities = useOpportunities();
   const companies = useCompanies();
   const clients = useClients();
+  const fetchDeals = useServerFn(getNotionDeals);
+  const qc = useQueryClient();
+  const { data, isLoading, isFetching, error } = useQuery({
+    queryKey: ["notion-deals"],
+    queryFn: () => fetchDeals(),
+    staleTime: 60_000,
+    refetchOnWindowFocus: true,
+  });
+  const opportunities = data?.deals ?? [];
+  const syncError = data?.error ?? (error instanceof Error ? error.message : null);
   const list = inScope(opportunities, scope);
   const acqOf = useAcqLookup(clients);
   const [open, setOpen] = useState(false);
