@@ -376,6 +376,24 @@ export function useSalesPeople(role: "acquisition" | "closer"): { id: string; te
 }
 
 
+/* ─── Number format preference ──────────────────────────────────────── */
+
+export type NumberFormatMode = "full" | "compact";
+
+const FMT_KEY = "axel.numberFormat";
+
+let _globalMode: NumberFormatMode =
+  (typeof window !== "undefined" && window.localStorage.getItem(FMT_KEY) as NumberFormatMode) || "compact";
+
+export function getNumberFormat(): NumberFormatMode { return _globalMode; }
+
+export function setNumberFormat(mode: NumberFormatMode) {
+  _globalMode = mode;
+  if (typeof window !== "undefined") {
+    try { window.localStorage.setItem(FMT_KEY, mode); } catch { /* ignore */ }
+  }
+}
+
 /* ─── Formatters ────────────────────────────────────────────────────── */
 
 export const fmt = (amount: number, currency: Currency) =>
@@ -384,6 +402,12 @@ export const fmt = (amount: number, currency: Currency) =>
     currency,
     maximumFractionDigits: 0,
   }).format(amount);
+
+export const fmtFull = (amount: number, currency: Currency) => {
+  const symbol = currency === "EUR" ? "€" : currency === "USD" ? "$" : "Ar";
+  const num = Math.abs(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return currency === "MGA" ? `${num} ${symbol}` : `${symbol}${num}`;
+};
 
 export const fmtCompact = (amount: number, currency: Currency) => {
   const abs = Math.abs(amount);
@@ -396,3 +420,6 @@ export const fmtCompact = (amount: number, currency: Currency) => {
   const num = value.toLocaleString("en-US", { maximumFractionDigits: suffix ? 1 : 0 });
   return currency === "MGA" ? `${num}${suffix} ${symbol}` : `${symbol}${num}${suffix}`;
 };
+
+export const fmtAmount = (amount: number, currency: Currency) =>
+  _globalMode === "full" ? fmtFull(amount, currency) : fmtCompact(amount, currency);

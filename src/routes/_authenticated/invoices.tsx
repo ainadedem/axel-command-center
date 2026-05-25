@@ -4,20 +4,21 @@ import { PageHeader } from "@/components/page-header";
 import {
   useInvoices, useCompanies, useClients, useProjects, usePurchaseOrders, useQuotes, useAccounts,
   invoicesStore, transactionsStore,
-  fmtCompact, toMGA, FX, type Invoice, type Currency,
+  fmtAmount, toMGA, FX, type Invoice, type Currency,
+  getNumberFormat, setNumberFormat, type NumberFormatMode,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, Ban, BadgeCheck } from "lucide-react";
+import { Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, Ban, BadgeCheck, ToggleLeft, ToggleRight } from "lucide-react";
 import { InvoicePreview } from "@/components/invoice-preview";
 import { RecordPaymentDialog } from "@/components/statement-import-dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -56,6 +57,13 @@ function Body() {
   const [paying, setPaying] = useState<Invoice | null>(null);
   const [cancelling, setCancelling] = useState<Invoice | null>(null);
   const [marking, setMarking] = useState<Invoice | null>(null);
+  const [numMode, setNumMode] = useState<NumberFormatMode>(getNumberFormat());
+
+  const toggleMode = useCallback(() => {
+    const next: NumberFormatMode = numMode === "compact" ? "full" : "compact";
+    setNumMode(next);
+    setNumberFormat(next);
+  }, [numMode]);
 
   const active = list.filter((i) => i.status !== "cancelled");
   const totalOpen = active.filter((i) => i.status !== "paid").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
@@ -66,16 +74,26 @@ function Body() {
 
   return (
     <div className="p-8 space-y-5">
-      <CrudToolbar count={list.length} label="invoices" onCreate={openCreate} />
+      <div className="flex items-center justify-between gap-4">
+        <CrudToolbar count={list.length} label="invoices" onCreate={openCreate} />
+        <button
+          onClick={toggleMode}
+          className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          title={numMode === "compact" ? "Switch to full numbers" : "Switch to compact numbers"}
+        >
+          {numMode === "compact" ? <ToggleLeft className="h-4 w-4" /> : <ToggleRight className="h-4 w-4" />}
+          <span className="hidden sm:inline">{numMode === "compact" ? "Compact" : "Full"}</span>
+        </button>
+      </div>
 
       {list.length === 0 ? (
         <EmptyState label="invoices" onCreate={openCreate} />
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Stat label="Open receivables" value={fmtCompact(totalOpen, "MGA")} />
-            <Stat label="Overdue" value={fmtCompact(totalOverdue, "MGA")} danger />
-            <Stat label="Collected (period)" value={fmtCompact(totalPaid, "MGA")} good />
+            <Stat label="Open receivables" value={fmtAmount(totalOpen, "MGA")} />
+            <Stat label="Overdue" value={fmtAmount(totalOverdue, "MGA")} danger />
+            <Stat label="Collected (period)" value={fmtAmount(totalPaid, "MGA")} good />
           </div>
 
           <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
@@ -147,9 +165,9 @@ function Body() {
                           <div className="text-[10px] text-muted-foreground mt-1 max-w-[180px] truncate italic" title={inv.cancellationReason}>“{inv.cancellationReason}”</div>
                         )}
                       </td>
-                      <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(inv.amount, inv.currency)}</td>
+                      <td className="px-5 py-3.5 text-right font-tnum">{fmtAmount(inv.amount, inv.currency)}</td>
                       <td className="px-5 py-3.5 text-right font-tnum font-medium">
-                        {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? fmtCompact(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
+                        {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? fmtAmount(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
@@ -364,7 +382,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__none__">— No PO —</SelectItem>
-                {clientPOs.map((p) => <SelectItem key={p.id} value={p.id}>{p.number} · {fmtCompact(p.amount, p.currency)} · {p.status}</SelectItem>)}
+                {clientPOs.map((p) => <SelectItem key={p.id} value={p.id}>{p.number} · {fmtAmount(p.amount, p.currency)} · {p.status}</SelectItem>)}
               </SelectContent>
             </Select>
             {blocked && (
