@@ -5,7 +5,7 @@ import {
   ChevronDown, Check, LogOut,
   BookOpen, BookText, Scale, Library, Receipt,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CompanyProvider, useCompany } from "@/lib/company-context";
 import { useCompanies } from "@/lib/mock-data";
 import { useAuth } from "@/lib/auth-context";
@@ -148,7 +148,7 @@ function Sidebar() {
         })}
       </nav>
       <div className="p-3 border-t border-sidebar-border">
-        <Link to="/" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50">
+        <Link to="/settings" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50">
           <Settings className="h-4 w-4" /> Settings
         </Link>
       </div>
@@ -156,32 +156,104 @@ function Sidebar() {
   );
 }
 
+// Map current path → the create action exposed by that page (via window event)
+const CREATE_EVENT = "axel:open-create";
+const NEW_BUTTON_ROUTES: { match: (p: string) => boolean; to: string; label: string }[] = [
+  { match: (p) => p.startsWith("/accounts"), to: "/accounts", label: "New account" },
+  { match: (p) => p.startsWith("/transactions"), to: "/transactions", label: "New transaction" },
+  { match: (p) => p.startsWith("/invoices"), to: "/invoices", label: "New invoice" },
+  { match: (p) => p.startsWith("/clients"), to: "/clients", label: "New client" },
+  { match: (p) => p.startsWith("/suppliers"), to: "/suppliers", label: "New supplier" },
+  { match: (p) => p.startsWith("/projects"), to: "/projects", label: "New project" },
+  { match: (p) => p.startsWith("/pipeline"), to: "/pipeline", label: "New opportunity" },
+  { match: (p) => p.startsWith("/companies"), to: "/companies", label: "New company" },
+  { match: (p) => p.startsWith("/journal"), to: "/journal", label: "New entry" },
+];
+
 function Topbar() {
   const { profile, user, signOut, roles } = useAuth();
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
   const [menuOpen, setMenuOpen] = useState(false);
+  const [bellOpen, setBellOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
   const name = profile?.display_name || user?.email || "—";
   const initials = name.split(/\s+/).map((s) => s[0]).slice(0, 2).join("").toUpperCase();
   const role = roles[0]?.replace("_", " ") ?? "no role";
 
+  const newAction = NEW_BUTTON_ROUTES.find((r) => r.match(pathname));
+  const newLabel = newAction?.label ?? "New";
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+    navigate({ to: "/transactions", search: { q } as never });
+  };
+
+  const handleNew = () => {
+    if (newAction) {
+      if (pathname.startsWith(newAction.to)) {
+        window.dispatchEvent(new CustomEvent(CREATE_EVENT));
+      } else {
+        navigate({ to: newAction.to });
+      }
+    } else {
+      navigate({ to: "/transactions" });
+    }
+  };
+
   return (
     <header className="h-14 shrink-0 border-b border-border bg-background/70 backdrop-blur px-6 flex items-center gap-4 sticky top-0 z-30">
-      <div className="flex-1 max-w-md relative">
+      <form onSubmit={submitSearch} className="flex-1 max-w-md relative">
         <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
         <input
+          ref={searchRef}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
           placeholder="Search transactions, invoices, clients…"
-          className="w-full h-9 pl-9 pr-3 rounded-md bg-surface border border-border text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full h-9 pl-9 pr-12 rounded-md bg-surface border border-border text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring"
         />
         <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
-      </div>
+      </form>
       <div className="flex items-center gap-2">
-        <button className="h-9 px-3 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition flex items-center gap-1.5">
-          <Plus className="h-4 w-4" /> New
+        <button
+          onClick={handleNew}
+          className="h-9 px-3 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition flex items-center gap-1.5"
+        >
+          <Plus className="h-4 w-4" /> {newLabel}
         </button>
-        <button className="h-9 w-9 grid place-items-center rounded-md hover:bg-surface relative">
-          <Bell className="h-4 w-4" />
-          <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-primary" />
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setBellOpen((v) => !v)}
+            className="h-9 w-9 grid place-items-center rounded-md hover:bg-surface relative"
+            aria-label="Notifications"
+          >
+            <Bell className="h-4 w-4" />
+          </button>
+          {bellOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setBellOpen(false)} />
+              <div className="absolute right-0 mt-2 w-72 rounded-lg border border-border bg-popover shadow-2xl z-50 overflow-hidden">
+                <div className="px-3 py-2.5 border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground">Notifications</div>
+                <div className="p-6 text-center text-sm text-muted-foreground">You're all caught up.</div>
+              </div>
+            </>
+          )}
+        </div>
         <div className="relative">
           <button
             onClick={() => setMenuOpen((v) => !v)}
@@ -199,6 +271,12 @@ function Topbar() {
                   <div className="text-[10px] uppercase tracking-wider text-primary mt-1">{role}</div>
                 </div>
                 <button
+                  onClick={() => { setMenuOpen(false); navigate({ to: "/settings" }); }}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-accent"
+                >
+                  <Settings className="h-4 w-4" /> Settings
+                </button>
+                <button
                   onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
                   className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-accent"
                 >
@@ -212,6 +290,8 @@ function Topbar() {
     </header>
   );
 }
+
+export { CREATE_EVENT };
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (

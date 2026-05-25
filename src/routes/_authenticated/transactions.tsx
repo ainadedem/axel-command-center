@@ -18,7 +18,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/transactions")({ component: TransactionsPage });
+export const Route = createFileRoute("/_authenticated/transactions")({
+  component: TransactionsPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    q: typeof search.q === "string" ? search.q : "",
+  }),
+});
 
 const types = ["all", "income", "expense", "transfer", "intercompany"] as const;
 
@@ -35,18 +40,32 @@ function Body() {
   const { scope } = useCompany();
   const transactions = useTransactions();
   const companies = useCompanies();
+  const { q } = Route.useSearch();
   const [filter, setFilter] = useState<(typeof types)[number]>("all");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
 
   let list = inScope(transactions, scope);
   if (filter !== "all") list = list.filter((t) => t.type === filter);
+  if (q) {
+    const qq = q.toLowerCase();
+    list = list.filter((t) =>
+      t.description.toLowerCase().includes(qq) ||
+      t.category.toLowerCase().includes(qq) ||
+      String(t.amount).includes(qq),
+    );
+  }
   list = [...list].sort((a, b) => b.date.localeCompare(a.date));
 
   const openCreate = () => { setEditing(null); setOpen(true); };
 
   return (
     <div className="p-8 space-y-5">
+      {q && (
+        <div className="text-xs text-muted-foreground">
+          Filtered by <span className="text-foreground font-medium">"{q}"</span> · {list.length} match{list.length === 1 ? "" : "es"}
+        </div>
+      )}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2 flex-wrap">
           {types.map((t) => (

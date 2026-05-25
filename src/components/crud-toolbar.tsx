@@ -1,5 +1,7 @@
 import { Plus } from "lucide-react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { CREATE_EVENT } from "@/components/app-shell";
 
 export function CrudToolbar({
   count,
@@ -10,6 +12,13 @@ export function CrudToolbar({
   label: string;
   onCreate: () => void;
 }) {
+  // Listen for the topbar "New" button broadcast
+  useEffect(() => {
+    const handler = () => onCreate();
+    window.addEventListener(CREATE_EVENT, handler);
+    return () => window.removeEventListener(CREATE_EVENT, handler);
+  }, [onCreate]);
+
   return (
     <div className="flex items-center justify-between">
       <div className="text-xs text-muted-foreground font-tnum">

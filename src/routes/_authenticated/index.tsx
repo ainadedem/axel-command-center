@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { KpiCard } from "@/components/kpi-card";
@@ -240,7 +240,7 @@ function DashboardBody() {
         <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
           <div className="flex items-center justify-between mb-1">
             <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Pipeline</div>
-            <a href="/pipeline" className="text-xs text-primary hover:underline">View →</a>
+            <Link to="/pipeline" className="text-xs text-primary hover:underline">View →</Link>
           </div>
           <div className="font-display text-3xl font-bold tracking-tight font-tnum">{fmtCompact(pipelineMGA, "MGA")}</div>
           <div className="text-xs text-muted-foreground font-tnum mt-1">Weighted {fmtCompact(weightedMGA, "MGA")}</div>
@@ -266,7 +266,7 @@ function DashboardBody() {
         <div className="xl:col-span-2 rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Recent activity</div>
-            <a href="/transactions" className="text-xs text-primary hover:underline">All transactions →</a>
+            <Link to="/transactions" className="text-xs text-primary hover:underline">All transactions →</Link>
           </div>
           <div className="divide-y divide-border/60">
             {tx.slice(0, 6).map((t) => {
