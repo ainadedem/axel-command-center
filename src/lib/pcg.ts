@@ -175,7 +175,11 @@ export interface JournalEntry {
 
 import logiaSeed from "./logia-grand-livre-seed.json";
 import logiaAccountLabels from "./logia-account-labels.json";
-import { companiesStore } from "./mock-data";
+import {
+  companiesStore, accountsStore, clientsStore, suppliersStore,
+  invoicesStore, transactionsStore,
+  type Account, type Client, type Supplier, type Invoice, type Transaction,
+} from "./mock-data";
 
 export const journalEntriesStore = createCollection<JournalEntry>("journal-entries", []);
 export const journalEntries = journalEntriesStore.items;
@@ -201,19 +205,184 @@ export function seedLogiaGrandLivre(force = false) {
   if (hasLogia && !force) return 0;
   const others = journalEntriesStore.items.filter((e) => e.companyId !== "log");
   journalEntriesStore.replaceAll([...others, ...seed]);
+  // Derive the rest of the operational data from the journal entries.
+  seedLogiaDerivedData(true);
   return seed.length;
 }
 
-// Auto-seed on first load (idempotent).
-if (typeof window !== "undefined") {
-  try {
-    ensureSeedCompanies();
-    seedLogiaGrandLivre(false);
-  } catch { /* ignore */ }
+/**
+ * Derive Logia's accounts, clients, suppliers, invoices and transactions
+ * from the imported journal entries — so every page shows the same reality.
+ */
+export function seedLogiaDerivedData(force = false) {
+  const entries = journalEntriesStore.items.filter((e) => e.companyId === "log");
+  if (entries.length === 0) return;
+
+  // Skip if Logia already has derived data and we're not forcing.
+  const hasDerived =
+    accountsStore.items.some((a) => a.companyId === "log") ||
+    clientsStore.items.some((c) => c.companyId === "log") ||
+    suppliersStore.items.some((s) => s.companyId === "log");
+  if (hasDerived && !force) return;
+
+  // Wipe Logia-scoped derived data so re-seeding is clean.
+  accountsStore.replaceAll(accountsStore.items.filter((a) => a.companyId !== "log"));
+  clientsStore.replaceAll(clientsStore.items.filter((c) => c.companyId !== "log"));
+  suppliersStore.replaceAll(suppliersStore.items.filter((s) => s.companyId !== "log"));
+  invoicesStore.replaceAll(invoicesStore.items.filter((i) => i.companyId !== "log"));
+  transactionsStore.replaceAll(transactionsStore.items.filter((t) => t.companyId !== "log"));
+
+  /* ── Accounts (bank + cash) ─────────────────────────────────────── */
+  const accountByCode = new Map<string, Account>();
+  const bniBalance = sumNet(entries, (l) => l.account === "512100");
+  accountByCode.set("512100", {
+    id: "acc_log_bni", companyId: "log", name: "BNI — Compte courant",
+    type: "bank", currency: "MGA", balance: bniBalance,
+  });
+  const caisseBalance = sumNet(entries, (l) => l.account === "530000");
+  accountByCode.set("530000", {
+    id: "acc_log_caisse", companyId: "log", name: "Caisse",
+    type: "cash", currency: "MGA", balance: caisseBalance,
+  });
+  for (const a of accountByCode.values()) accountsStore.add(a);
+
+  /* ── Clients (411) ──────────────────────────────────────────────── */
+  const clientByName = new Map<string, Client>();
+  for (const e of entries) {
+    for (const l of e.lines) {
+      if (!l.account.startsWith("411")) continue;
+      const name = (l.label || "").trim();
+      if (!name || name.toUpperCase() === "CLIENTS") continue;
+      if (clientByName.has(name)) continue;
+      const client: Client = {
+        id: `cli_log_${slug(name)}`,
+        companyId: "log",
+        name,
+        country: guessCountry(name),
+      };
+      clientByName.set(name, client);
+      clientsStore.add(client);
+    }
+  }
+
+  /* ── Suppliers (401) ────────────────────────────────────────────── */
+  const supplierByName = new Map<string, Supplier>();
+  for (const e of entries) {
+    for (const l of e.lines) {
+      if (!l.account.startsWith("401")) continue;
+      const name = (l.label || "").trim();
+      if (!name || name.toUpperCase() === "FOURNISSEURS") continue;
+      if (supplierByName.has(name)) continue;
+      const supplier: Supplier = {
+        id: `sup_log_${slug(name)}`,
+        companyId: "log",
+        name,
+        account: l.account,
+        kind: l.account === "401200" ? "internal" : "external",
+      };
+      supplierByName.set(name, supplier);
+      suppliersStore.add(supplier);
+    }
+  }
+
+  /* ── Invoices (VTE journal entries) ─────────────────────────────── */
+  for (const e of entries) {
+    if (e.journal !== "VTE") continue;
+    const clientLine = e.lines.find((l) => l.account.startsWith("411") && l.debit > 0);
+    if (!clientLine) continue;
+    const client = clientByName.get((clientLine.label || "").trim());
+    if (!client) continue;
+    const amount = clientLine.debit;
+    // A receivable is "paid" once a matching 411 credit lands in any journal.
+    const paid = entries
+      .filter((x) => x.lines.some((l) => l.account.startsWith("411") && l.credit > 0 && l.label === clientLine.label && new Date(x.date) >= new Date(e.date)))
+      .reduce((s, x) => s + x.lines.filter((l) => l.account.startsWith("411") && l.credit > 0 && l.label === clientLine.label).reduce((a, l) => a + l.credit, 0), 0);
+    const cappedPaid = Math.min(paid, amount);
+    const dueDate = addDays(e.date, 30);
+    const overdue = new Date(dueDate) < new Date() && cappedPaid < amount;
+    const status: Invoice["status"] =
+      cappedPaid >= amount ? "paid" : cappedPaid > 0 ? "partial" : overdue ? "overdue" : "sent";
+    const inv: Invoice = {
+      id: `inv_${e.id}`,
+      number: e.piece,
+      companyId: "log",
+      clientId: client.id,
+      issueDate: e.date,
+      dueDate,
+      amount,
+      paid: cappedPaid,
+      currency: "MGA",
+      status,
+    };
+    invoicesStore.add(inv);
+  }
+
+  /* ── Transactions (BNQ + CSS journal entries) ───────────────────── */
+  for (const e of entries) {
+    let accountId: string | undefined;
+    let cashLine: typeof e.lines[number] | undefined;
+    if (e.journal === "BNQ") {
+      cashLine = e.lines.find((l) => l.account === "512100");
+      accountId = "acc_log_bni";
+    } else if (e.journal === "CSS") {
+      cashLine = e.lines.find((l) => l.account === "530000");
+      accountId = "acc_log_caisse";
+    }
+    if (!accountId || !cashLine) continue;
+    const isIncome = cashLine.debit > 0; // cash in → debit on cash account
+    const amount = isIncome ? cashLine.debit : cashLine.credit;
+    // Counterpart line drives category + client/supplier linkage.
+    const counter = e.lines.find((l) => l !== cashLine);
+    const clientName = counter?.account.startsWith("411") ? counter.label?.trim() : undefined;
+    const transfer = e.lines.some((l) => l.account === "580000"); // virement interne
+    const tx: Transaction = {
+      id: `tx_${e.id}`,
+      companyId: "log",
+      accountId,
+      date: e.date,
+      type: transfer ? "transfer" : isIncome ? "income" : "expense",
+      category: counter ? accountLabels[counter.account] ?? counter.label ?? counter.account : "Divers",
+      description: e.description.split("\n")[0].slice(0, 140),
+      amount,
+      currency: "MGA",
+      clientId: clientName ? clientByName.get(clientName)?.id : undefined,
+    };
+    transactionsStore.add(tx);
+  }
+}
+
+/* ── helpers ──────────────────────────────────────────────────────── */
+function sumNet(entries: JournalEntry[], pick: (l: JournalLine) => boolean): number {
+  let s = 0;
+  for (const e of entries) for (const l of e.lines) if (pick(l)) s += l.debit - l.credit;
+  return s;
+}
+function slug(s: string): string {
+  return s.toLowerCase().normalize("NFKD").replace(/[^\w]+/g, "_").replace(/^_|_$/g, "").slice(0, 40);
+}
+function addDays(iso: string, days: number): string {
+  const d = new Date(iso); d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+function guessCountry(name: string): string {
+  const u = name.toUpperCase();
+  if (u.includes("CANADA")) return "Canada";
+  if (u.includes("PNUD")) return "International";
+  return "Madagascar";
 }
 
 /** Labels for sub-accounts (6-digit codes) used in the imported Grand Livre. */
 export const accountLabels = logiaAccountLabels as Record<string, string>;
+
+// Auto-seed on first load (idempotent). Declared AFTER `accountLabels`
+// because seedLogiaDerivedData() reads from it.
+if (typeof window !== "undefined") {
+  try {
+    ensureSeedCompanies();
+    seedLogiaGrandLivre(false);
+    seedLogiaDerivedData(false);
+  } catch { /* ignore */ }
+}
 
 /** Resolve an account code to its PCG entry by progressively shorter prefixes. */
 export function pcgRoot(code: string): PcgAccount | undefined {

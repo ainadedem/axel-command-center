@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Building2, Wallet, ArrowLeftRight, FileText,
-  Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus,
+  Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus, Truck,
   ChevronDown, Check, LogOut,
   BookOpen, BookText, Scale, Library, Receipt,
 } from "lucide-react";
@@ -18,6 +18,7 @@ const nav = [
   { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { to: "/invoices", label: "Invoices", icon: FileText },
   { to: "/clients", label: "Clients", icon: Users },
+  { to: "/suppliers", label: "Suppliers", icon: Truck },
   { to: "/projects", label: "Projects", icon: Briefcase },
   { to: "/pipeline", label: "Pipeline", icon: TrendingUp },
   { to: "/reports", label: "Reports", icon: BarChart3 },
