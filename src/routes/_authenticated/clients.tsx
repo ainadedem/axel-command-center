@@ -333,7 +333,8 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Acquired on</Label><Input type="date" value={acquiredAt} onChange={(e) => setAcquiredAt(e.target.value)} /></div>
-            <div /></div>
+            <div />
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Industry</Label><Input value={industry} onChange={(e) => setIndustry(e.target.value)} placeholder="Telecom, Finance, …" /></div>
             <div><Label>Website</Label><Input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://…" /></div>
