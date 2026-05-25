@@ -214,7 +214,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
 
   const submit = () => {
     if (!number.trim() || !companyId || !clientId) return;
-    const data = { number, companyId, clientId, projectId: projectId || undefined, issueDate, validUntil, amount: Math.round(total), currency, status, lines, notes: notes || undefined };
+    const data = { number, companyId, clientId, projectId: projectId || undefined, issueDate, validUntil, amount: Math.round(total), currency, status, mode, lines, notes: notes || undefined };
     if (editing) quotesStore.update(editing.id, data);
     else quotesStore.add({ id: newId("q"), ...data });
     onOpenChange(false);
