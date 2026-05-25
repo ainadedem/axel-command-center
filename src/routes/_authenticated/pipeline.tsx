@@ -615,12 +615,12 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
   );
 }
 
-function Stat({ label, value, highlight, accent }: { label: string; value: string; highlight?: boolean; accent?: string }) {
+function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className={`relative overflow-hidden rounded-xl border border-border p-5 ${highlight ? "bg-gradient-to-br from-surface-elevated to-surface shadow-[var(--shadow-glow)]" : "bg-[var(--gradient-surface)]"}`}>
-      {accent && <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />}
-      <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
-      <div className="font-display text-2xl font-bold mt-2 font-tnum">{value}</div>
+    <div className="rounded-lg border border-border bg-surface p-4">
+      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-xl font-semibold mt-1.5 font-tnum">{value}</div>
     </div>
   );
+
 }
