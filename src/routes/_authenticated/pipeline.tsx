@@ -52,7 +52,7 @@ function urgencyOf(o: Opportunity): { label: string; cls: string } | null {
 function PipelinePage() {
   return (
     <AppShell>
-      <PageHeader title="Pipeline" description="Future revenue — by stage, weighted by probability." />
+      <PageHeader title="Pipeline" description="Synced live from Notion · Logia Sales CRM." />
       <Body />
     </AppShell>
   );
