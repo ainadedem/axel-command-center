@@ -165,6 +165,7 @@ export interface QuoteLine {
   /** Per-unit price in the quote's currency. */
   rate: number;
 }
+export type QuoteMode = "rate-card" | "standard";
 export interface Quote {
   id: string;
   number: string;
@@ -178,7 +179,9 @@ export interface Quote {
   currency: Currency;
   status: QuoteStatus;
   notes?: string;
-  /** Line items priced from the rate card. */
+  /** Pricing mode — rate-card (capability/level driven) or standard (free-form). */
+  mode?: QuoteMode;
+  /** Line items — priced from rate card or free-form depending on mode. */
   lines?: QuoteLine[];
 }
 
