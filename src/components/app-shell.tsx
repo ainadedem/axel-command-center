@@ -8,7 +8,8 @@ import { useState, type ReactNode } from "react";
 import { CompanyProvider, useCompany } from "@/lib/company-context";
 import { companies } from "@/lib/mock-data";
 import { useAuth } from "@/lib/auth-context";
-import { ROLE_LABEL, type Resource } from "@/lib/permissions";
+import { ROLE_LABEL, ROUTE_RESOURCE, type Resource } from "@/lib/permissions";
+import { AccessGate } from "@/components/access-gate";
 import { cn } from "@/lib/utils";
 
 const nav: { to: string; label: string; icon: typeof LayoutDashboard; resource: Resource }[] = [
@@ -142,9 +143,7 @@ function Topbar() {
         <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
       </div>
       <div className="flex items-center gap-2">
-        <button className="h-9 px-3 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition flex items-center gap-1.5">
-          <Plus className="h-4 w-4" /> New
-        </button>
+        <TopbarNewButton />
         <button className="h-9 w-9 grid place-items-center rounded-md hover:bg-surface relative">
           <Bell className="h-4 w-4" />
           <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-primary" />
@@ -180,6 +179,40 @@ function Topbar() {
   );
 }
 
+function TopbarNewButton() {
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const { can } = useAuth();
+  const resource = resolveResource(pathname);
+  if (!resource || !can(resource, "edit")) return null;
+  return (
+    <button className="h-9 px-3 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition flex items-center gap-1.5">
+      <Plus className="h-4 w-4" /> New
+    </button>
+  );
+}
+
+function resolveResource(pathname: string): Resource | null {
+  if (ROUTE_RESOURCE[pathname]) return ROUTE_RESOURCE[pathname];
+  // Match longest prefix (e.g. /invoices/123 -> /invoices)
+  const match = Object.keys(ROUTE_RESOURCE)
+    .filter((k) => k !== "/" && pathname.startsWith(k))
+    .sort((a, b) => b.length - a.length)[0];
+  return match ? ROUTE_RESOURCE[match] : null;
+}
+
+function GatedMain({ children }: { children: ReactNode }) {
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const resource = resolveResource(pathname);
+  return (
+    <main className="flex-1 overflow-y-auto">
+      <div className="absolute inset-0 pointer-events-none [background:var(--gradient-glow)] opacity-60" />
+      <div className="relative">
+        {resource ? <AccessGate resource={resource}>{children}</AccessGate> : children}
+      </div>
+    </main>
+  );
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <CompanyProvider>
@@ -187,10 +220,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <Topbar />
-          <main className="flex-1 overflow-y-auto">
-            <div className="absolute inset-0 pointer-events-none [background:var(--gradient-glow)] opacity-60" />
-            <div className="relative">{children}</div>
-          </main>
+          <GatedMain>{children}</GatedMain>
         </div>
       </div>
     </CompanyProvider>
