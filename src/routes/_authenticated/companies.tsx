@@ -6,7 +6,7 @@ import {
   companiesStore, toMGA, fmtCompact, type Company, type Currency,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -86,10 +86,11 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [color, setColor] = useState(PALETTE[0]);
   const [baseCurrency, setBaseCurrency] = useState<Currency>("MGA");
 
-  // sync when dialog opens
-  if (open && editing && name !== editing.name && shortName !== editing.shortName) {
-    setName(editing.name); setShortName(editing.shortName); setColor(editing.color); setBaseCurrency(editing.baseCurrency);
-  }
+  useEffect(() => {
+    if (!open) return;
+    if (editing) { setName(editing.name); setShortName(editing.shortName); setColor(editing.color); setBaseCurrency(editing.baseCurrency); }
+    else { setName(""); setShortName(""); setColor(PALETTE[0]); setBaseCurrency("MGA"); }
+  }, [open, editing]);
 
   const reset = () => { setName(""); setShortName(""); setColor(PALETTE[0]); setBaseCurrency("MGA"); };
 
