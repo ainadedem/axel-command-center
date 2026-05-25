@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useInvoices, useCompanies, useClients, useProjects, usePurchaseOrders, useQuotes, invoicesStore,
-  fmtCompact, toMGA, type Invoice, type Currency,
+  useInvoices, useCompanies, useClients, useProjects, usePurchaseOrders, useQuotes, useAccounts,
+  invoicesStore, transactionsStore,
+  fmtCompact, toMGA, FX, type Invoice, type Currency,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
