@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useClients, useCompanies, useProjects, clientsStore,
-  fmtCompact, toMGA, type Client,
+  useClients, useCompanies, useProjects, useInvoices, useTransactions,
+  clientsStore, fmtCompact, toMGA, type Client,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { useEffect, useState } from "react";
