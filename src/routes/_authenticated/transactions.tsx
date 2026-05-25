@@ -322,7 +322,7 @@ function Body() {
                   </tr>
                 );
               })}
-            </>
+            </Fragment>
           ))}
         </tbody>
       </table>
