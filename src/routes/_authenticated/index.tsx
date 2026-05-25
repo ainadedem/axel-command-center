@@ -168,19 +168,27 @@ function DashboardBody() {
       {/* Charts row */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <div className="xl:col-span-2 rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <div>
-              <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Cash flow · 30 days</div>
+              <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Cash flow · {cashViewLabel}</div>
               <div className="font-display text-lg font-semibold mt-1">All currencies, MGA equivalent (M)</div>
             </div>
             <div className="flex items-center gap-3 text-xs">
+              <Tabs value={cashView} onValueChange={(v) => setCashView(v as "daily" | "monthly" | "yearly")}>
+                <TabsList className="h-8">
+                  <TabsTrigger value="daily" className="text-xs px-2.5 py-1">Daily</TabsTrigger>
+                  <TabsTrigger value="monthly" className="text-xs px-2.5 py-1">Monthly</TabsTrigger>
+                  <TabsTrigger value="yearly" className="text-xs px-2.5 py-1">Yearly</TabsTrigger>
+                </TabsList>
+              </Tabs>
               <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary" />Income</span>
               <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-destructive" />Expense</span>
             </div>
           </div>
           <div className="h-64">
             <ResponsiveContainer>
-              <AreaChart data={days} margin={{ top: 6, right: 8, left: -16, bottom: 0 }}>
+              <AreaChart data={cashFlowData} margin={{ top: 6, right: 8, left: -16, bottom: 0 }}>
+
                 <defs>
                   <linearGradient id="gIn" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="oklch(0.78 0.14 165)" stopOpacity={0.5} />
