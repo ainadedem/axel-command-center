@@ -15,10 +15,16 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
+import { Route as AuthenticatedPlanComptableRouteImport } from './routes/_authenticated/plan-comptable'
 import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated/pipeline'
+import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
+import { Route as AuthenticatedGrandLivreRouteImport } from './routes/_authenticated/grand-livre'
+import { Route as AuthenticatedCompteResultatRouteImport } from './routes/_authenticated/compte-resultat'
 import { Route as AuthenticatedCompaniesRouteImport } from './routes/_authenticated/companies'
 import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
+import { Route as AuthenticatedBilanRouteImport } from './routes/_authenticated/bilan'
+import { Route as AuthenticatedBalanceRouteImport } from './routes/_authenticated/balance'
 import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
 
 const LoginRoute = LoginRouteImport.update({
@@ -51,9 +57,20 @@ const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
   path: '/projects',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedPlanComptableRoute =
+  AuthenticatedPlanComptableRouteImport.update({
+    id: '/plan-comptable',
+    path: '/plan-comptable',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedPipelineRoute = AuthenticatedPipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedJournalRoute = AuthenticatedJournalRouteImport.update({
+  id: '/journal',
+  path: '/journal',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedInvoicesRoute = AuthenticatedInvoicesRouteImport.update({
@@ -61,6 +78,17 @@ const AuthenticatedInvoicesRoute = AuthenticatedInvoicesRouteImport.update({
   path: '/invoices',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedGrandLivreRoute = AuthenticatedGrandLivreRouteImport.update({
+  id: '/grand-livre',
+  path: '/grand-livre',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCompteResultatRoute =
+  AuthenticatedCompteResultatRouteImport.update({
+    id: '/compte-resultat',
+    path: '/compte-resultat',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedCompaniesRoute = AuthenticatedCompaniesRouteImport.update({
   id: '/companies',
   path: '/companies',
@@ -69,6 +97,16 @@ const AuthenticatedCompaniesRoute = AuthenticatedCompaniesRouteImport.update({
 const AuthenticatedClientsRoute = AuthenticatedClientsRouteImport.update({
   id: '/clients',
   path: '/clients',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedBilanRoute = AuthenticatedBilanRouteImport.update({
+  id: '/bilan',
+  path: '/bilan',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedBalanceRoute = AuthenticatedBalanceRouteImport.update({
+  id: '/balance',
+  path: '/balance',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAccountsRoute = AuthenticatedAccountsRouteImport.update({
@@ -81,10 +119,16 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/accounts': typeof AuthenticatedAccountsRoute
+  '/balance': typeof AuthenticatedBalanceRoute
+  '/bilan': typeof AuthenticatedBilanRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/companies': typeof AuthenticatedCompaniesRoute
+  '/compte-resultat': typeof AuthenticatedCompteResultatRoute
+  '/grand-livre': typeof AuthenticatedGrandLivreRoute
   '/invoices': typeof AuthenticatedInvoicesRoute
+  '/journal': typeof AuthenticatedJournalRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
+  '/plan-comptable': typeof AuthenticatedPlanComptableRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
@@ -92,10 +136,16 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/accounts': typeof AuthenticatedAccountsRoute
+  '/balance': typeof AuthenticatedBalanceRoute
+  '/bilan': typeof AuthenticatedBilanRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/companies': typeof AuthenticatedCompaniesRoute
+  '/compte-resultat': typeof AuthenticatedCompteResultatRoute
+  '/grand-livre': typeof AuthenticatedGrandLivreRoute
   '/invoices': typeof AuthenticatedInvoicesRoute
+  '/journal': typeof AuthenticatedJournalRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
+  '/plan-comptable': typeof AuthenticatedPlanComptableRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
@@ -106,10 +156,16 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/accounts': typeof AuthenticatedAccountsRoute
+  '/_authenticated/balance': typeof AuthenticatedBalanceRoute
+  '/_authenticated/bilan': typeof AuthenticatedBilanRoute
   '/_authenticated/clients': typeof AuthenticatedClientsRoute
   '/_authenticated/companies': typeof AuthenticatedCompaniesRoute
+  '/_authenticated/compte-resultat': typeof AuthenticatedCompteResultatRoute
+  '/_authenticated/grand-livre': typeof AuthenticatedGrandLivreRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRoute
+  '/_authenticated/journal': typeof AuthenticatedJournalRoute
   '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
+  '/_authenticated/plan-comptable': typeof AuthenticatedPlanComptableRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
@@ -121,10 +177,16 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/accounts'
+    | '/balance'
+    | '/bilan'
     | '/clients'
     | '/companies'
+    | '/compte-resultat'
+    | '/grand-livre'
     | '/invoices'
+    | '/journal'
     | '/pipeline'
+    | '/plan-comptable'
     | '/projects'
     | '/reports'
     | '/transactions'
@@ -132,10 +194,16 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/accounts'
+    | '/balance'
+    | '/bilan'
     | '/clients'
     | '/companies'
+    | '/compte-resultat'
+    | '/grand-livre'
     | '/invoices'
+    | '/journal'
     | '/pipeline'
+    | '/plan-comptable'
     | '/projects'
     | '/reports'
     | '/transactions'
@@ -145,10 +213,16 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/_authenticated/accounts'
+    | '/_authenticated/balance'
+    | '/_authenticated/bilan'
     | '/_authenticated/clients'
     | '/_authenticated/companies'
+    | '/_authenticated/compte-resultat'
+    | '/_authenticated/grand-livre'
     | '/_authenticated/invoices'
+    | '/_authenticated/journal'
     | '/_authenticated/pipeline'
+    | '/_authenticated/plan-comptable'
     | '/_authenticated/projects'
     | '/_authenticated/reports'
     | '/_authenticated/transactions'
@@ -204,6 +278,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProjectsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/plan-comptable': {
+      id: '/_authenticated/plan-comptable'
+      path: '/plan-comptable'
+      fullPath: '/plan-comptable'
+      preLoaderRoute: typeof AuthenticatedPlanComptableRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/pipeline': {
       id: '/_authenticated/pipeline'
       path: '/pipeline'
@@ -211,11 +292,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPipelineRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/journal': {
+      id: '/_authenticated/journal'
+      path: '/journal'
+      fullPath: '/journal'
+      preLoaderRoute: typeof AuthenticatedJournalRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/invoices': {
       id: '/_authenticated/invoices'
       path: '/invoices'
       fullPath: '/invoices'
       preLoaderRoute: typeof AuthenticatedInvoicesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/grand-livre': {
+      id: '/_authenticated/grand-livre'
+      path: '/grand-livre'
+      fullPath: '/grand-livre'
+      preLoaderRoute: typeof AuthenticatedGrandLivreRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/compte-resultat': {
+      id: '/_authenticated/compte-resultat'
+      path: '/compte-resultat'
+      fullPath: '/compte-resultat'
+      preLoaderRoute: typeof AuthenticatedCompteResultatRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/companies': {
@@ -232,6 +334,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClientsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/bilan': {
+      id: '/_authenticated/bilan'
+      path: '/bilan'
+      fullPath: '/bilan'
+      preLoaderRoute: typeof AuthenticatedBilanRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/balance': {
+      id: '/_authenticated/balance'
+      path: '/balance'
+      fullPath: '/balance'
+      preLoaderRoute: typeof AuthenticatedBalanceRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/accounts': {
       id: '/_authenticated/accounts'
       path: '/accounts'
@@ -244,10 +360,16 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAccountsRoute: typeof AuthenticatedAccountsRoute
+  AuthenticatedBalanceRoute: typeof AuthenticatedBalanceRoute
+  AuthenticatedBilanRoute: typeof AuthenticatedBilanRoute
   AuthenticatedClientsRoute: typeof AuthenticatedClientsRoute
   AuthenticatedCompaniesRoute: typeof AuthenticatedCompaniesRoute
+  AuthenticatedCompteResultatRoute: typeof AuthenticatedCompteResultatRoute
+  AuthenticatedGrandLivreRoute: typeof AuthenticatedGrandLivreRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRoute
+  AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
   AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
+  AuthenticatedPlanComptableRoute: typeof AuthenticatedPlanComptableRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRoute
@@ -256,10 +378,16 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAccountsRoute: AuthenticatedAccountsRoute,
+  AuthenticatedBalanceRoute: AuthenticatedBalanceRoute,
+  AuthenticatedBilanRoute: AuthenticatedBilanRoute,
   AuthenticatedClientsRoute: AuthenticatedClientsRoute,
   AuthenticatedCompaniesRoute: AuthenticatedCompaniesRoute,
+  AuthenticatedCompteResultatRoute: AuthenticatedCompteResultatRoute,
+  AuthenticatedGrandLivreRoute: AuthenticatedGrandLivreRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRoute,
+  AuthenticatedJournalRoute: AuthenticatedJournalRoute,
   AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
+  AuthenticatedPlanComptableRoute: AuthenticatedPlanComptableRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedTransactionsRoute: AuthenticatedTransactionsRoute,
