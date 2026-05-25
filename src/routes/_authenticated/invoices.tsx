@@ -68,16 +68,25 @@ function Body() {
     setNumberFormat(next);
   }, [numMode]);
 
+  const quarterOf = (iso: string) => {
+    const d = parseISO(iso);
+    return `${d.getFullYear()} Q${Math.floor(d.getMonth() / 3) + 1}`;
+  };
+  const monthOf = (iso: string) => format(parseISO(iso), "MMM yyyy");
+  const dayOf = (iso: string) => format(parseISO(iso), "MMM d, yyyy");
+
   const fields: FieldDef<Invoice>[] = [
     { key: "number", label: "Number", type: "string", accessor: (i) => i.number, noGroup: true },
     { key: "client", label: "Client", type: "enum", accessor: (i) => clients.find((c) => c.id === i.clientId)?.name ?? "" },
     { key: "project", label: "Project", type: "enum", accessor: (i) => projects.find((p) => p.id === i.projectId)?.name ?? "" },
-    { key: "rep", label: "Sales rep", type: "enum", accessor: (i) => clients.find((c) => c.id === i.clientId)?.acquisition ?? "" },
     { key: "company", label: "Company", type: "enum", accessor: (i) => companies.find((c) => c.id === i.companyId)?.shortName ?? "" },
     { key: "status", label: "Status", type: "enum", accessor: (i) => i.status },
     { key: "currency", label: "Currency", type: "enum", accessor: (i) => i.currency },
     { key: "issueDate", label: "Issued", type: "date", accessor: (i) => i.issueDate, noGroup: true },
     { key: "dueDate", label: "Due", type: "date", accessor: (i) => i.dueDate, noGroup: true },
+    { key: "issuedDay", label: "Issued (day)", type: "string", accessor: (i) => dayOf(i.issueDate), noSort: true, noFilter: true },
+    { key: "issuedMonth", label: "Issued (month)", type: "string", accessor: (i) => monthOf(i.issueDate), noSort: true, noFilter: true },
+    { key: "issuedQuarter", label: "Issued (quarter)", type: "string", accessor: (i) => quarterOf(i.issueDate), noSort: true, noFilter: true },
     { key: "amount", label: "Amount", type: "number", accessor: (i) => i.amount, noGroup: true },
     { key: "balance", label: "Balance", type: "number", accessor: (i) => i.amount - i.paid, noGroup: true },
   ];
@@ -216,7 +225,7 @@ function Body() {
                   <th className="text-left font-medium px-5 py-3">Number</th>
                   <th className="text-left font-medium px-5 py-3">Client</th>
                   <th className="text-left font-medium px-5 py-3">Project</th>
-                  <th className="text-left font-medium px-5 py-3">Sales rep</th>
+
                   <th className="text-left font-medium px-5 py-3">Company</th>
                   <th className="text-left font-medium px-5 py-3">Issued</th>
                   <th className="text-left font-medium px-5 py-3">Due</th>
@@ -231,12 +240,12 @@ function Body() {
               <tbody>
                 {groups.map((g) => (
                   <Fragment key={g.key}>
-                    {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={13} />}
+                    {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={12} />}
                     {g.items.map((inv) => {
                   const co = companies.find((c) => c.id === inv.companyId);
                   const cl = clients.find((c) => c.id === inv.clientId);
                   const proj = inv.projectId ? projects.find((p) => p.id === inv.projectId) : undefined;
-                  const salesRep = cl?.acquisition;
+                  
                   const days = differenceInDays(parseISO(inv.dueDate), new Date());
                   const balance = inv.amount - inv.paid;
                   const timing = inv.paidDate
@@ -249,8 +258,8 @@ function Body() {
                       <td className="px-5 py-3.5 text-xs">
                         {proj ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}
                       </td>
-                      <td className="px-5 py-3.5 text-xs text-muted-foreground">{salesRep ?? <span className="text-muted-foreground/50">—</span>}</td>
                       <td className="px-5 py-3.5">
+
                         {co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}
                       </td>
                       <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">{format(parseISO(inv.issueDate), "MMM d, yyyy")}</td>
