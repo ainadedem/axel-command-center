@@ -56,11 +56,12 @@ function Body() {
   );
 }
 
-function Stat({ label, value, good, accent }: { label: string; value: string; good?: boolean; accent?: boolean }) {
+function Stat({ label, value, tone }: { label: string; value: string; tone?: "success" | "destructive" | "primary" }) {
+  const toneClass = tone === "success" ? "text-success" : tone === "destructive" ? "text-destructive" : tone === "primary" ? "text-primary" : "";
   return (
     <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
       <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
-      <div className={`font-display text-2xl font-bold mt-2 font-tnum ${good ? "text-success" : ""} ${accent ? "text-primary" : ""}`}>{value}</div>
+      <div className={`font-display text-2xl font-bold mt-2 font-tnum ${toneClass}`}>{value}</div>
     </div>
   );
 }
