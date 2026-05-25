@@ -97,7 +97,7 @@ function buildInvoiceHTML({ invoice, company, client, project }: { invoice: Invo
   ].filter(Boolean) as string[];
 
   const statusColors: Record<string, string> = {
-    draft: "#71717a", sent: "#0891b2", partial: "#ca8a04", paid: "#16a34a", overdue: "#dc2626",
+    draft: "#71717a", sent: "#0891b2", partial: "#ca8a04", paid: "#16a34a", overdue: "#dc2626", cancelled: "#475569",
   };
 
   return `
