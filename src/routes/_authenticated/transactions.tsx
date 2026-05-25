@@ -213,11 +213,6 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
   const [clientId, setClientId] = useState<string>("");
   const [supplierId, setSupplierId] = useState<string>("");
   const [projectId, setProjectId] = useState<string>("");
-  const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("0");
-  const [currency, setCurrency] = useState<Currency>("MGA");
-  const [clientId, setClientId] = useState<string>("");
-  const [supplierId, setSupplierId] = useState<string>("");
 
   useEffect(() => {
     if (!open) return;
