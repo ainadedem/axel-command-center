@@ -167,10 +167,12 @@ function deriveStatus(amount: number, paid: number, dueDate: string): Invoice["s
 function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Invoice | null }) {
   const companies = useCompanies();
   const clients = useClients();
+  const projects = useProjects();
   const today = new Date().toISOString().slice(0, 10);
   const [number, setNumber] = useState("");
   const [companyId, setCompanyId] = useState("");
   const [clientId, setClientId] = useState("");
+  const [projectId, setProjectId] = useState<string>("");
   const [issueDate, setIssueDate] = useState(today);
   const [dueDate, setDueDate] = useState(today);
   const [amount, setAmount] = useState("0");
@@ -182,24 +184,28 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     if (!open) return;
     if (editing) {
       setNumber(editing.number); setCompanyId(editing.companyId); setClientId(editing.clientId);
+      setProjectId(editing.projectId ?? "");
       setIssueDate(editing.issueDate); setDueDate(editing.dueDate);
       setAmount(String(editing.amount)); setPaid(String(editing.paid));
       setCurrency(editing.currency); setStatus(editing.status);
     } else {
       setNumber(`INV-${Date.now().toString().slice(-6)}`); setCompanyId(companies[0]?.id ?? ""); setClientId("");
+      setProjectId("");
       setIssueDate(today); setDueDate(today); setAmount("0"); setPaid("0");
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
     }
   }, [open, editing, companies, today]);
 
   const companyClients = clients.filter((c) => c.companyId === companyId);
+  const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
+  const selectedClient = clients.find((c) => c.id === clientId);
 
   const submit = () => {
     if (!number.trim() || !companyId || !clientId) return;
     const a = Number(amount) || 0;
     const p = Number(paid) || 0;
     const finalStatus = status === "draft" ? "draft" : deriveStatus(a, p, dueDate);
-    const data = { number, companyId, clientId, issueDate, dueDate, amount: a, paid: p, currency, status: finalStatus };
+    const data = { number, companyId, clientId, projectId: projectId || undefined, issueDate, dueDate, amount: a, paid: p, currency, status: finalStatus };
     if (editing) invoicesStore.update(editing.id, data);
     else invoicesStore.add({ id: newId("inv"), ...data });
     onOpenChange(false);
