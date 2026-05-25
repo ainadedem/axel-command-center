@@ -16,7 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
+import { InvoicePreview } from "@/components/invoice-preview";
 
 export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage });
 
@@ -46,6 +47,7 @@ function Body() {
   const list = inScope(invoices, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Invoice | null>(null);
+  const [previewing, setPreviewing] = useState<Invoice | null>(null);
 
   const totalOpen = list.filter((i) => i.status !== "paid").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
   const totalOverdue = list.filter((i) => i.status === "overdue").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
@@ -138,6 +140,7 @@ function Body() {
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
+                          <button onClick={() => setPreviewing(inv)} title="Preview & export PDF" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
                           <button onClick={() => { setEditing(inv); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
                           <button onClick={() => confirm(`Delete invoice ${inv.number}?`) && invoicesStore.remove(inv.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
                         </div>
@@ -152,6 +155,14 @@ function Body() {
       )}
 
       <InvoiceDialog open={open} onOpenChange={setOpen} editing={editing} />
+      <InvoicePreview
+        open={!!previewing}
+        onOpenChange={(v) => { if (!v) setPreviewing(null); }}
+        invoice={previewing}
+        company={previewing ? companies.find((c) => c.id === previewing.companyId) : undefined}
+        client={previewing ? clients.find((c) => c.id === previewing.clientId) : undefined}
+        project={previewing?.projectId ? projects.find((p) => p.id === previewing.projectId) : undefined}
+      />
     </div>
   );
 }

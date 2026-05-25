@@ -21,6 +21,24 @@ export interface Company {
   shortName: string;
   color: string;
   baseCurrency: Currency;
+  /** Legal / billing information used on invoice PDFs. */
+  legalName?: string;
+  address?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  /** Madagascar tax IDs. */
+  nif?: string;
+  stat?: string;
+  rcs?: string;
+  /** Generic VAT / tax identifier (intl. fallback). */
+  taxId?: string;
+  bankName?: string;
+  bankAccount?: string;
+  /** SWIFT / BIC for international wires. */
+  bankSwift?: string;
+  /** Logo data URL or remote URL printed in the header. */
+  logoUrl?: string;
 }
 
 export interface Account {
@@ -55,6 +73,11 @@ export interface Client {
   industry?: string;
   /** Free-text list of key contacts at the company. */
   contacts?: string;
+  /** Legal tax identifiers (printed on invoices). */
+  taxId?: string;
+  nif?: string;
+  stat?: string;
+  rcs?: string;
 }
 
 export interface Project {
