@@ -92,20 +92,53 @@ function Body() {
       {list.length === 0 ? (
         <EmptyState label="transactions" onCreate={openCreate} />
       ) : (
-        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
-                <th className="text-left font-medium px-5 py-3">Date</th>
-                <th className="text-left font-medium px-5 py-3">Description</th>
-                <th className="text-left font-medium px-5 py-3">Company</th>
-                <th className="text-left font-medium px-5 py-3">Counterparty</th>
-                <th className="text-left font-medium px-5 py-3">Category</th>
-                <th className="text-left font-medium px-5 py-3">Type</th>
-                <th className="text-right font-medium px-5 py-3">Amount</th>
-                <th className="px-5 py-3 w-20" />
-              </tr>
-            </thead>
+        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-x-auto">
+          <ResizableTable />
+        </div>
+      )}
+
+      <TransactionDialog open={open} onOpenChange={setOpen} editing={editing} />
+    </div>
+  );
+
+  function ResizableTable() {
+    const cols = [
+      { key: "date", label: "Date", align: "left" as const, w: 140 },
+      { key: "description", label: "Description", align: "left" as const, w: 280 },
+      { key: "company", label: "Company", align: "left" as const, w: 140 },
+      { key: "counterparty", label: "Counterparty", align: "left" as const, w: 200 },
+      { key: "category", label: "Category", align: "left" as const, w: 180 },
+      { key: "type", label: "Type", align: "left" as const, w: 130 },
+      { key: "amount", label: "Amount", align: "right" as const, w: 160 },
+      { key: "actions", label: "", align: "right" as const, w: 90 },
+    ];
+    const defaults = Object.fromEntries(cols.map((c) => [c.key, c.w]));
+    const { widths, startResize, resetWidths } = useResizableColumns("tx-col-widths", defaults);
+    const total = cols.reduce((s, c) => s + (widths[c.key] ?? c.w), 0);
+
+    return (
+      <table className="text-sm" style={{ width: total, tableLayout: "fixed" }}>
+        <colgroup>
+          {cols.map((c) => <col key={c.key} style={{ width: widths[c.key] ?? c.w }} />)}
+        </colgroup>
+        <thead>
+          <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+            {cols.map((c, i) => (
+              <th key={c.key} className={cn("font-medium px-5 py-3 relative select-none", c.align === "right" ? "text-right" : "text-left")}>
+                {c.key === "actions" ? (
+                  <button
+                    onClick={resetWidths}
+                    title="Reset column widths"
+                    className="text-[10px] text-muted-foreground/70 hover:text-foreground"
+                  >
+                    reset
+                  </button>
+                ) : c.label}
+                {i < cols.length - 1 && <ResizeHandle onMouseDown={startResize(c.key)} />}
+              </th>
+            ))}
+          </tr>
+        </thead>
             <tbody>
               {list.map((t) => {
                 const co = companies.find((c) => c.id === t.companyId);
