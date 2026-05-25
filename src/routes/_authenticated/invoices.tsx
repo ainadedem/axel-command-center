@@ -382,7 +382,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__none__">— No PO —</SelectItem>
-                {clientPOs.map((p) => <SelectItem key={p.id} value={p.id}>{p.number} · {fmtCompact(p.amount, p.currency)} · {p.status}</SelectItem>)}
+                {clientPOs.map((p) => <SelectItem key={p.id} value={p.id}>{p.number} · {fmtAmount(p.amount, p.currency)} · {p.status}</SelectItem>)}
               </SelectContent>
             </Select>
             {blocked && (
