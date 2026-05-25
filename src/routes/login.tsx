@@ -81,10 +81,29 @@ function LoginPage() {
             <span className="font-display text-lg font-bold tracking-tight">AXEL</span>
           </div>
 
-          <h2 className="font-display text-2xl font-bold tracking-tight">Sign in</h2>
-          <p className="text-sm text-muted-foreground mt-1">Welcome back to your control room.</p>
+          <h2 className="font-display text-2xl font-bold tracking-tight">
+            {mode === "signup" ? "Create admin account" : "Sign in"}
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            {mode === "signup"
+              ? "The first account becomes the Group Admin."
+              : "Welcome back to your control room."}
+          </p>
 
-          <form onSubmit={handleEmail} className="space-y-3 mt-7">
+          <div className="mt-5 inline-flex rounded-md border border-border p-0.5 bg-surface text-xs">
+            <button
+              type="button"
+              onClick={() => { setMode("signin"); setError(null); }}
+              className={`px-3 h-7 rounded ${mode === "signin" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+            >Sign in</button>
+            <button
+              type="button"
+              onClick={() => { setMode("signup"); setError(null); }}
+              className={`px-3 h-7 rounded ${mode === "signup" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+            >Create account</button>
+          </div>
+
+          <form onSubmit={handleEmail} className="space-y-3 mt-5">
             <div>
               <label className="text-xs font-medium text-muted-foreground">Email</label>
               <input
