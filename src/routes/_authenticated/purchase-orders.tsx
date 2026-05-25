@@ -136,6 +136,8 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
   const [documentUrl, setDocumentUrl] = useState<string | undefined>();
   const [documentName, setDocumentName] = useState<string | undefined>();
   const [documentType, setDocumentType] = useState<string | undefined>();
+  const [documentUploadedAt, setDocumentUploadedAt] = useState<string | undefined>();
+  const [documentHistory, setDocumentHistory] = useState<DocVersion[]>([]);
   const [uploadError, setUploadError] = useState<string>("");
 
   useEffect(() => {
