@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { CREATE_EVENT } from "@/components/app-shell";
 
@@ -7,10 +7,12 @@ export function CrudToolbar({
   count,
   label,
   onCreate,
+  children,
 }: {
   count: number;
   label: string;
   onCreate: () => void;
+  children?: ReactNode;
 }) {
   // Listen for the topbar "New" button broadcast
   useEffect(() => {
@@ -24,9 +26,12 @@ export function CrudToolbar({
       <div className="text-xs text-muted-foreground font-tnum">
         {count} {label}
       </div>
-      <Button size="sm" onClick={onCreate} className="gap-1.5">
-        <Plus className="h-4 w-4" /> New
-      </Button>
+      <div className="flex items-center gap-2">
+        {children}
+        <Button size="sm" onClick={onCreate} className="gap-1.5">
+          <Plus className="h-4 w-4" /> New
+        </Button>
+      </div>
     </div>
   );
 }

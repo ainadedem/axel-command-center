@@ -15,17 +15,16 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
-import { Pencil, Trash2, Wallet, AlertCircle, TrendingUp, ArrowUpRight, UserCheck, Sparkles } from "lucide-react";
+import { Pencil, Trash2, Wallet, AlertCircle, TrendingUp, ArrowUpRight, UserCheck, Sparkles, LayoutGrid, List as ListIcon } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/clients")({ component: ClientsPage });
 
 /** True when a client should be treated as a real (won) client, not a lead. */
 function isWonClient(cl: Client, hasActivity: boolean): boolean {
-  // Explicit status wins; otherwise infer from activity to keep legacy data working.
   if (cl.status === "client") return true;
   if (cl.status === "lead") return false;
-  return hasActivity || true; // undefined defaults to "client" for backward compatibility
+  return hasActivity || true;
 }
 
 function ClientsPage() {
@@ -37,9 +36,10 @@ function ClientsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
   const [tab, setTab] = useState<"all" | "clients" | "leads">("clients");
+  const [view, setView] = useState<"grid" | "list">("grid");
   const openCreate = () => { setEditing(null); setOpen(true); };
 
-  // Partition clients into "leads" vs "clients" using explicit status + activity fallback.
+  // Partition clients into "leads" vs "clients"
   const partitioned = clients.map((cl) => {
     const hasActivity =
       invoices.some((i) => i.clientId === cl.id) ||
@@ -50,7 +50,7 @@ function ClientsPage() {
   const wonClients = partitioned.filter((p) => !p.isLead).map((p) => p.cl);
   const leadClients = partitioned.filter((p) => p.isLead).map((p) => p.cl);
 
-  // Aggregate KPIs across won clients (revenue numbers don't make sense for leads)
+  // Aggregate KPIs across won clients
   const totals = wonClients.reduce(
     (acc, cl) => {
       const cliInvoices = invoices.filter((i) => i.clientId === cl.id);
@@ -91,7 +91,7 @@ function ClientsPage() {
     <AppShell>
       <PageHeader title="Clients" description="Leads from the pipeline and won clients — kept separate." />
       <div className="p-8 space-y-6">
-        {/* High-contrast KPI strip */}
+        {/* KPI strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <KpiTile icon={<UserCheck className="h-4 w-4" />} label="Won clients" value={String(wonClients.length)} sub={`${leadClients.length} lead${leadClients.length === 1 ? "" : "s"}`} tint="from-primary/25 to-primary/5" ring="ring-primary/30" />
           <KpiTile icon={<Wallet className="h-4 w-4" />} label="Revenue booked" value={fmtCompact(totals.revenue, "MGA")} tint="from-emerald-500/25 to-emerald-500/5" ring="ring-emerald-500/30" />
@@ -99,7 +99,24 @@ function ClientsPage() {
           <KpiTile icon={<TrendingUp className="h-4 w-4" />} label="Top client" value={topClient?.cl.name ?? "—"} sub={topClient ? fmtCompact(topClient.r, "MGA") : undefined} tint="from-sky-500/25 to-sky-500/5" ring="ring-sky-500/30" />
         </div>
 
-        <CrudToolbar count={visible.length} label={tab === "leads" ? "leads" : "clients"} onCreate={openCreate} />
+        <CrudToolbar count={visible.length} label={tab === "leads" ? "leads" : "clients"} onCreate={openCreate}>
+          <div className="flex items-center border rounded-md overflow-hidden">
+            <button
+              onClick={() => setView("grid")}
+              className={`h-8 w-8 grid place-items-center ${view === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-elevated"}`}
+              title="Grid view"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setView("list")}
+              className={`h-8 w-8 grid place-items-center ${view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-elevated"}`}
+              title="List view"
+            >
+              <ListIcon className="h-4 w-4" />
+            </button>
+          </div>
+        </CrudToolbar>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
           <TabsList>
@@ -110,98 +127,208 @@ function ClientsPage() {
           <TabsContent value={tab} className="mt-4">
             {visible.length === 0 ? (
               <EmptyState label={tab === "leads" ? "leads" : "clients"} onCreate={openCreate} />
+            ) : view === "list" ? (
+              <ClientListView clients={visible} companies={companies} invoices={invoices} projects={projects} transactions={transactions} onEdit={(cl) => { setEditing(cl); setOpen(true); }} onPromote={promote} />
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {visible.map((cl) => {
-                  const co = companies.find((c) => c.id === cl.companyId);
-                  const cliProjects = projects.filter((p) => p.clientId === cl.id);
-                  const cliInvoices = invoices.filter((i) => i.clientId === cl.id);
-                  const cliTx = transactions.filter((t) => t.clientId === cl.id);
-                  const invoicedMGA = cliInvoices.reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
-                  const paidMGA = cliInvoices.reduce((s, i) => s + toMGA(i.paid, i.currency), 0);
-                  const projectRevenue = cliProjects.reduce((s, p) => s + toMGA(p.revenue, p.currency), 0);
-                  const incomeTxMGA = cliTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
-                  const expenseTxMGA = cliTx.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
-                  const revenue = invoicedMGA || projectRevenue || incomeTxMGA;
-                  const projectCost = cliProjects.reduce((s, p) => s + toMGA(p.cost, p.currency), 0);
-                  const cost = projectCost + expenseTxMGA;
-                  const margin = revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0;
-                  const outstanding = Math.max(0, invoicedMGA - paidMGA);
-                  const overdue = cliInvoices.some((i) => i.status === "overdue");
-                  const isLead = cl.status === "lead";
-                  return (
-                    <div key={cl.id} className={`relative rounded-2xl border-2 ${isLead ? "border-dashed border-amber-500/40 bg-amber-500/5" : "border-border bg-surface-elevated"} p-5 hover:border-primary hover:shadow-[0_0_0_4px_color-mix(in_oklab,var(--primary)_15%,transparent)] transition-all group`}>
-                      {co && <div className="absolute top-0 left-5 right-5 h-1 rounded-b-full" style={{ background: co.color }} />}
-                      <div className="flex items-start justify-between mb-4 gap-3">
-                        <div className="flex items-start gap-3 min-w-0">
-                          <Avatar src={cl.avatarUrl} name={cl.name} size={48} />
-                          <div className="min-w-0">
-                            <div className="font-display font-semibold text-base truncate flex items-center gap-2">
-                              {cl.name}
-                              {isLead && <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 border border-amber-500/30 font-semibold"><Sparkles className="h-2.5 w-2.5" />Lead</span>}
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-0.5 truncate">
-                              {[cl.industry, cl.country].filter(Boolean).join(" · ")}
-                            </div>
-                            {(cl.email || cl.phone || cl.website) && (
-                              <div className="text-[11px] text-muted-foreground/80 mt-1 truncate space-x-2">
-                                {cl.website && <a href={cl.website} target="_blank" rel="noopener noreferrer" className="hover:text-primary underline-offset-2 hover:underline">{cl.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}</a>}
-                                {cl.email && <span>· {cl.email}</span>}
-                                {cl.phone && <span>· {cl.phone}</span>}
-                              </div>
-                            )}
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {cl.acquisition && <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-700 border border-sky-500/30 font-medium">Acq · {cl.acquisition}</span>}
-                              {cl.referral && <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 border border-emerald-500/30 font-medium">Ref · {cl.referral}</span>}
-                              {cl.acquiredAt && !isLead && <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-700 border border-violet-500/30 font-medium">Since {cl.acquisitionYear ?? cl.acquiredAt}</span>}
-                              {overdue && <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-destructive/20 text-destructive border border-destructive/40 font-semibold uppercase tracking-wider">Overdue</span>}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {co && (
-                            <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-md bg-background border border-border">
-                              <span className="h-2 w-2 rounded-full" style={{ background: co.color }} />
-                              {co.shortName}
-                            </span>
-                          )}
-                          <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 transition-opacity">
-                            {isLead && (
-                              <button onClick={() => promote(cl)} title="Promote to client" className="h-7 w-7 grid place-items-center rounded hover:bg-emerald-500/15 text-muted-foreground hover:text-emerald-700"><UserCheck className="h-3.5 w-3.5" /></button>
-                            )}
-                            <button onClick={() => { setEditing(cl); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-background text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                            <button onClick={() => confirm(`Delete ${cl.name}?`) && clientsStore.remove(cl.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                          </div>
-                        </div>
-                      </div>
-                      {isLead ? (
-                        <div className="rounded-xl bg-background/60 border border-dashed border-amber-500/30 p-4 mt-4 text-center text-xs text-muted-foreground">
-                          Lead from the pipeline. Promote to a client when the deal is won.
-                        </div>
-                      ) : (
-                        <div className="rounded-xl bg-background border border-border p-4 mt-4">
-                          <div className="grid grid-cols-3 gap-3">
-                            <StatBold label="Revenue" value={fmtCompact(revenue, "MGA")} />
-                            <StatBold label="Outstanding" value={fmtCompact(outstanding, "MGA")} tone={outstanding > 0 ? "warn" : "default"} />
-                            <StatBold label="Margin" value={`${margin.toFixed(0)}%`} tone={margin >= 30 ? "good" : margin >= 0 ? "default" : "bad"} />
-                          </div>
-                        </div>
-                      )}
-                      <div className="grid grid-cols-3 gap-3 mt-3 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                        <div>{cliInvoices.length} invoice{cliInvoices.length === 1 ? "" : "s"}</div>
-                        <div>{cliTx.length} txn{cliTx.length === 1 ? "" : "s"}</div>
-                        <div>{cliProjects.length} project{cliProjects.length === 1 ? "" : "s"}</div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <ClientGridView clients={visible} companies={companies} invoices={invoices} projects={projects} transactions={transactions} onEdit={(cl) => { setEditing(cl); setOpen(true); }} onPromote={promote} />
             )}
           </TabsContent>
         </Tabs>
       </div>
       <ClientDialog open={open} onOpenChange={setOpen} editing={editing} />
     </AppShell>
+  );
+}
+
+/* ── Grid View ── */
+function ClientGridView({
+  clients, companies, invoices, projects, transactions, onEdit, onPromote,
+}: {
+  clients: Client[];
+  companies: ReturnType<typeof useCompanies>;
+  invoices: ReturnType<typeof useInvoices>;
+  projects: ReturnType<typeof useProjects>;
+  transactions: ReturnType<typeof useTransactions>;
+  onEdit: (cl: Client) => void;
+  onPromote: (cl: Client) => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      {clients.map((cl) => {
+        const co = companies.find((c) => c.id === cl.companyId);
+        const cliProjects = projects.filter((p) => p.clientId === cl.id);
+        const cliInvoices = invoices.filter((i) => i.clientId === cl.id);
+        const cliTx = transactions.filter((t) => t.clientId === cl.id);
+        const invoicedMGA = cliInvoices.reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
+        const paidMGA = cliInvoices.reduce((s, i) => s + toMGA(i.paid, i.currency), 0);
+        const projectRevenue = cliProjects.reduce((s, p) => s + toMGA(p.revenue, p.currency), 0);
+        const incomeTxMGA = cliTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+        const expenseTxMGA = cliTx.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+        const revenue = invoicedMGA || projectRevenue || incomeTxMGA;
+        const projectCost = cliProjects.reduce((s, p) => s + toMGA(p.cost, p.currency), 0);
+        const cost = projectCost + expenseTxMGA;
+        const margin = revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0;
+        const outstanding = Math.max(0, invoicedMGA - paidMGA);
+        const overdue = cliInvoices.some((i) => i.status === "overdue");
+        const isLead = cl.status === "lead";
+        return (
+          <div key={cl.id} className={`relative rounded-xl border ${isLead ? "border-dashed border-amber-500/40 bg-amber-500/[0.03]" : "border-border bg-surface-elevated"} p-4 hover:border-primary/40 transition group`}>
+            <div className="flex items-start gap-3">
+              <div className="relative shrink-0">
+                <Avatar src={cl.avatarUrl} name={cl.name} size={40} />
+                {co && (
+                  <span
+                    className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background"
+                    style={{ background: co.color }}
+                    title={co.name}
+                  />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-display font-semibold text-sm truncate flex items-center gap-1.5">
+                  {cl.name}
+                  {isLead && <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 border border-amber-500/30 font-semibold">Lead</span>}
+                  {overdue && <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30 font-semibold">Overdue</span>}
+                </div>
+                <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {[cl.industry, cl.country].filter(Boolean).join(" · ")}
+                </div>
+                {(cl.email || cl.phone) && (
+                  <div className="text-[11px] text-muted-foreground/70 mt-1 truncate">
+                    {cl.email} {cl.phone && `· ${cl.phone}`}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                {isLead && (
+                  <button onClick={() => onPromote(cl)} title="Promote to client" className="h-7 w-7 grid place-items-center rounded hover:bg-emerald-500/15 text-muted-foreground hover:text-emerald-700"><UserCheck className="h-3.5 w-3.5" /></button>
+                )}
+                <button onClick={() => onEdit(cl)} className="h-7 w-7 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
+                <button onClick={() => confirm(`Delete ${cl.name}?`) && clientsStore.remove(cl.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+              </div>
+            </div>
+
+            {isLead ? (
+              <div className="mt-3 text-xs text-muted-foreground/80 border-t border-border/50 pt-3">
+                Lead from the pipeline. Promote when the deal is won.
+              </div>
+            ) : (
+              <div className="mt-3 border-t border-border/50 pt-3">
+                <div className="grid grid-cols-3 gap-2">
+                  <StatMini label="Revenue" value={fmtCompact(revenue, "MGA")} />
+                  <StatMini label="Outstanding" value={fmtCompact(outstanding, "MGA")} tone={outstanding > 0 ? "warn" : "default"} />
+                  <StatMini label="Margin" value={`${margin.toFixed(0)}%`} tone={margin >= 30 ? "good" : margin >= 0 ? "default" : "bad"} />
+                </div>
+              </div>
+            )}
+
+            <div className="mt-2.5 flex gap-3 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+              <span>{cliInvoices.length} invoice{cliInvoices.length === 1 ? "" : "s"}</span>
+              <span>{cliTx.length} txn{cliTx.length === 1 ? "" : "s"}</span>
+              <span>{cliProjects.length} project{cliProjects.length === 1 ? "" : "s"}</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── List View ── */
+function ClientListView({
+  clients, companies, invoices, projects, transactions, onEdit, onPromote,
+}: {
+  clients: Client[];
+  companies: ReturnType<typeof useCompanies>;
+  invoices: ReturnType<typeof useInvoices>;
+  projects: ReturnType<typeof useProjects>;
+  transactions: ReturnType<typeof useTransactions>;
+  onEdit: (cl: Client) => void;
+  onPromote: (cl: Client) => void;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-surface-elevated overflow-hidden">
+      <div className="grid grid-cols-[1fr_120px_100px_120px_40px] md:grid-cols-[1fr_140px_120px_140px_40px] gap-3 px-4 py-2.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border bg-background/50">
+        <div>Client</div>
+        <div className="text-right">Revenue</div>
+        <div className="text-right">Outstanding</div>
+        <div className="text-right">Margin</div>
+        <div />
+      </div>
+      {clients.map((cl) => {
+        const co = companies.find((c) => c.id === cl.companyId);
+        const cliProjects = projects.filter((p) => p.clientId === cl.id);
+        const cliInvoices = invoices.filter((i) => i.clientId === cl.id);
+        const cliTx = transactions.filter((t) => t.clientId === cl.id);
+        const invoicedMGA = cliInvoices.reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
+        const paidMGA = cliInvoices.reduce((s, i) => s + toMGA(i.paid, i.currency), 0);
+        const projectRevenue = cliProjects.reduce((s, p) => s + toMGA(p.revenue, p.currency), 0);
+        const incomeTxMGA = cliTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+        const expenseTxMGA = cliTx.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+        const revenue = invoicedMGA || projectRevenue || incomeTxMGA;
+        const projectCost = cliProjects.reduce((s, p) => s + toMGA(p.cost, p.currency), 0);
+        const cost = projectCost + expenseTxMGA;
+        const margin = revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0;
+        const outstanding = Math.max(0, invoicedMGA - paidMGA);
+        const overdue = cliInvoices.some((i) => i.status === "overdue");
+        const isLead = cl.status === "lead";
+        return (
+          <div
+            key={cl.id}
+            className={`grid grid-cols-[1fr_120px_100px_120px_40px] md:grid-cols-[1fr_140px_120px_140px_40px] gap-3 px-4 py-3 items-center border-b border-border/50 last:border-b-0 hover:bg-accent/40 transition group ${isLead ? "bg-amber-500/[0.03]" : ""}`}
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="relative shrink-0">
+                <Avatar src={cl.avatarUrl} name={cl.name} size={32} />
+                {co && (
+                  <span
+                    className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background"
+                    style={{ background: co.color }}
+                    title={co.name}
+                  />
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="font-medium text-sm truncate flex items-center gap-1.5">
+                  {cl.name}
+                  {isLead && <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 border border-amber-500/30 font-semibold">Lead</span>}
+                  {overdue && <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30 font-semibold">Overdue</span>}
+                </div>
+                <div className="text-[11px] text-muted-foreground truncate">
+                  {[cl.industry, cl.country].filter(Boolean).join(" · ")}
+                </div>
+              </div>
+            </div>
+            <div className="text-right font-tnum text-sm">{isLead ? "—" : fmtCompact(revenue, "MGA")}</div>
+            <div className={`text-right font-tnum text-sm ${outstanding > 0 ? "text-amber-600" : ""}`}>{isLead ? "—" : fmtCompact(outstanding, "MGA")}</div>
+            <div className={`text-right font-tnum text-sm ${margin >= 30 ? "text-emerald-600" : margin < 0 ? "text-destructive" : ""}`}>{isLead ? "—" : `${margin.toFixed(0)}%`}</div>
+            <div className="flex justify-end">
+              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                {isLead && (
+                  <button onClick={() => onPromote(cl)} title="Promote" className="h-7 w-7 grid place-items-center rounded hover:bg-emerald-500/15 text-muted-foreground hover:text-emerald-700"><UserCheck className="h-3.5 w-3.5" /></button>
+                )}
+                <button onClick={() => onEdit(cl)} className="h-7 w-7 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
+                <button onClick={() => confirm(`Delete ${cl.name}?`) && clientsStore.remove(cl.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── Helpers ── */
+function StatMini({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "good" | "warn" | "bad" }) {
+  const color =
+    tone === "good" ? "text-emerald-600" :
+    tone === "warn" ? "text-amber-600" :
+    tone === "bad" ? "text-destructive" : "text-foreground";
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground font-semibold">{label}</div>
+      <div className={`font-tnum font-semibold mt-0.5 text-sm ${color}`}>{value}</div>
+    </div>
   );
 }
 
@@ -390,18 +517,5 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function StatBold({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "good" | "warn" | "bad" }) {
-  const color =
-    tone === "good" ? "text-emerald-600" :
-    tone === "warn" ? "text-amber-600" :
-    tone === "bad" ? "text-destructive" : "text-foreground";
-  return (
-    <div>
-      <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground font-semibold">{label}</div>
-      <div className={`font-display font-bold tracking-tight font-tnum mt-1 text-lg ${color}`}>{value}</div>
-    </div>
   );
 }
