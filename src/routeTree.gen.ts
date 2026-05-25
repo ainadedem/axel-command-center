@@ -36,6 +36,7 @@ import { Route as AuthenticatedBalanceRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAxelRouteImport } from './routes/_authenticated/axel'
 import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
 import { Route as AuthenticatedAxelIndexRouteImport } from './routes/_authenticated/axel.index'
+import { Route as AuthenticatedAxelThreadIdRouteImport } from './routes/_authenticated/axel.$threadId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -175,6 +176,12 @@ const AuthenticatedAxelIndexRoute = AuthenticatedAxelIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAxelRoute,
 } as any)
+const AuthenticatedAxelThreadIdRoute =
+  AuthenticatedAxelThreadIdRouteImport.update({
+    id: '/$threadId',
+    path: '/$threadId',
+    getParentRoute: () => AuthenticatedAxelRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -202,6 +209,7 @@ export interface FileRoutesByFullPath {
   '/team': typeof AuthenticatedTeamRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
+  '/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
   '/axel/': typeof AuthenticatedAxelIndexRoute
 }
 export interface FileRoutesByTo {
@@ -229,6 +237,7 @@ export interface FileRoutesByTo {
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
   '/': typeof AuthenticatedIndexRoute
+  '/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
   '/axel': typeof AuthenticatedAxelIndexRoute
 }
 export interface FileRoutesById {
@@ -259,6 +268,7 @@ export interface FileRoutesById {
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
   '/_authenticated/axel/': typeof AuthenticatedAxelIndexRoute
 }
 export interface FileRouteTypes {
@@ -289,6 +299,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/transactions'
     | '/api/axel-chat'
+    | '/axel/$threadId'
     | '/axel/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -316,6 +327,7 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/api/axel-chat'
     | '/'
+    | '/axel/$threadId'
     | '/axel'
   id:
     | '__root__'
@@ -345,6 +357,7 @@ export interface FileRouteTypes {
     | '/_authenticated/transactions'
     | '/api/axel-chat'
     | '/_authenticated/'
+    | '/_authenticated/axel/$threadId'
     | '/_authenticated/axel/'
   fileRoutesById: FileRoutesById
 }
@@ -545,14 +558,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAxelIndexRouteImport
       parentRoute: typeof AuthenticatedAxelRoute
     }
+    '/_authenticated/axel/$threadId': {
+      id: '/_authenticated/axel/$threadId'
+      path: '/$threadId'
+      fullPath: '/axel/$threadId'
+      preLoaderRoute: typeof AuthenticatedAxelThreadIdRouteImport
+      parentRoute: typeof AuthenticatedAxelRoute
+    }
   }
 }
 
 interface AuthenticatedAxelRouteChildren {
+  AuthenticatedAxelThreadIdRoute: typeof AuthenticatedAxelThreadIdRoute
   AuthenticatedAxelIndexRoute: typeof AuthenticatedAxelIndexRoute
 }
 
 const AuthenticatedAxelRouteChildren: AuthenticatedAxelRouteChildren = {
+  AuthenticatedAxelThreadIdRoute: AuthenticatedAxelThreadIdRoute,
   AuthenticatedAxelIndexRoute: AuthenticatedAxelIndexRoute,
 }
 
@@ -623,3 +645,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
