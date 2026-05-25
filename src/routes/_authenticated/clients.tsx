@@ -29,10 +29,46 @@ function ClientsPage() {
   const [editing, setEditing] = useState<Client | null>(null);
   const openCreate = () => { setEditing(null); setOpen(true); };
 
+  // Aggregate KPIs across all clients
+  const totals = clients.reduce(
+    (acc, cl) => {
+      const cliInvoices = invoices.filter((i) => i.clientId === cl.id);
+      const cliProjects = projects.filter((p) => p.clientId === cl.id);
+      const cliTx = transactions.filter((t) => t.clientId === cl.id);
+      const invoicedMGA = cliInvoices.reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
+      const paidMGA = cliInvoices.reduce((s, i) => s + toMGA(i.paid, i.currency), 0);
+      const projectRevenue = cliProjects.reduce((s, p) => s + toMGA(p.revenue, p.currency), 0);
+      const incomeTxMGA = cliTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+      acc.revenue += invoicedMGA || projectRevenue || incomeTxMGA;
+      acc.outstanding += Math.max(0, invoicedMGA - paidMGA);
+      acc.overdue += cliInvoices.filter((i) => i.status === "overdue").length;
+      return acc;
+    },
+    { revenue: 0, outstanding: 0, overdue: 0 },
+  );
+  const topClient = clients
+    .map((cl) => {
+      const cliInvoices = invoices.filter((i) => i.clientId === cl.id);
+      const cliProjects = projects.filter((p) => p.clientId === cl.id);
+      const r =
+        cliInvoices.reduce((s, i) => s + toMGA(i.amount, i.currency), 0) ||
+        cliProjects.reduce((s, p) => s + toMGA(p.revenue, p.currency), 0);
+      return { cl, r };
+    })
+    .sort((a, b) => b.r - a.r)[0];
+
   return (
     <AppShell>
       <PageHeader title="Clients" description="Who pays you, and how much they're worth." />
-      <div className="p-8 space-y-5">
+      <div className="p-8 space-y-6">
+        {/* High-contrast KPI strip */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <KpiTile icon={<Users className="h-4 w-4" />} label="Total clients" value={String(clients.length)} tint="from-primary/25 to-primary/5" ring="ring-primary/30" />
+          <KpiTile icon={<Wallet className="h-4 w-4" />} label="Revenue booked" value={fmtCompact(totals.revenue, "MGA")} tint="from-emerald-500/25 to-emerald-500/5" ring="ring-emerald-500/30" />
+          <KpiTile icon={<AlertCircle className="h-4 w-4" />} label="Outstanding" value={fmtCompact(totals.outstanding, "MGA")} sub={`${totals.overdue} overdue`} tint="from-amber-500/25 to-amber-500/5" ring="ring-amber-500/30" />
+          <KpiTile icon={<TrendingUp className="h-4 w-4" />} label="Top client" value={topClient?.cl.name ?? "—"} sub={topClient ? fmtCompact(topClient.r, "MGA") : undefined} tint="from-sky-500/25 to-sky-500/5" ring="ring-sky-500/30" />
+        </div>
+
         <CrudToolbar count={clients.length} label="clients" onCreate={openCreate} />
         {clients.length === 0 ? (
           <EmptyState label="clients" onCreate={openCreate} />
@@ -43,7 +79,6 @@ function ClientsPage() {
               const cliProjects = projects.filter((p) => p.clientId === cl.id);
               const cliInvoices = invoices.filter((i) => i.clientId === cl.id);
               const cliTx = transactions.filter((t) => t.clientId === cl.id);
-              // Revenue: prefer invoices when present, else project revenue, else income transactions.
               const invoicedMGA = cliInvoices.reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
               const paidMGA = cliInvoices.reduce((s, i) => s + toMGA(i.paid, i.currency), 0);
               const projectRevenue = cliProjects.reduce((s, p) => s + toMGA(p.revenue, p.currency), 0);
@@ -54,13 +89,15 @@ function ClientsPage() {
               const cost = projectCost + expenseTxMGA;
               const margin = revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0;
               const outstanding = Math.max(0, invoicedMGA - paidMGA);
+              const overdue = cliInvoices.some((i) => i.status === "overdue");
               return (
-                <div key={cl.id} className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 hover:border-primary/40 transition group">
+                <div key={cl.id} className="relative rounded-2xl border-2 border-border bg-surface-elevated p-5 hover:border-primary hover:shadow-[0_0_0_4px_color-mix(in_oklab,var(--primary)_15%,transparent)] transition-all group">
+                  {co && <div className="absolute top-0 left-5 right-5 h-1 rounded-b-full" style={{ background: co.color }} />}
                   <div className="flex items-start justify-between mb-4 gap-3">
                     <div className="flex items-start gap-3 min-w-0">
-                      <Avatar src={cl.avatarUrl} name={cl.name} size={44} />
+                      <Avatar src={cl.avatarUrl} name={cl.name} size={48} />
                       <div className="min-w-0">
-                        <div className="font-medium text-base truncate">{cl.name}</div>
+                        <div className="font-display font-semibold text-base truncate">{cl.name}</div>
                         <div className="text-xs text-muted-foreground mt-0.5 truncate">
                           {[cl.industry, cl.country].filter(Boolean).join(" · ")}
                         </div>
@@ -72,43 +109,34 @@ function ClientsPage() {
                           </div>
                         )}
                         <div className="flex flex-wrap gap-1 mt-2">
-                          {cl.acquisition && (
-                            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20" title="Client acquisition">
-                              Acq · {cl.acquisition}
-                            </span>
-                          )}
-                          {cl.referral && (
-                            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20" title="Referral">
-                              Ref · {cl.referral}
-                            </span>
-                          )}
-                          {cl.acquiredAt && (
-                            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-300 border border-violet-500/20" title="Acquired on">
-                              Since {cl.acquisitionYear ?? cl.acquiredAt}
-                            </span>
-                          )}
+                          {cl.acquisition && <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30 font-medium">Acq · {cl.acquisition}</span>}
+                          {cl.referral && <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-medium">Ref · {cl.referral}</span>}
+                          {cl.acquiredAt && <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-300 border border-violet-500/30 font-medium">Since {cl.acquisitionYear ?? cl.acquiredAt}</span>}
+                          {overdue && <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-destructive/20 text-destructive border border-destructive/40 font-semibold uppercase tracking-wider">Overdue</span>}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {co && (
-                        <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-md bg-background border border-border">
                           <span className="h-2 w-2 rounded-full" style={{ background: co.color }} />
                           {co.shortName}
                         </span>
                       )}
-                      <div className="opacity-0 group-hover:opacity-100 flex gap-0.5">
-                        <button onClick={() => { setEditing(cl); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
+                      <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 transition-opacity">
+                        <button onClick={() => { setEditing(cl); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-background text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
                         <button onClick={() => confirm(`Delete ${cl.name}?`) && clientsStore.remove(cl.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-border/60">
-                    <Stat label="Revenue" value={fmtCompact(revenue, "MGA")} />
-                    <Stat label="Outstanding" value={fmtCompact(outstanding, "MGA")} />
-                    <Stat label="Margin" value={`${margin.toFixed(0)}%`} accent />
+                  <div className="rounded-xl bg-background border border-border p-4 mt-4">
+                    <div className="grid grid-cols-3 gap-3">
+                      <StatBold label="Revenue" value={fmtCompact(revenue, "MGA")} />
+                      <StatBold label="Outstanding" value={fmtCompact(outstanding, "MGA")} tone={outstanding > 0 ? "warn" : "default"} />
+                      <StatBold label="Margin" value={`${margin.toFixed(0)}%`} tone={margin >= 30 ? "good" : margin >= 0 ? "default" : "bad"} />
+                    </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-3 mt-3 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <div className="grid grid-cols-3 gap-3 mt-3 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
                     <div>{cliInvoices.length} invoice{cliInvoices.length === 1 ? "" : "s"}</div>
                     <div>{cliTx.length} txn{cliTx.length === 1 ? "" : "s"}</div>
                     <div>{cliProjects.length} project{cliProjects.length === 1 ? "" : "s"}</div>
@@ -121,6 +149,20 @@ function ClientsPage() {
       </div>
       <ClientDialog open={open} onOpenChange={setOpen} editing={editing} />
     </AppShell>
+  );
+}
+
+function KpiTile({ icon, label, value, sub, tint, ring }: { icon: React.ReactNode; label: string; value: string; sub?: string; tint: string; ring: string }) {
+  return (
+    <div className={`relative rounded-2xl border-2 border-border bg-gradient-to-br ${tint} p-5 ring-1 ${ring} overflow-hidden`}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="h-9 w-9 rounded-xl bg-background/80 backdrop-blur grid place-items-center text-foreground border border-border">{icon}</div>
+        <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+      </div>
+      <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">{label}</div>
+      <div className="font-display text-2xl font-bold tracking-tight font-tnum mt-1 truncate">{value}</div>
+      {sub && <div className="text-xs text-muted-foreground font-tnum mt-1">{sub}</div>}
+    </div>
   );
 }
 
