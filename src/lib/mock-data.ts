@@ -175,6 +175,25 @@ export interface Supplier {
   kind: "external" | "internal";
   /** Profile picture (data URL or remote URL). */
   avatarUrl?: string;
+  /** Contact + legal info (used for payables tracking and invoice/bill PDFs). */
+  contactPerson?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  address?: string;
+  country?: string;
+  /** Default payment terms in days. */
+  paymentTerms?: number;
+  /** Legal tax identifiers. */
+  taxId?: string;
+  nif?: string;
+  stat?: string;
+  rcs?: string;
+  /** Bank details for payouts. */
+  bankName?: string;
+  bankAccount?: string;
+  bankSwift?: string;
+  notes?: string;
 }
 
 /* ─── Team & Sales team ─────────────────────────────────────────────── */
