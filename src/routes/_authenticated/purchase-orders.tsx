@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Upload, FileText, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/purchase-orders")({ component: POPage });
 
@@ -66,9 +66,11 @@ function Body() {
                 <th className="text-left font-medium px-5 py-3">Company</th>
                 <th className="text-left font-medium px-5 py-3">Issued</th>
                 <th className="text-left font-medium px-5 py-3">Status</th>
+                <th className="text-left font-medium px-5 py-3">Document</th>
                 <th className="text-right font-medium px-5 py-3">Amount</th>
                 <th className="px-5 py-3 w-20" />
               </tr>
+
             </thead>
             <tbody>
               {list.map((po) => {
@@ -86,7 +88,15 @@ function Body() {
                     <td className="px-5 py-3.5">{co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}</td>
                     <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">{format(parseISO(po.issueDate), "MMM d, yyyy")}</td>
                     <td className="px-5 py-3.5"><span className={cn("text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[po.status])}>{po.status}</span></td>
+                    <td className="px-5 py-3.5 text-xs">
+                      {po.documentUrl ? (
+                        <a href={po.documentUrl} download={po.documentName} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-primary hover:underline max-w-[180px] truncate">
+                          <FileText className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{po.documentName ?? "PO file"}</span>
+                        </a>
+                      ) : <span className="text-muted-foreground/50">—</span>}
+                    </td>
                     <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(po.amount, po.currency)}</td>
+
                     <td className="px-5 py-3.5 text-right">
                       <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
                         <button onClick={() => { setEditing(po); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
@@ -121,6 +131,10 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
   const [amount, setAmount] = useState("0");
   const [currency, setCurrency] = useState<Currency>("EUR");
   const [status, setStatus] = useState<POStatus>("issued");
+  const [documentUrl, setDocumentUrl] = useState<string | undefined>();
+  const [documentName, setDocumentName] = useState<string | undefined>();
+  const [documentType, setDocumentType] = useState<string | undefined>();
+  const [uploadError, setUploadError] = useState<string>("");
 
   useEffect(() => {
     if (!open) return;
@@ -130,12 +144,28 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
       setProjectId(editing.projectId ?? ""); setQuoteId(editing.quoteId ?? "");
       setIssueDate(editing.issueDate); setAmount(String(editing.amount));
       setCurrency(editing.currency); setStatus(editing.status);
+      setDocumentUrl(editing.documentUrl); setDocumentName(editing.documentName); setDocumentType(editing.documentType);
     } else {
       setNumber(`PO-${Date.now().toString().slice(-6)}`); setClientReference("");
       setCompanyId(companies[0]?.id ?? ""); setClientId(""); setProjectId(""); setQuoteId("");
       setIssueDate(today); setAmount("0"); setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("issued");
+      setDocumentUrl(undefined); setDocumentName(undefined); setDocumentType(undefined);
     }
+    setUploadError("");
   }, [open, editing, companies, today]);
+
+  const handleFile = (file: File) => {
+    setUploadError("");
+    if (file.size > 5 * 1024 * 1024) { setUploadError("Max 5 MB"); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setDocumentUrl(reader.result as string);
+      setDocumentName(file.name);
+      setDocumentType(file.type);
+    };
+    reader.readAsDataURL(file);
+  };
+
 
   const companyClients = clients.filter((c) => c.companyId === companyId);
   const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
@@ -153,7 +183,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
 
   const submit = () => {
     if (!number.trim() || !companyId || !clientId) return;
-    const data = { number, clientReference: clientReference || undefined, companyId, clientId, projectId: projectId || undefined, quoteId: quoteId || undefined, issueDate, amount: Number(amount) || 0, currency, status };
+    const data = { number, clientReference: clientReference || undefined, companyId, clientId, projectId: projectId || undefined, quoteId: quoteId || undefined, issueDate, amount: Number(amount) || 0, currency, status, documentUrl, documentName, documentType };
     if (editing) purchaseOrdersStore.update(editing.id, data);
     else purchaseOrdersStore.add({ id: newId("po"), ...data });
     onOpenChange(false);
@@ -232,7 +262,25 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <Label>Client PO document</Label>
+            {documentUrl ? (
+              <div className="flex items-center gap-2 rounded-md border border-border bg-surface-elevated/40 px-3 py-2 text-sm">
+                <FileText className="h-4 w-4 text-primary shrink-0" />
+                <a href={documentUrl} download={documentName} target="_blank" rel="noreferrer" className="flex-1 truncate text-primary hover:underline">{documentName}</a>
+                <button type="button" onClick={() => { setDocumentUrl(undefined); setDocumentName(undefined); setDocumentType(undefined); }} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><X className="h-3.5 w-3.5" /></button>
+              </div>
+            ) : (
+              <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border bg-surface-elevated/30 hover:bg-surface-elevated/60 px-3 py-2.5 text-sm text-muted-foreground transition-colors">
+                <Upload className="h-4 w-4" />
+                <span>Upload PDF or image (max 5 MB)</span>
+                <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
+              </label>
+            )}
+            {uploadError && <p className="text-[11px] text-destructive mt-1">{uploadError}</p>}
+          </div>
         </div>
+
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={submit}>{editing ? "Save" : "Create"}</Button>
