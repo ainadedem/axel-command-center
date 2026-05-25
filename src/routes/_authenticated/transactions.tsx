@@ -219,6 +219,8 @@ function Body() {
         </div>
       </div>
 
+      <DataToolbar view={view} items={preList} />
+
       {list.length === 0 ? (
         <EmptyState label="transactions" onCreate={openCreate} />
       ) : (
