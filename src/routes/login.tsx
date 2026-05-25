@@ -84,7 +84,7 @@ function LoginPage() {
             Axel
           </h1>
           <p className="mt-6 text-muted-foreground max-w-sm leading-relaxed">
-            Multi-company, multi-currency control of cash, revenue, and pipeline — engineered for clarity.
+            Multi-company, multi-currency control of cash, revenue, and pipeline — engineered for clarity. The Axiom Winford Group.
           </p>
         </div>
       </div>
