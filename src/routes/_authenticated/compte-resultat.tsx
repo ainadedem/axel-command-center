@@ -118,15 +118,16 @@ function SubTotal({ label, value, co }: any) {
   return (
     <div className="flex items-center justify-between px-5 py-2 text-sm bg-surface-elevated/40 rounded-md border border-border/40">
       <div className="font-semibold uppercase tracking-wider text-xs">{label}</div>
-      <div className="font-tnum font-semibold">{fmtMoney(value, co.baseCurrency)}</div>
+      <div className={`font-tnum font-semibold ${value > 0 ? "text-success" : value < 0 ? "text-destructive" : ""}`}>{fmtMoney(value, co.baseCurrency)}</div>
     </div>
   );
 }
 function Line({ label, value, co, bold, highlight }: any) {
+  const tone = value > 0 ? "text-success" : value < 0 ? "text-destructive" : "";
   return (
     <div className={`flex items-center justify-between px-5 py-3 ${highlight ? "bg-primary/5" : ""}`}>
       <div className={`${bold || highlight ? "font-display font-bold uppercase tracking-wider text-sm" : "text-sm"}`}>{label}</div>
-      <div className={`font-tnum ${highlight ? "font-bold text-lg" : bold ? "font-semibold" : ""} ${value < 0 ? "text-red-600" : ""}`}>
+      <div className={`font-tnum ${highlight ? "font-bold text-lg" : bold ? "font-semibold" : ""} ${tone}`}>
         {fmtMoney(value, co.baseCurrency)}
       </div>
     </div>
