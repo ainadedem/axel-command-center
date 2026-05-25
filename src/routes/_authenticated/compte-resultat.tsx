@@ -106,7 +106,7 @@ function Section({ title, rows, co }: any) {
             <tr key={r.code} className="border-b border-border/30 last:border-0">
               <td className="px-5 py-2 font-tnum w-16 text-muted-foreground">{r.code}</td>
               <td className="px-5 py-2">{r.label}</td>
-              <td className="px-5 py-2 text-right font-tnum">{fmtMoney(r.value, co.baseCurrency)}</td>
+              <td className={`px-5 py-2 text-right font-tnum ${r.value > 0 ? "text-success" : r.value < 0 ? "text-destructive" : ""}`}>{fmtMoney(r.value, co.baseCurrency)}</td>
             </tr>
           ))}
         </tbody>
