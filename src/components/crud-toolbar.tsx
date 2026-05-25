@@ -12,7 +12,7 @@ export function CrudToolbar({
   count: number;
   label: string;
   onCreate: () => void;
-  children?: React.ReactNode;
+  children?: ReactNode;
 }) {
   // Listen for the topbar "New" button broadcast
   useEffect(() => {
