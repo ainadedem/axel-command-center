@@ -59,6 +59,8 @@ function Body() {
                 <th className="text-right font-medium px-5 py-3">Margin</th>
                 <th className="text-right font-medium px-5 py-3">Invoiced</th>
                 <th className="text-right font-medium px-5 py-3">Collected</th>
+                <th className="text-right font-medium px-5 py-3">Logged spend</th>
+                <th className="text-right font-medium px-5 py-3">Net P&amp;L</th>
                 <th className="px-5 py-3 w-20" />
               </tr>
             </thead>
