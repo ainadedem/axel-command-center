@@ -19,9 +19,9 @@ import { Pencil, Trash2, Target, Handshake } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/sales-team")({ component: SalesTeamPage });
 
 const ROLE_STYLES: Record<SalesRole, { label: string; cls: string; icon: React.ComponentType<{ className?: string }> }> = {
-  acquisition: { label: "Acquisition", cls: "bg-sky-500/10 text-sky-300 border border-sky-500/20",       icon: Target },
-  closer:      { label: "Closer",      cls: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20", icon: Handshake },
-  both:        { label: "Acq + Closer", cls: "bg-violet-500/10 text-violet-300 border border-violet-500/20",   icon: Handshake },
+  acquisition: { label: "Acquisition", cls: "bg-sky-500/10 text-sky-700 border border-sky-500/20",       icon: Target },
+  closer:      { label: "Closer",      cls: "bg-emerald-500/10 text-emerald-700 border border-emerald-500/20", icon: Handshake },
+  both:        { label: "Acq + Closer", cls: "bg-violet-500/10 text-violet-700 border border-violet-500/20",   icon: Handshake },
 };
 
 function SalesTeamPage() {
