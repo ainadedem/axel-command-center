@@ -243,7 +243,10 @@ export interface Opportunity {
   id: string;
   companyId: string;
   name: string;
+  /** Display name for the client/lead. Kept in sync with the linked Client when clientId is set. */
   client: string;
+  /** Foreign key into the Clients database. Required for new opportunities; legacy rows may only have `client`. */
+  clientId?: string;
   /** Closer in charge of finalizing the deal. Acquisition lives on the Client. */
   closer?: string;
   stage: Stage;
