@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useProjects, useClients, useCompanies, projectsStore,
+  useProjects, useClients, useCompanies, useInvoices, projectsStore,
   fmtCompact, type Project, type Currency,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
@@ -32,6 +32,7 @@ function Body() {
   const projects = useProjects();
   const clients = useClients();
   const companies = useCompanies();
+  const invoices = useInvoices();
   const list = inScope(projects, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Project | null>(null);
@@ -49,11 +50,14 @@ function Body() {
               <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
                 <th className="text-left font-medium px-5 py-3">Project</th>
                 <th className="text-left font-medium px-5 py-3">Client</th>
+                <th className="text-left font-medium px-5 py-3">Sales rep</th>
                 <th className="text-left font-medium px-5 py-3">Company</th>
                 <th className="text-right font-medium px-5 py-3">Revenue</th>
                 <th className="text-right font-medium px-5 py-3">Cost</th>
                 <th className="text-right font-medium px-5 py-3">Profit</th>
                 <th className="text-right font-medium px-5 py-3">Margin</th>
+                <th className="text-right font-medium px-5 py-3">Invoiced</th>
+                <th className="text-right font-medium px-5 py-3">Collected</th>
                 <th className="px-5 py-3 w-20" />
               </tr>
             </thead>
@@ -63,10 +67,19 @@ function Body() {
                 const co = companies.find((c) => c.id === p.companyId);
                 const profit = p.revenue - p.cost;
                 const margin = p.revenue > 0 ? (profit / p.revenue) * 100 : 0;
+                const projInvoices = invoices.filter((i) => i.projectId === p.id);
+                const invoiced = projInvoices.reduce((s, i) => s + i.amount, 0);
+                const collected = projInvoices.reduce((s, i) => s + i.paid, 0);
                 return (
                   <tr key={p.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
-                    <td className="px-5 py-3.5 font-medium">{p.name}</td>
+                    <td className="px-5 py-3.5 font-medium">
+                      {p.name}
+                      {projInvoices.length > 0 && (
+                        <span className="ml-2 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-primary/30 text-primary bg-primary/5">{projInvoices.length} inv</span>
+                      )}
+                    </td>
                     <td className="px-5 py-3.5 text-muted-foreground">{cl?.name ?? "—"}</td>
+                    <td className="px-5 py-3.5 text-xs text-muted-foreground">{cl?.acquisition ?? <span className="text-muted-foreground/50">—</span>}</td>
                     <td className="px-5 py-3.5">
                       {co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}
                     </td>
@@ -74,6 +87,8 @@ function Body() {
                     <td className="px-5 py-3.5 text-right font-tnum text-muted-foreground">{fmtCompact(p.cost, p.currency)}</td>
                     <td className="px-5 py-3.5 text-right font-tnum font-medium text-success">{fmtCompact(profit, p.currency)}</td>
                     <td className="px-5 py-3.5 text-right"><span className="font-display text-primary font-tnum">{margin.toFixed(0)}%</span></td>
+                    <td className="px-5 py-3.5 text-right font-tnum text-xs">{invoiced > 0 ? fmtCompact(invoiced, p.currency) : <span className="text-muted-foreground/50">—</span>}</td>
+                    <td className="px-5 py-3.5 text-right font-tnum text-xs text-success">{collected > 0 ? fmtCompact(collected, p.currency) : <span className="text-muted-foreground/50">—</span>}</td>
                     <td className="px-5 py-3.5 text-right">
                       <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
                         <button onClick={() => { setEditing(p); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>

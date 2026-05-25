@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useInvoices, useCompanies, useClients, invoicesStore,
+  useInvoices, useCompanies, useClients, useProjects, invoicesStore,
   fmtCompact, toMGA, type Invoice, type Currency,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
@@ -42,6 +42,7 @@ function Body() {
   const invoices = useInvoices();
   const companies = useCompanies();
   const clients = useClients();
+  const projects = useProjects();
   const list = inScope(invoices, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Invoice | null>(null);
@@ -71,6 +72,8 @@ function Body() {
                 <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
                   <th className="text-left font-medium px-5 py-3">Number</th>
                   <th className="text-left font-medium px-5 py-3">Client</th>
+                  <th className="text-left font-medium px-5 py-3">Project</th>
+                  <th className="text-left font-medium px-5 py-3">Sales rep</th>
                   <th className="text-left font-medium px-5 py-3">Company</th>
                   <th className="text-left font-medium px-5 py-3">Issued</th>
                   <th className="text-left font-medium px-5 py-3">Due</th>
@@ -86,6 +89,8 @@ function Body() {
                 {list.map((inv) => {
                   const co = companies.find((c) => c.id === inv.companyId);
                   const cl = clients.find((c) => c.id === inv.clientId);
+                  const proj = inv.projectId ? projects.find((p) => p.id === inv.projectId) : undefined;
+                  const salesRep = cl?.acquisition;
                   const days = differenceInDays(parseISO(inv.dueDate), new Date());
                   const balance = inv.amount - inv.paid;
                   const timing = inv.paidDate
@@ -95,6 +100,10 @@ function Body() {
                     <tr key={inv.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
                       <td className="px-5 py-3.5 font-tnum text-xs text-muted-foreground">{inv.number}</td>
                       <td className="px-5 py-3.5 font-medium">{cl?.name ?? "—"}</td>
+                      <td className="px-5 py-3.5 text-xs">
+                        {proj ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}
+                      </td>
+                      <td className="px-5 py-3.5 text-xs text-muted-foreground">{salesRep ?? <span className="text-muted-foreground/50">—</span>}</td>
                       <td className="px-5 py-3.5">
                         {co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}
                       </td>
@@ -158,10 +167,12 @@ function deriveStatus(amount: number, paid: number, dueDate: string): Invoice["s
 function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Invoice | null }) {
   const companies = useCompanies();
   const clients = useClients();
+  const projects = useProjects();
   const today = new Date().toISOString().slice(0, 10);
   const [number, setNumber] = useState("");
   const [companyId, setCompanyId] = useState("");
   const [clientId, setClientId] = useState("");
+  const [projectId, setProjectId] = useState<string>("");
   const [issueDate, setIssueDate] = useState(today);
   const [dueDate, setDueDate] = useState(today);
   const [amount, setAmount] = useState("0");
@@ -173,24 +184,28 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     if (!open) return;
     if (editing) {
       setNumber(editing.number); setCompanyId(editing.companyId); setClientId(editing.clientId);
+      setProjectId(editing.projectId ?? "");
       setIssueDate(editing.issueDate); setDueDate(editing.dueDate);
       setAmount(String(editing.amount)); setPaid(String(editing.paid));
       setCurrency(editing.currency); setStatus(editing.status);
     } else {
       setNumber(`INV-${Date.now().toString().slice(-6)}`); setCompanyId(companies[0]?.id ?? ""); setClientId("");
+      setProjectId("");
       setIssueDate(today); setDueDate(today); setAmount("0"); setPaid("0");
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
     }
   }, [open, editing, companies, today]);
 
   const companyClients = clients.filter((c) => c.companyId === companyId);
+  const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
+  const selectedClient = clients.find((c) => c.id === clientId);
 
   const submit = () => {
     if (!number.trim() || !companyId || !clientId) return;
     const a = Number(amount) || 0;
     const p = Number(paid) || 0;
     const finalStatus = status === "draft" ? "draft" : deriveStatus(a, p, dueDate);
-    const data = { number, companyId, clientId, issueDate, dueDate, amount: a, paid: p, currency, status: finalStatus };
+    const data = { number, companyId, clientId, projectId: projectId || undefined, issueDate, dueDate, amount: a, paid: p, currency, status: finalStatus };
     if (editing) invoicesStore.update(editing.id, data);
     else invoicesStore.add({ id: newId("inv"), ...data });
     onOpenChange(false);
@@ -224,11 +239,25 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
             </div>
             <div>
               <Label>Client</Label>
-              <Select value={clientId} onValueChange={setClientId}>
+              <Select value={clientId} onValueChange={(v) => { setClientId(v); setProjectId(""); }}>
                 <SelectTrigger><SelectValue placeholder={companyClients.length ? "Select" : "Create client first"} /></SelectTrigger>
                 <SelectContent>{companyClients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
+              {selectedClient?.acquisition && (
+                <p className="text-[11px] text-muted-foreground mt-1">Sales rep: <span className="text-foreground">{selectedClient.acquisition}</span></p>
+              )}
             </div>
+          </div>
+          <div>
+            <Label>Project</Label>
+            <Select value={projectId || "__none__"} onValueChange={(v) => setProjectId(v === "__none__" ? "" : v)} disabled={!clientId}>
+              <SelectTrigger><SelectValue placeholder={clientId ? (clientProjects.length ? "Select project" : "No projects for this client") : "Select client first"} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— No project —</SelectItem>
+                {clientProjects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground mt-1">Linking the invoice to a project ties it back to the sales team via the client.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Issue date</Label><Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
