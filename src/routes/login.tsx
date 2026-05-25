@@ -139,7 +139,7 @@ function LoginPage() {
               disabled={busy}
               className="w-full h-10 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
             >
-              {busy ? "…" : "Sign in"}
+              {busy ? "…" : mode === "signup" ? "Create account" : "Sign in"}
             </button>
           </form>
 
