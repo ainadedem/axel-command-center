@@ -177,6 +177,7 @@ import logiaSeed from "./logia-grand-livre-seed.json";
 import logiaAccountLabels from "./logia-account-labels.json";
 import logiaOpportunitiesSeed from "./logia-opportunities-seed.json";
 import clientsEnrichmentSeed from "./clients-enrichment-seed.json";
+import axiomBankSeed from "./axiom-bank-seed.json";
 import {
   companiesStore, accountsStore, clientsStore, suppliersStore,
   invoicesStore, transactionsStore, categoriesStore, opportunitiesStore,
@@ -628,6 +629,7 @@ export function enrichClientsFromAccounts() {
 // because seedLogiaDerivedData() reads from it.
 const DERIVED_VERSION = "12"; // bump to force re-derive on existing local data
 const AXIOM_INVOICES_VERSION = "3";
+const AXIOM_BANK_VERSION = "1";
 if (typeof window !== "undefined") {
   try {
     ensureSeedCompanies();
@@ -646,6 +648,12 @@ if (typeof window !== "undefined") {
     if (axCurrent !== AXIOM_INVOICES_VERSION) {
       seedAxiomInvoices(true);
       localStorage.setItem("axiom-invoices-version", AXIOM_INVOICES_VERSION);
+    }
+
+    const axBankCurrent = localStorage.getItem("axiom-bank-version");
+    if (axBankCurrent !== AXIOM_BANK_VERSION) {
+      seedAxiomBankStatement(true);
+      localStorage.setItem("axiom-bank-version", AXIOM_BANK_VERSION);
     }
   } catch { /* ignore */ }
 }
@@ -755,6 +763,76 @@ export function seedAxiomInvoices(force = false) {
   for (const i of seeds) invoicesStore.add(i);
 
   return seeds.length;
+}
+
+/**
+ * Seed Axiom Unlimited's MCB bank account + transactions from the imported
+ * bank statement (Jan–Apr 2026). Idempotent: removes prior seeded rows on
+ * each version bump and re-inserts.
+ */
+export function seedAxiomBankStatement(force = false) {
+  ensureSeedCompanies();
+
+  const ACCOUNT_ID = "acc_axi_mcb";
+  const seedIdPrefix = "txn_axi_mcb_";
+
+  const hasSeeded = transactionsStore.items.some((t) => t.id.startsWith(seedIdPrefix));
+  if (hasSeeded && !force) return 0;
+
+  // Wipe any prior seeded MCB transactions and the seeded account itself.
+  transactionsStore.replaceAll(
+    transactionsStore.items.filter((t) => !t.id.startsWith(seedIdPrefix)),
+  );
+  accountsStore.replaceAll(accountsStore.items.filter((a) => a.id !== ACCOUNT_ID));
+
+  const rows = axiomBankSeed as Array<{
+    id: string; date: string; type: "income" | "expense";
+    description: string; reference: string; amount: number;
+  }>;
+
+  // Compute closing balance from the imported flows.
+  const closing = rows.reduce(
+    (n, r) => n + (r.type === "income" ? r.amount : -r.amount),
+    0,
+  );
+
+  accountsStore.add({
+    id: ACCOUNT_ID,
+    companyId: "axi",
+    name: "MCB — Compte courant",
+    type: "bank",
+    currency: "MGA",
+    balance: Math.round(closing),
+  });
+
+  const categoryFor = (desc: string, type: "income" | "expense"): string => {
+    const d = desc.toLowerCase();
+    if (d.startsWith("frais") || d.startsWith("tva")) return "Frais bancaires";
+    if (d.includes("swift") || d.includes("virement recu") || d.includes("virement reçu"))
+      return "Encaissements clients";
+    if (d.startsWith("depot en especes") || d.startsWith("dépôt")) return "Dépôts espèces";
+    if (d.startsWith("db vente carte")) return "Paiements carte";
+    if (d.startsWith("prelevement") || d.startsWith("prélèvement")) return "Prélèvements";
+    if (d.includes("transfert compte a compte") || d.includes("transfert compte à compte"))
+      return "Virements internes";
+    return type === "income" ? "Autres encaissements" : "Autres décaissements";
+  };
+
+  for (const r of rows) {
+    transactionsStore.add({
+      id: r.id,
+      companyId: "axi",
+      accountId: ACCOUNT_ID,
+      date: r.date,
+      type: r.type,
+      category: categoryFor(r.description, r.type),
+      description: r.reference ? `${r.description} · ${r.reference}` : r.description,
+      amount: r.amount,
+      currency: "MGA",
+    });
+  }
+
+  return rows.length;
 }
 
 
