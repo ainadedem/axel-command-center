@@ -192,6 +192,71 @@ function DashboardBody() {
   const totalClosed12mo = salesData.reduce((s, p) => s + p.closed, 0);
   const totalForecast3mo = salesData.reduce((s, p) => s + p.forecast, 0);
 
+  // ── Axiom pipeline — future expected revenue ───────────────────────────
+  // Match any company whose name contains "Axiom" (case-insensitive).
+  const axiomCompanyIds = useMemo(
+    () => new Set(companies.filter((c) => /axiom/i.test(c.name)).map((c) => c.id)),
+    [companies],
+  );
+  const axiomOpenOpp = useMemo(
+    () =>
+      opp.filter(
+        (o) =>
+          axiomCompanyIds.has(o.companyId) &&
+          o.stage !== "Closed" &&
+          o.stage !== "Lost",
+      ),
+    [opp, axiomCompanyIds],
+  );
+  const axiomGrossMGA = axiomOpenOpp.reduce(
+    (s, o) => s + toMGA(o.value, o.currency),
+    0,
+  );
+  const axiomWeightedMGA = axiomOpenOpp.reduce(
+    (s, o) => s + toMGA(o.value, o.currency) * stageProbability[o.stage],
+    0,
+  );
+  // Currency mix (gross, in MGA equivalent) for FX transparency.
+  const axiomByCurrency = axiomOpenOpp.reduce<Record<Currency, { native: number; mga: number }>>(
+    (m, o) => {
+      const cur = o.currency;
+      m[cur] ??= { native: 0, mga: 0 };
+      m[cur].native += o.value;
+      m[cur].mga += toMGA(o.value, o.currency);
+      return m;
+    },
+    {} as Record<Currency, { native: number; mga: number }>,
+  );
+  // 6-month forward weighted expected revenue, MGA equivalent.
+  const axiomForecast6mo = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 6 }).map((_, i) => {
+      const d = subMonths(now, -(i + 1));
+      const start = startOfMonth(d);
+      const end = endOfMonth(d);
+      const inMonth = axiomOpenOpp.filter((o) => {
+        const td = parseISO(o.expectedClose);
+        return td >= start && td <= end;
+      });
+      const weighted = inMonth.reduce(
+        (s, o) => s + toMGA(o.value, o.currency) * stageProbability[o.stage],
+        0,
+      );
+      const gross = inMonth.reduce(
+        (s, o) => s + toMGA(o.value, o.currency),
+        0,
+      );
+      return {
+        date: format(d, "MMM yy"),
+        weighted: weighted / 1_000_000,
+        gross: gross / 1_000_000,
+      };
+    });
+  }, [axiomOpenOpp]);
+  // Runway impact — if weighted expected revenue lands, how many extra months of runway?
+  const runwayWithPipeline = burnMGA > 0 ? (totalMGA + axiomWeightedMGA) / burnMGA : runwayMonths;
+  const runwayAddedMonths = runwayWithPipeline - runwayMonths;
+
   return (
     <div className="p-8 space-y-6">
       {/* Hero KPIs */}
