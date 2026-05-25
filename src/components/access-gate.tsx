@@ -15,7 +15,8 @@ export function AccessGate({
   resource: Resource;
   children: ReactNode;
 }) {
-  const { can, roles } = useAuth();
+  const { can, roles, loading } = useAuth();
+  if (loading) return null;
   if (!can(resource, "view")) return <Forbidden resource={resource} />;
   const readOnly = !can(resource, "edit");
   return (

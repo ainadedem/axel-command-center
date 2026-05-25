@@ -45,14 +45,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Set up listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
       if (s?.user) {
         setLoading(true);
+        setSession(s);
         // defer to avoid deadlock
         setTimeout(() => {
           loadUserData(s.user.id).finally(() => setLoading(false));
         }, 0);
       } else {
+        setSession(null);
         setProfile(null);
         setRoles([]);
         setLoading(false);
@@ -60,9 +61,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
-      if (s?.user) loadUserData(s.user.id).finally(() => setLoading(false));
-      else setLoading(false);
+      if (s?.user) {
+        setLoading(true);
+        setSession(s);
+        loadUserData(s.user.id).finally(() => setLoading(false));
+      } else {
+        setSession(null);
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
