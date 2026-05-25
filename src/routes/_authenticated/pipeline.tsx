@@ -21,39 +21,28 @@ import { Pencil, Trash2, Flame, Clock, AlertTriangle, CheckCircle2, XCircle } fr
 
 export const Route = createFileRoute("/_authenticated/pipeline")({ component: PipelinePage });
 
-/* ─── Stage visual system ─────────────────────────────────────────── */
+/* ─── Stage visual system (minimal — just a colored dot) ───────────── */
 
-type StageStyle = {
-  /** Tailwind utility classes for full color block (header strip). */
-  bar: string;
-  /** Border accent for cards. */
-  ring: string;
-  /** Soft tinted background. */
-  tint: string;
-  /** Foreground/text accent. */
-  text: string;
-  /** Pill/badge classes. */
-  pill: string;
-  icon: React.ComponentType<{ className?: string }>;
-};
+type StageStyle = { dot: string; text: string };
 
 const STAGE_STYLES: Record<Stage, StageStyle> = {
-  Lead:        { bar: "bg-slate-400",     ring: "border-l-slate-400",   tint: "bg-slate-400/5",   text: "text-slate-400",   pill: "bg-slate-400/10 text-slate-300 border border-slate-400/20",    icon: Clock },
-  Qualified:   { bar: "bg-sky-500",       ring: "border-l-sky-500",     tint: "bg-sky-500/5",     text: "text-sky-600",     pill: "bg-sky-500/10 text-sky-700 border border-sky-500/20",          icon: CheckCircle2 },
-  Proposal:    { bar: "bg-violet-500",    ring: "border-l-violet-500",  tint: "bg-violet-500/5",  text: "text-violet-400",  pill: "bg-violet-500/10 text-violet-700 border border-violet-500/20", icon: Pencil },
-  Negotiation: { bar: "bg-amber-500",     ring: "border-l-amber-500",   tint: "bg-amber-500/5",   text: "text-amber-400",   pill: "bg-amber-500/10 text-amber-700 border border-amber-500/20",    icon: Flame },
-  Won:         { bar: "bg-emerald-500",   ring: "border-l-emerald-500", tint: "bg-emerald-500/5", text: "text-emerald-400", pill: "bg-emerald-500/10 text-emerald-700 border border-emerald-500/20", icon: CheckCircle2 },
-  Lost:        { bar: "bg-rose-500",      ring: "border-l-rose-500",    tint: "bg-rose-500/5",    text: "text-rose-400",    pill: "bg-rose-500/10 text-rose-700 border border-rose-500/20",       icon: XCircle },
+  Lead:        { dot: "bg-slate-400",   text: "text-slate-500" },
+  Qualified:   { dot: "bg-sky-500",     text: "text-sky-600" },
+  Proposal:    { dot: "bg-violet-500",  text: "text-violet-500" },
+  Negotiation: { dot: "bg-amber-500",   text: "text-amber-500" },
+  Won:         { dot: "bg-emerald-500", text: "text-emerald-500" },
+  Lost:        { dot: "bg-rose-500",    text: "text-rose-500" },
 };
 
 function urgencyOf(o: Opportunity): { label: string; cls: string } | null {
   if (o.stage === "Won" || o.stage === "Lost") return null;
   const days = differenceInDays(parseISO(o.expectedClose), new Date());
-  if (days < 0) return { label: `${Math.abs(days)}d overdue`, cls: "text-rose-400 bg-rose-500/10" };
-  if (days <= 7) return { label: `${days}d left`, cls: "text-amber-400 bg-amber-500/10" };
-  if (days <= 30) return { label: `${days}d`, cls: "text-sky-600 bg-sky-500/10" };
+  if (days < 0) return { label: `${Math.abs(days)}d overdue`, cls: "text-rose-500" };
+  if (days <= 7) return { label: `${days}d left`, cls: "text-amber-500" };
+  if (days <= 30) return { label: `${days}d`, cls: "text-muted-foreground" };
   return null;
 }
+
 
 function PipelinePage() {
   return (
