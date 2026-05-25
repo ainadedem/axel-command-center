@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
   useClients, useCompanies, useProjects, useInvoices, useTransactions,
+  useSalesPeople,
   clientsStore, fmtCompact, toMGA, type Client,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
@@ -100,26 +101,21 @@ function ClientsPage() {
 
 function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Client | null }) {
   const companies = useCompanies();
-  const clients = useClients();
+  const acqPeople = useSalesPeople("acquisition");
   const [companyId, setCompanyId] = useState("");
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
   const [acquisition, setAcquisition] = useState("");
-  const [acqMode, setAcqMode] = useState<"pick" | "new">("pick");
-
-  const existingAcqs = Array.from(new Set(clients.map((c) => c.acquisition).filter(Boolean) as string[])).sort();
 
   useEffect(() => {
     if (!open) return;
     if (editing) {
       setCompanyId(editing.companyId); setName(editing.name); setCountry(editing.country);
-      const acq = editing.acquisition ?? "";
-      setAcquisition(acq);
-      setAcqMode(acq && !existingAcqs.includes(acq) ? "new" : "pick");
+      setAcquisition(editing.acquisition ?? "");
     } else {
-      setCompanyId(companies[0]?.id ?? ""); setName(""); setCountry(""); setAcquisition(""); setAcqMode("pick");
+      setCompanyId(companies[0]?.id ?? ""); setName(""); setCountry(""); setAcquisition("");
     }
-  }, [open, editing, companies, existingAcqs.join(",")]);
+  }, [open, editing, companies]);
 
   const submit = () => {
     if (!name.trim() || !companyId) return;
@@ -128,6 +124,13 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
     else clientsStore.add({ id: newId("cli"), ...data });
     onOpenChange(false);
   };
+
+  // If editing a client whose acquisition isn't in the sales team anymore, still surface it.
+  const acqOptions = (() => {
+    const names = acqPeople.map((p) => p.name);
+    if (acquisition && !names.includes(acquisition)) names.push(acquisition);
+    return names.sort();
+  })();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -145,29 +148,22 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
           <div><Label>Country</Label><Input value={country} onChange={(e) => setCountry(e.target.value)} /></div>
           <div>
             <Label>Acquisition</Label>
-            {acqMode === "pick" ? (
-              <Select
-                value={acquisition}
-                onValueChange={(v) => {
-                  if (v === "__new__") { setAcqMode("new"); setAcquisition(""); }
-                  else setAcquisition(v);
-                }}
-              >
+            {acqOptions.length === 0 ? (
+              <div className="text-xs text-muted-foreground rounded-md border border-dashed border-border px-3 py-2">
+                No acquisition people in the sales team yet — <Link to="/sales-team" className="text-primary underline">add one</Link>.
+              </div>
+            ) : (
+              <Select value={acquisition || "__none__"} onValueChange={(v) => setAcquisition(v === "__none__" ? "" : v)}>
                 <SelectTrigger><SelectValue placeholder="Select acquisition person" /></SelectTrigger>
                 <SelectContent>
-                  {existingAcqs.map((a) => (
-                    <SelectItem key={a} value={a}>{a}</SelectItem>
-                  ))}
-                  <SelectItem value="__new__">+ Add new person</SelectItem>
+                  <SelectItem value="__none__">— Unassigned —</SelectItem>
+                  {acqOptions.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
                 </SelectContent>
               </Select>
-            ) : (
-              <div className="flex gap-2">
-                <Input value={acquisition} onChange={(e) => setAcquisition(e.target.value)} placeholder="New acquisition name" className="flex-1" />
-                <Button variant="outline" size="sm" onClick={() => { setAcqMode("pick"); if (!existingAcqs.includes(acquisition)) setAcquisition(""); }}>Cancel</Button>
-              </div>
             )}
-            <p className="text-[11px] text-muted-foreground mt-1">Single person across all opportunities, invoices and projects for this client.</p>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Sourced from the <Link to="/sales-team" className="text-primary underline">Sales team</Link>. Same person across all opportunities, invoices and projects for this client.
+            </p>
           </div>
         </div>
         <DialogFooter>

@@ -132,6 +132,26 @@ export interface Supplier {
   kind: "external" | "internal";
 }
 
+/* ─── Team & Sales team ─────────────────────────────────────────────── */
+
+/** A person in the organization (Team database, source of truth). */
+export interface TeamMember {
+  id: string;
+  name: string;
+  email?: string;
+  jobTitle?: string;
+  department?: string;
+}
+
+export type SalesRole = "acquisition" | "closer" | "both";
+
+/** Sales team is a curated subset of the Team database with a sales role. */
+export interface SalesMember {
+  id: string;
+  teamMemberId: string;
+  role: SalesRole;
+}
+
 /* ─── Stores (start empty) ──────────────────────────────────────────── */
 
 export const companiesStore = createCollection<Company>("companies", []);
@@ -144,6 +164,8 @@ export const invoicesStore = createCollection<Invoice>("invoices", []);
 export const opportunitiesStore = createCollection<Opportunity>("opportunities", []);
 export const categoriesStore = createCollection<Category>("categories", []);
 export const budgetsStore = createCollection<Budget>("budgets", []);
+export const teamMembersStore = createCollection<TeamMember>("team-members", []);
+export const salesMembersStore = createCollection<SalesMember>("sales-members", []);
 
 /* ─── Live array exports (backward compatibility) ───────────────────── */
 
@@ -157,6 +179,8 @@ export const invoices = invoicesStore.items;
 export const opportunities = opportunitiesStore.items;
 export const categories = categoriesStore.items;
 export const budgets = budgetsStore.items;
+export const teamMembers = teamMembersStore.items;
+export const salesMembers = salesMembersStore.items;
 
 /* ─── Hooks ─────────────────────────────────────────────────────────── */
 
@@ -170,6 +194,20 @@ export const useInvoices = () => useCollection(invoicesStore);
 export const useOpportunities = () => useCollection(opportunitiesStore);
 export const useCategories = () => useCollection(categoriesStore);
 export const useBudgets = () => useCollection(budgetsStore);
+export const useTeamMembers = () => useCollection(teamMembersStore);
+export const useSalesMembers = () => useCollection(salesMembersStore);
+
+/** Convenience: list of sales-team people (with team name) filtered by role. */
+export function useSalesPeople(role: "acquisition" | "closer"): { id: string; teamMemberId: string; name: string }[] {
+  const sm = useSalesMembers();
+  const tm = useTeamMembers();
+  const byId = new Map(tm.map((t) => [t.id, t]));
+  return sm
+    .filter((s) => s.role === role || s.role === "both")
+    .map((s) => ({ id: s.id, teamMemberId: s.teamMemberId, name: byId.get(s.teamMemberId)?.name ?? "" }))
+    .filter((p) => p.name)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
 
 
 /* ─── Formatters ────────────────────────────────────────────────────── */
