@@ -19,6 +19,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { ResizeHandle, useResizableColumns } from "@/components/resizable-columns";
 import { Pencil, Trash2 } from "lucide-react";
+import { useDataView, type FieldDef } from "@/hooks/use-data-view";
+import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 
 export const Route = createFileRoute("/_authenticated/transactions")({
   component: TransactionsPage,
