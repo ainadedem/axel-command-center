@@ -100,20 +100,26 @@ function ClientsPage() {
 
 function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Client | null }) {
   const companies = useCompanies();
+  const clients = useClients();
   const [companyId, setCompanyId] = useState("");
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
   const [acquisition, setAcquisition] = useState("");
+  const [acqMode, setAcqMode] = useState<"pick" | "new">("pick");
+
+  const existingAcqs = Array.from(new Set(clients.map((c) => c.acquisition).filter(Boolean) as string[])).sort();
 
   useEffect(() => {
     if (!open) return;
     if (editing) {
       setCompanyId(editing.companyId); setName(editing.name); setCountry(editing.country);
-      setAcquisition(editing.acquisition ?? "");
+      const acq = editing.acquisition ?? "";
+      setAcquisition(acq);
+      setAcqMode(acq && !existingAcqs.includes(acq) ? "new" : "pick");
     } else {
-      setCompanyId(companies[0]?.id ?? ""); setName(""); setCountry(""); setAcquisition("");
+      setCompanyId(companies[0]?.id ?? ""); setName(""); setCountry(""); setAcquisition(""); setAcqMode("pick");
     }
-  }, [open, editing, companies]);
+  }, [open, editing, companies, existingAcqs.join(",")]);
 
   const submit = () => {
     if (!name.trim() || !companyId) return;
@@ -139,7 +145,28 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
           <div><Label>Country</Label><Input value={country} onChange={(e) => setCountry(e.target.value)} /></div>
           <div>
             <Label>Acquisition</Label>
-            <Input value={acquisition} onChange={(e) => setAcquisition(e.target.value)} placeholder="Who brought this client" />
+            {acqMode === "pick" ? (
+              <Select
+                value={acquisition}
+                onValueChange={(v) => {
+                  if (v === "__new__") { setAcqMode("new"); setAcquisition(""); }
+                  else setAcquisition(v);
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="Select acquisition person" /></SelectTrigger>
+                <SelectContent>
+                  {existingAcqs.map((a) => (
+                    <SelectItem key={a} value={a}>{a}</SelectItem>
+                  ))}
+                  <SelectItem value="__new__">+ Add new person</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="flex gap-2">
+                <Input value={acquisition} onChange={(e) => setAcquisition(e.target.value)} placeholder="New acquisition name" className="flex-1" />
+                <Button variant="outline" size="sm" onClick={() => { setAcqMode("pick"); if (!existingAcqs.includes(acquisition)) setAcquisition(""); }}>Cancel</Button>
+              </div>
+            )}
             <p className="text-[11px] text-muted-foreground mt-1">Single person across all opportunities, invoices and projects for this client.</p>
           </div>
         </div>
