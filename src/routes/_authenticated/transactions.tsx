@@ -300,7 +300,36 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
             </div>
           </div>
           <div><Label>Description</Label><Input value={description} onChange={(e) => setDescription(e.target.value)} /></div>
-          <div><Label>Category</Label><Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Payroll, Services, …" /></div>
+          <div>
+            <Label>Category</Label>
+            <Select
+              value={categoryId || "__custom"}
+              onValueChange={(v) => {
+                if (v === "__custom") { setCategoryId(""); return; }
+                setCategoryId(v);
+                setCategoryName(companyCategories.find((c) => c.id === v)?.name ?? "");
+              }}
+              disabled={!kind}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={kind ? "Pick or create" : "Only for income / expense"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__custom">— Type a new one —</SelectItem>
+                {companyCategories.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!categoryId && (
+              <Input
+                className="mt-2"
+                value={categoryName}
+                onChange={(e) => setCategoryName(e.target.value)}
+                placeholder="New category name (Payroll, Services, …)"
+              />
+            )}
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Amount</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
             <div>
