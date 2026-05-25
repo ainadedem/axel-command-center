@@ -152,6 +152,44 @@ function DashboardBody() {
     return { name: c.shortName, profit: (inc - exp) / 1_000_000, color: c.color };
   });
 
+  // Sales (closed) chart — historical "Closed" deals by expectedClose month + forecast
+  // for the next 3 months derived from the open pipeline weighted by stage probability.
+  const salesData = useMemo(() => {
+    const now = new Date();
+    const historyMonths = 12;
+    const forecastMonths = 3;
+    const points: Array<{ date: string; closed: number; forecast: number }> = [];
+    for (let i = -historyMonths + 1; i <= forecastMonths; i++) {
+      const d = subMonths(now, -i);
+      const start = startOfMonth(d);
+      const end = endOfMonth(d);
+      const inMonth = (iso: string) => {
+        const td = parseISO(iso);
+        return td >= start && td <= end;
+      };
+      const isFuture = i > 0;
+      const closed = isFuture
+        ? 0
+        : opp
+            .filter((o) => o.stage === "Closed" && inMonth(o.expectedClose))
+            .reduce((s, o) => s + toMGA(o.value, o.currency), 0);
+      const forecast = isFuture
+        ? opp
+            .filter((o) => o.stage !== "Closed" && o.stage !== "Lost" && inMonth(o.expectedClose))
+            .reduce((s, o) => s + toMGA(o.value, o.currency) * stageProbability[o.stage], 0)
+        : 0;
+      points.push({
+        date: format(d, "MMM yy"),
+        closed: closed / 1_000_000,
+        forecast: forecast / 1_000_000,
+      });
+    }
+    return points;
+  }, [opp]);
+
+  const totalClosed12mo = salesData.reduce((s, p) => s + p.closed, 0);
+  const totalForecast3mo = salesData.reduce((s, p) => s + p.forecast, 0);
+
   return (
     <div className="p-8 space-y-6">
       {/* Hero KPIs */}
