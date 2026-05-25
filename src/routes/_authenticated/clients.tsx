@@ -236,6 +236,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   const [industry, setIndustry] = useState("");
   const [contacts, setContacts] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+  const [status, setStatus] = useState<"lead" | "client">("client");
 
   useEffect(() => {
     if (!open) return;
@@ -251,11 +252,13 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setIndustry(editing.industry ?? "");
       setContacts(editing.contacts ?? "");
       setAvatarUrl(editing.avatarUrl);
+      setStatus(editing.status ?? "client");
     } else {
       setCompanyId(companies[0]?.id ?? ""); setName(""); setCountry(""); setAcquisition(""); setReferral("");
       setAcquiredAt(new Date().toISOString().slice(0, 10));
       setWebsite(""); setEmail(""); setPhone(""); setAddress(""); setIndustry(""); setContacts("");
       setAvatarUrl(undefined);
+      setStatus("client");
     }
   }, [open, editing, companies]);
 
@@ -263,6 +266,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
     if (!name.trim() || !companyId) return;
     const data = {
       companyId, name, country,
+      status,
       acquisition: acquisition.trim() || undefined,
       referral: referral.trim() || undefined,
       acquiredAt: acquiredAt || undefined,
