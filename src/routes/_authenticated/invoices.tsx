@@ -30,6 +30,7 @@ const statusStyles: Record<string, string> = {
   partial: "border-warning/40 text-warning bg-warning/10",
   paid: "border-success/40 text-success bg-success/10",
   overdue: "border-destructive/40 text-destructive bg-destructive/10",
+  cancelled: "border-muted-foreground/30 text-muted-foreground bg-muted/20 line-through",
 };
 
 function InvoicesPage() {
