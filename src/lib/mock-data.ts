@@ -59,6 +59,12 @@ export interface Client {
   companyId: string;
   name: string;
   country: string;
+  /**
+   * "lead" = prospect captured via the pipeline (not yet won).
+   * "client" = active customer (won deal, invoiced, or manually promoted).
+   * Undefined is treated as "client" for backward compatibility.
+   */
+  status?: "lead" | "client";
   /** Client acquisition person — the one who brought this client. Single source of truth across all tables. */
   acquisition?: string;
   /** Referral — another team member credited for this client. */
@@ -237,7 +243,10 @@ export interface Opportunity {
   id: string;
   companyId: string;
   name: string;
+  /** Display name for the client/lead. Kept in sync with the linked Client when clientId is set. */
   client: string;
+  /** Foreign key into the Clients database. Required for new opportunities; legacy rows may only have `client`. */
+  clientId?: string;
   /** Closer in charge of finalizing the deal. Acquisition lives on the Client. */
   closer?: string;
   stage: Stage;

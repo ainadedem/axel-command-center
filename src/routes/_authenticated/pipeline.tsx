@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useOpportunities, useCompanies, useClients, useSalesPeople, opportunitiesStore,
+  useOpportunities, useCompanies, useClients, useSalesPeople, opportunitiesStore, clientsStore,
   stages, fmtCompact, toMGA, stageProbability,
   type Stage, type Opportunity, type Currency, type Client,
 } from "@/lib/mock-data";
@@ -64,14 +64,19 @@ function PipelinePage() {
   );
 }
 
-/** Map (companyId, client name) → acquisition person from the Clients table. */
+/** Resolve acquisition person for an opportunity — prefers clientId link, falls back to (companyId, client name). */
 function useAcqLookup(clients: Client[]): (o: Opportunity) => string {
   return useMemo(() => {
-    const map = new Map<string, string>();
+    const byId = new Map<string, Client>();
+    const byName = new Map<string, Client>();
     for (const c of clients) {
-      if (c.acquisition) map.set(`${c.companyId}::${c.name.toLowerCase()}`, c.acquisition);
+      byId.set(c.id, c);
+      byName.set(`${c.companyId}::${c.name.toLowerCase()}`, c);
     }
-    return (o: Opportunity) => map.get(`${o.companyId}::${(o.client || "").toLowerCase()}`) ?? "";
+    return (o: Opportunity) => {
+      const c = (o.clientId && byId.get(o.clientId)) || byName.get(`${o.companyId}::${(o.client || "").toLowerCase()}`);
+      return c?.acquisition ?? "";
+    };
   }, [clients]);
 }
 
@@ -416,7 +421,8 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
   const closerPeople = useSalesPeople("closer");
   const [companyId, setCompanyId] = useState("");
   const [name, setName] = useState("");
-  const [client, setClient] = useState("");
+  const [clientId, setClientId] = useState<string>("");
+  const [newLeadName, setNewLeadName] = useState("");
   const [closer, setCloser] = useState("");
   const [stage, setStage] = useState<Stage>("Lead");
   const [value, setValue] = useState("0");
@@ -426,22 +432,38 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
   useEffect(() => {
     if (!open) return;
     if (editing) {
-      setCompanyId(editing.companyId); setName(editing.name); setClient(editing.client);
+      setCompanyId(editing.companyId); setName(editing.name);
+      // Resolve the linked client: prefer clientId, else look up by (companyId, name).
+      const linked = editing.clientId
+        ? clients.find((c) => c.id === editing.clientId)
+        : clients.find((c) => c.companyId === editing.companyId && c.name.toLowerCase() === (editing.client || "").toLowerCase());
+      setClientId(linked?.id ?? "");
+      setNewLeadName(linked ? "" : (editing.client ?? ""));
       setCloser(editing.closer ?? "");
       setStage(editing.stage); setValue(String(editing.value)); setCurrency(editing.currency); setExpectedClose(editing.expectedClose);
     } else {
-      const c = companies[0]; setCompanyId(c?.id ?? ""); setName(""); setClient("");
+      const c = companies[0]; setCompanyId(c?.id ?? ""); setName("");
+      setClientId(""); setNewLeadName("");
       setCloser("");
       setStage("Lead"); setValue("0"); setCurrency(c?.baseCurrency ?? "EUR"); setExpectedClose(new Date().toISOString().slice(0, 10));
     }
-  }, [open, editing, companies]);
+  }, [open, editing, companies, clients]);
 
-  const acqForClient = useMemo(() => {
-    const match = clients.find(
-      (c) => c.companyId === companyId && c.name.toLowerCase() === client.trim().toLowerCase(),
-    );
-    return match?.acquisition ?? "";
-  }, [clients, companyId, client]);
+  // Reset client picker when company changes (so we don't keep a client from another company).
+  useEffect(() => {
+    if (!open || !companyId) return;
+    if (clientId) {
+      const cl = clients.find((c) => c.id === clientId);
+      if (!cl || cl.companyId !== companyId) setClientId("");
+    }
+  }, [companyId, clientId, clients, open]);
+
+  const companyClients = useMemo(
+    () => clients.filter((c) => c.companyId === companyId).sort((a, b) => a.name.localeCompare(b.name)),
+    [clients, companyId],
+  );
+  const selectedClient = clientId ? clients.find((c) => c.id === clientId) : undefined;
+  const acqForClient = selectedClient?.acquisition ?? "";
 
   const closerOptions = useMemo(() => {
     const names = closerPeople.map((p) => p.name);
@@ -451,7 +473,53 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
 
   const submit = () => {
     if (!name.trim() || !companyId) return;
-    const data = { companyId, name, client, closer: closer.trim() || undefined, stage, value: Number(value) || 0, currency, expectedClose };
+
+    // Resolve / create the linked client.
+    let linkedClientId = clientId;
+    let clientDisplayName = selectedClient?.name ?? "";
+    if (!linkedClientId) {
+      const trimmed = newLeadName.trim();
+      if (!trimmed) return; // require either a picked client or a new lead name
+      // De-dupe: if a client with this name already exists for the company, reuse it.
+      const existing = clients.find(
+        (c) => c.companyId === companyId && c.name.toLowerCase() === trimmed.toLowerCase(),
+      );
+      if (existing) {
+        linkedClientId = existing.id;
+        clientDisplayName = existing.name;
+      } else {
+        const newId_ = newId("cli");
+        const newClient: Client = {
+          id: newId_,
+          companyId,
+          name: trimmed,
+          country: "",
+          status: stage === "Won" ? "client" : "lead",
+        };
+        clientsStore.add(newClient);
+        linkedClientId = newId_;
+        clientDisplayName = trimmed;
+      }
+    }
+
+    // If moving to Won, promote the linked client from "lead" to "client".
+    if (stage === "Won" && linkedClientId) {
+      const cl = clients.find((c) => c.id === linkedClientId);
+      if (cl && cl.status !== "client") {
+        clientsStore.update(linkedClientId, {
+          status: "client",
+          acquiredAt: cl.acquiredAt ?? new Date().toISOString().slice(0, 10),
+        });
+      }
+    }
+
+    const data = {
+      companyId, name,
+      clientId: linkedClientId,
+      client: clientDisplayName,
+      closer: closer.trim() || undefined,
+      stage, value: Number(value) || 0, currency, expectedClose,
+    };
     if (editing) opportunitiesStore.update(editing.id, data);
     else opportunitiesStore.add({ id: newId("opp"), ...data });
     onOpenChange(false);
@@ -471,10 +539,36 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
           </div>
           <div><Label>Opportunity name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div>
-            <Label>Client</Label>
-            <Input value={client} onChange={(e) => setClient(e.target.value)} />
+            <Label>Client / lead <span className="text-destructive">*</span></Label>
+            <Select
+              value={clientId || "__new__"}
+              onValueChange={(v) => setClientId(v === "__new__" ? "" : v)}
+              disabled={!companyId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={companyId ? "Select client" : "Select company first"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__new__">＋ New lead…</SelectItem>
+                {companyClients.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name} {c.status === "lead" ? "· lead" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!clientId && (
+              <div className="mt-2">
+                <Input
+                  value={newLeadName}
+                  onChange={(e) => setNewLeadName(e.target.value)}
+                  placeholder="New lead name (will be added to Clients as a lead)"
+                />
+              </div>
+            )}
             <p className="text-[11px] text-muted-foreground mt-1">
-              Acquisition: <span className="font-medium text-foreground">{acqForClient || "—"}</span> (managed on the Clients page)
+              Acquisition: <span className="font-medium text-foreground">{acqForClient || "—"}</span>
+              {" "}(managed on the <Link to="/clients" className="text-primary underline">Clients</Link> page)
             </p>
           </div>
           <div>
@@ -521,7 +615,9 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit}>{editing ? "Save" : "Create"}</Button>
+          <Button onClick={submit} disabled={!name.trim() || !companyId || (!clientId && !newLeadName.trim())}>
+            {editing ? "Save" : "Create"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
