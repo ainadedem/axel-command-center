@@ -98,6 +98,7 @@ function Body() {
                 <th className="text-left font-medium px-5 py-3">Date</th>
                 <th className="text-left font-medium px-5 py-3">Description</th>
                 <th className="text-left font-medium px-5 py-3">Company</th>
+                <th className="text-left font-medium px-5 py-3">Counterparty</th>
                 <th className="text-left font-medium px-5 py-3">Category</th>
                 <th className="text-left font-medium px-5 py-3">Type</th>
                 <th className="text-right font-medium px-5 py-3">Amount</th>
