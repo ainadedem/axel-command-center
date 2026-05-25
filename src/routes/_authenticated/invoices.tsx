@@ -3,12 +3,13 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
   useInvoices, useCompanies, useClients, useProjects, usePurchaseOrders, useQuotes, useAccounts,
-  invoicesStore, transactionsStore,
-  fmtAmount, toMGA, FX, type Invoice, type Currency,
+  invoicesStore, transactionsStore, projectsStore,
+  fmtAmount, toMGA, FX, type Invoice, type Project, type Currency,
   getNumberFormat, setNumberFormat, type NumberFormatMode,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
+import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useEffect, useState, useCallback } from "react";
