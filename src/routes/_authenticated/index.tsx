@@ -143,28 +143,29 @@ function DashboardBody() {
               <AreaChart data={days} margin={{ top: 6, right: 8, left: -16, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gIn" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="oklch(0.78 0.14 165)" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="oklch(0.78 0.14 165)" stopOpacity={0} />
+                    <stop offset="0%" stopColor="oklch(0.56 0.19 275)" stopOpacity={0.25} />
+                    <stop offset="100%" stopColor="oklch(0.56 0.19 275)" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="gOut" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="oklch(0.68 0.19 22)" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="oklch(0.68 0.19 22)" stopOpacity={0} />
+                    <stop offset="0%" stopColor="oklch(0.66 0.22 22)" stopOpacity={0.18} />
+                    <stop offset="100%" stopColor="oklch(0.66 0.22 22)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke="oklch(0.3 0.018 250 / 0.4)" vertical={false} />
-                <XAxis dataKey="date" stroke="oklch(0.68 0.015 250)" fontSize={11} tickLine={false} axisLine={false} minTickGap={32} />
-                <YAxis stroke="oklch(0.68 0.015 250)" fontSize={11} tickLine={false} axisLine={false} />
+                <CartesianGrid stroke="oklch(0.92 0.006 260)" vertical={false} />
+                <XAxis dataKey="date" stroke="oklch(0.55 0.02 260)" fontSize={11} tickLine={false} axisLine={false} minTickGap={32} />
+                <YAxis stroke="oklch(0.55 0.02 260)" fontSize={11} tickLine={false} axisLine={false} />
                 <Tooltip
                   contentStyle={{
-                    background: "oklch(0.215 0.02 250)",
-                    border: "1px solid oklch(0.3 0.018 250)",
-                    borderRadius: 8,
+                    background: "oklch(1 0 0)",
+                    border: "1px solid oklch(0.92 0.006 260)",
+                    borderRadius: 12,
                     fontSize: 12,
+                    boxShadow: "0 8px 24px -12px oklch(0.22 0.02 260 / 0.15)",
                   }}
-                  labelStyle={{ color: "oklch(0.97 0.005 250)" }}
+                  labelStyle={{ color: "oklch(0.22 0.02 260)" }}
                 />
-                <Area type="monotone" dataKey="income" stroke="oklch(0.78 0.14 165)" strokeWidth={2} fill="url(#gIn)" />
-                <Area type="monotone" dataKey="expense" stroke="oklch(0.68 0.19 22)" strokeWidth={2} fill="url(#gOut)" />
+                <Area type="monotone" dataKey="income" stroke="oklch(0.56 0.19 275)" strokeWidth={2.5} fill="url(#gIn)" />
+                <Area type="monotone" dataKey="expense" stroke="oklch(0.66 0.22 22)" strokeWidth={2} fill="url(#gOut)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
