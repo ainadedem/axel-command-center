@@ -66,9 +66,11 @@ function Body() {
                 <th className="text-left font-medium px-5 py-3">Company</th>
                 <th className="text-left font-medium px-5 py-3">Issued</th>
                 <th className="text-left font-medium px-5 py-3">Status</th>
+                <th className="text-left font-medium px-5 py-3">Document</th>
                 <th className="text-right font-medium px-5 py-3">Amount</th>
                 <th className="px-5 py-3 w-20" />
               </tr>
+
             </thead>
             <tbody>
               {list.map((po) => {
