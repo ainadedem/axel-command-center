@@ -40,7 +40,6 @@ function Body() {
   const { scope } = useCompany();
   const transactions = useTransactions();
   const companies = useCompanies();
-  const [filter, setFilter] = useState<(typeof types)[number]>("all");
   const { q } = Route.useSearch();
   const [filter, setFilter] = useState<(typeof types)[number]>("all");
   const [open, setOpen] = useState(false);
