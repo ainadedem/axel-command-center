@@ -5,7 +5,7 @@
     "name": "Airtel Forfait Janvier",
     "client": "Airtel Madagascar",
     "owner": "Dedem",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 24100000,
     "currency": "MGA",
     "expectedClose": "2026-01-01"
@@ -16,7 +16,7 @@
     "name": "Airtel Forfait Fevrier",
     "client": "Airtel Madagascar",
     "owner": "Dedem",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 24100000,
     "currency": "MGA",
     "expectedClose": "2026-02-01"
@@ -27,7 +27,7 @@
     "name": "Airtel Forfait Mars",
     "client": "Airtel Madagascar",
     "owner": "Dedem",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 24100000,
     "currency": "MGA",
     "expectedClose": "2026-03-01"
@@ -93,7 +93,7 @@
     "name": "Event Airtel Nouvel An",
     "client": "Airtel Madagascar",
     "owner": "Elisa",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 65000000,
     "currency": "MGA",
     "expectedClose": "2026-01-01"
@@ -115,7 +115,7 @@
     "name": "Location panneau MAHAMASINA",
     "client": "Blue Carbon Technology INC",
     "owner": "Elisa",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 3485000,
     "currency": "MGA",
     "expectedClose": "2026-01-01"
@@ -126,7 +126,7 @@
     "name": "Charte graphique et banque d’image (SOLDE)",
     "client": "Ryze",
     "owner": "Elisa",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 2394750,
     "currency": "MGA",
     "expectedClose": "2026-01-01"
@@ -137,7 +137,7 @@
     "name": "Valisoa Club (Acompte N*02)",
     "client": "Madagascar Airlines",
     "owner": "Dedem",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 5805000,
     "currency": "MGA",
     "expectedClose": "2026-01-01"
@@ -148,7 +148,7 @@
     "name": "Bacs compartimentes",
     "client": "Promodim",
     "owner": "Elisa",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 525000,
     "currency": "MGA",
     "expectedClose": "2026-01-01"
@@ -159,7 +159,7 @@
     "name": "Video DMI et DCE",
     "client": "BMOI",
     "owner": "Elisa",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 3300000,
     "currency": "MGA",
     "expectedClose": "2026-02-01"
@@ -170,7 +170,7 @@
     "name": "Vols Interprovinciaux",
     "client": "Madagascar Airlines",
     "owner": "Elisa",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 2500000,
     "currency": "MGA",
     "expectedClose": "2026-02-01"
@@ -181,7 +181,7 @@
     "name": "Refonte Plateforme 24/24 MG (Prototype)",
     "client": "2424 MG",
     "owner": "Dedem",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 5500000,
     "currency": "MGA",
     "expectedClose": "2026-02-01"
@@ -192,7 +192,7 @@
     "name": "Production étiquettes personnalises",
     "client": "Promodim",
     "owner": "Elisa",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 1404000,
     "currency": "MGA",
     "expectedClose": "2026-02-09"
@@ -203,7 +203,7 @@
     "name": "Production cadeaux d’entreprises (coffrets)",
     "client": "Promodim",
     "owner": "Elisa",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 23011600,
     "currency": "MGA",
     "expectedClose": "2026-02-09"
@@ -214,7 +214,7 @@
     "name": "Conception de logo",
     "client": "TISSEO",
     "owner": "Elisa",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 500000,
     "currency": "MGA",
     "expectedClose": "2026-02-09"
@@ -225,7 +225,7 @@
     "name": "Visuels pour Salon Mars",
     "client": "Madagascar Airlines",
     "owner": "Elisa",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 1250000,
     "currency": "MGA",
     "expectedClose": "2026-02-09"
@@ -313,7 +313,7 @@
     "name": "Finalisation identité visuelle",
     "client": "IMMERSION",
     "owner": "Elisa",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 1346400,
     "currency": "MGA",
     "expectedClose": "2026-03-13"
@@ -324,7 +324,7 @@
     "name": "Reconduction Panneau ANTANIMENA",
     "client": "Blue Carbon Technology INC",
     "owner": "Elisa",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 2975000,
     "currency": "MGA",
     "expectedClose": "2026-03-13"
@@ -335,7 +335,7 @@
     "name": "Reconduction Panneau MAHAMASINA",
     "client": "Blue Carbon Technology INC",
     "owner": "Elisa",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 2286500,
     "currency": "MGA",
     "expectedClose": "2026-03-13"
@@ -401,7 +401,7 @@
     "name": "Production de Roll up",
     "client": "Promodim",
     "owner": "Elisa",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 2508000,
     "currency": "MGA",
     "expectedClose": "2026-04-01"
@@ -423,7 +423,7 @@
     "name": "Modif carte de visite",
     "client": "Synergy",
     "owner": "Elisa",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 380000,
     "currency": "MGA",
     "expectedClose": "2026-04-08"
@@ -511,7 +511,7 @@
     "name": "Design site web",
     "client": "Novity",
     "owner": "Elisa",
-    "stage": "Won",
+    "stage": "Closed",
     "value": 6400000,
     "currency": "MGA",
     "expectedClose": "2026-04-13"
