@@ -1,6 +1,8 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
+// Side-effect import: triggers idempotent data seeds (Logia + Axiom).
+import "@/lib/pcg";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
