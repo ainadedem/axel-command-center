@@ -17,7 +17,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, FileCheck2, Plus, X } from "lucide-react";
+import { Pencil, Trash2, FileCheck2, Plus, X, Eye } from "lucide-react";
+import { DocumentPreview, type DocumentData } from "@/components/document-preview";
 
 export const Route = createFileRoute("/_authenticated/quotations")({ component: QuotationsPage });
 
@@ -47,6 +48,7 @@ function Body() {
   const list = inScope(quotes, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Quote | null>(null);
+  const [previewing, setPreviewing] = useState<Quote | null>(null);
   const openCreate = () => { setEditing(null); setOpen(true); };
 
   const convertToPO = (q: Quote) => {
@@ -108,6 +110,7 @@ function Body() {
                           <button onClick={() => convertToPO(q)} title="Convert to PO" className="text-[10px] uppercase tracking-wider px-2 py-1 rounded border border-success/30 text-success hover:bg-success/10 flex items-center gap-1"><FileCheck2 className="h-3 w-3" /> To PO</button>
                         )}
                         <div className="opacity-0 group-hover:opacity-100 flex gap-1">
+                          <button onClick={() => setPreviewing(q)} title="Preview & export PDF" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
                           <button onClick={() => { setEditing(q); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
                           <button onClick={() => confirm(`Delete quote ${q.number}?`) && quotesStore.remove(q.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
                         </div>
@@ -121,8 +124,30 @@ function Body() {
         </div>
       )}
       <QuoteDialog open={open} onOpenChange={setOpen} editing={editing} />
+      <DocumentPreview
+        open={!!previewing}
+        onOpenChange={(v) => { if (!v) setPreviewing(null); }}
+        doc={previewing ? quoteToDoc(previewing) : null}
+        company={previewing ? companies.find((c) => c.id === previewing.companyId) : undefined}
+        client={previewing ? clients.find((c) => c.id === previewing.clientId) : undefined}
+        project={previewing?.projectId ? projects.find((p) => p.id === previewing.projectId) : undefined}
+      />
     </div>
   );
+}
+
+function quoteToDoc(q: Quote): DocumentData {
+  return {
+    kind: "quote",
+    number: q.number,
+    status: q.status,
+    issueDate: q.issueDate,
+    dueDate: q.validUntil,
+    amount: q.amount,
+    currency: q.currency,
+    lines: q.lines,
+    notes: q.notes,
+  };
 }
 
 function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Quote | null }) {
