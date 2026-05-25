@@ -4,8 +4,8 @@ import { PageHeader } from "@/components/page-header";
 import { KpiCard } from "@/components/kpi-card";
 import { useCompany } from "@/lib/company-context";
 import {
-  accounts, transactions, invoices, opportunities,
-  toMGA, fmtCompact, stageProbability, companies,
+  useAccounts, useTransactions, useInvoices, useOpportunities, useCompanies,
+  toMGA, fmtCompact, stageProbability,
 } from "@/lib/mock-data";
 import { inScope } from "@/lib/company-context";
 import {
@@ -41,10 +41,11 @@ function Dashboard() {
 function DashboardBody() {
   const { scope } = useCompany();
 
-  const acc = inScope(accounts, scope);
-  const tx = inScope(transactions, scope);
-  const inv = inScope(invoices, scope);
-  const opp = inScope(opportunities, scope);
+  const acc = inScope(useAccounts(), scope);
+  const tx = inScope(useTransactions(), scope);
+  const inv = inScope(useInvoices(), scope);
+  const opp = inScope(useOpportunities(), scope);
+  const companies = useCompanies();
 
   const cashByCurrency = acc.reduce<Record<string, number>>((m, a) => {
     m[a.currency] = (m[a.currency] ?? 0) + a.balance;
