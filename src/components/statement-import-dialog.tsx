@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
   accountsStore, transactionsStore, invoicesStore, invoices as invoicesArr,
+  toMGA, FX,
   type Account, type Transaction, type Invoice,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
@@ -167,19 +168,27 @@ function autoMatchInvoice(
 ): string | undefined {
   if (type !== "income") return undefined;
   const desc = description.toLowerCase().replace(/\s+/g, " ");
-  // Try invoice.number substring match (case-insensitive, also try normalized)
+  const descNorm = desc.replace(/[^a-z0-9]/g, "");
+  // Find candidates by invoice number appearing in description
   const candidates = invoices.filter((i) => {
     const n = i.number.toLowerCase();
     const nNorm = n.replace(/[^a-z0-9]/g, "");
-    const descNorm = desc.replace(/[^a-z0-9]/g, "");
     return n.length >= 3 && (desc.includes(n) || (nNorm.length >= 4 && descNorm.includes(nNorm)));
   });
   if (!candidates.length) return undefined;
-  // Prefer same currency + similar amount (within 1%)
-  const sameCcy = candidates.filter((i) => i.currency === account.currency);
-  const pool = sameCcy.length ? sameCcy : candidates;
-  const exact = pool.find((i) => Math.abs(i.amount - amount) <= Math.max(1, i.amount * 0.01));
-  return (exact ?? pool[0]).id;
+  // Convert each invoice's remaining to the account's currency and prefer
+  // the closest match (tolerate ±10% to absorb FX drift).
+  const amountInMGA = toMGA(amount, account.currency);
+  const scored = candidates.map((i) => {
+    const remaining = Math.max(0, i.amount - i.paid);
+    const remainingInMGA = toMGA(remaining, i.currency);
+    const diff = Math.abs(remainingInMGA - amountInMGA);
+    const ratio = remainingInMGA > 0 ? diff / remainingInMGA : 1;
+    return { i, ratio };
+  }).sort((a, b) => a.ratio - b.ratio);
+  const best = scored[0];
+  // Loose threshold so FX swings don't block the match
+  return best.ratio <= 0.15 ? best.i.id : scored[0].i.id;
 }
 
 /* ─── Component ─────────────────────────────────────────────────────── */
