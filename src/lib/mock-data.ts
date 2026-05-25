@@ -73,6 +73,11 @@ export interface Client {
   industry?: string;
   /** Free-text list of key contacts at the company. */
   contacts?: string;
+  /** Legal tax identifiers (printed on invoices). */
+  taxId?: string;
+  nif?: string;
+  stat?: string;
+  rcs?: string;
 }
 
 export interface Project {
