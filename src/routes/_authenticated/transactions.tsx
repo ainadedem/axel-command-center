@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
+import { ResizeHandle, useResizableColumns } from "@/components/resizable-columns";
 import { Pencil, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/transactions")({
@@ -91,67 +92,96 @@ function Body() {
       {list.length === 0 ? (
         <EmptyState label="transactions" onCreate={openCreate} />
       ) : (
-        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
-                <th className="text-left font-medium px-5 py-3">Date</th>
-                <th className="text-left font-medium px-5 py-3">Description</th>
-                <th className="text-left font-medium px-5 py-3">Company</th>
-                <th className="text-left font-medium px-5 py-3">Counterparty</th>
-                <th className="text-left font-medium px-5 py-3">Category</th>
-                <th className="text-left font-medium px-5 py-3">Type</th>
-                <th className="text-right font-medium px-5 py-3">Amount</th>
-                <th className="px-5 py-3 w-20" />
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((t) => {
-                const co = companies.find((c) => c.id === t.companyId);
-                const cli = t.clientId ? clients.find((c) => c.id === t.clientId) : null;
-                const sup = t.supplierId ? suppliers.find((s) => s.id === t.supplierId) : null;
-                return (
-                  <tr key={t.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
-                    <td className="px-5 py-3.5 text-muted-foreground font-tnum text-xs">{format(parseISO(t.date), "MMM d, yyyy")}</td>
-                    <td className="px-5 py-3.5 font-medium">{t.description}</td>
-                    <td className="px-5 py-3.5">
-                      {co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}
-                    </td>
-                    <td className="px-5 py-3.5 text-xs">
-                      {cli ? <span className="text-success">↑ {cli.name}</span>
-                        : sup ? <span className="text-muted-foreground">↓ {sup.name}</span>
-                        : <span className="text-muted-foreground/50">—</span>}
-                    </td>
-                    <td className="px-5 py-3.5 text-muted-foreground">{t.category}</td>
-                    <td className="px-5 py-3.5">
-                      <span className={cn(
-                        "text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border",
-                        t.type === "income" && "border-success/40 text-success bg-success/10",
-                        t.type === "expense" && "border-destructive/30 text-destructive bg-destructive/10",
-                        t.type === "transfer" && "border-chart-2/30 text-chart-2 bg-chart-2/10",
-                        t.type === "intercompany" && "border-chart-4/30 text-chart-4 bg-chart-4/10",
-                      )}>{t.type}</span>
-                    </td>
-                    <td className={cn("px-5 py-3.5 text-right font-tnum font-medium", t.type === "income" && "text-success")}>
-                      {t.type === "income" ? "+" : t.type === "expense" ? "−" : ""}{fmtCompact(t.amount, t.currency)}
-                    </td>
-                    <td className="px-5 py-3.5 text-right">
-                      <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
-                        <button onClick={() => { setEditing(t); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                        <button onClick={() => confirm("Delete this transaction?") && transactionsStore.remove(t.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-x-auto">
+          <ResizableTable />
         </div>
       )}
 
       <TransactionDialog open={open} onOpenChange={setOpen} editing={editing} />
     </div>
   );
+
+  function ResizableTable() {
+    const cols = [
+      { key: "date", label: "Date", align: "left" as const, w: 140 },
+      { key: "description", label: "Description", align: "left" as const, w: 280 },
+      { key: "company", label: "Company", align: "left" as const, w: 140 },
+      { key: "counterparty", label: "Counterparty", align: "left" as const, w: 200 },
+      { key: "category", label: "Category", align: "left" as const, w: 180 },
+      { key: "type", label: "Type", align: "left" as const, w: 130 },
+      { key: "amount", label: "Amount", align: "right" as const, w: 160 },
+      { key: "actions", label: "", align: "right" as const, w: 90 },
+    ];
+    const defaults = Object.fromEntries(cols.map((c) => [c.key, c.w]));
+    const { widths, startResize, resetWidths } = useResizableColumns("tx-col-widths", defaults);
+    const total = cols.reduce((s, c) => s + (widths[c.key] ?? c.w), 0);
+
+    return (
+      <table className="text-sm" style={{ width: total, tableLayout: "fixed" }}>
+        <colgroup>
+          {cols.map((c) => <col key={c.key} style={{ width: widths[c.key] ?? c.w }} />)}
+        </colgroup>
+        <thead>
+          <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+            {cols.map((c, i) => (
+              <th key={c.key} className={cn("font-medium px-5 py-3 relative select-none", c.align === "right" ? "text-right" : "text-left")}>
+                {c.key === "actions" ? (
+                  <button
+                    onClick={resetWidths}
+                    title="Reset column widths"
+                    className="text-[10px] text-muted-foreground/70 hover:text-foreground"
+                  >
+                    reset
+                  </button>
+                ) : c.label}
+                {i < cols.length - 1 && <ResizeHandle onMouseDown={startResize(c.key)} />}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {list.map((t) => {
+            const co = companies.find((c) => c.id === t.companyId);
+            const cli = t.clientId ? clients.find((c) => c.id === t.clientId) : null;
+            const sup = t.supplierId ? suppliers.find((s) => s.id === t.supplierId) : null;
+            return (
+              <tr key={t.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
+                <td className="px-5 py-3.5 text-muted-foreground font-tnum text-xs truncate">{format(parseISO(t.date), "MMM d, yyyy")}</td>
+                <td className="px-5 py-3.5 font-medium truncate">{t.description}</td>
+                <td className="px-5 py-3.5 truncate">
+                  {co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}
+                </td>
+                <td className="px-5 py-3.5 text-xs truncate">
+                  {cli ? <span className="text-success">↑ {cli.name}</span>
+                    : sup ? <span className="text-muted-foreground">↓ {sup.name}</span>
+                    : <span className="text-muted-foreground/50">—</span>}
+                </td>
+                <td className="px-5 py-3.5 text-muted-foreground truncate">{t.category}</td>
+                <td className="px-5 py-3.5 truncate">
+                  <span className={cn(
+                    "text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                    t.type === "income" && "border-success/40 text-success bg-success/10",
+                    t.type === "expense" && "border-destructive/30 text-destructive bg-destructive/10",
+                    t.type === "transfer" && "border-chart-2/30 text-chart-2 bg-chart-2/10",
+                    t.type === "intercompany" && "border-chart-4/30 text-chart-4 bg-chart-4/10",
+                  )}>{t.type}</span>
+                </td>
+                <td className={cn("px-5 py-3.5 text-right font-tnum font-medium truncate", t.type === "income" && "text-success")}>
+                  {t.type === "income" ? "+" : t.type === "expense" ? "−" : ""}{fmtCompact(t.amount, t.currency)}
+                </td>
+                <td className="px-5 py-3.5 text-right">
+                  <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
+                    <button onClick={() => { setEditing(t); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => confirm("Delete this transaction?") && transactionsStore.remove(t.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    );
+  }
 }
 
 function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Transaction | null }) {
