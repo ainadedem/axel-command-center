@@ -118,6 +118,50 @@ function CompanySwitcher() {
   );
 }
 
+function SidebarSection({ section, pathname }: { section: NavSection; pathname: string }) {
+  const hasActive = section.items.some(
+    (item) => pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to)),
+  );
+  const [open, setOpen] = useState(hasActive);
+
+  useEffect(() => {
+    if (hasActive) setOpen(true);
+  }, [hasActive]);
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition cursor-pointer select-none">
+        <span>{section.label}</span>
+        {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="space-y-0.5 pb-2">
+          {section.items.map((item) => {
+            const active = pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to));
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={cn(
+                  "group flex items-center gap-3 px-3 py-2 rounded-md text-sm transition relative",
+                  active
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
+                )}
+              >
+                {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-primary" />}
+                <Icon className="h-4 w-4" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 function Sidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   return (
@@ -134,51 +178,10 @@ function Sidebar() {
       <div className="px-3 pb-3">
         <CompanySwitcher />
       </div>
-      <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
-        {nav.map((item) => {
-          const active = pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to));
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={cn(
-                "group flex items-center gap-3 px-3 py-2 rounded-md text-sm transition relative",
-                active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
-              )}
-            >
-              {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-primary" />}
-              <Icon className="h-4 w-4" />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-
-        <div className="pt-4 pb-1 px-3 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          Comptabilité · PCG 2005
-        </div>
-        {compta.map((item) => {
-          const active = pathname === item.to || pathname.startsWith(item.to);
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={cn(
-                "group flex items-center gap-3 px-3 py-2 rounded-md text-sm transition relative",
-                active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
-              )}
-            >
-              {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-primary" />}
-              <Icon className="h-4 w-4" />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
+      <nav className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
+        {sections.map((section) => (
+          <SidebarSection key={section.label} section={section} pathname={pathname} />
+        ))}
       </nav>
       <div className="p-3 border-t border-sidebar-border">
         <Link to="/settings" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50">
