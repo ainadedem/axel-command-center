@@ -182,6 +182,7 @@ import {
   companiesStore, accountsStore, clientsStore, suppliersStore,
   invoicesStore, transactionsStore, categoriesStore, opportunitiesStore,
   teamMembersStore, salesMembersStore, projectsStore,
+  FX, toMGA,
   type Account, type Client, type Supplier, type Invoice, type Transaction, type Category, type Opportunity,
   type TeamMember, type SalesMember, type SalesRole, type Project,
 } from "./mock-data";
@@ -630,6 +631,7 @@ export function enrichClientsFromAccounts() {
 const DERIVED_VERSION = "12"; // bump to force re-derive on existing local data
 const AXIOM_INVOICES_VERSION = "3";
 const AXIOM_BANK_VERSION = "1";
+const AXIOM_RECONCILE_VERSION = "1";
 if (typeof window !== "undefined") {
   try {
     ensureSeedCompanies();
@@ -654,6 +656,14 @@ if (typeof window !== "undefined") {
     if (axBankCurrent !== AXIOM_BANK_VERSION) {
       seedAxiomBankStatement(true);
       localStorage.setItem("axiom-bank-version", AXIOM_BANK_VERSION);
+    }
+
+    // Reconcile Axiom invoices against MCB bank transactions.
+    // Re-runs whenever invoices, bank statement, or the reconcile logic version bump.
+    const reconcileKey = `${AXIOM_INVOICES_VERSION}.${AXIOM_BANK_VERSION}.${AXIOM_RECONCILE_VERSION}`;
+    if (localStorage.getItem("axiom-reconcile-key") !== reconcileKey) {
+      reconcileAxiomInvoices();
+      localStorage.setItem("axiom-reconcile-key", reconcileKey);
     }
   } catch { /* ignore */ }
 }
