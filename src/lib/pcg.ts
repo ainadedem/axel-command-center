@@ -690,8 +690,6 @@ const AXIOM_INVOICES_VERSION = "3";
 const AXIOM_BANK_VERSION = "1";
 const AXIOM_RECONCILE_VERSION = "1";
 const AXIOM_OPPS_VERSION = "1";
-const AXIOM_BANK_VERSION = "1";
-const AXIOM_RECONCILE_VERSION = "1";
 if (typeof window !== "undefined") {
   try {
     ensureSeedCompanies();
