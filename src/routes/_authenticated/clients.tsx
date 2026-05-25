@@ -61,7 +61,16 @@ function ClientsPage() {
                       <Avatar src={cl.avatarUrl} name={cl.name} size={44} />
                       <div className="min-w-0">
                         <div className="font-medium text-base truncate">{cl.name}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">{cl.country}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                          {[cl.industry, cl.country].filter(Boolean).join(" · ")}
+                        </div>
+                        {(cl.email || cl.phone || cl.website) && (
+                          <div className="text-[11px] text-muted-foreground/80 mt-1 truncate space-x-2">
+                            {cl.website && <a href={cl.website} target="_blank" rel="noopener noreferrer" className="hover:text-primary underline-offset-2 hover:underline">{cl.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}</a>}
+                            {cl.email && <span>· {cl.email}</span>}
+                            {cl.phone && <span>· {cl.phone}</span>}
+                          </div>
+                        )}
                         <div className="flex flex-wrap gap-1 mt-2">
                           {cl.acquisition && (
                             <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20" title="Client acquisition">
@@ -70,7 +79,7 @@ function ClientsPage() {
                           )}
                           {cl.acquiredAt && (
                             <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-300 border border-violet-500/20" title="Acquired on">
-                              Since {cl.acquiredAt}
+                              Since {cl.acquisitionYear ?? cl.acquiredAt}
                             </span>
                           )}
                         </div>
