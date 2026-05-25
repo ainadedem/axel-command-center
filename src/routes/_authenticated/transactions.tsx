@@ -176,7 +176,7 @@ function Body() {
                     t.type === "intercompany" && "border-chart-4/30 text-chart-4 bg-chart-4/10",
                   )}>{t.type}</span>
                 </td>
-                <td className={cn("px-5 py-3.5 text-right font-tnum font-medium truncate", t.type === "income" && "text-success")}>
+                <td className={cn("px-5 py-3.5 text-right font-tnum font-medium truncate", t.type === "income" && "text-success", t.type === "expense" && "text-destructive")}>
                   {t.type === "income" ? "+" : t.type === "expense" ? "−" : ""}{fmtCompact(t.amount, t.currency)}
                 </td>
                 <td className="px-5 py-3.5 text-right">
