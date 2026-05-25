@@ -179,6 +179,8 @@ export const invoices = invoicesStore.items;
 export const opportunities = opportunitiesStore.items;
 export const categories = categoriesStore.items;
 export const budgets = budgetsStore.items;
+export const teamMembers = teamMembersStore.items;
+export const salesMembers = salesMembersStore.items;
 
 /* ─── Hooks ─────────────────────────────────────────────────────────── */
 
@@ -192,6 +194,20 @@ export const useInvoices = () => useCollection(invoicesStore);
 export const useOpportunities = () => useCollection(opportunitiesStore);
 export const useCategories = () => useCollection(categoriesStore);
 export const useBudgets = () => useCollection(budgetsStore);
+export const useTeamMembers = () => useCollection(teamMembersStore);
+export const useSalesMembers = () => useCollection(salesMembersStore);
+
+/** Convenience: list of sales-team people (with team name) filtered by role. */
+export function useSalesPeople(role: "acquisition" | "closer"): { id: string; teamMemberId: string; name: string }[] {
+  const sm = useSalesMembers();
+  const tm = useTeamMembers();
+  const byId = new Map(tm.map((t) => [t.id, t]));
+  return sm
+    .filter((s) => s.role === role || s.role === "both")
+    .map((s) => ({ id: s.id, teamMemberId: s.teamMemberId, name: byId.get(s.teamMemberId)?.name ?? "" }))
+    .filter((p) => p.name)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
 
 
 /* ─── Formatters ────────────────────────────────────────────────────── */
