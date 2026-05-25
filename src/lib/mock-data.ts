@@ -56,6 +56,7 @@ export interface Transaction {
   date: string;
   type: "income" | "expense" | "transfer" | "intercompany";
   category: string;
+  categoryId?: string;
   description: string;
   amount: number;
   currency: Currency;
@@ -63,6 +64,29 @@ export interface Transaction {
   supplierId?: string;
   projectId?: string;
 }
+
+/** A spending/income category, scoped per company. */
+export interface Category {
+  id: string;
+  companyId: string;
+  name: string;
+  /** Drives which transactions count toward this category's budget. */
+  kind: "expense" | "income";
+  /** Optional PCG account code this category maps to (e.g. "606100"). */
+  account?: string;
+  color?: string;
+}
+
+/** Yearly budget plan for a category (one row per year). */
+export interface Budget {
+  id: string;
+  companyId: string;
+  categoryId: string;
+  year: number;
+  amount: number;
+  currency: Currency;
+}
+
 
 export interface Invoice {
   id: string;
