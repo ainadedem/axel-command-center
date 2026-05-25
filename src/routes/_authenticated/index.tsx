@@ -127,7 +127,7 @@ function DashboardBody() {
 
       {/* Charts row */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <div className="xl:col-span-2 rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
+        <div className="xl:col-span-2 rounded-2xl bg-card shadow-[var(--shadow-elevated)] p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Cash flow · 30 days</div>
@@ -143,44 +143,45 @@ function DashboardBody() {
               <AreaChart data={days} margin={{ top: 6, right: 8, left: -16, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gIn" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="oklch(0.78 0.14 165)" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="oklch(0.78 0.14 165)" stopOpacity={0} />
+                    <stop offset="0%" stopColor="oklch(0.56 0.19 275)" stopOpacity={0.25} />
+                    <stop offset="100%" stopColor="oklch(0.56 0.19 275)" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="gOut" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="oklch(0.68 0.19 22)" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="oklch(0.68 0.19 22)" stopOpacity={0} />
+                    <stop offset="0%" stopColor="oklch(0.66 0.22 22)" stopOpacity={0.18} />
+                    <stop offset="100%" stopColor="oklch(0.66 0.22 22)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke="oklch(0.3 0.018 250 / 0.4)" vertical={false} />
-                <XAxis dataKey="date" stroke="oklch(0.68 0.015 250)" fontSize={11} tickLine={false} axisLine={false} minTickGap={32} />
-                <YAxis stroke="oklch(0.68 0.015 250)" fontSize={11} tickLine={false} axisLine={false} />
+                <CartesianGrid stroke="oklch(0.92 0.006 260)" vertical={false} />
+                <XAxis dataKey="date" stroke="oklch(0.55 0.02 260)" fontSize={11} tickLine={false} axisLine={false} minTickGap={32} />
+                <YAxis stroke="oklch(0.55 0.02 260)" fontSize={11} tickLine={false} axisLine={false} />
                 <Tooltip
                   contentStyle={{
-                    background: "oklch(0.215 0.02 250)",
-                    border: "1px solid oklch(0.3 0.018 250)",
-                    borderRadius: 8,
+                    background: "oklch(1 0 0)",
+                    border: "1px solid oklch(0.92 0.006 260)",
+                    borderRadius: 12,
                     fontSize: 12,
+                    boxShadow: "0 8px 24px -12px oklch(0.22 0.02 260 / 0.15)",
                   }}
-                  labelStyle={{ color: "oklch(0.97 0.005 250)" }}
+                  labelStyle={{ color: "oklch(0.22 0.02 260)" }}
                 />
-                <Area type="monotone" dataKey="income" stroke="oklch(0.78 0.14 165)" strokeWidth={2} fill="url(#gIn)" />
-                <Area type="monotone" dataKey="expense" stroke="oklch(0.68 0.19 22)" strokeWidth={2} fill="url(#gOut)" />
+                <Area type="monotone" dataKey="income" stroke="oklch(0.56 0.19 275)" strokeWidth={2.5} fill="url(#gIn)" />
+                <Area type="monotone" dataKey="expense" stroke="oklch(0.66 0.22 22)" strokeWidth={2} fill="url(#gOut)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
+        <div className="rounded-2xl bg-card shadow-[var(--shadow-elevated)] p-6">
           <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Profit by company</div>
           <div className="font-display text-lg font-semibold mt-1 mb-4">30-day net (M MGA)</div>
           <div className="h-64">
             <ResponsiveContainer>
               <BarChart data={perCompany} margin={{ top: 6, right: 8, left: -16, bottom: 0 }}>
-                <CartesianGrid stroke="oklch(0.3 0.018 250 / 0.4)" vertical={false} />
-                <XAxis dataKey="name" stroke="oklch(0.68 0.015 250)" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="oklch(0.68 0.015 250)" fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ background: "oklch(0.215 0.02 250)", border: "1px solid oklch(0.3 0.018 250)", borderRadius: 8, fontSize: 12 }} cursor={{ fill: "oklch(0.27 0.02 250 / 0.5)" }} />
-                <Bar dataKey="profit" radius={[6, 6, 0, 0]} fill="oklch(0.78 0.14 165)" />
+                <CartesianGrid stroke="oklch(0.92 0.006 260)" vertical={false} />
+                <XAxis dataKey="name" stroke="oklch(0.55 0.02 260)" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="oklch(0.55 0.02 260)" fontSize={11} tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={{ background: "oklch(1 0 0)", border: "1px solid oklch(0.92 0.006 260)", borderRadius: 12, fontSize: 12, boxShadow: "0 8px 24px -12px oklch(0.22 0.02 260 / 0.15)" }} cursor={{ fill: "oklch(0.96 0.006 260)" }} />
+                <Bar dataKey="profit" radius={[8, 8, 0, 0]} fill="oklch(0.56 0.19 275)" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -189,7 +190,7 @@ function DashboardBody() {
 
       {/* Pipeline + Recent */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
+        <div className="rounded-2xl bg-card shadow-[var(--shadow-elevated)] p-6">
           <div className="flex items-center justify-between mb-1">
             <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Pipeline</div>
             <a href="/pipeline" className="text-xs text-primary hover:underline">View →</a>
@@ -215,7 +216,7 @@ function DashboardBody() {
           </div>
         </div>
 
-        <div className="xl:col-span-2 rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
+        <div className="xl:col-span-2 rounded-2xl bg-card shadow-[var(--shadow-elevated)] p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Recent activity</div>
             <a href="/transactions" className="text-xs text-primary hover:underline">All transactions →</a>
