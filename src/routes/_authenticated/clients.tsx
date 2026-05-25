@@ -3,7 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
   useClients, useCompanies, useProjects, useInvoices, useTransactions,
-  useSalesPeople,
+  useSalesPeople, useTeamMembers,
   clientsStore, fmtCompact, toMGA, type Client,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
@@ -77,6 +77,11 @@ function ClientsPage() {
                               Acq · {cl.acquisition}
                             </span>
                           )}
+                          {cl.referral && (
+                            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20" title="Referral">
+                              Ref · {cl.referral}
+                            </span>
+                          )}
                           {cl.acquiredAt && (
                             <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-300 border border-violet-500/20" title="Acquired on">
                               Since {cl.acquisitionYear ?? cl.acquiredAt}
@@ -122,10 +127,12 @@ function ClientsPage() {
 function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Client | null }) {
   const companies = useCompanies();
   const acqPeople = useSalesPeople("acquisition");
+  const teamMembers = useTeamMembers();
   const [companyId, setCompanyId] = useState("");
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
   const [acquisition, setAcquisition] = useState("");
+  const [referral, setReferral] = useState("");
   const [acquiredAt, setAcquiredAt] = useState("");
   const [website, setWebsite] = useState("");
   const [email, setEmail] = useState("");
@@ -140,6 +147,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
     if (editing) {
       setCompanyId(editing.companyId); setName(editing.name); setCountry(editing.country);
       setAcquisition(editing.acquisition ?? "");
+      setReferral(editing.referral ?? "");
       setAcquiredAt(editing.acquiredAt ?? "");
       setWebsite(editing.website ?? "");
       setEmail(editing.email ?? "");
@@ -149,7 +157,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setContacts(editing.contacts ?? "");
       setAvatarUrl(editing.avatarUrl);
     } else {
-      setCompanyId(companies[0]?.id ?? ""); setName(""); setCountry(""); setAcquisition("");
+      setCompanyId(companies[0]?.id ?? ""); setName(""); setCountry(""); setAcquisition(""); setReferral("");
       setAcquiredAt(new Date().toISOString().slice(0, 10));
       setWebsite(""); setEmail(""); setPhone(""); setAddress(""); setIndustry(""); setContacts("");
       setAvatarUrl(undefined);
@@ -161,6 +169,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
     const data = {
       companyId, name, country,
       acquisition: acquisition.trim() || undefined,
+      referral: referral.trim() || undefined,
       acquiredAt: acquiredAt || undefined,
       website: website.trim() || undefined,
       email: email.trim() || undefined,
@@ -179,6 +188,12 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
     const names = acqPeople.map((p) => p.name);
     if (acquisition && !names.includes(acquisition)) names.push(acquisition);
     return names.sort();
+  })();
+
+  const refOptions = (() => {
+    const names = teamMembers.map((t) => t.name).filter(Boolean);
+    if (referral && !names.includes(referral)) names.push(referral);
+    return Array.from(new Set(names)).sort();
   })();
 
   return (
@@ -230,6 +245,25 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
             )}
             <p className="text-[11px] text-muted-foreground mt-1">
               Sourced from the <Link to="/sales-team" className="text-primary underline">Sales team</Link>. Same person across all opportunities, invoices and projects for this client.
+            </p>
+          </div>
+          <div>
+            <Label>Referral</Label>
+            {refOptions.length === 0 ? (
+              <div className="text-xs text-muted-foreground rounded-md border border-dashed border-border px-3 py-2">
+                No team members yet — <Link to="/team" className="text-primary underline">add one</Link>.
+              </div>
+            ) : (
+              <Select value={referral || "__none__"} onValueChange={(v) => setReferral(v === "__none__" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Select referral" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— None —</SelectItem>
+                  {refOptions.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Another team member credited for bringing this client. Sourced from the <Link to="/team" className="text-primary underline">Team</Link>.
             </p>
           </div>
         </div>

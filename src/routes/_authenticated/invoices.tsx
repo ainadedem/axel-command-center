@@ -72,7 +72,10 @@ function Body() {
                   <th className="text-left font-medium px-5 py-3">Number</th>
                   <th className="text-left font-medium px-5 py-3">Client</th>
                   <th className="text-left font-medium px-5 py-3">Company</th>
+                  <th className="text-left font-medium px-5 py-3">Issued</th>
                   <th className="text-left font-medium px-5 py-3">Due</th>
+                  <th className="text-left font-medium px-5 py-3">Paid on</th>
+                  <th className="text-left font-medium px-5 py-3">Timing</th>
                   <th className="text-left font-medium px-5 py-3">Status</th>
                   <th className="text-right font-medium px-5 py-3">Amount</th>
                   <th className="text-right font-medium px-5 py-3">Balance</th>
@@ -85,6 +88,9 @@ function Body() {
                   const cl = clients.find((c) => c.id === inv.clientId);
                   const days = differenceInDays(parseISO(inv.dueDate), new Date());
                   const balance = inv.amount - inv.paid;
+                  const timing = inv.paidDate
+                    ? differenceInDays(parseISO(inv.paidDate), parseISO(inv.dueDate))
+                    : null;
                   return (
                     <tr key={inv.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
                       <td className="px-5 py-3.5 font-tnum text-xs text-muted-foreground">{inv.number}</td>
@@ -92,10 +98,27 @@ function Body() {
                       <td className="px-5 py-3.5">
                         {co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}
                       </td>
+                      <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">{format(parseISO(inv.issueDate), "MMM d, yyyy")}</td>
                       <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">
-                        {format(parseISO(inv.dueDate), "MMM d")}
-                        {days < 0 && <span className="ml-2 text-destructive">{Math.abs(days)}d late</span>}
-                        {days >= 0 && days < 14 && <span className="ml-2 text-warning">in {days}d</span>}
+                        {format(parseISO(inv.dueDate), "MMM d, yyyy")}
+                        {!inv.paidDate && days < 0 && <span className="ml-2 text-destructive">{Math.abs(days)}d late</span>}
+                        {!inv.paidDate && days >= 0 && days < 14 && <span className="ml-2 text-warning">in {days}d</span>}
+                      </td>
+                      <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">
+                        {inv.paidDate ? format(parseISO(inv.paidDate), "MMM d, yyyy") : <span className="text-muted-foreground/50">—</span>}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        {timing === null ? (
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Pending</span>
+                        ) : timing <= 0 ? (
+                          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-success/40 text-success bg-success/10">
+                            {timing === 0 ? "On due day" : `Early ${Math.abs(timing)}d`}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-destructive/40 text-destructive bg-destructive/10">
+                            Late {timing}d
+                          </span>
+                        )}
                       </td>
                       <td className="px-5 py-3.5">
                         <span className={cn("text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[inv.status])}>{inv.status}</span>
