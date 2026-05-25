@@ -273,9 +273,15 @@ export function seedLogiaDerivedData(force = false) {
   for (const e of entries) {
     for (const l of e.lines) {
       if (!l.account.startsWith("411")) continue;
-      const name = (l.label || "").trim();
-      if (!name || name.toUpperCase() === "CLIENTS") continue;
-      if (clientByName.has(name)) continue;
+      const rawName = (l.label || "").trim();
+      if (!rawName || rawName.toUpperCase() === "CLIENTS") continue;
+      const name = canonicalClientName(rawName);
+      // Index both the canonical and raw label so downstream lookups (invoices,
+      // transactions) find the same client regardless of spelling variant.
+      if (clientByName.has(name)) {
+        clientByName.set(rawName, clientByName.get(name)!);
+        continue;
+      }
       const client: Client = {
         id: `cli_log_${slug(name)}`,
         companyId: "log",
@@ -283,6 +289,7 @@ export function seedLogiaDerivedData(force = false) {
         country: guessCountry(name),
       };
       clientByName.set(name, client);
+      clientByName.set(rawName, client);
       clientsStore.add(client);
     }
   }
