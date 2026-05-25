@@ -274,8 +274,8 @@ function Body() {
         </thead>
         <tbody>
           {groups.map((g) => (
-            <>
-              {groups.length > 1 && <GroupHeaderRow key={`h-${g.key}`} label={g.label} count={g.items.length} colSpan={cols.length} />}
+            <Fragment key={g.key}>
+              {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={cols.length} />}
               {g.items.map((t) => {
                 const co = companies.find((c) => c.id === t.companyId);
                 const cli = t.clientId ? clients.find((c) => c.id === t.clientId) : null;
