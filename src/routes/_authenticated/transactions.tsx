@@ -53,17 +53,32 @@ function Body() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
 
-  let list = inScope(transactions, scope);
-  if (filter !== "all") list = list.filter((t) => t.type === filter);
+  let preList = inScope(transactions, scope);
+  if (filter !== "all") preList = preList.filter((t) => t.type === filter);
   if (q) {
     const qq = q.toLowerCase();
-    list = list.filter((t) =>
+    preList = preList.filter((t) =>
       t.description.toLowerCase().includes(qq) ||
       t.category.toLowerCase().includes(qq) ||
       String(t.amount).includes(qq),
     );
   }
-  list = [...list].sort((a, b) => b.date.localeCompare(a.date));
+
+  const fields: FieldDef<Transaction>[] = [
+    { key: "date", label: "Date", type: "date", accessor: (t) => t.date },
+    { key: "description", label: "Description", type: "string", accessor: (t) => t.description },
+    { key: "company", label: "Company", type: "enum", accessor: (t) => companies.find((c) => c.id === t.companyId)?.shortName ?? "" },
+    { key: "counterparty", label: "Counterparty", type: "string", accessor: (t) => clients.find((c) => c.id === t.clientId)?.name ?? suppliers.find((s) => s.id === t.supplierId)?.name ?? "" },
+    { key: "project", label: "Project", type: "enum", accessor: (t) => projects.find((p) => p.id === t.projectId)?.name ?? "" },
+    { key: "category", label: "Category", type: "enum", accessor: (t) => t.category },
+    { key: "type", label: "Type", type: "enum", accessor: (t) => t.type },
+    { key: "amount", label: "Amount", type: "number", accessor: (t) => t.amount, noGroup: true },
+  ];
+  const view = useDataView<Transaction>("transactions", fields);
+  // Default to date desc if no sort chosen
+  const defaultSorted = view.state.sort ? preList : [...preList].sort((a, b) => b.date.localeCompare(a.date));
+  const groups = view.apply(defaultSorted);
+  const list = groups.flatMap((g) => g.items);
 
   const openCreate = () => { setEditing(null); setOpen(true); };
 
