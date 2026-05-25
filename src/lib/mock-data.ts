@@ -331,6 +331,14 @@ export const projectsStore = createCollection<Project>("projects", []);
 export const transactionsStore = createCollection<Transaction>("transactions", []);
 export const invoicesStore = createCollection<Invoice>("invoices", []);
 export const opportunitiesStore = createCollection<Opportunity>("opportunities", []);
+// Migrate legacy "Won" stage → "Closed" (mirrors Notion "Logia Sales CRM" status).
+{
+  let migrated = false;
+  for (const o of opportunitiesStore.items) {
+    if ((o.stage as string) === "Won") { o.stage = "Closed"; migrated = true; }
+  }
+  if (migrated) opportunitiesStore.replaceAll([...opportunitiesStore.items]);
+}
 export const categoriesStore = createCollection<Category>("categories", []);
 export const budgetsStore = createCollection<Budget>("budgets", []);
 export const teamMembersStore = createCollection<TeamMember>("team-members", []);
