@@ -94,7 +94,7 @@ function Body() {
                       <td className="px-5 py-2">{pcgIndex.get(a.code)?.name}</td>
                       <td className="px-5 py-2 text-right font-tnum">{t.debit ? fmtMoney(t.debit, displayCo.baseCurrency) : ""}</td>
                       <td className="px-5 py-2 text-right font-tnum">{t.credit ? fmtMoney(t.credit, displayCo.baseCurrency) : ""}</td>
-                      <td className={`px-5 py-2 text-right font-tnum ${solde >= 0 ? "" : "text-muted-foreground"}`}>
+                      <td className={`px-5 py-2 text-right font-tnum ${solde > 0 ? "text-success" : solde < 0 ? "text-destructive" : ""}`}>
                         {fmtMoney(solde, displayCo.baseCurrency)} {solde >= 0 ? "D" : "C"}
                       </td>
                     </tr>
