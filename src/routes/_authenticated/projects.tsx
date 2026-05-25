@@ -7,7 +7,7 @@ import {
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2 } from "lucide-react";
 import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
+import { useDataView, type FieldDef } from "@/hooks/use-data-view";
+import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 
 export const Route = createFileRoute("/_authenticated/projects")({ component: ProjectsPage });
 
