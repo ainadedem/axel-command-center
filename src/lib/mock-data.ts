@@ -139,6 +139,8 @@ export const projectsStore = createCollection<Project>("projects", []);
 export const transactionsStore = createCollection<Transaction>("transactions", []);
 export const invoicesStore = createCollection<Invoice>("invoices", []);
 export const opportunitiesStore = createCollection<Opportunity>("opportunities", []);
+export const categoriesStore = createCollection<Category>("categories", []);
+export const budgetsStore = createCollection<Budget>("budgets", []);
 
 /* ─── Live array exports (backward compatibility) ───────────────────── */
 
@@ -150,6 +152,8 @@ export const projects = projectsStore.items;
 export const transactions = transactionsStore.items;
 export const invoices = invoicesStore.items;
 export const opportunities = opportunitiesStore.items;
+export const categories = categoriesStore.items;
+export const budgets = budgetsStore.items;
 
 /* ─── Hooks ─────────────────────────────────────────────────────────── */
 
@@ -161,6 +165,9 @@ export const useProjects = () => useCollection(projectsStore);
 export const useTransactions = () => useCollection(transactionsStore);
 export const useInvoices = () => useCollection(invoicesStore);
 export const useOpportunities = () => useCollection(opportunitiesStore);
+export const useCategories = () => useCollection(categoriesStore);
+export const useBudgets = () => useCollection(budgetsStore);
+
 
 /* ─── Formatters ────────────────────────────────────────────────────── */
 
