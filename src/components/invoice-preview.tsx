@@ -69,31 +69,25 @@ function buildInvoiceHTML({ invoice, company, client, project }: { invoice: Invo
   const companyLines = [
     company?.legalName ?? company?.name,
     company?.address,
-    [company?.email, company?.phone].filter(Boolean).join(" · "),
-    company?.website,
+    company?.email,
+    company?.phone,
   ].filter(Boolean) as string[];
 
   const companyLegal = [
     company?.nif && `NIF ${company.nif}`,
     company?.stat && `STAT ${company.stat}`,
-    company?.rcs && `RCS ${company.rcs}`,
-    company?.taxId && `Tax ID ${company.taxId}`,
   ].filter(Boolean) as string[];
 
   const clientLines = [
     client?.name,
     client?.address,
-    client?.country,
-    [client?.email, client?.phone].filter(Boolean).join(" · "),
-    client?.website,
-    client?.contacts && `Attn: ${client.contacts}`,
+    client?.email,
+    client?.phone,
   ].filter(Boolean) as string[];
 
   const clientLegal = [
     client?.nif && `NIF ${client.nif}`,
     client?.stat && `STAT ${client.stat}`,
-    client?.rcs && `RCS ${client.rcs}`,
-    client?.taxId && `Tax ID ${client.taxId}`,
   ].filter(Boolean) as string[];
 
   const bank = [
