@@ -723,13 +723,13 @@ export function seedAxiomInvoices(force = false) {
   // - Logia: one Webflow project.
   const projectSeeds: Project[] = [
     { id: "proj_axi_deindeal_2026", companyId: "axi", clientId: "cli_axi_deindeal",
-      name: "Dein Deal — Production mensuelle 2026", revenue: 2350 * 4, cost: 0, currency: "EUR" },
+      name: "Production 2026", revenue: 2350 * 4, cost: 0, currency: "EUR" },
     { id: "proj_axi_trembley_jan", companyId: "axi", clientId: "cli_axi_trembley",
-      name: "Trembley — Modélisation Meubles (Jan)", revenue: 1230, cost: 0, currency: "EUR" },
+      name: "Production Modélisation Meubles", revenue: 1230, cost: 0, currency: "EUR" },
     { id: "proj_axi_trembley_feb", companyId: "axi", clientId: "cli_axi_trembley",
-      name: "Trembley — Modélisation Meubles (Feb)", revenue: 1230, cost: 0, currency: "EUR" },
+      name: "Production Modélisation Meubles", revenue: 1230, cost: 0, currency: "EUR" },
     { id: "proj_axi_logia_webflow", companyId: "axi", clientId: "cli_axi_logia",
-      name: "Logia — Intégration Webflow", revenue: 1_800_000, cost: 0, currency: "MGA" },
+      name: "Accompagnement dans l'intégration sur Webflow", revenue: 1_800_000, cost: 0, currency: "MGA" },
   ];
   for (const p of projectSeeds) {
     if (!projectsStore.items.some((x) => x.id === p.id)) projectsStore.add(p);
