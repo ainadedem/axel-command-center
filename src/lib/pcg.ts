@@ -393,7 +393,7 @@ export const accountLabels = logiaAccountLabels as Record<string, string>;
 
 // Auto-seed on first load (idempotent). Declared AFTER `accountLabels`
 // because seedLogiaDerivedData() reads from it.
-const DERIVED_VERSION = "2"; // bump to force re-derive on existing local data
+const DERIVED_VERSION = "3"; // bump to force re-derive on existing local data
 if (typeof window !== "undefined") {
   try {
     ensureSeedCompanies();
