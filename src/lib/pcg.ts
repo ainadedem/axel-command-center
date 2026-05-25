@@ -371,7 +371,11 @@ function guessCountry(name: string): string {
   return "Madagascar";
 }
 
-// Auto-seed on first load (idempotent).
+/** Labels for sub-accounts (6-digit codes) used in the imported Grand Livre. */
+export const accountLabels = logiaAccountLabels as Record<string, string>;
+
+// Auto-seed on first load (idempotent). Declared AFTER `accountLabels`
+// because seedLogiaDerivedData() reads from it.
 if (typeof window !== "undefined") {
   try {
     ensureSeedCompanies();
@@ -379,9 +383,6 @@ if (typeof window !== "undefined") {
     seedLogiaDerivedData(false);
   } catch { /* ignore */ }
 }
-
-/** Labels for sub-accounts (6-digit codes) used in the imported Grand Livre. */
-export const accountLabels = logiaAccountLabels as Record<string, string>;
 
 /** Resolve an account code to its PCG entry by progressively shorter prefixes. */
 export function pcgRoot(code: string): PcgAccount | undefined {
