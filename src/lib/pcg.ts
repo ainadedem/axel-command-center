@@ -168,16 +168,12 @@ export interface JournalEntry {
   lines: JournalLine[];
 }
 
-const today = new Date();
-const d = (offset: number) => {
-  const x = new Date(today);
-  x.setDate(x.getDate() - offset);
-  return x.toISOString().slice(0, 10);
-};
+import { createCollection, useCollection } from "./data-store";
 
-// All amounts in MGA (or company base currency for axi: USD).
-// For audit clarity we use the company base currency.
-export const journalEntries: JournalEntry[] = [];
+export const journalEntriesStore = createCollection<JournalEntry>("journal-entries", []);
+export const journalEntries = journalEntriesStore.items;
+export const useJournalEntries = () => useCollection(journalEntriesStore);
+
 
 export const pcgCompanyIds = new Set(["log", "axi"]);
 export const usesPcg = (companyId: string) => pcgCompanyIds.has(companyId);
