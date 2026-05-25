@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
   accountsStore, transactionsStore, invoicesStore, invoices as invoicesArr,
+  toMGA, FX,
   type Account, type Transaction, type Invoice,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
@@ -167,19 +168,27 @@ function autoMatchInvoice(
 ): string | undefined {
   if (type !== "income") return undefined;
   const desc = description.toLowerCase().replace(/\s+/g, " ");
-  // Try invoice.number substring match (case-insensitive, also try normalized)
+  const descNorm = desc.replace(/[^a-z0-9]/g, "");
+  // Find candidates by invoice number appearing in description
   const candidates = invoices.filter((i) => {
     const n = i.number.toLowerCase();
     const nNorm = n.replace(/[^a-z0-9]/g, "");
-    const descNorm = desc.replace(/[^a-z0-9]/g, "");
     return n.length >= 3 && (desc.includes(n) || (nNorm.length >= 4 && descNorm.includes(nNorm)));
   });
   if (!candidates.length) return undefined;
-  // Prefer same currency + similar amount (within 1%)
-  const sameCcy = candidates.filter((i) => i.currency === account.currency);
-  const pool = sameCcy.length ? sameCcy : candidates;
-  const exact = pool.find((i) => Math.abs(i.amount - amount) <= Math.max(1, i.amount * 0.01));
-  return (exact ?? pool[0]).id;
+  // Convert each invoice's remaining to the account's currency and prefer
+  // the closest match (tolerate ±10% to absorb FX drift).
+  const amountInMGA = toMGA(amount, account.currency);
+  const scored = candidates.map((i) => {
+    const remaining = Math.max(0, i.amount - i.paid);
+    const remainingInMGA = toMGA(remaining, i.currency);
+    const diff = Math.abs(remainingInMGA - amountInMGA);
+    const ratio = remainingInMGA > 0 ? diff / remainingInMGA : 1;
+    return { i, ratio };
+  }).sort((a, b) => a.ratio - b.ratio);
+  const best = scored[0];
+  // Loose threshold so FX swings don't block the match
+  return best.ratio <= 0.15 ? best.i.id : scored[0].i.id;
 }
 
 /* ─── Component ─────────────────────────────────────────────────────── */
@@ -243,13 +252,28 @@ export function StatementImportDialog({
       transactionsStore.add(tx);
     }
 
-    // Apply payments to invoices
+    // Apply payments to invoices — handle FX when invoice currency ≠ account currency
     for (const [invId, { total, latestDate }] of payments) {
       const inv = invoicesArr.find((i) => i.id === invId);
       if (!inv) continue;
-      const newPaid = inv.paid + total;
+      const sameCcy = inv.currency === account.currency;
+      let invoicePaidDelta: number; // in invoice currency
+      let fxDelta = 0;              // in account currency (signed: + gain, − loss)
+      if (sameCcy) {
+        invoicePaidDelta = total;
+      } else {
+        // Convert received amount (account ccy) into invoice ccy via FX table
+        const receivedInInvCcy = toMGA(total, account.currency) / FX[inv.currency];
+        const remainingInInvCcy = Math.max(0, inv.amount - inv.paid);
+        // Settle up to remaining; everything else is FX variance.
+        invoicePaidDelta = Math.min(receivedInInvCcy, remainingInInvCcy);
+        // Convert what was actually applied back to account ccy to compute FX diff
+        const settledInAcctCcy = toMGA(invoicePaidDelta, inv.currency) / FX[account.currency];
+        fxDelta = total - settledInAcctCcy; // positive = gain, negative = loss
+      }
+      const newPaid = inv.paid + invoicePaidDelta;
       const newStatus: Invoice["status"] =
-        newPaid >= inv.amount && inv.amount > 0 ? "paid"
+        newPaid + 0.01 >= inv.amount && inv.amount > 0 ? "paid"
         : newPaid > 0 ? "partial"
         : differenceInDays(parseISO(inv.dueDate), new Date()) < 0 ? "overdue"
         : "sent";
@@ -258,6 +282,26 @@ export function StatementImportDialog({
         paidDate: !inv.paidDate || latestDate > inv.paidDate ? latestDate : inv.paidDate,
         status: newStatus,
       });
+
+      // Record FX gain/loss as its own ledger entry so the books reconcile
+      if (Math.abs(fxDelta) >= 1) {
+        const isGain = fxDelta > 0;
+        transactionsStore.add({
+          id: newId("tx"),
+          companyId: account.companyId,
+          accountId: "",
+          date: latestDate,
+          type: isGain ? "income" : "expense",
+          category: isGain ? "Gain de change" : "Perte de change",
+          description: `FX ${isGain ? "gain" : "loss"} · ${inv.number} (${inv.currency} → ${account.currency})`,
+          amount: Math.abs(fxDelta),
+          currency: account.currency,
+          clientId: inv.clientId,
+          projectId: inv.projectId,
+          invoiceId: inv.id,
+          source: "statement",
+        });
+      }
     }
 
     // Update account: balance + upload metadata
@@ -335,9 +379,22 @@ export function StatementImportDialog({
                           <td className="px-3 py-2 truncate max-w-[260px]">{r.description}</td>
                           <td className="px-3 py-2">
                             {inv ? (
-                              <span className="inline-flex items-center gap-1 text-success">
-                                <CheckCircle2 className="h-3 w-3" /> {inv.number}
-                              </span>
+                              <div className="flex flex-col">
+                                <span className="inline-flex items-center gap-1 text-success">
+                                  <CheckCircle2 className="h-3 w-3" /> {inv.number}
+                                </span>
+                                {account && inv.currency !== account.currency && (() => {
+                                  const remainingInv = Math.max(0, inv.amount - inv.paid);
+                                  const settledInAcct = toMGA(Math.min(toMGA(r.amount, account.currency) / FX[inv.currency], remainingInv), inv.currency) / FX[account.currency];
+                                  const fx = r.amount - settledInAcct;
+                                  if (Math.abs(fx) < 1) return null;
+                                  return (
+                                    <span className={cn("text-[10px] font-tnum", fx > 0 ? "text-success" : "text-destructive")}>
+                                      FX {fx > 0 ? "gain" : "loss"} {Math.abs(fx).toLocaleString(undefined, { maximumFractionDigits: 0 })} {account.currency}
+                                    </span>
+                                  );
+                                })()}
+                              </div>
                             ) : (
                               <span className="text-muted-foreground/60">—</span>
                             )}
