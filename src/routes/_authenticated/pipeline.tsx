@@ -30,12 +30,13 @@ const STAGE_STYLES: Record<Stage, StageStyle> = {
   Qualified:   { dot: "bg-sky-500",     text: "text-sky-600" },
   Proposal:    { dot: "bg-violet-500",  text: "text-violet-500" },
   Negotiation: { dot: "bg-amber-500",   text: "text-amber-500" },
-  Won:         { dot: "bg-emerald-500", text: "text-emerald-500" },
+  "In progress": { dot: "bg-blue-500",    text: "text-blue-500" },
+  Closed:      { dot: "bg-emerald-500", text: "text-emerald-500" },
   Lost:        { dot: "bg-rose-500",    text: "text-rose-500" },
 };
 
 function urgencyOf(o: Opportunity): { label: string; cls: string } | null {
-  if (o.stage === "Won" || o.stage === "Lost") return null;
+  if (o.stage === "Closed" || o.stage === "Lost") return null;
   const days = differenceInDays(parseISO(o.expectedClose), new Date());
   if (days < 0) return { label: `${Math.abs(days)}d overdue`, cls: "text-rose-500" };
   if (days <= 7) return { label: `${days}d left`, cls: "text-amber-500" };
@@ -80,15 +81,15 @@ function Body() {
   const [editing, setEditing] = useState<Opportunity | null>(null);
   const [view, setView] = useState<"kanban" | "list" | "acquisition" | "closer" | "forecast">("kanban");
 
-  const active = list.filter((o) => o.stage !== "Won" && o.stage !== "Lost");
+  const active = list.filter((o) => o.stage !== "Closed" && o.stage !== "Lost");
   const total = active.reduce((s, o) => s + toMGA(o.value, o.currency), 0);
   const weighted = active.reduce((s, o) => s + toMGA(o.value, o.currency) * stageProbability[o.stage], 0);
-  const won = list.filter((o) => o.stage === "Won").reduce((s, o) => s + toMGA(o.value, o.currency), 0);
+  const won = list.filter((o) => o.stage === "Closed").reduce((s, o) => s + toMGA(o.value, o.currency), 0);
   const lost = list.filter((o) => o.stage === "Lost").reduce((s, o) => s + toMGA(o.value, o.currency), 0);
   const winRate = (() => {
-    const closed = list.filter((o) => o.stage === "Won" || o.stage === "Lost").length;
+    const closed = list.filter((o) => o.stage === "Closed" || o.stage === "Lost").length;
     if (!closed) return 0;
-    return Math.round((list.filter((o) => o.stage === "Won").length / closed) * 100);
+    return Math.round((list.filter((o) => o.stage === "Closed").length / closed) * 100);
   })();
 
   const openCreate = () => { setEditing(null); setOpen(true); };
@@ -105,7 +106,7 @@ function Body() {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <Stat label="Pipeline" value={fmtCompact(total, "MGA")} />
             <Stat label="Weighted" value={fmtCompact(weighted, "MGA")} />
-            <Stat label="Won" value={fmtCompact(won, "MGA")} />
+            <Stat label="Closed" value={fmtCompact(won, "MGA")} />
             <Stat label="Lost" value={fmtCompact(lost, "MGA")} />
             <Stat label="Win rate" value={`${winRate}%`} />
           </div>
@@ -315,7 +316,7 @@ function PeopleView({ list, onEdit, role, acqOf }: { list: Opportunity[]; onEdit
       {grouped.map(([person, ops]) => {
         const total = ops.reduce((s, o) => s + toMGA(o.value, o.currency), 0);
         const weighted = ops.reduce((s, o) => s + toMGA(o.value, o.currency) * stageProbability[o.stage], 0);
-        const won = ops.filter((o) => o.stage === "Won").reduce((s, o) => s + toMGA(o.value, o.currency), 0);
+        const won = ops.filter((o) => o.stage === "Closed").reduce((s, o) => s + toMGA(o.value, o.currency), 0);
         return (
           <div key={person} className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4">
             <div className="flex items-center justify-between mb-3">
@@ -485,7 +486,7 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
           companyId,
           name: trimmed,
           country: "",
-          status: stage === "Won" ? "client" : "lead",
+          status: stage === "Closed" ? "client" : "lead",
         };
         clientsStore.add(newClient);
         linkedClientId = newId_;
@@ -494,7 +495,7 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
     }
 
     // If moving to Won, promote the linked client from "lead" to "client".
-    if (stage === "Won" && linkedClientId) {
+    if (stage === "Closed" && linkedClientId) {
       const cl = clients.find((c) => c.id === linkedClientId);
       if (cl && cl.status !== "client") {
         clientsStore.update(linkedClientId, {
