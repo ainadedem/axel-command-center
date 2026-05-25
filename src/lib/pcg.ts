@@ -422,9 +422,17 @@ function guessCountry(name: string): string {
 /** Labels for sub-accounts (6-digit codes) used in the imported Grand Livre. */
 export const accountLabels = logiaAccountLabels as Record<string, string>;
 
+/** Replace all Logia-scoped opportunities with the imported Notion CRM snapshot. */
+export function seedLogiaOpportunities() {
+  const seed = logiaOpportunitiesSeed as Opportunity[];
+  const others = opportunitiesStore.items.filter((o) => o.companyId !== "log");
+  opportunitiesStore.replaceAll([...others, ...seed]);
+  return seed.length;
+}
+
 // Auto-seed on first load (idempotent). Declared AFTER `accountLabels`
 // because seedLogiaDerivedData() reads from it.
-const DERIVED_VERSION = "4"; // bump to force re-derive on existing local data
+const DERIVED_VERSION = "5"; // bump to force re-derive on existing local data
 if (typeof window !== "undefined") {
   try {
     ensureSeedCompanies();
@@ -432,9 +440,13 @@ if (typeof window !== "undefined") {
     const current = localStorage.getItem("logia-derived-version");
     const force = current !== DERIVED_VERSION;
     seedLogiaDerivedData(force);
-    if (force) localStorage.setItem("logia-derived-version", DERIVED_VERSION);
+    if (force) {
+      seedLogiaOpportunities();
+      localStorage.setItem("logia-derived-version", DERIVED_VERSION);
+    }
   } catch { /* ignore */ }
 }
+
 
 /** Resolve an account code to its PCG entry by progressively shorter prefixes. */
 export function pcgRoot(code: string): PcgAccount | undefined {
