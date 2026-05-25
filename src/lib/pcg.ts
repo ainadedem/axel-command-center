@@ -175,10 +175,11 @@ export interface JournalEntry {
 
 import logiaSeed from "./logia-grand-livre-seed.json";
 import logiaAccountLabels from "./logia-account-labels.json";
+import logiaOpportunitiesSeed from "./logia-opportunities-seed.json";
 import {
   companiesStore, accountsStore, clientsStore, suppliersStore,
-  invoicesStore, transactionsStore, categoriesStore,
-  type Account, type Client, type Supplier, type Invoice, type Transaction, type Category,
+  invoicesStore, transactionsStore, categoriesStore, opportunitiesStore,
+  type Account, type Client, type Supplier, type Invoice, type Transaction, type Category, type Opportunity,
 } from "./mock-data";
 
 export const journalEntriesStore = createCollection<JournalEntry>("journal-entries", []);
