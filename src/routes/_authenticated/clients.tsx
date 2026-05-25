@@ -157,7 +157,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setContacts(editing.contacts ?? "");
       setAvatarUrl(editing.avatarUrl);
     } else {
-      setCompanyId(companies[0]?.id ?? ""); setName(""); setCountry(""); setAcquisition("");
+      setCompanyId(companies[0]?.id ?? ""); setName(""); setCountry(""); setAcquisition(""); setReferral("");
       setAcquiredAt(new Date().toISOString().slice(0, 10));
       setWebsite(""); setEmail(""); setPhone(""); setAddress(""); setIndustry(""); setContacts("");
       setAvatarUrl(undefined);
