@@ -191,7 +191,51 @@ function Body() {
         project={previewing?.projectId ? projects.find((p) => p.id === previewing.projectId) : undefined}
       />
       <RecordPaymentDialog open={!!paying} onOpenChange={(v) => { if (!v) setPaying(null); }} invoice={paying} />
+      <CancelInvoiceDialog open={!!cancelling} onOpenChange={(v) => { if (!v) setCancelling(null); }} invoice={cancelling} />
     </div>
+  );
+}
+
+function CancelInvoiceDialog({ open, onOpenChange, invoice }: { open: boolean; onOpenChange: (v: boolean) => void; invoice: Invoice | null }) {
+  const [reason, setReason] = useState("");
+  useEffect(() => { if (open) setReason(""); }, [open]);
+  if (!invoice) return null;
+  const submit = () => {
+    const trimmed = reason.trim();
+    if (!trimmed) return;
+    invoicesStore.update(invoice.id, {
+      status: "cancelled",
+      cancelledAt: new Date().toISOString(),
+      cancellationReason: trimmed,
+    });
+    onOpenChange(false);
+  };
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Cancel invoice {invoice.number}</DialogTitle></DialogHeader>
+        <div className="space-y-3 py-2">
+          <p className="text-xs text-muted-foreground">
+            The invoice will remain in the CRM with a <span className="text-foreground font-medium">cancelled</span> status. This action cannot be undone from this dialog.
+          </p>
+          <div>
+            <Label>Reason <span className="text-destructive">*</span></Label>
+            <Textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Why is this invoice being cancelled?"
+              rows={4}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Keep invoice</Button>
+          <Button variant="destructive" onClick={submit} disabled={!reason.trim()}>
+            <Ban className="h-3.5 w-3.5 mr-1.5" /> Cancel invoice
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
