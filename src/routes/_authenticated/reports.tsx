@@ -40,10 +40,10 @@ function Body() {
         <div className="h-80">
           <ResponsiveContainer>
             <BarChart data={data} margin={{ top: 6, right: 8, left: -16, bottom: 0 }}>
-              <CartesianGrid stroke="oklch(0.3 0.018 250 / 0.4)" vertical={false} />
-              <XAxis dataKey="name" stroke="oklch(0.68 0.015 250)" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="oklch(0.68 0.015 250)" fontSize={11} tickLine={false} axisLine={false} />
-              <Tooltip contentStyle={{ background: "oklch(0.215 0.02 250)", border: "1px solid oklch(0.3 0.018 250)", borderRadius: 8, fontSize: 12 }} cursor={{ fill: "oklch(0.27 0.02 250 / 0.5)" }} />
+              <CartesianGrid stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+              <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} cursor={{ fill: "color-mix(in oklab, var(--primary) 6%, transparent)" }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar dataKey="Income" radius={[6, 6, 0, 0]} fill="oklch(0.78 0.14 165)" />
               <Bar dataKey="Expense" radius={[6, 6, 0, 0]} fill="oklch(0.68 0.19 22)" />

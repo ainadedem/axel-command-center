@@ -264,17 +264,17 @@ function DashboardBody() {
                     <stop offset="100%" stopColor="oklch(0.68 0.19 22)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke="oklch(0.3 0.018 250 / 0.4)" vertical={false} />
-                <XAxis dataKey="date" stroke="oklch(0.68 0.015 250)" fontSize={11} tickLine={false} axisLine={false} minTickGap={32} />
-                <YAxis stroke="oklch(0.68 0.015 250)" fontSize={11} tickLine={false} axisLine={false} />
+                <CartesianGrid stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="date" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} minTickGap={32} />
+                <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
                 <Tooltip
                   contentStyle={{
-                    background: "oklch(0.215 0.02 250)",
-                    border: "1px solid oklch(0.3 0.018 250)",
+                    background: "var(--card)",
+                    border: "1px solid var(--border)",
                     borderRadius: 8,
                     fontSize: 12,
                   }}
-                  labelStyle={{ color: "oklch(0.97 0.005 250)" }}
+                  labelStyle={{ color: "var(--foreground)" }}
                 />
                 <Area type="monotone" dataKey="income" stroke="oklch(0.78 0.14 165)" strokeWidth={2} fill="url(#gIn)" />
                 <Area type="monotone" dataKey="expense" stroke="oklch(0.68 0.19 22)" strokeWidth={2} fill="url(#gOut)" />
@@ -289,10 +289,10 @@ function DashboardBody() {
           <div className="h-64">
             <ResponsiveContainer>
               <BarChart data={perCompany} margin={{ top: 6, right: 8, left: -16, bottom: 0 }}>
-                <CartesianGrid stroke="oklch(0.3 0.018 250 / 0.4)" vertical={false} />
-                <XAxis dataKey="name" stroke="oklch(0.68 0.015 250)" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="oklch(0.68 0.015 250)" fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ background: "oklch(0.215 0.02 250)", border: "1px solid oklch(0.3 0.018 250)", borderRadius: 8, fontSize: 12 }} cursor={{ fill: "oklch(0.27 0.02 250 / 0.5)" }} />
+                <CartesianGrid stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} cursor={{ fill: "color-mix(in oklab, var(--primary) 6%, transparent)" }} />
                 <Bar dataKey="profit" radius={[6, 6, 0, 0]} fill="oklch(0.78 0.14 165)" />
               </BarChart>
             </ResponsiveContainer>
