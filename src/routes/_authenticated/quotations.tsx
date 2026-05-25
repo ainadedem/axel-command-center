@@ -270,14 +270,22 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
             </div>
             <div>
               <Label>Currency</Label>
-              <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MGA">MGA</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="USD">USD</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="mt-1 inline-flex rounded-md border border-border overflow-hidden text-xs">
+                {(["EUR", "USD", "MGA"] as Currency[]).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCurrency(c)}
+                    className={cn(
+                      "px-3 py-1.5 font-tnum",
+                      currency === c ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground hover:bg-surface-elevated",
+                      c !== "EUR" && "border-l border-border"
+                    )}
+                  >
+                    {c === "EUR" ? "€ EUR" : c === "USD" ? "$ USD" : "Ar MGA"}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -320,8 +328,8 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                       {mode === "rate-card" && <th className="text-left font-medium px-2 py-2 w-20">Level</th>}
                       <th className="text-left font-medium px-2 py-2 w-20">Unit</th>
                       <th className="text-right font-medium px-2 py-2 w-20">Qty</th>
-                      <th className="text-right font-medium px-2 py-2 w-28">Rate</th>
-                      <th className="text-right font-medium px-2 py-2 w-28">Amount</th>
+                      <th className="text-right font-medium px-2 py-2 w-28">Rate ({currency})</th>
+                      <th className="text-right font-medium px-2 py-2 w-28">Amount ({currency})</th>
                       <th className="w-8" />
                     </tr>
                   </thead>
@@ -360,7 +368,14 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                           </Select>
                         </td>
                         <td className="px-2 py-1.5"><Input type="number" className="h-8 text-xs text-right" value={l.quantity} onChange={(e) => updateLine(l.id, { quantity: Number(e.target.value) })} /></td>
-                        <td className="px-2 py-1.5"><Input type="number" className="h-8 text-xs text-right" value={l.rate} onChange={(e) => updateLine(l.id, { rate: Number(e.target.value), level: undefined })} /></td>
+                        <td className="px-2 py-1.5">
+                          <div className="relative">
+                            <Input type="number" className="h-8 text-xs text-right pr-8" value={l.rate} onChange={(e) => updateLine(l.id, { rate: Number(e.target.value), level: undefined })} />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">
+                              {currency === "EUR" ? "€" : currency === "USD" ? "$" : "Ar"}
+                            </span>
+                          </div>
+                        </td>
                         <td className="px-2 py-1.5 text-right font-tnum">{fmt((Number(l.quantity) || 0) * (Number(l.rate) || 0), currency)}</td>
                         <td className="px-2 py-1.5"><button type="button" onClick={() => removeLine(l.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><X className="h-3.5 w-3.5" /></button></td>
                       </tr>
