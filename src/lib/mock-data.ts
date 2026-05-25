@@ -155,7 +155,11 @@ export interface Invoice {
   /** ISO date of the latest client payment (411 credit) applied to this invoice. */
   paidDate?: string;
   currency: Currency;
-  status: "draft" | "sent" | "partial" | "paid" | "overdue";
+  status: "draft" | "sent" | "partial" | "paid" | "overdue" | "cancelled";
+  /** ISO timestamp when invoice was cancelled. */
+  cancelledAt?: string;
+  /** Required comment explaining the cancellation. */
+  cancellationReason?: string;
 }
 
 /* ─── Sales process: Quote → PO → Invoice ───────────────────────────── */
