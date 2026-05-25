@@ -164,7 +164,7 @@ function Body() {
                     </td>
                     <td className="px-5 py-2 text-right font-tnum">{m.debit ? fmtMoney(m.debit, co.baseCurrency) : ""}</td>
                     <td className="px-5 py-2 text-right font-tnum">{m.credit ? fmtMoney(m.credit, co.baseCurrency) : ""}</td>
-                    <td className="px-5 py-2 text-right font-tnum text-muted-foreground">
+                    <td className={`px-5 py-2 text-right font-tnum ${solde > 0 ? "text-success" : solde < 0 ? "text-destructive" : "text-muted-foreground"}`}>
                       {fmtMoney(solde, co.baseCurrency)}
                     </td>
                   </tr>
@@ -176,7 +176,7 @@ function Body() {
                 </td>
                 <td className="px-5 py-2 text-right font-tnum">{fmtMoney(totD, co.baseCurrency)}</td>
                 <td className="px-5 py-2 text-right font-tnum">{fmtMoney(totC, co.baseCurrency)}</td>
-                <td className="px-5 py-2 text-right font-tnum">
+                <td className={`px-5 py-2 text-right font-tnum ${(totD - totC) > 0 ? "text-success" : (totD - totC) < 0 ? "text-destructive" : ""}`}>
                   {fmtMoney(totD - totC, co.baseCurrency)} {totD - totC >= 0 ? "D" : "C"}
                 </td>
               </tr>

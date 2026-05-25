@@ -58,10 +58,10 @@ function CompteResultatPage() {
       <PageHeader title="Compte de résultat" description={`Présentation par nature — PCG Madagascar 2005 · ${co.name}`} />
       <div className="p-8 space-y-5">
         <div className="grid grid-cols-4 gap-3">
-          <Stat label="Produits totaux" value={fmtMoney(totProduits, co.baseCurrency)} />
-          <Stat label="Charges totales" value={fmtMoney(totCharges, co.baseCurrency)} />
-          <Stat label="Résultat d'exploitation" value={fmtMoney(resultatExpl, co.baseCurrency)} />
-          <Stat label="Résultat net" value={fmtMoney(resultatNet, co.baseCurrency)} highlight={resultatNet >= 0} />
+          <Stat label="Produits totaux" value={fmtMoney(totProduits, co.baseCurrency)} tone={totProduits > 0 ? "success" : totProduits < 0 ? "destructive" : undefined} />
+          <Stat label="Charges totales" value={fmtMoney(totCharges, co.baseCurrency)} tone="destructive" />
+          <Stat label="Résultat d'exploitation" value={fmtMoney(resultatExpl, co.baseCurrency)} tone={resultatExpl > 0 ? "success" : resultatExpl < 0 ? "destructive" : undefined} />
+          <Stat label="Résultat net" value={fmtMoney(resultatNet, co.baseCurrency)} tone={resultatNet > 0 ? "success" : resultatNet < 0 ? "destructive" : undefined} />
         </div>
 
         <Section title="Produits" rows={produitsRows} co={co} />
@@ -82,11 +82,12 @@ function CompteResultatPage() {
   );
 }
 
-function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function Stat({ label, value, tone }: { label: string; value: string; tone?: "success" | "destructive" }) {
+  const toneClass = tone === "success" ? "text-success" : tone === "destructive" ? "text-destructive" : "";
   return (
     <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
       <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
-      <div className={`font-display text-2xl font-bold mt-1 font-tnum ${highlight ? "text-emerald-600" : ""}`}>{value}</div>
+      <div className={`font-display text-2xl font-bold mt-1 font-tnum ${toneClass}`}>{value}</div>
     </div>
   );
 }
@@ -105,7 +106,7 @@ function Section({ title, rows, co }: any) {
             <tr key={r.code} className="border-b border-border/30 last:border-0">
               <td className="px-5 py-2 font-tnum w-16 text-muted-foreground">{r.code}</td>
               <td className="px-5 py-2">{r.label}</td>
-              <td className="px-5 py-2 text-right font-tnum">{fmtMoney(r.value, co.baseCurrency)}</td>
+              <td className={`px-5 py-2 text-right font-tnum ${r.value > 0 ? "text-success" : r.value < 0 ? "text-destructive" : ""}`}>{fmtMoney(r.value, co.baseCurrency)}</td>
             </tr>
           ))}
         </tbody>
@@ -117,15 +118,16 @@ function SubTotal({ label, value, co }: any) {
   return (
     <div className="flex items-center justify-between px-5 py-2 text-sm bg-surface-elevated/40 rounded-md border border-border/40">
       <div className="font-semibold uppercase tracking-wider text-xs">{label}</div>
-      <div className="font-tnum font-semibold">{fmtMoney(value, co.baseCurrency)}</div>
+      <div className={`font-tnum font-semibold ${value > 0 ? "text-success" : value < 0 ? "text-destructive" : ""}`}>{fmtMoney(value, co.baseCurrency)}</div>
     </div>
   );
 }
 function Line({ label, value, co, bold, highlight }: any) {
+  const tone = value > 0 ? "text-success" : value < 0 ? "text-destructive" : "";
   return (
     <div className={`flex items-center justify-between px-5 py-3 ${highlight ? "bg-primary/5" : ""}`}>
       <div className={`${bold || highlight ? "font-display font-bold uppercase tracking-wider text-sm" : "text-sm"}`}>{label}</div>
-      <div className={`font-tnum ${highlight ? "font-bold text-lg" : bold ? "font-semibold" : ""} ${value < 0 ? "text-red-600" : ""}`}>
+      <div className={`font-tnum ${highlight ? "font-bold text-lg" : bold ? "font-semibold" : ""} ${tone}`}>
         {fmtMoney(value, co.baseCurrency)}
       </div>
     </div>

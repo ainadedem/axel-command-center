@@ -29,9 +29,9 @@ function Body() {
   return (
     <div className="p-8 space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Stat label="Group income · 30d" value={fmtCompact(totalInc * 1_000_000, "MGA")} good />
-        <Stat label="Group spend · 30d" value={fmtCompact(totalExp * 1_000_000, "MGA")} />
-        <Stat label="Group profit · 30d" value={fmtCompact((totalInc - totalExp) * 1_000_000, "MGA")} accent />
+        <Stat label="Group income · 30d" value={fmtCompact(totalInc * 1_000_000, "MGA")} tone="success" />
+        <Stat label="Group spend · 30d" value={fmtCompact(totalExp * 1_000_000, "MGA")} tone="destructive" />
+        <Stat label="Group profit · 30d" value={fmtCompact((totalInc - totalExp) * 1_000_000, "MGA")} tone={(totalInc - totalExp) >= 0 ? "success" : "destructive"} />
       </div>
 
       <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
@@ -56,11 +56,12 @@ function Body() {
   );
 }
 
-function Stat({ label, value, good, accent }: { label: string; value: string; good?: boolean; accent?: boolean }) {
+function Stat({ label, value, tone }: { label: string; value: string; tone?: "success" | "destructive" | "primary" }) {
+  const toneClass = tone === "success" ? "text-success" : tone === "destructive" ? "text-destructive" : tone === "primary" ? "text-primary" : "";
   return (
     <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
       <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
-      <div className={`font-display text-2xl font-bold mt-2 font-tnum ${good ? "text-success" : ""} ${accent ? "text-primary" : ""}`}>{value}</div>
+      <div className={`font-display text-2xl font-bold mt-2 font-tnum ${toneClass}`}>{value}</div>
     </div>
   );
 }

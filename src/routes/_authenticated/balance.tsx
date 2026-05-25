@@ -94,7 +94,7 @@ function Body() {
                       <td className="px-5 py-2">{pcgIndex.get(a.code)?.name}</td>
                       <td className="px-5 py-2 text-right font-tnum">{t.debit ? fmtMoney(t.debit, displayCo.baseCurrency) : ""}</td>
                       <td className="px-5 py-2 text-right font-tnum">{t.credit ? fmtMoney(t.credit, displayCo.baseCurrency) : ""}</td>
-                      <td className={`px-5 py-2 text-right font-tnum ${solde >= 0 ? "" : "text-muted-foreground"}`}>
+                      <td className={`px-5 py-2 text-right font-tnum ${solde > 0 ? "text-success" : solde < 0 ? "text-destructive" : ""}`}>
                         {fmtMoney(solde, displayCo.baseCurrency)} {solde >= 0 ? "D" : "C"}
                       </td>
                     </tr>
@@ -105,7 +105,7 @@ function Body() {
                   <td className="px-5 py-2 text-xs uppercase tracking-wider">Sous-total classe {cls}</td>
                   <td className="px-5 py-2 text-right font-tnum">{fmtMoney(subD, displayCo.baseCurrency)}</td>
                   <td className="px-5 py-2 text-right font-tnum">{fmtMoney(subC, displayCo.baseCurrency)}</td>
-                  <td className="px-5 py-2 text-right font-tnum">{fmtMoney(subD - subC, displayCo.baseCurrency)}</td>
+                  <td className={`px-5 py-2 text-right font-tnum ${(subD - subC) > 0 ? "text-success" : (subD - subC) < 0 ? "text-destructive" : ""}`}>{fmtMoney(subD - subC, displayCo.baseCurrency)}</td>
                 </tr>
               </tbody>
             </table>
@@ -120,7 +120,7 @@ function Stat({ label, value, ok }: { label: string; value: string; ok?: boolean
   return (
     <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
       <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
-      <div className={`font-display text-2xl font-bold mt-1 font-tnum ${ok ? "text-emerald-600" : ""}`}>{value}</div>
+      <div className={`font-display text-2xl font-bold mt-1 font-tnum ${ok ? "text-success" : ""}`}>{value}</div>
     </div>
   );
 }
