@@ -144,10 +144,10 @@ function DashboardBody() {
         />
         <KpiCard
           label="Profit · last 30d"
-          value={fmtCompact(profitMGA, "MGA")}
+          value={<span className={profitMGA > 0 ? "text-success" : profitMGA < 0 ? "text-destructive" : ""}>{fmtCompact(profitMGA, "MGA")}</span>}
           sub={`Income ${fmtCompact(incomeMGA, "MGA")} · Spend ${fmtCompact(expenseMGA, "MGA")}`}
-          trend="+8.1%"
-          trendDir="up"
+          trend={profitMGA >= 0 ? "+8.1%" : "−8.1%"}
+          trendDir={profitMGA >= 0 ? "up" : "down"}
         />
         <KpiCard
           label="Receivables"
