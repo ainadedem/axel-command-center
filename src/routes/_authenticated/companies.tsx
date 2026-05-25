@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2 } from "lucide-react";
+import { AvatarUpload } from "@/components/avatar-upload";
 
 export const Route = createFileRoute("/_authenticated/companies")({ component: CompaniesPage });
 
@@ -97,6 +98,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [bankName, setBankName] = useState("");
   const [bankAccount, setBankAccount] = useState("");
   const [bankSwift, setBankSwift] = useState("");
+  const [logoUrl, setLogoUrl] = useState<string | undefined>();
 
   useEffect(() => {
     if (!open) return;
@@ -106,10 +108,12 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setEmail(editing.email ?? ""); setPhone(editing.phone ?? ""); setWebsite(editing.website ?? "");
       setNif(editing.nif ?? ""); setStat(editing.stat ?? ""); setRcs(editing.rcs ?? ""); setTaxId(editing.taxId ?? "");
       setBankName(editing.bankName ?? ""); setBankAccount(editing.bankAccount ?? ""); setBankSwift(editing.bankSwift ?? "");
+      setLogoUrl(editing.logoUrl);
     } else {
       setName(""); setShortName(""); setColor(PALETTE[0]); setBaseCurrency("MGA");
       setLegalName(""); setAddress(""); setEmail(""); setPhone(""); setWebsite("");
       setNif(""); setStat(""); setRcs(""); setTaxId(""); setBankName(""); setBankAccount(""); setBankSwift("");
+      setLogoUrl(undefined);
     }
   }, [open, editing]);
 
@@ -121,6 +125,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       email: email || undefined, phone: phone || undefined, website: website || undefined,
       nif: nif || undefined, stat: stat || undefined, rcs: rcs || undefined, taxId: taxId || undefined,
       bankName: bankName || undefined, bankAccount: bankAccount || undefined, bankSwift: bankSwift || undefined,
+      logoUrl,
     };
     if (editing) companiesStore.update(editing.id, data);
     else companiesStore.add({ id: newId("co"), ...data });
