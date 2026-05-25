@@ -12,9 +12,37 @@ interface Ctx {
 
 const CompanyCtx = createContext<Ctx | null>(null);
 
+const STORAGE_KEY = "axel.companyScope";
+
+function loadScope(): Scope {
+  if (typeof window === "undefined") return { id: "group" };
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { id: "group" };
+    const parsed = JSON.parse(raw) as Scope;
+    if (parsed?.id === "group" || (parsed?.id === "company" && typeof parsed.companyId === "string")) {
+      return parsed;
+    }
+  } catch {
+    // ignore
+  }
+  return { id: "group" };
+}
+
 export function CompanyProvider({ children }: { children: ReactNode }) {
-  const [scope, setScope] = useState<Scope>({ id: "group" });
+  const [scope, setScopeState] = useState<Scope>(loadScope);
   const companies = useCompanies();
+
+  const setScope = (s: Scope) => {
+    setScopeState(s);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+      } catch {
+        // ignore
+      }
+    }
+  };
 
   const value = useMemo<Ctx>(() => {
     const scopedCompanies =
