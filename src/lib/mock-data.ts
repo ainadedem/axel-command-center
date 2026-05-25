@@ -183,7 +183,12 @@ export interface PurchaseOrder {
   amount: number;
   currency: Currency;
   status: POStatus;
+  /** Uploaded client PO document (data URL). */
+  documentUrl?: string;
+  documentName?: string;
+  documentType?: string;
 }
+
 
 export type Stage = "Lead" | "Qualified" | "Proposal" | "Negotiation" | "Won" | "Lost";
 export const stages: Stage[] = ["Lead", "Qualified", "Proposal", "Negotiation", "Won", "Lost"];
