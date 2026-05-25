@@ -383,7 +383,7 @@ export function RecordPaymentDialog({
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   // Reset on open
-  useMemo(() => {
+  useEffect(() => {
     if (open && invoice) {
       setAmount(String(Math.max(0, invoice.amount - invoice.paid)));
       setDate(new Date().toISOString().slice(0, 10));
