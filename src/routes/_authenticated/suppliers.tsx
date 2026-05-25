@@ -116,22 +116,65 @@ function Body() {
 
 function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Supplier | null }) {
   const companies = useCompanies();
-  const [name, setName] = useState(editing?.name ?? "");
-  const [companyId, setCompanyId] = useState(editing?.companyId ?? companies[0]?.id ?? "");
-  const [account, setAccount] = useState(editing?.account ?? "401000");
-  const [kind, setKind] = useState<Supplier["kind"]>(editing?.kind ?? "external");
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(editing?.avatarUrl);
+  const [name, setName] = useState("");
+  const [companyId, setCompanyId] = useState("");
+  const [account, setAccount] = useState("401000");
+  const [kind, setKind] = useState<Supplier["kind"]>("external");
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+  const [contactPerson, setContactPerson] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [website, setWebsite] = useState("");
+  const [address, setAddress] = useState("");
+  const [country, setCountry] = useState("");
+  const [paymentTerms, setPaymentTerms] = useState("");
+  const [taxId, setTaxId] = useState("");
+  const [nif, setNif] = useState("");
+  const [stat, setStat] = useState("");
+  const [rcs, setRcs] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [bankAccount, setBankAccount] = useState("");
+  const [bankSwift, setBankSwift] = useState("");
+  const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    if (editing) {
+      setName(editing.name); setCompanyId(editing.companyId); setAccount(editing.account); setKind(editing.kind);
+      setAvatarUrl(editing.avatarUrl);
+      setContactPerson(editing.contactPerson ?? ""); setEmail(editing.email ?? ""); setPhone(editing.phone ?? "");
+      setWebsite(editing.website ?? ""); setAddress(editing.address ?? ""); setCountry(editing.country ?? "");
+      setPaymentTerms(editing.paymentTerms != null ? String(editing.paymentTerms) : "");
+      setTaxId(editing.taxId ?? ""); setNif(editing.nif ?? ""); setStat(editing.stat ?? ""); setRcs(editing.rcs ?? "");
+      setBankName(editing.bankName ?? ""); setBankAccount(editing.bankAccount ?? ""); setBankSwift(editing.bankSwift ?? "");
+      setNotes(editing.notes ?? "");
+    } else {
+      setName(""); setCompanyId(companies[0]?.id ?? ""); setAccount("401000"); setKind("external");
+      setAvatarUrl(undefined); setContactPerson(""); setEmail(""); setPhone(""); setWebsite("");
+      setAddress(""); setCountry(""); setPaymentTerms(""); setTaxId(""); setNif(""); setStat(""); setRcs("");
+      setBankName(""); setBankAccount(""); setBankSwift(""); setNotes("");
+    }
+  }, [open, editing, companies]);
 
   function submit() {
     if (!name.trim() || !companyId) return;
-    if (editing) suppliersStore.update(editing.id, { name, companyId, account, kind, avatarUrl });
-    else suppliersStore.add({ id: newId("sup"), name, companyId, account, kind, avatarUrl });
+    const data: Omit<Supplier, "id"> = {
+      name, companyId, account, kind, avatarUrl,
+      contactPerson: contactPerson || undefined, email: email || undefined, phone: phone || undefined,
+      website: website || undefined, address: address || undefined, country: country || undefined,
+      paymentTerms: paymentTerms ? Number(paymentTerms) : undefined,
+      taxId: taxId || undefined, nif: nif || undefined, stat: stat || undefined, rcs: rcs || undefined,
+      bankName: bankName || undefined, bankAccount: bankAccount || undefined, bankSwift: bankSwift || undefined,
+      notes: notes || undefined,
+    };
+    if (editing) suppliersStore.update(editing.id, data);
+    else suppliersStore.add({ id: newId("sup"), ...data });
     onOpenChange(false);
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[80vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{editing ? "Edit supplier" : "New supplier"}</DialogTitle></DialogHeader>
         <div className="space-y-3 py-2">
           <div className="flex items-start gap-4">
@@ -141,22 +184,50 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
               <Input value={name} onChange={(e) => setName(e.target.value)} />
             </div>
           </div>
-          <div><Label>Company</Label>
-            <Select value={companyId} onValueChange={setCompanyId}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Company</Label>
+              <Select value={companyId} onValueChange={setCompanyId}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div><Label>Kind</Label>
+              <Select value={kind} onValueChange={(v) => setKind(v as Supplier["kind"])}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="external">External (401000)</SelectItem>
+                  <SelectItem value="internal">Internal (401200)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div><Label>Kind</Label>
-            <Select value={kind} onValueChange={(v) => setKind(v as Supplier["kind"])}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="external">External (401000)</SelectItem>
-                <SelectItem value="internal">Internal (401200)</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>PCG account</Label><Input value={account} onChange={(e) => setAccount(e.target.value)} /></div>
+            <div><Label>Payment terms (days)</Label><Input type="number" value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} placeholder="30" /></div>
           </div>
-          <div><Label>PCG account</Label><Input value={account} onChange={(e) => setAccount(e.target.value)} /></div>
+          <div className="pt-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Contact</div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Contact person</Label><Input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} /></div>
+            <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+            <div><Label>Phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
+            <div><Label>Website</Label><Input value={website} onChange={(e) => setWebsite(e.target.value)} /></div>
+            <div className="col-span-2"><Label>Address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} /></div>
+            <div><Label>Country</Label><Input value={country} onChange={(e) => setCountry(e.target.value)} /></div>
+          </div>
+          <div className="pt-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Legal IDs</div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>NIF</Label><Input value={nif} onChange={(e) => setNif(e.target.value)} /></div>
+            <div><Label>STAT</Label><Input value={stat} onChange={(e) => setStat(e.target.value)} /></div>
+            <div><Label>RCS</Label><Input value={rcs} onChange={(e) => setRcs(e.target.value)} /></div>
+            <div><Label>Tax / VAT ID</Label><Input value={taxId} onChange={(e) => setTaxId(e.target.value)} /></div>
+          </div>
+          <div className="pt-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Bank</div>
+          <div className="grid grid-cols-3 gap-3">
+            <div><Label>Bank name</Label><Input value={bankName} onChange={(e) => setBankName(e.target.value)} /></div>
+            <div><Label>Account / IBAN</Label><Input value={bankAccount} onChange={(e) => setBankAccount(e.target.value)} /></div>
+            <div><Label>SWIFT / BIC</Label><Input value={bankSwift} onChange={(e) => setBankSwift(e.target.value)} /></div>
+          </div>
+          <div><Label>Notes</Label><Input value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
