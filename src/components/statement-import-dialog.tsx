@@ -252,13 +252,28 @@ export function StatementImportDialog({
       transactionsStore.add(tx);
     }
 
-    // Apply payments to invoices
+    // Apply payments to invoices — handle FX when invoice currency ≠ account currency
     for (const [invId, { total, latestDate }] of payments) {
       const inv = invoicesArr.find((i) => i.id === invId);
       if (!inv) continue;
-      const newPaid = inv.paid + total;
+      const sameCcy = inv.currency === account.currency;
+      let invoicePaidDelta: number; // in invoice currency
+      let fxDelta = 0;              // in account currency (signed: + gain, − loss)
+      if (sameCcy) {
+        invoicePaidDelta = total;
+      } else {
+        // Convert received amount (account ccy) into invoice ccy via FX table
+        const receivedInInvCcy = toMGA(total, account.currency) / FX[inv.currency];
+        const remainingInInvCcy = Math.max(0, inv.amount - inv.paid);
+        // Settle up to remaining; everything else is FX variance.
+        invoicePaidDelta = Math.min(receivedInInvCcy, remainingInInvCcy);
+        // Convert what was actually applied back to account ccy to compute FX diff
+        const settledInAcctCcy = toMGA(invoicePaidDelta, inv.currency) / FX[account.currency];
+        fxDelta = total - settledInAcctCcy; // positive = gain, negative = loss
+      }
+      const newPaid = inv.paid + invoicePaidDelta;
       const newStatus: Invoice["status"] =
-        newPaid >= inv.amount && inv.amount > 0 ? "paid"
+        newPaid + 0.01 >= inv.amount && inv.amount > 0 ? "paid"
         : newPaid > 0 ? "partial"
         : differenceInDays(parseISO(inv.dueDate), new Date()) < 0 ? "overdue"
         : "sent";
@@ -267,6 +282,26 @@ export function StatementImportDialog({
         paidDate: !inv.paidDate || latestDate > inv.paidDate ? latestDate : inv.paidDate,
         status: newStatus,
       });
+
+      // Record FX gain/loss as its own ledger entry so the books reconcile
+      if (Math.abs(fxDelta) >= 1) {
+        const isGain = fxDelta > 0;
+        transactionsStore.add({
+          id: newId("tx"),
+          companyId: account.companyId,
+          accountId: "",
+          date: latestDate,
+          type: isGain ? "income" : "expense",
+          category: isGain ? "Gain de change" : "Perte de change",
+          description: `FX ${isGain ? "gain" : "loss"} · ${inv.number} (${inv.currency} → ${account.currency})`,
+          amount: Math.abs(fxDelta),
+          currency: account.currency,
+          clientId: inv.clientId,
+          projectId: inv.projectId,
+          invoiceId: inv.id,
+          source: "statement",
+        });
+      }
     }
 
     // Update account: balance + upload metadata
