@@ -71,7 +71,7 @@ function Body() {
   const list = inScope(opportunities, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Opportunity | null>(null);
-  const [view, setView] = useState<"kanban" | "list" | "owner" | "forecast">("kanban");
+  const [view, setView] = useState<"kanban" | "list" | "acquisition" | "closer" | "forecast">("kanban");
 
   const active = list.filter((o) => o.stage !== "Won" && o.stage !== "Lost");
   const total = active.reduce((s, o) => s + toMGA(o.value, o.currency), 0);
@@ -110,7 +110,8 @@ function Body() {
             <TabsList>
               <TabsTrigger value="kanban">Kanban</TabsTrigger>
               <TabsTrigger value="list">List</TabsTrigger>
-              <TabsTrigger value="owner">By owner</TabsTrigger>
+              <TabsTrigger value="acquisition">By acquisition</TabsTrigger>
+              <TabsTrigger value="closer">By closer</TabsTrigger>
               <TabsTrigger value="forecast">Forecast</TabsTrigger>
             </TabsList>
 
@@ -120,8 +121,11 @@ function Body() {
             <TabsContent value="list" className="mt-4">
               <ListView list={list} onEdit={onEdit} />
             </TabsContent>
-            <TabsContent value="owner" className="mt-4">
-              <OwnerView list={list} onEdit={onEdit} />
+            <TabsContent value="acquisition" className="mt-4">
+              <PeopleView list={list} onEdit={onEdit} role="acquisition" />
+            </TabsContent>
+            <TabsContent value="closer" className="mt-4">
+              <PeopleView list={list} onEdit={onEdit} role="closer" />
             </TabsContent>
             <TabsContent value="forecast" className="mt-4">
               <ForecastView list={list} />
@@ -203,6 +207,12 @@ function KanbanView({ list, companies, onEdit }: { list: Opportunity[]; companie
                         {co && <span className="h-2 w-2 rounded-full mt-1.5 shrink-0" style={{ background: co.color }} />}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">{o.client}</div>
+                      {(o.owner || o.closer) && (
+                        <div className="flex flex-wrap gap-1 mt-2 text-[9px]">
+                          {o.owner && <span className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20" title="Acquisition">A · {o.owner}</span>}
+                          {o.closer && <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20" title="Closer">C · {o.closer}</span>}
+                        </div>
+                      )}
                       <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/40">
                         <div className="font-display font-bold text-sm font-tnum">{fmtCompact(o.value, o.currency)}</div>
                         {u ? (
@@ -237,9 +247,10 @@ function ListView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportuni
   return (
     <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
       <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
-        <div className="col-span-4">Opportunity</div>
+        <div className="col-span-3">Opportunity</div>
         <div className="col-span-2">Stage</div>
-        <div className="col-span-2">Owner</div>
+        <div className="col-span-2">Acquisition</div>
+        <div className="col-span-1">Closer</div>
         <div className="col-span-2 text-right">Value</div>
         <div className="col-span-2 text-right">Close</div>
       </div>
@@ -249,7 +260,7 @@ function ListView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportuni
         const Icon = st.icon;
         return (
           <div key={o.id} className={`grid grid-cols-12 gap-2 px-4 py-3 items-center border-b border-border/40 last:border-0 border-l-2 ${st.ring} hover:bg-surface-elevated transition cursor-pointer`} onClick={() => onEdit(o)}>
-            <div className="col-span-4">
+            <div className="col-span-3">
               <div className="text-sm font-medium">{o.name}</div>
               <div className="text-xs text-muted-foreground">{o.client}</div>
             </div>
@@ -258,7 +269,8 @@ function ListView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportuni
                 <Icon className="h-3 w-3" /> {o.stage}
               </span>
             </div>
-            <div className="col-span-2 text-xs text-muted-foreground">{o.owner || "—"}</div>
+            <div className="col-span-2 text-xs text-muted-foreground truncate">{o.owner || "—"}</div>
+            <div className="col-span-1 text-xs text-muted-foreground truncate">{o.closer || "—"}</div>
             <div className="col-span-2 text-right font-tnum text-sm font-semibold">{fmtCompact(o.value, o.currency)}</div>
             <div className="col-span-2 text-right">
               {u ? (
@@ -274,13 +286,13 @@ function ListView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportuni
   );
 }
 
-/* ─── Owner view ──────────────────────────────────────────────────── */
+/* ─── People view (by acquisition or closer) ──────────────────────── */
 
-function OwnerView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportunity) => void }) {
+function PeopleView({ list, onEdit, role }: { list: Opportunity[]; onEdit: (o: Opportunity) => void; role: "acquisition" | "closer" }) {
   const grouped = useMemo(() => {
     const m = new Map<string, Opportunity[]>();
     list.forEach((o) => {
-      const k = o.owner || "Unassigned";
+      const k = (role === "acquisition" ? o.owner : o.closer) || "Unassigned";
       m.set(k, [...(m.get(k) ?? []), o]);
     });
     return Array.from(m.entries()).sort((a, b) => {
@@ -288,19 +300,23 @@ function OwnerView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportun
       const vb = b[1].reduce((s, o) => s + toMGA(o.value, o.currency), 0);
       return vb - va;
     });
-  }, [list]);
+  }, [list, role]);
+
+  const roleLabel = role === "acquisition" ? "Acquisition" : "Closer";
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-      {grouped.map(([owner, ops]) => {
+      {grouped.map(([person, ops]) => {
         const total = ops.reduce((s, o) => s + toMGA(o.value, o.currency), 0);
         const weighted = ops.reduce((s, o) => s + toMGA(o.value, o.currency) * stageProbability[o.stage], 0);
+        const won = ops.filter((o) => o.stage === "Won").reduce((s, o) => s + toMGA(o.value, o.currency), 0);
         return (
-          <div key={owner} className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4">
+          <div key={person} className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="font-semibold text-sm">{owner}</div>
-                <div className="text-[11px] text-muted-foreground font-tnum">{ops.length} · {fmtCompact(total, "MGA")} · ~{fmtCompact(weighted, "MGA")}</div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{roleLabel}</div>
+                <div className="font-semibold text-sm">{person}</div>
+                <div className="text-[11px] text-muted-foreground font-tnum mt-0.5">{ops.length} · {fmtCompact(total, "MGA")} · ~{fmtCompact(weighted, "MGA")} · won {fmtCompact(won, "MGA")}</div>
               </div>
             </div>
             <div className="space-y-1.5">
@@ -310,7 +326,11 @@ function OwnerView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportun
                   <button key={o.id} onClick={() => onEdit(o)} className={`w-full flex items-center justify-between gap-2 text-left rounded-md border-l-2 ${st.ring} bg-surface-elevated/60 hover:bg-surface-elevated px-2.5 py-2 transition`}>
                     <div className="min-w-0">
                       <div className="text-xs font-medium truncate">{o.name}</div>
-                      <div className="text-[10px] text-muted-foreground truncate">{o.client}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">
+                        {o.client}
+                        {role === "acquisition" && o.closer ? ` · closer: ${o.closer}` : ""}
+                        {role === "closer" && o.owner ? ` · acq: ${o.owner}` : ""}
+                      </div>
                     </div>
                     <div className="flex flex-col items-end shrink-0">
                       <span className={`text-[9px] px-1.5 py-0.5 rounded ${st.pill}`}>{o.stage}</span>
@@ -381,6 +401,7 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
   const [name, setName] = useState("");
   const [client, setClient] = useState("");
   const [owner, setOwner] = useState("");
+  const [closer, setCloser] = useState("");
   const [stage, setStage] = useState<Stage>("Lead");
   const [value, setValue] = useState("0");
   const [currency, setCurrency] = useState<Currency>("EUR");
@@ -389,17 +410,19 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
   useEffect(() => {
     if (!open) return;
     if (editing) {
-      setCompanyId(editing.companyId); setName(editing.name); setClient(editing.client); setOwner(editing.owner);
+      setCompanyId(editing.companyId); setName(editing.name); setClient(editing.client);
+      setOwner(editing.owner); setCloser(editing.closer ?? "");
       setStage(editing.stage); setValue(String(editing.value)); setCurrency(editing.currency); setExpectedClose(editing.expectedClose);
     } else {
-      const c = companies[0]; setCompanyId(c?.id ?? ""); setName(""); setClient(""); setOwner("");
+      const c = companies[0]; setCompanyId(c?.id ?? ""); setName(""); setClient("");
+      setOwner(""); setCloser("");
       setStage("Lead"); setValue("0"); setCurrency(c?.baseCurrency ?? "EUR"); setExpectedClose(new Date().toISOString().slice(0, 10));
     }
   }, [open, editing, companies]);
 
   const submit = () => {
     if (!name.trim() || !companyId) return;
-    const data = { companyId, name, client, owner, stage, value: Number(value) || 0, currency, expectedClose };
+    const data = { companyId, name, client, owner, closer: closer.trim() || undefined, stage, value: Number(value) || 0, currency, expectedClose };
     if (editing) opportunitiesStore.update(editing.id, data);
     else opportunitiesStore.add({ id: newId("opp"), ...data });
     onOpenChange(false);
@@ -418,9 +441,10 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
             </Select>
           </div>
           <div><Label>Opportunity name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div><Label>Client</Label><Input value={client} onChange={(e) => setClient(e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Client</Label><Input value={client} onChange={(e) => setClient(e.target.value)} /></div>
-            <div><Label>Owner</Label><Input value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="M.R." /></div>
+            <div><Label>Acquisition (client owner)</Label><Input value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="Who brought the client" /></div>
+            <div><Label>Closer</Label><Input value={closer} onChange={(e) => setCloser(e.target.value)} placeholder="Who closes the deal" /></div>
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div>
