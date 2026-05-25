@@ -119,6 +119,7 @@ function Body() {
       )}
 
       <AccountDialog open={open} onOpenChange={setOpen} editing={editing} />
+      <StatementImportDialog open={!!importing} onOpenChange={(v) => { if (!v) setImporting(null); }} account={importing} />
     </div>
   );
 }
