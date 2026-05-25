@@ -122,7 +122,8 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
   const hasActive = section.items.some(
     (item) => pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to)),
   );
-  const [open, setOpen] = useState(hasActive);
+  // Default: every section is expanded; opens automatically when a child route is active.
+  const [open, setOpen] = useState(true);
 
   useEffect(() => {
     if (hasActive) setOpen(true);

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useTransactions, useCompanies, useAccounts, useClients, useSuppliers, useCategories,
+  useTransactions, useCompanies, useAccounts, useClients, useSuppliers, useCategories, useProjects,
   transactionsStore, categoriesStore, fmtCompact, type Transaction, type Currency,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
@@ -43,6 +43,7 @@ function Body() {
   const companies = useCompanies();
   const clients = useClients();
   const suppliers = useSuppliers();
+  const projects = useProjects();
   const { q } = Route.useSearch();
   const [filter, setFilter] = useState<(typeof types)[number]>("all");
   const [open, setOpen] = useState(false);
@@ -104,11 +105,12 @@ function Body() {
   function ResizableTable() {
     const cols = [
       { key: "date", label: "Date", align: "left" as const, w: 140 },
-      { key: "description", label: "Description", align: "left" as const, w: 280 },
-      { key: "company", label: "Company", align: "left" as const, w: 140 },
-      { key: "counterparty", label: "Counterparty", align: "left" as const, w: 200 },
-      { key: "category", label: "Category", align: "left" as const, w: 180 },
-      { key: "type", label: "Type", align: "left" as const, w: 130 },
+      { key: "description", label: "Description", align: "left" as const, w: 260 },
+      { key: "company", label: "Company", align: "left" as const, w: 130 },
+      { key: "counterparty", label: "Counterparty", align: "left" as const, w: 180 },
+      { key: "project", label: "Project", align: "left" as const, w: 160 },
+      { key: "category", label: "Category", align: "left" as const, w: 160 },
+      { key: "type", label: "Type", align: "left" as const, w: 120 },
       { key: "amount", label: "Amount", align: "right" as const, w: 160 },
       { key: "actions", label: "", align: "right" as const, w: 90 },
     ];
@@ -156,6 +158,14 @@ function Body() {
                     : sup ? <span className="text-muted-foreground">↓ {sup.name}</span>
                     : <span className="text-muted-foreground/50">—</span>}
                 </td>
+                <td className="px-5 py-3.5 text-xs truncate">
+                  {(() => {
+                    const proj = t.projectId ? projects.find((p) => p.id === t.projectId) : null;
+                    return proj
+                      ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 truncate max-w-full">{proj.name}</span>
+                      : <span className="text-muted-foreground/50">—</span>;
+                  })()}
+                </td>
                 <td className="px-5 py-3.5 text-muted-foreground truncate">{t.category}</td>
                 <td className="px-5 py-3.5 truncate">
                   <span className={cn(
@@ -190,6 +200,7 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
   const clients = useClients();
   const suppliers = useSuppliers();
   const categories = useCategories();
+  const projects = useProjects();
   const [companyId, setCompanyId] = useState("");
   const [accountId, setAccountId] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -201,6 +212,7 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
   const [currency, setCurrency] = useState<Currency>("MGA");
   const [clientId, setClientId] = useState<string>("");
   const [supplierId, setSupplierId] = useState<string>("");
+  const [projectId, setProjectId] = useState<string>("");
 
   useEffect(() => {
     if (!open) return;
@@ -210,11 +222,12 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
       setDescription(editing.description);
       setAmount(String(editing.amount)); setCurrency(editing.currency);
       setClientId(editing.clientId ?? ""); setSupplierId(editing.supplierId ?? "");
+      setProjectId(editing.projectId ?? "");
     } else {
       const c = companies[0]; setCompanyId(c?.id ?? ""); setAccountId(""); setDate(new Date().toISOString().slice(0, 10));
       setType("expense"); setCategoryId(""); setCategoryName(""); setDescription(""); setAmount("0");
       setCurrency(c?.baseCurrency ?? "MGA");
-      setClientId(""); setSupplierId("");
+      setClientId(""); setSupplierId(""); setProjectId("");
     }
   }, [open, editing, companies]);
 
@@ -256,6 +269,7 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
       amount: Number(amount) || 0, currency,
       clientId: type === "income" ? (clientId || undefined) : undefined,
       supplierId: type === "expense" ? (supplierId || undefined) : undefined,
+      projectId: projectId || undefined,
     };
     if (editing) transactionsStore.update(editing.id, data);
     else transactionsStore.add({ id: newId("tx"), ...data });
@@ -368,6 +382,22 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
               </Select>
             </div>
           )}
+          {(type === "income" || type === "expense") && (() => {
+            const companyProjects = projects.filter((p) => p.companyId === companyId && (type === "expense" || !clientId || p.clientId === clientId));
+            return (
+              <div>
+                <Label>Project</Label>
+                <Select value={projectId || "none"} onValueChange={(v) => setProjectId(v === "none" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder={companyProjects.length ? "Link a project" : "No projects for this company"} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— None —</SelectItem>
+                    {companyProjects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground mt-1">Used to track P&L per project (sales & expenses).</p>
+              </div>
+            );
+          })()}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
