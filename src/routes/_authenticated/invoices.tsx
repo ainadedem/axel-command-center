@@ -53,11 +53,23 @@ function Body() {
   const [editing, setEditing] = useState<Invoice | null>(null);
   const [previewing, setPreviewing] = useState<Invoice | null>(null);
   const [paying, setPaying] = useState<Invoice | null>(null);
+  const [cancelling, setCancelling] = useState<Invoice | null>(null);
 
-  const totalOpen = list.filter((i) => i.status !== "paid").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
-  const totalOverdue = list.filter((i) => i.status === "overdue").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
-  const totalPaid = list.filter((i) => i.status === "paid").reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
+  const active = list.filter((i) => i.status !== "cancelled");
+  const totalOpen = active.filter((i) => i.status !== "paid").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
+  const totalOverdue = active.filter((i) => i.status === "overdue").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
+  const totalPaid = active.filter((i) => i.status === "paid").reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
   const openCreate = () => { setEditing(null); setOpen(true); };
+
+  const markPaid = (inv: Invoice) => {
+    if (inv.status === "cancelled") return;
+    if (!confirm(`Mark invoice ${inv.number} as fully paid?`)) return;
+    invoicesStore.update(inv.id, {
+      paid: inv.amount,
+      paidDate: new Date().toISOString().slice(0, 10),
+      status: "paid",
+    });
+  };
 
   return (
     <div className="p-8 space-y-5">
