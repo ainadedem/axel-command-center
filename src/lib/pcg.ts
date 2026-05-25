@@ -440,7 +440,8 @@ if (typeof window !== "undefined") {
     const current = localStorage.getItem("logia-derived-version");
     const force = current !== DERIVED_VERSION;
     seedLogiaDerivedData(force);
-    if (force) {
+    const hasLogiaOpps = opportunitiesStore.items.some((o) => o.companyId === "log");
+    if (force || !hasLogiaOpps) {
       seedLogiaOpportunities();
       localStorage.setItem("logia-derived-version", DERIVED_VERSION);
     }
