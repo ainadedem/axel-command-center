@@ -73,15 +73,15 @@ function LoginPage() {
         <div className="relative z-10">
           <div className="flex items-center gap-2.5 mb-10">
             <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-chart-2 grid place-items-center shadow-[var(--shadow-glow)]">
-              <span className="font-display text-lg font-bold text-primary-foreground">O</span>
+              <span className="font-display text-lg font-bold text-primary-foreground">A</span>
             </div>
             <div>
-              <div className="font-display text-xl font-bold tracking-tight leading-none">onlogia</div>
+              <div className="font-display text-xl font-bold tracking-tight leading-none">AXEL</div>
               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mt-0.5">Control System</div>
             </div>
           </div>
           <h1 className="font-display text-5xl font-bold tracking-tight leading-[1.05] max-w-md">
-            onlogia.
+            The Axiom<br />Winford<br />Group.
           </h1>
           <p className="mt-6 text-muted-foreground max-w-sm leading-relaxed">
             Multi-company, multi-currency control of cash, revenue, and pipeline — engineered for clarity.
@@ -93,9 +93,9 @@ function LoginPage() {
         <div className="w-full max-w-sm">
           <div className="lg:hidden flex items-center gap-2.5 mb-8 justify-center">
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-chart-2 grid place-items-center">
-              <span className="font-display text-base font-bold text-primary-foreground">O</span>
+              <span className="font-display text-base font-bold text-primary-foreground">A</span>
             </div>
-            <span className="font-display text-lg font-bold tracking-tight">onlogia</span>
+            <span className="font-display text-lg font-bold tracking-tight">AXEL</span>
           </div>
 
           <h2 className="font-display text-2xl font-bold tracking-tight">

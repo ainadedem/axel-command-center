@@ -1,4 +1,4 @@
-// onlogia data layer — reactive collections persisted to localStorage.
+// AXEL data layer — reactive collections persisted to localStorage.
 // Each collection exposes a live array (mutated in place) and a hook
 // that triggers re-renders on changes.
 import { createCollection, useCollection } from "./data-store";
