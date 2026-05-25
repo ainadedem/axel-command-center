@@ -729,6 +729,7 @@ if (typeof window !== "undefined") {
       // Defer to ensure function declaration is hoisted in all bundling modes
       queueMicrotask(() => {
         reconcileAxiomInvoices();
+        localStorage.setItem("axiom-reconcile-key", reconcileKey);
       });
     }
 
