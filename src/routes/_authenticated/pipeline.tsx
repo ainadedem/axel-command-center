@@ -256,7 +256,7 @@ function KanbanView({ list, companies, onEdit, acqOf }: { list: Opportunity[]; c
 
 /* ─── List view ───────────────────────────────────────────────────── */
 
-function ListView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportunity) => void }) {
+function ListView({ list, onEdit, acqOf }: { list: Opportunity[]; onEdit: (o: Opportunity) => void; acqOf: (o: Opportunity) => string }) {
   const sorted = [...list].sort((a, b) => toMGA(b.value, b.currency) - toMGA(a.value, a.currency));
   return (
     <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
@@ -283,7 +283,7 @@ function ListView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportuni
                 <Icon className="h-3 w-3" /> {o.stage}
               </span>
             </div>
-            <div className="col-span-2 text-xs text-muted-foreground truncate">{o.owner || "—"}</div>
+            <div className="col-span-2 text-xs text-muted-foreground truncate">{acqOf(o) || "—"}</div>
             <div className="col-span-1 text-xs text-muted-foreground truncate">{o.closer || "—"}</div>
             <div className="col-span-2 text-right font-tnum text-sm font-semibold">{fmtCompact(o.value, o.currency)}</div>
             <div className="col-span-2 text-right">
