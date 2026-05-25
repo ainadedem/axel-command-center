@@ -46,8 +46,10 @@ function ClientsPage() {
               const paidMGA = cliInvoices.reduce((s, i) => s + toMGA(i.paid, i.currency), 0);
               const projectRevenue = cliProjects.reduce((s, p) => s + toMGA(p.revenue, p.currency), 0);
               const incomeTxMGA = cliTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+              const expenseTxMGA = cliTx.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
               const revenue = invoicedMGA || projectRevenue || incomeTxMGA;
-              const cost = cliProjects.reduce((s, p) => s + toMGA(p.cost, p.currency), 0);
+              const projectCost = cliProjects.reduce((s, p) => s + toMGA(p.cost, p.currency), 0);
+              const cost = projectCost + expenseTxMGA;
               const margin = revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0;
               const outstanding = Math.max(0, invoicedMGA - paidMGA);
               return (
