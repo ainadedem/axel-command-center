@@ -9,7 +9,7 @@ import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
 import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
 import { format, parseISO } from "date-fns";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { ResizeHandle, useResizableColumns } from "@/components/resizable-columns";
 import { Pencil, Trash2 } from "lucide-react";
+import { useDataView, type FieldDef } from "@/hooks/use-data-view";
+import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 
 export const Route = createFileRoute("/_authenticated/transactions")({
   component: TransactionsPage,
@@ -51,17 +53,32 @@ function Body() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
 
-  let list = inScope(transactions, scope);
-  if (filter !== "all") list = list.filter((t) => t.type === filter);
+  let preList = inScope(transactions, scope);
+  if (filter !== "all") preList = preList.filter((t) => t.type === filter);
   if (q) {
     const qq = q.toLowerCase();
-    list = list.filter((t) =>
+    preList = preList.filter((t) =>
       t.description.toLowerCase().includes(qq) ||
       t.category.toLowerCase().includes(qq) ||
       String(t.amount).includes(qq),
     );
   }
-  list = [...list].sort((a, b) => b.date.localeCompare(a.date));
+
+  const fields: FieldDef<Transaction>[] = [
+    { key: "date", label: "Date", type: "date", accessor: (t) => t.date },
+    { key: "description", label: "Description", type: "string", accessor: (t) => t.description },
+    { key: "company", label: "Company", type: "enum", accessor: (t) => companies.find((c) => c.id === t.companyId)?.shortName ?? "" },
+    { key: "counterparty", label: "Counterparty", type: "string", accessor: (t) => clients.find((c) => c.id === t.clientId)?.name ?? suppliers.find((s) => s.id === t.supplierId)?.name ?? "" },
+    { key: "project", label: "Project", type: "enum", accessor: (t) => projects.find((p) => p.id === t.projectId)?.name ?? "" },
+    { key: "category", label: "Category", type: "enum", accessor: (t) => t.category },
+    { key: "type", label: "Type", type: "enum", accessor: (t) => t.type },
+    { key: "amount", label: "Amount", type: "number", accessor: (t) => t.amount, noGroup: true },
+  ];
+  const view = useDataView<Transaction>("transactions", fields);
+  // Default to date desc if no sort chosen
+  const defaultSorted = view.state.sort ? preList : [...preList].sort((a, b) => b.date.localeCompare(a.date));
+  const groups = view.apply(defaultSorted);
+  const list = groups.flatMap((g) => g.items);
 
   const openCreate = () => { setEditing(null); setOpen(true); };
 
@@ -202,6 +219,8 @@ function Body() {
         </div>
       </div>
 
+      <DataToolbar view={view} items={preList} />
+
       {list.length === 0 ? (
         <EmptyState label="transactions" onCreate={openCreate} />
       ) : (
@@ -254,57 +273,63 @@ function Body() {
           </tr>
         </thead>
         <tbody>
-          {list.map((t) => {
-            const co = companies.find((c) => c.id === t.companyId);
-            const cli = t.clientId ? clients.find((c) => c.id === t.clientId) : null;
-            const sup = t.supplierId ? suppliers.find((s) => s.id === t.supplierId) : null;
-            return (
-              <tr key={t.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
-                <td className="px-5 py-3.5 text-muted-foreground font-tnum text-xs truncate">{format(parseISO(t.date), "MMM d, yyyy")}</td>
-                <td className="px-5 py-3.5 font-medium truncate">{t.description}</td>
-                <td className="px-5 py-3.5 truncate">
-                  {co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}
-                </td>
-                <td className="px-5 py-3.5 text-xs truncate">
-                  {cli ? <span className="text-success">↑ {cli.name}</span>
-                    : sup ? <span className="text-muted-foreground">↓ {sup.name}</span>
-                    : <span className="text-muted-foreground/50">—</span>}
-                </td>
-                <td className="px-5 py-3.5 text-xs truncate">
-                  {(() => {
-                    const proj = t.projectId ? projects.find((p) => p.id === t.projectId) : null;
-                    return proj
-                      ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 truncate max-w-full">{proj.name}</span>
-                      : <span className="text-muted-foreground/50">—</span>;
-                  })()}
-                </td>
-                <td className="px-5 py-3.5 text-muted-foreground truncate">{t.category}</td>
-                <td className="px-5 py-3.5 truncate">
-                  <span className={cn(
-                    "text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border",
-                    t.type === "income" && "border-success/40 text-success bg-success/10",
-                    t.type === "expense" && "border-destructive/30 text-destructive bg-destructive/10",
-                    t.type === "transfer" && "border-chart-2/30 text-chart-2 bg-chart-2/10",
-                    t.type === "intercompany" && "border-chart-4/30 text-chart-4 bg-chart-4/10",
-                  )}>{t.type}</span>
-                </td>
-                <td className={cn("px-5 py-3.5 text-right font-tnum font-medium truncate", t.type === "income" && "text-success", t.type === "expense" && "text-destructive")}>
-                  {t.type === "income" ? "+" : t.type === "expense" ? "−" : ""}{fmtCompact(t.amount, t.currency)}
-                </td>
-                <td className="px-5 py-3.5 text-right">
-                  <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
-                    <button onClick={() => { setEditing(t); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                    <button onClick={() => confirm("Delete this transaction?") && transactionsStore.remove(t.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
+          {groups.map((g) => (
+            <Fragment key={g.key}>
+              {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={cols.length} />}
+              {g.items.map((t) => {
+                const co = companies.find((c) => c.id === t.companyId);
+                const cli = t.clientId ? clients.find((c) => c.id === t.clientId) : null;
+                const sup = t.supplierId ? suppliers.find((s) => s.id === t.supplierId) : null;
+                return (
+                  <tr key={t.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
+                    <td className="px-5 py-3.5 text-muted-foreground font-tnum text-xs truncate">{format(parseISO(t.date), "MMM d, yyyy")}</td>
+                    <td className="px-5 py-3.5 font-medium truncate">{t.description}</td>
+                    <td className="px-5 py-3.5 truncate">
+                      {co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}
+                    </td>
+                    <td className="px-5 py-3.5 text-xs truncate">
+                      {cli ? <span className="text-success">↑ {cli.name}</span>
+                        : sup ? <span className="text-muted-foreground">↓ {sup.name}</span>
+                        : <span className="text-muted-foreground/50">—</span>}
+                    </td>
+                    <td className="px-5 py-3.5 text-xs truncate">
+                      {(() => {
+                        const proj = t.projectId ? projects.find((p) => p.id === t.projectId) : null;
+                        return proj
+                          ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 truncate max-w-full">{proj.name}</span>
+                          : <span className="text-muted-foreground/50">—</span>;
+                      })()}
+                    </td>
+                    <td className="px-5 py-3.5 text-muted-foreground truncate">{t.category}</td>
+                    <td className="px-5 py-3.5 truncate">
+                      <span className={cn(
+                        "text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                        t.type === "income" && "border-success/40 text-success bg-success/10",
+                        t.type === "expense" && "border-destructive/30 text-destructive bg-destructive/10",
+                        t.type === "transfer" && "border-chart-2/30 text-chart-2 bg-chart-2/10",
+                        t.type === "intercompany" && "border-chart-4/30 text-chart-4 bg-chart-4/10",
+                      )}>{t.type}</span>
+                    </td>
+                    <td className={cn("px-5 py-3.5 text-right font-tnum font-medium truncate", t.type === "income" && "text-success", t.type === "expense" && "text-destructive")}>
+                      {t.type === "income" ? "+" : t.type === "expense" ? "−" : ""}{fmtCompact(t.amount, t.currency)}
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
+                        <button onClick={() => { setEditing(t); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
+                        <button onClick={() => confirm("Delete this transaction?") && transactionsStore.remove(t.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </Fragment>
+          ))}
         </tbody>
       </table>
     );
   }
 }
+
 
 function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Transaction | null }) {
   const companies = useCompanies();

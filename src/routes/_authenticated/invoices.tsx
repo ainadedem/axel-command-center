@@ -12,7 +12,9 @@ import { inScope, useCompany } from "@/lib/company-context";
 import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useEffect, useState, useCallback } from "react";
+import { Fragment, useEffect, useState, useCallback } from "react";
+import { useDataView, type FieldDef } from "@/hooks/use-data-view";
+import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,7 +53,7 @@ function Body() {
   const companies = useCompanies();
   const clients = useClients();
   const projects = useProjects();
-  const list = inScope(invoices, scope);
+  const baseList = inScope(invoices, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Invoice | null>(null);
   const [previewing, setPreviewing] = useState<Invoice | null>(null);
@@ -66,6 +68,23 @@ function Body() {
     setNumberFormat(next);
   }, [numMode]);
 
+  const fields: FieldDef<Invoice>[] = [
+    { key: "number", label: "Number", type: "string", accessor: (i) => i.number, noGroup: true },
+    { key: "client", label: "Client", type: "enum", accessor: (i) => clients.find((c) => c.id === i.clientId)?.name ?? "" },
+    { key: "project", label: "Project", type: "enum", accessor: (i) => projects.find((p) => p.id === i.projectId)?.name ?? "" },
+    { key: "rep", label: "Sales rep", type: "enum", accessor: (i) => clients.find((c) => c.id === i.clientId)?.acquisition ?? "" },
+    { key: "company", label: "Company", type: "enum", accessor: (i) => companies.find((c) => c.id === i.companyId)?.shortName ?? "" },
+    { key: "status", label: "Status", type: "enum", accessor: (i) => i.status },
+    { key: "currency", label: "Currency", type: "enum", accessor: (i) => i.currency },
+    { key: "issueDate", label: "Issued", type: "date", accessor: (i) => i.issueDate, noGroup: true },
+    { key: "dueDate", label: "Due", type: "date", accessor: (i) => i.dueDate, noGroup: true },
+    { key: "amount", label: "Amount", type: "number", accessor: (i) => i.amount, noGroup: true },
+    { key: "balance", label: "Balance", type: "number", accessor: (i) => i.amount - i.paid, noGroup: true },
+  ];
+  const view = useDataView<Invoice>("invoices", fields);
+  const groups = view.apply(baseList);
+  const list = groups.flatMap((g) => g.items);
+
   const active = list.filter((i) => i.status !== "cancelled");
   const totalOpen = active.filter((i) => i.status !== "paid").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
   const totalOverdue = active.filter((i) => i.status === "overdue").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
@@ -73,7 +92,7 @@ function Body() {
   const openCreate = () => { setEditing(null); setOpen(true); };
 
 
-  const scopedInvoices = list;
+  const scopedInvoices = baseList;
   const scopedTx = transactionsStore.items; // raw for matching
   const checks: ReconcileCheck[] = [
     {
@@ -178,6 +197,8 @@ function Body() {
         </div>
       </div>
 
+      <DataToolbar view={view} items={baseList} />
+
       {list.length === 0 ? (
         <EmptyState label="invoices" onCreate={openCreate} />
       ) : (
@@ -208,7 +229,10 @@ function Body() {
                 </tr>
               </thead>
               <tbody>
-                {list.map((inv) => {
+                {groups.map((g) => (
+                  <Fragment key={g.key}>
+                    {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={13} />}
+                    {g.items.map((inv) => {
                   const co = companies.find((c) => c.id === inv.companyId);
                   const cl = clients.find((c) => c.id === inv.clientId);
                   const proj = inv.projectId ? projects.find((p) => p.id === inv.projectId) : undefined;
@@ -278,6 +302,8 @@ function Body() {
                     </tr>
                   );
                 })}
+                  </Fragment>
+                ))}
               </tbody>
             </table>
           </div>

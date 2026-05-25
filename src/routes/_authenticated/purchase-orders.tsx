@@ -9,7 +9,9 @@ import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
+import { useDataView, type FieldDef } from "@/hooks/use-data-view";
+import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,15 +48,34 @@ function Body() {
   const companies = useCompanies();
   const clients = useClients();
   const projects = useProjects();
-  const list = inScope(pos, scope);
+  const baseList = inScope(pos, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<PurchaseOrder | null>(null);
   const [previewing, setPreviewing] = useState<PurchaseOrder | null>(null);
   const openCreate = () => { setEditing(null); setOpen(true); };
 
+  const fields: FieldDef<PurchaseOrder>[] = [
+    { key: "number", label: "Number", type: "string", accessor: (p) => p.number, noGroup: true },
+    { key: "clientRef", label: "Client ref", type: "string", accessor: (p) => p.clientReference ?? "", noGroup: true },
+    { key: "client", label: "Client", type: "enum", accessor: (p) => clients.find((c) => c.id === p.clientId)?.name ?? "" },
+    { key: "project", label: "Project", type: "enum", accessor: (p) => projects.find((pr) => pr.id === p.projectId)?.name ?? "" },
+    { key: "company", label: "Company", type: "enum", accessor: (p) => companies.find((c) => c.id === p.companyId)?.shortName ?? "" },
+    { key: "status", label: "Status", type: "enum", accessor: (p) => p.status },
+    { key: "currency", label: "Currency", type: "enum", accessor: (p) => p.currency },
+    { key: "issueDate", label: "Issued", type: "date", accessor: (p) => p.issueDate, noGroup: true },
+    { key: "amount", label: "Amount", type: "number", accessor: (p) => p.amount, noGroup: true },
+    { key: "hasDoc", label: "Has document", type: "boolean", accessor: (p) => !!p.documentUrl },
+  ];
+  const view = useDataView<PurchaseOrder>("purchase-orders", fields);
+  const groups = view.apply(baseList);
+  const list = groups.flatMap((g) => g.items);
+
   return (
     <div className="p-8 space-y-5">
-      <CrudToolbar count={list.length} label="purchase orders" onCreate={openCreate} />
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <CrudToolbar count={list.length} label="purchase orders" onCreate={openCreate} />
+        <DataToolbar view={view} items={baseList} />
+      </div>
       {list.length === 0 ? (
         <EmptyState label="purchase orders" onCreate={openCreate} />
       ) : (
@@ -77,7 +98,10 @@ function Body() {
 
             </thead>
             <tbody>
-              {list.map((po) => {
+              {groups.map((g) => (
+                <Fragment key={g.key}>
+                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={11} />}
+                  {g.items.map((po) => {
                 const co = companies.find((c) => c.id === po.companyId);
                 const cl = clients.find((c) => c.id === po.clientId);
                 const proj = po.projectId ? projects.find((p) => p.id === po.projectId) : undefined;
@@ -111,6 +135,8 @@ function Body() {
                   </tr>
                 );
               })}
+                </Fragment>
+              ))}
             </tbody>
           </table>
         </div>
