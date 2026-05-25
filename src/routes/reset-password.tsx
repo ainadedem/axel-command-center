@@ -1,14 +1,9 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/reset-password")({
-  beforeLoad: async () => {
-    // If already logged in, redirect to home
-    const { data } = await supabase.auth.getSession();
-    if (data.session) throw redirect({ to: "/" });
-  },
   component: ResetPasswordPage,
 });
 
@@ -19,16 +14,30 @@ function ResetPasswordPage() {
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  // Supabase puts recovery tokens in the URL hash; we just need the session to be present
+  // Supabase parses the recovery token from the URL hash and creates a
+  // session. We listen for PASSWORD_RECOVERY (or an existing session) so
+  // the user lands on this form instead of being redirected away.
   useEffect(() => {
-    const checkSession = async () => {
+    let resolved = false;
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
+        resolved = true;
+        setError(null);
+      }
+    });
+
+    const t = setTimeout(async () => {
+      if (resolved) return;
       const { data } = await supabase.auth.getSession();
       if (!data.session) {
-        // No session from recovery link — user may have opened this page directly
         setError("This reset link is invalid or has expired. Please request a new one.");
       }
+    }, 1500);
+
+    return () => {
+      sub.subscription.unsubscribe();
+      clearTimeout(t);
     };
-    checkSession();
   }, []);
 
   const handleSubmit = async (e: FormEvent) => {
