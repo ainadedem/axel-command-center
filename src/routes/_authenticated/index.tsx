@@ -15,6 +15,14 @@ import {
 import { format, subDays, subMonths, startOfMonth, endOfMonth, startOfYear, parseISO } from "date-fns";
 import { useState, useMemo } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertTriangle, AlertOctagon, ShieldCheck } from "lucide-react";
+
+const pct = (cur: number, prev: number) => {
+  if (prev === 0) return cur === 0 ? 0 : cur > 0 ? 100 : -100;
+  return ((cur - prev) / Math.abs(prev)) * 100;
+};
+const fmtPct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(1)}%`;
+
 
 export const Route = createFileRoute("/_authenticated/")({ component: Dashboard });
 
