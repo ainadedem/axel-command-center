@@ -158,6 +158,14 @@ function Body() {
                     : sup ? <span className="text-muted-foreground">↓ {sup.name}</span>
                     : <span className="text-muted-foreground/50">—</span>}
                 </td>
+                <td className="px-5 py-3.5 text-xs truncate">
+                  {(() => {
+                    const proj = t.projectId ? projects.find((p) => p.id === t.projectId) : null;
+                    return proj
+                      ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 truncate max-w-full">{proj.name}</span>
+                      : <span className="text-muted-foreground/50">—</span>;
+                  })()}
+                </td>
                 <td className="px-5 py-3.5 text-muted-foreground truncate">{t.category}</td>
                 <td className="px-5 py-3.5 truncate">
                   <span className={cn(
