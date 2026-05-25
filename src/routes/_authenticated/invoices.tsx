@@ -72,6 +72,8 @@ function Body() {
                 <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
                   <th className="text-left font-medium px-5 py-3">Number</th>
                   <th className="text-left font-medium px-5 py-3">Client</th>
+                  <th className="text-left font-medium px-5 py-3">Project</th>
+                  <th className="text-left font-medium px-5 py-3">Sales rep</th>
                   <th className="text-left font-medium px-5 py-3">Company</th>
                   <th className="text-left font-medium px-5 py-3">Issued</th>
                   <th className="text-left font-medium px-5 py-3">Due</th>
