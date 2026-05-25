@@ -37,6 +37,8 @@ export interface Client {
   companyId: string;
   name: string;
   country: string;
+  /** Client acquisition person — the one who brought this client. Single source of truth across all tables. */
+  acquisition?: string;
 }
 
 export interface Project {
@@ -112,9 +114,7 @@ export interface Opportunity {
   companyId: string;
   name: string;
   client: string;
-  /** Client acquisition person (a.k.a. account owner / hunter). */
-  owner: string;
-  /** Closer in charge of finalizing the deal (often different from acquisition). */
+  /** Closer in charge of finalizing the deal. Acquisition lives on the Client. */
   closer?: string;
   stage: Stage;
   value: number;

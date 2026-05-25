@@ -422,17 +422,47 @@ function guessCountry(name: string): string {
 /** Labels for sub-accounts (6-digit codes) used in the imported Grand Livre. */
 export const accountLabels = logiaAccountLabels as Record<string, string>;
 
-/** Replace all Logia-scoped opportunities with the imported Notion CRM snapshot. */
+/** Replace all Logia-scoped opportunities with the imported Notion CRM snapshot,
+ *  and propagate each client's acquisition person onto the Clients table
+ *  (single source of truth — same person across every opportunity for that client). */
 export function seedLogiaOpportunities() {
-  const seed = logiaOpportunitiesSeed as Opportunity[];
+  type RawOpp = Opportunity & { owner?: string };
+  const seed = logiaOpportunitiesSeed as RawOpp[];
+
+  // 1) Derive acquisition per client: pick the most frequent legacy `owner`.
+  const tally = new Map<string, Map<string, number>>(); // clientName → owner → count
+  for (const o of seed) {
+    if (!o.owner) continue;
+    const key = (o.client || "").trim();
+    if (!key) continue;
+    const inner = tally.get(key) ?? new Map<string, number>();
+    inner.set(o.owner, (inner.get(o.owner) ?? 0) + 1);
+    tally.set(key, inner);
+  }
+  const acqByClient = new Map<string, string>();
+  for (const [name, owners] of tally) {
+    const top = [...owners.entries()].sort((a, b) => b[1] - a[1])[0];
+    if (top) acqByClient.set(name.toLowerCase(), top[0]);
+  }
+
+  // 2) Update the Logia clients in place with their acquisition person.
+  const updatedClients = clientsStore.items.map((c) => {
+    if (c.companyId !== "log") return c;
+    const acq = acqByClient.get(c.name.toLowerCase());
+    return acq ? { ...c, acquisition: acq } : c;
+  });
+  clientsStore.replaceAll(updatedClients);
+
+  // 3) Replace Logia opportunities (strip legacy `owner` field — acquisition lives on Client).
   const others = opportunitiesStore.items.filter((o) => o.companyId !== "log");
-  opportunitiesStore.replaceAll([...others, ...seed]);
-  return seed.length;
+  const cleaned: Opportunity[] = seed.map(({ owner: _owner, ...rest }) => rest);
+  opportunitiesStore.replaceAll([...others, ...cleaned]);
+  return cleaned.length;
 }
 
 // Auto-seed on first load (idempotent). Declared AFTER `accountLabels`
 // because seedLogiaDerivedData() reads from it.
-const DERIVED_VERSION = "6"; // bump to force re-derive on existing local data
+const DERIVED_VERSION = "7"; // bump to force re-derive on existing local data
 if (typeof window !== "undefined") {
   try {
     ensureSeedCompanies();

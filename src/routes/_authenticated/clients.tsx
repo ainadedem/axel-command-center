@@ -58,6 +58,11 @@ function ClientsPage() {
                     <div>
                       <div className="font-medium text-base">{cl.name}</div>
                       <div className="text-xs text-muted-foreground mt-0.5">{cl.country}</div>
+                      {cl.acquisition && (
+                        <div className="mt-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20" title="Client acquisition">
+                          Acq · {cl.acquisition}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       {co && (
@@ -98,16 +103,21 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   const [companyId, setCompanyId] = useState("");
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
+  const [acquisition, setAcquisition] = useState("");
 
   useEffect(() => {
     if (!open) return;
-    if (editing) { setCompanyId(editing.companyId); setName(editing.name); setCountry(editing.country); }
-    else { setCompanyId(companies[0]?.id ?? ""); setName(""); setCountry(""); }
+    if (editing) {
+      setCompanyId(editing.companyId); setName(editing.name); setCountry(editing.country);
+      setAcquisition(editing.acquisition ?? "");
+    } else {
+      setCompanyId(companies[0]?.id ?? ""); setName(""); setCountry(""); setAcquisition("");
+    }
   }, [open, editing, companies]);
 
   const submit = () => {
     if (!name.trim() || !companyId) return;
-    const data = { companyId, name, country };
+    const data = { companyId, name, country, acquisition: acquisition.trim() || undefined };
     if (editing) clientsStore.update(editing.id, data);
     else clientsStore.add({ id: newId("cli"), ...data });
     onOpenChange(false);
@@ -127,6 +137,11 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
           </div>
           <div><Label>Client name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div><Label>Country</Label><Input value={country} onChange={(e) => setCountry(e.target.value)} /></div>
+          <div>
+            <Label>Acquisition</Label>
+            <Input value={acquisition} onChange={(e) => setAcquisition(e.target.value)} placeholder="Who brought this client" />
+            <p className="text-[11px] text-muted-foreground mt-1">Single person across all opportunities, invoices and projects for this client.</p>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>

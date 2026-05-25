@@ -2,9 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useOpportunities, useCompanies, opportunitiesStore,
+  useOpportunities, useCompanies, useClients, opportunitiesStore,
   stages, fmtCompact, toMGA, stageProbability,
-  type Stage, type Opportunity, type Currency,
+  type Stage, type Opportunity, type Currency, type Client,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
@@ -64,11 +64,24 @@ function PipelinePage() {
   );
 }
 
+/** Map (companyId, client name) → acquisition person from the Clients table. */
+function useAcqLookup(clients: Client[]): (o: Opportunity) => string {
+  return useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of clients) {
+      if (c.acquisition) map.set(`${c.companyId}::${c.name.toLowerCase()}`, c.acquisition);
+    }
+    return (o: Opportunity) => map.get(`${o.companyId}::${(o.client || "").toLowerCase()}`) ?? "";
+  }, [clients]);
+}
+
 function Body() {
   const { scope } = useCompany();
   const opportunities = useOpportunities();
   const companies = useCompanies();
+  const clients = useClients();
   const list = inScope(opportunities, scope);
+  const acqOf = useAcqLookup(clients);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Opportunity | null>(null);
   const [view, setView] = useState<"kanban" | "list" | "acquisition" | "closer" | "forecast">("kanban");
@@ -116,16 +129,16 @@ function Body() {
             </TabsList>
 
             <TabsContent value="kanban" className="mt-4">
-              <KanbanView list={list} companies={companies} onEdit={onEdit} />
+              <KanbanView list={list} companies={companies} onEdit={onEdit} acqOf={acqOf} />
             </TabsContent>
             <TabsContent value="list" className="mt-4">
-              <ListView list={list} onEdit={onEdit} />
+              <ListView list={list} onEdit={onEdit} acqOf={acqOf} />
             </TabsContent>
             <TabsContent value="acquisition" className="mt-4">
-              <PeopleView list={list} onEdit={onEdit} role="acquisition" />
+              <PeopleView list={list} onEdit={onEdit} role="acquisition" acqOf={acqOf} />
             </TabsContent>
             <TabsContent value="closer" className="mt-4">
-              <PeopleView list={list} onEdit={onEdit} role="closer" />
+              <PeopleView list={list} onEdit={onEdit} role="closer" acqOf={acqOf} />
             </TabsContent>
             <TabsContent value="forecast" className="mt-4">
               <ForecastView list={list} />
@@ -174,7 +187,7 @@ function StageDistribution({ list }: { list: Opportunity[] }) {
 
 /* ─── Kanban view ─────────────────────────────────────────────────── */
 
-function KanbanView({ list, companies, onEdit }: { list: Opportunity[]; companies: ReturnType<typeof useCompanies>; onEdit: (o: Opportunity) => void }) {
+function KanbanView({ list, companies, onEdit, acqOf }: { list: Opportunity[]; companies: ReturnType<typeof useCompanies>; onEdit: (o: Opportunity) => void; acqOf: (o: Opportunity) => string }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
       {stages.map((s) => {
@@ -200,6 +213,7 @@ function KanbanView({ list, companies, onEdit }: { list: Opportunity[]; companie
                 {col.map((o) => {
                   const co = companies.find((c) => c.id === o.companyId);
                   const u = urgencyOf(o);
+                  const acq = acqOf(o);
                   return (
                     <div key={o.id} className={`rounded-lg bg-surface-elevated border-l-2 ${st.ring} border-y border-r border-border/60 p-3 hover:border-primary/40 transition group`}>
                       <div className="flex items-start justify-between gap-2">
@@ -207,9 +221,9 @@ function KanbanView({ list, companies, onEdit }: { list: Opportunity[]; companie
                         {co && <span className="h-2 w-2 rounded-full mt-1.5 shrink-0" style={{ background: co.color }} />}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">{o.client}</div>
-                      {(o.owner || o.closer) && (
+                      {(acq || o.closer) && (
                         <div className="flex flex-wrap gap-1 mt-2 text-[9px]">
-                          {o.owner && <span className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20" title="Acquisition">A · {o.owner}</span>}
+                          {acq && <span className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20" title="Acquisition (from client)">A · {acq}</span>}
                           {o.closer && <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20" title="Closer">C · {o.closer}</span>}
                         </div>
                       )}
@@ -242,7 +256,7 @@ function KanbanView({ list, companies, onEdit }: { list: Opportunity[]; companie
 
 /* ─── List view ───────────────────────────────────────────────────── */
 
-function ListView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportunity) => void }) {
+function ListView({ list, onEdit, acqOf }: { list: Opportunity[]; onEdit: (o: Opportunity) => void; acqOf: (o: Opportunity) => string }) {
   const sorted = [...list].sort((a, b) => toMGA(b.value, b.currency) - toMGA(a.value, a.currency));
   return (
     <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
@@ -269,7 +283,7 @@ function ListView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportuni
                 <Icon className="h-3 w-3" /> {o.stage}
               </span>
             </div>
-            <div className="col-span-2 text-xs text-muted-foreground truncate">{o.owner || "—"}</div>
+            <div className="col-span-2 text-xs text-muted-foreground truncate">{acqOf(o) || "—"}</div>
             <div className="col-span-1 text-xs text-muted-foreground truncate">{o.closer || "—"}</div>
             <div className="col-span-2 text-right font-tnum text-sm font-semibold">{fmtCompact(o.value, o.currency)}</div>
             <div className="col-span-2 text-right">
@@ -288,11 +302,11 @@ function ListView({ list, onEdit }: { list: Opportunity[]; onEdit: (o: Opportuni
 
 /* ─── People view (by acquisition or closer) ──────────────────────── */
 
-function PeopleView({ list, onEdit, role }: { list: Opportunity[]; onEdit: (o: Opportunity) => void; role: "acquisition" | "closer" }) {
+function PeopleView({ list, onEdit, role, acqOf }: { list: Opportunity[]; onEdit: (o: Opportunity) => void; role: "acquisition" | "closer"; acqOf: (o: Opportunity) => string }) {
   const grouped = useMemo(() => {
     const m = new Map<string, Opportunity[]>();
     list.forEach((o) => {
-      const k = (role === "acquisition" ? o.owner : o.closer) || "Unassigned";
+      const k = (role === "acquisition" ? acqOf(o) : o.closer) || "Unassigned";
       m.set(k, [...(m.get(k) ?? []), o]);
     });
     return Array.from(m.entries()).sort((a, b) => {
@@ -300,7 +314,7 @@ function PeopleView({ list, onEdit, role }: { list: Opportunity[]; onEdit: (o: O
       const vb = b[1].reduce((s, o) => s + toMGA(o.value, o.currency), 0);
       return vb - va;
     });
-  }, [list, role]);
+  }, [list, role, acqOf]);
 
   const roleLabel = role === "acquisition" ? "Acquisition" : "Closer";
 
@@ -322,6 +336,7 @@ function PeopleView({ list, onEdit, role }: { list: Opportunity[]; onEdit: (o: O
             <div className="space-y-1.5">
               {ops.map((o) => {
                 const st = STAGE_STYLES[o.stage];
+                const otherAcq = acqOf(o);
                 return (
                   <button key={o.id} onClick={() => onEdit(o)} className={`w-full flex items-center justify-between gap-2 text-left rounded-md border-l-2 ${st.ring} bg-surface-elevated/60 hover:bg-surface-elevated px-2.5 py-2 transition`}>
                     <div className="min-w-0">
@@ -329,7 +344,7 @@ function PeopleView({ list, onEdit, role }: { list: Opportunity[]; onEdit: (o: O
                       <div className="text-[10px] text-muted-foreground truncate">
                         {o.client}
                         {role === "acquisition" && o.closer ? ` · closer: ${o.closer}` : ""}
-                        {role === "closer" && o.owner ? ` · acq: ${o.owner}` : ""}
+                        {role === "closer" && otherAcq ? ` · acq: ${otherAcq}` : ""}
                       </div>
                     </div>
                     <div className="flex flex-col items-end shrink-0">
@@ -397,10 +412,10 @@ function ForecastView({ list }: { list: Opportunity[] }) {
 
 function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Opportunity | null }) {
   const companies = useCompanies();
+  const clients = useClients();
   const [companyId, setCompanyId] = useState("");
   const [name, setName] = useState("");
   const [client, setClient] = useState("");
-  const [owner, setOwner] = useState("");
   const [closer, setCloser] = useState("");
   const [stage, setStage] = useState<Stage>("Lead");
   const [value, setValue] = useState("0");
@@ -411,18 +426,25 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
     if (!open) return;
     if (editing) {
       setCompanyId(editing.companyId); setName(editing.name); setClient(editing.client);
-      setOwner(editing.owner); setCloser(editing.closer ?? "");
+      setCloser(editing.closer ?? "");
       setStage(editing.stage); setValue(String(editing.value)); setCurrency(editing.currency); setExpectedClose(editing.expectedClose);
     } else {
       const c = companies[0]; setCompanyId(c?.id ?? ""); setName(""); setClient("");
-      setOwner(""); setCloser("");
+      setCloser("");
       setStage("Lead"); setValue("0"); setCurrency(c?.baseCurrency ?? "EUR"); setExpectedClose(new Date().toISOString().slice(0, 10));
     }
   }, [open, editing, companies]);
 
+  const acqForClient = useMemo(() => {
+    const match = clients.find(
+      (c) => c.companyId === companyId && c.name.toLowerCase() === client.trim().toLowerCase(),
+    );
+    return match?.acquisition ?? "";
+  }, [clients, companyId, client]);
+
   const submit = () => {
     if (!name.trim() || !companyId) return;
-    const data = { companyId, name, client, owner, closer: closer.trim() || undefined, stage, value: Number(value) || 0, currency, expectedClose };
+    const data = { companyId, name, client, closer: closer.trim() || undefined, stage, value: Number(value) || 0, currency, expectedClose };
     if (editing) opportunitiesStore.update(editing.id, data);
     else opportunitiesStore.add({ id: newId("opp"), ...data });
     onOpenChange(false);
@@ -441,11 +463,14 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
             </Select>
           </div>
           <div><Label>Opportunity name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-          <div><Label>Client</Label><Input value={client} onChange={(e) => setClient(e.target.value)} /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Acquisition (client owner)</Label><Input value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="Who brought the client" /></div>
-            <div><Label>Closer</Label><Input value={closer} onChange={(e) => setCloser(e.target.value)} placeholder="Who closes the deal" /></div>
+          <div>
+            <Label>Client</Label>
+            <Input value={client} onChange={(e) => setClient(e.target.value)} />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Acquisition: <span className="font-medium text-foreground">{acqForClient || "—"}</span> (managed on the Clients page)
+            </p>
           </div>
+          <div><Label>Closer</Label><Input value={closer} onChange={(e) => setCloser(e.target.value)} placeholder="Who closes the deal" /></div>
           <div className="grid grid-cols-3 gap-3">
             <div>
               <Label>Stage</Label>
