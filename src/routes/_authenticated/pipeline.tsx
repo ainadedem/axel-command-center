@@ -2,9 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useOpportunities, useCompanies, opportunitiesStore,
+  useOpportunities, useCompanies, useClients, opportunitiesStore,
   stages, fmtCompact, toMGA, stageProbability,
-  type Stage, type Opportunity, type Currency,
+  type Stage, type Opportunity, type Currency, type Client,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
