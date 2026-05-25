@@ -129,16 +129,16 @@ function Body() {
             </TabsList>
 
             <TabsContent value="kanban" className="mt-4">
-              <KanbanView list={list} companies={companies} onEdit={onEdit} />
+              <KanbanView list={list} companies={companies} onEdit={onEdit} acqOf={acqOf} />
             </TabsContent>
             <TabsContent value="list" className="mt-4">
-              <ListView list={list} onEdit={onEdit} />
+              <ListView list={list} onEdit={onEdit} acqOf={acqOf} />
             </TabsContent>
             <TabsContent value="acquisition" className="mt-4">
-              <PeopleView list={list} onEdit={onEdit} role="acquisition" />
+              <PeopleView list={list} onEdit={onEdit} role="acquisition" acqOf={acqOf} />
             </TabsContent>
             <TabsContent value="closer" className="mt-4">
-              <PeopleView list={list} onEdit={onEdit} role="closer" />
+              <PeopleView list={list} onEdit={onEdit} role="closer" acqOf={acqOf} />
             </TabsContent>
             <TabsContent value="forecast" className="mt-4">
               <ForecastView list={list} />
