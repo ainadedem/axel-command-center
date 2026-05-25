@@ -127,10 +127,12 @@ function ClientsPage() {
 function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Client | null }) {
   const companies = useCompanies();
   const acqPeople = useSalesPeople("acquisition");
+  const teamMembers = useTeamMembers();
   const [companyId, setCompanyId] = useState("");
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
   const [acquisition, setAcquisition] = useState("");
+  const [referral, setReferral] = useState("");
   const [acquiredAt, setAcquiredAt] = useState("");
   const [website, setWebsite] = useState("");
   const [email, setEmail] = useState("");
@@ -145,6 +147,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
     if (editing) {
       setCompanyId(editing.companyId); setName(editing.name); setCountry(editing.country);
       setAcquisition(editing.acquisition ?? "");
+      setReferral(editing.referral ?? "");
       setAcquiredAt(editing.acquiredAt ?? "");
       setWebsite(editing.website ?? "");
       setEmail(editing.email ?? "");
