@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
+import { Avatar, AvatarUpload } from "@/components/avatar-upload";
 import { Pencil, Trash2, Users } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/team")({ component: TeamPage });
@@ -58,9 +59,7 @@ function TeamPage() {
                 return (
                   <div key={m.id} className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated/60 transition group">
                     <div className="col-span-3 flex items-center gap-2.5">
-                      <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary/30 to-chart-2/30 grid place-items-center text-[10px] font-semibold">
-                        {m.name.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase()}
-                      </div>
+                      <Avatar src={m.avatarUrl} name={m.name} size={28} />
                       <div className="text-sm font-medium truncate">{m.name}</div>
                     </div>
                     <div className="col-span-3 text-xs text-muted-foreground truncate">{m.email || "—"}</div>
@@ -95,19 +94,27 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
   const [email, setEmail] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [department, setDepartment] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (!open) return;
     if (editing) {
       setName(editing.name); setEmail(editing.email ?? ""); setJobTitle(editing.jobTitle ?? ""); setDepartment(editing.department ?? "");
+      setAvatarUrl(editing.avatarUrl);
     } else {
-      setName(""); setEmail(""); setJobTitle(""); setDepartment("");
+      setName(""); setEmail(""); setJobTitle(""); setDepartment(""); setAvatarUrl(undefined);
     }
   }, [open, editing]);
 
   const submit = () => {
     if (!name.trim()) return;
-    const data = { name: name.trim(), email: email.trim() || undefined, jobTitle: jobTitle.trim() || undefined, department: department.trim() || undefined };
+    const data = {
+      name: name.trim(),
+      email: email.trim() || undefined,
+      jobTitle: jobTitle.trim() || undefined,
+      department: department.trim() || undefined,
+      avatarUrl,
+    };
     if (editing) teamMembersStore.update(editing.id, data);
     else teamMembersStore.add({ id: newId("tm"), ...data });
     onOpenChange(false);
@@ -118,8 +125,13 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
       <DialogContent>
         <DialogHeader><DialogTitle>{editing ? "Edit team member" : "New team member"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
-          <div><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-          <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+          <div className="flex items-start gap-4">
+            <AvatarUpload value={avatarUrl} onChange={setAvatarUrl} name={name} size={72} />
+            <div className="flex-1 space-y-3">
+              <div><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+              <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Job title</Label><Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} /></div>
             <div><Label>Department</Label><Input value={department} onChange={(e) => setDepartment(e.target.value)} /></div>

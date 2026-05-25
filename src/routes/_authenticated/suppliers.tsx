@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
+import { Avatar, AvatarUpload } from "@/components/avatar-upload";
 import { Pencil, Trash2, Building2, User } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/suppliers")({ component: SuppliersPage });
@@ -79,6 +80,7 @@ function Body() {
                   <tr key={s.id} className="border-t border-border/60 hover:bg-surface-elevated/30 group">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
+                        <Avatar src={s.avatarUrl} name={s.name} size={32} />
                         <Icon className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">{s.name}</span>
                       </div>
@@ -118,11 +120,12 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
   const [companyId, setCompanyId] = useState(editing?.companyId ?? companies[0]?.id ?? "");
   const [account, setAccount] = useState(editing?.account ?? "401000");
   const [kind, setKind] = useState<Supplier["kind"]>(editing?.kind ?? "external");
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(editing?.avatarUrl);
 
   function submit() {
     if (!name.trim() || !companyId) return;
-    if (editing) suppliersStore.update(editing.id, { name, companyId, account, kind });
-    else suppliersStore.add({ id: newId("sup"), name, companyId, account, kind });
+    if (editing) suppliersStore.update(editing.id, { name, companyId, account, kind, avatarUrl });
+    else suppliersStore.add({ id: newId("sup"), name, companyId, account, kind, avatarUrl });
     onOpenChange(false);
   }
 
@@ -131,7 +134,13 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
       <DialogContent>
         <DialogHeader><DialogTitle>{editing ? "Edit supplier" : "New supplier"}</DialogTitle></DialogHeader>
         <div className="space-y-3 py-2">
-          <div><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div className="flex items-start gap-4">
+            <AvatarUpload value={avatarUrl} onChange={setAvatarUrl} name={name} size={64} square={kind === "external"} />
+            <div className="flex-1">
+              <Label>Name</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+          </div>
           <div><Label>Company</Label>
             <Select value={companyId} onValueChange={setCompanyId}>
               <SelectTrigger><SelectValue /></SelectTrigger>

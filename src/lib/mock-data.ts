@@ -39,6 +39,10 @@ export interface Client {
   country: string;
   /** Client acquisition person — the one who brought this client. Single source of truth across all tables. */
   acquisition?: string;
+  /** ISO date (YYYY-MM-DD) when the client was acquired. */
+  acquiredAt?: string;
+  /** Profile picture stored as a data URL or remote URL. */
+  avatarUrl?: string;
 }
 
 export interface Project {
@@ -130,6 +134,8 @@ export interface Supplier {
   account: string;
   /** "external" = vendor, "internal" = staff reimbursements / honoraires internes. */
   kind: "external" | "internal";
+  /** Profile picture (data URL or remote URL). */
+  avatarUrl?: string;
 }
 
 /* ─── Team & Sales team ─────────────────────────────────────────────── */
@@ -141,6 +147,8 @@ export interface TeamMember {
   email?: string;
   jobTitle?: string;
   department?: string;
+  /** Profile picture (data URL or remote URL). */
+  avatarUrl?: string;
 }
 
 export type SalesRole = "acquisition" | "closer" | "both";
