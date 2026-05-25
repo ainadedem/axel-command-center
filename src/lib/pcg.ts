@@ -609,21 +609,25 @@ export function seedAxiomOpportunities() {
     { m: "12", label: "Dec", close: "2026-12-31" },
   ];
 
+  // Today (seed-time): months strictly before today's month are "Closed"
+  // (already invoiced/paid). Current and future months remain in the active
+  // pipeline as "In progress" so they show up on the dashboard pipeline KPI
+  // and feed the sales forecast.
+  const today = new Date();
+  const cutoff = today.getFullYear() * 100 + (today.getMonth() + 1); // YYYYMM
+
   for (const mo of months) {
-    // Trembley — Modélisation Meubles. Jan/Feb invoiced (€1,230). Mar–Aug pipeline (€0 in Notion).
+    const ym = 2026 * 100 + parseInt(mo.m, 10);
+    const isPast = ym < cutoff;
+
+    // Trembley — only Jan/Feb materialised (€1,230 each, invoiced & paid).
+    // Mar–Aug were "€0 pipeline" in Notion → drop entirely (no revenue expected).
     if (["01", "02"].includes(mo.m)) {
       seeds.push({
         id: `opp_axi_trembley_${mo.m}`, companyId: "axi",
         name: `Production Modélisation Meubles (${mo.label} 2026)`,
         client: "Trembley et Burgermeister SA", clientId: "cli_axi_trembley",
         closer, stage: "Closed", value: 1230, currency: "EUR", expectedClose: mo.close,
-      });
-    } else if (["03", "04", "05", "06", "07", "08"].includes(mo.m)) {
-      seeds.push({
-        id: `opp_axi_trembley_${mo.m}`, companyId: "axi",
-        name: `Production Modélisation Meubles (${mo.label} 2026)`,
-        client: "Trembley et Burgermeister SA", clientId: "cli_axi_trembley",
-        closer, stage: "Closed", value: 0, currency: "EUR", expectedClose: mo.close,
       });
     }
 
@@ -634,7 +638,8 @@ export function seedAxiomOpportunities() {
     seeds.push({
       id: `opp_axi_deindeal_${mo.m}`, companyId: "axi",
       name, client: "Dein Deal", clientId: "cli_axi_deindeal",
-      closer, stage: "Closed", value: 2350, currency: "EUR", expectedClose: mo.close,
+      closer, stage: isPast ? "Closed" : "In progress",
+      value: 2350, currency: "EUR", expectedClose: mo.close,
     });
   }
 
@@ -642,6 +647,7 @@ export function seedAxiomOpportunities() {
   opportunitiesStore.replaceAll([...others, ...seeds]);
   return seeds.length;
 }
+
 
 /** Normalise a client name for fuzzy matching (lowercase, ascii-only, alphanumeric+space). */
 function normalizeClientKey(s: string): string {
