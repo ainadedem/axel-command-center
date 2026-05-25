@@ -173,10 +173,50 @@ export interface JournalEntry {
 
 
 
+import logiaSeed from "./logia-grand-livre-seed.json";
+import logiaAccountLabels from "./logia-account-labels.json";
+
 export const journalEntriesStore = createCollection<JournalEntry>("journal-entries", []);
 export const journalEntries = journalEntriesStore.items;
 export const useJournalEntries = () => useCollection(journalEntriesStore);
 
+/** Seed Logia's Grand Livre (imported from Google Drive snapshot) if absent. */
+export function seedLogiaGrandLivre(force = false) {
+  const seed = logiaSeed as JournalEntry[];
+  const hasLogia = journalEntriesStore.items.some((e) => e.companyId === "log");
+  if (hasLogia && !force) return 0;
+  const others = journalEntriesStore.items.filter((e) => e.companyId !== "log");
+  journalEntriesStore.replaceAll([...others, ...seed]);
+  return seed.length;
+}
+
+// Auto-seed on first load (idempotent: only adds when Logia has no entries).
+if (typeof window !== "undefined") {
+  try { seedLogiaGrandLivre(false); } catch { /* ignore */ }
+}
+
+/** Labels for sub-accounts (6-digit codes) used in the imported Grand Livre. */
+export const accountLabels = logiaAccountLabels as Record<string, string>;
+
+/** Resolve an account code to its PCG entry by progressively shorter prefixes. */
+export function pcgRoot(code: string): PcgAccount | undefined {
+  for (let n = Math.min(code.length, 5); n >= 2; n--) {
+    const hit = pcgIndex.get(code.slice(0, n));
+    if (hit) return hit;
+  }
+  return undefined;
+}
+
+/** PCG class (1..7) derived from the first character of the account code. */
+export function accountClass(code: string): PcgClass | undefined {
+  const n = Number(code[0]);
+  return n >= 1 && n <= 7 ? (n as PcgClass) : undefined;
+}
+
+/** Human label for an account (sub-account label, then PCG root, then code). */
+export function accountLabel(code: string): string {
+  return accountLabels[code] ?? pcgRoot(code)?.name ?? code;
+}
 
 export const pcgCompanyIds = new Set(["log", "axi"]);
 export const usesPcg = (companyId: string) => pcgCompanyIds.has(companyId);
