@@ -275,6 +275,8 @@ export const categoriesStore = createCollection<Category>("categories", []);
 export const budgetsStore = createCollection<Budget>("budgets", []);
 export const teamMembersStore = createCollection<TeamMember>("team-members", []);
 export const salesMembersStore = createCollection<SalesMember>("sales-members", []);
+export const quotesStore = createCollection<Quote>("quotes", []);
+export const purchaseOrdersStore = createCollection<PurchaseOrder>("purchase-orders", []);
 
 /* ─── Live array exports (backward compatibility) ───────────────────── */
 
