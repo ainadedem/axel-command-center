@@ -309,7 +309,7 @@ function PeopleView({ list, onEdit, role, acqOf }: { list: Opportunity[]; onEdit
     });
   }, [list, role, acqOf]);
 
-  const roleLabel = role === "acquisition" ? "Acquisition" : "Closer";
+  const roleLabel = role === "acquisition" ? "Acquisition" : "Deal Closer";
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
