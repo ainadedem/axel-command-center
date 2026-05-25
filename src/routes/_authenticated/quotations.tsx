@@ -3,20 +3,21 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
   useQuotes, useCompanies, useClients, useProjects, quotesStore, purchaseOrdersStore,
-  fmtCompact, type Quote, type QuoteStatus, type Currency,
+  fmt, fmtCompact, type Quote, type QuoteLine, type QuoteStatus, type Currency,
 } from "@/lib/mock-data";
+import { capabilities, levels, getRate, type Capability, type Level } from "@/lib/rate-card";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, FileCheck2 } from "lucide-react";
+import { Pencil, Trash2, FileCheck2, Plus, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/quotations")({ component: QuotationsPage });
 
