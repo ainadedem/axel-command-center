@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useOpportunities, useCompanies, useClients, opportunitiesStore,
+  useOpportunities, useCompanies, useClients, useSalesPeople, opportunitiesStore,
   stages, fmtCompact, toMGA, stageProbability,
   type Stage, type Opportunity, type Currency, type Client,
 } from "@/lib/mock-data";
@@ -413,6 +413,7 @@ function ForecastView({ list }: { list: Opportunity[] }) {
 function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Opportunity | null }) {
   const companies = useCompanies();
   const clients = useClients();
+  const closerPeople = useSalesPeople("closer");
   const [companyId, setCompanyId] = useState("");
   const [name, setName] = useState("");
   const [client, setClient] = useState("");
@@ -442,6 +443,12 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
     return match?.acquisition ?? "";
   }, [clients, companyId, client]);
 
+  const closerOptions = useMemo(() => {
+    const names = closerPeople.map((p) => p.name);
+    if (closer && !names.includes(closer)) names.push(closer);
+    return names.sort();
+  }, [closerPeople, closer]);
+
   const submit = () => {
     if (!name.trim() || !companyId) return;
     const data = { companyId, name, client, closer: closer.trim() || undefined, stage, value: Number(value) || 0, currency, expectedClose };
@@ -470,7 +477,25 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
               Acquisition: <span className="font-medium text-foreground">{acqForClient || "—"}</span> (managed on the Clients page)
             </p>
           </div>
-          <div><Label>Closer</Label><Input value={closer} onChange={(e) => setCloser(e.target.value)} placeholder="Who closes the deal" /></div>
+          <div>
+            <Label>Closer</Label>
+            {closerOptions.length === 0 ? (
+              <div className="text-xs text-muted-foreground rounded-md border border-dashed border-border px-3 py-2">
+                No closers in the sales team yet — <Link to="/sales-team" className="text-primary underline">add one</Link>.
+              </div>
+            ) : (
+              <Select value={closer || "__none__"} onValueChange={(v) => setCloser(v === "__none__" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Select closer" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Unassigned —</SelectItem>
+                  {closerOptions.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Sourced from the <Link to="/sales-team" className="text-primary underline">Sales team</Link>.
+            </p>
+          </div>
           <div className="grid grid-cols-3 gap-3">
             <div>
               <Label>Stage</Label>

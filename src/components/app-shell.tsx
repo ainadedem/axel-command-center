@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Building2, Wallet, ArrowLeftRight, FileText,
   Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus, Truck,
-  ChevronDown, Check, LogOut, Target,
+  ChevronDown, Check, LogOut, Target, UserCog, Handshake,
   BookOpen, BookText, Scale, Library, Receipt,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -21,6 +21,8 @@ const nav = [
   { to: "/suppliers", label: "Suppliers", icon: Truck },
   { to: "/projects", label: "Projects", icon: Briefcase },
   { to: "/pipeline", label: "Pipeline", icon: TrendingUp },
+  { to: "/sales-team", label: "Sales team", icon: Handshake },
+  { to: "/team", label: "Team", icon: UserCog },
   { to: "/budgets", label: "Budgets", icon: Target },
   { to: "/reports", label: "Reports", icon: BarChart3 },
 ];
@@ -167,6 +169,8 @@ const NEW_BUTTON_ROUTES: { match: (p: string) => boolean; to: string; label: str
   { match: (p) => p.startsWith("/suppliers"), to: "/suppliers", label: "New supplier" },
   { match: (p) => p.startsWith("/projects"), to: "/projects", label: "New project" },
   { match: (p) => p.startsWith("/pipeline"), to: "/pipeline", label: "New opportunity" },
+  { match: (p) => p.startsWith("/sales-team"), to: "/sales-team", label: "Add sales member" },
+  { match: (p) => p.startsWith("/team"), to: "/team", label: "New team member" },
   { match: (p) => p.startsWith("/budgets"), to: "/budgets", label: "New category" },
   { match: (p) => p.startsWith("/companies"), to: "/companies", label: "New company" },
   { match: (p) => p.startsWith("/journal"), to: "/journal", label: "New entry" },
