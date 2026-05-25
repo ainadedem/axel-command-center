@@ -118,6 +118,12 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   const [country, setCountry] = useState("");
   const [acquisition, setAcquisition] = useState("");
   const [acquiredAt, setAcquiredAt] = useState("");
+  const [website, setWebsite] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [contacts, setContacts] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -126,10 +132,17 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setCompanyId(editing.companyId); setName(editing.name); setCountry(editing.country);
       setAcquisition(editing.acquisition ?? "");
       setAcquiredAt(editing.acquiredAt ?? "");
+      setWebsite(editing.website ?? "");
+      setEmail(editing.email ?? "");
+      setPhone(editing.phone ?? "");
+      setAddress(editing.address ?? "");
+      setIndustry(editing.industry ?? "");
+      setContacts(editing.contacts ?? "");
       setAvatarUrl(editing.avatarUrl);
     } else {
       setCompanyId(companies[0]?.id ?? ""); setName(""); setCountry(""); setAcquisition("");
       setAcquiredAt(new Date().toISOString().slice(0, 10));
+      setWebsite(""); setEmail(""); setPhone(""); setAddress(""); setIndustry(""); setContacts("");
       setAvatarUrl(undefined);
     }
   }, [open, editing, companies]);
@@ -140,6 +153,12 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       companyId, name, country,
       acquisition: acquisition.trim() || undefined,
       acquiredAt: acquiredAt || undefined,
+      website: website.trim() || undefined,
+      email: email.trim() || undefined,
+      phone: phone.trim() || undefined,
+      address: address.trim() || undefined,
+      industry: industry.trim() || undefined,
+      contacts: contacts.trim() || undefined,
       avatarUrl,
     };
     if (editing) clientsStore.update(editing.id, data);
@@ -155,9 +174,9 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader><DialogTitle>{editing ? "Edit client" : "New client"}</DialogTitle></DialogHeader>
-        <div className="space-y-4 py-2">
+        <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-1">
           <div className="flex items-start gap-4">
             <AvatarUpload value={avatarUrl} onChange={setAvatarUrl} name={name} size={72} />
             <div className="flex-1 space-y-3">
@@ -175,6 +194,16 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
             <div><Label>Country</Label><Input value={country} onChange={(e) => setCountry(e.target.value)} /></div>
             <div><Label>Acquired on</Label><Input type="date" value={acquiredAt} onChange={(e) => setAcquiredAt(e.target.value)} /></div>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Industry</Label><Input value={industry} onChange={(e) => setIndustry(e.target.value)} placeholder="Telecom, Finance, …" /></div>
+            <div><Label>Website</Label><Input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://…" /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+            <div><Label>Phone</Label><Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
+          </div>
+          <div><Label>HQ address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} /></div>
+          <div><Label>Key contacts</Label><Input value={contacts} onChange={(e) => setContacts(e.target.value)} placeholder="Name, role; Name, role…" /></div>
           <div>
             <Label>Acquisition</Label>
             {acqOptions.length === 0 ? (
