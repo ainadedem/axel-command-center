@@ -324,18 +324,42 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
             <div><Label>Due date</Label><Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
           </div>
           <div className="grid grid-cols-3 gap-3">
-            <div><Label>Amount</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
-            <div><Label>Paid</Label><Input type="number" value={paid} onChange={(e) => setPaid(e.target.value)} /></div>
+            <div>
+              <Label>Amount</Label>
+              <div className="relative">
+                <Input type="number" className="pr-10" value={amount} onChange={(e) => setAmount(e.target.value)} />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">
+                  {currency === "EUR" ? "€" : currency === "USD" ? "$" : "Ar"}
+                </span>
+              </div>
+            </div>
+            <div>
+              <Label>Paid</Label>
+              <div className="relative">
+                <Input type="number" className="pr-10" value={paid} onChange={(e) => setPaid(e.target.value)} />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">
+                  {currency === "EUR" ? "€" : currency === "USD" ? "$" : "Ar"}
+                </span>
+              </div>
+            </div>
             <div>
               <Label>Currency</Label>
-              <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MGA">MGA</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="USD">USD</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="mt-1 inline-flex rounded-md border border-border overflow-hidden text-xs">
+                {(["EUR", "USD", "MGA"] as Currency[]).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCurrency(c)}
+                    className={cn(
+                      "px-3 py-1.5 font-tnum",
+                      currency === c ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground hover:bg-surface-elevated",
+                      c !== "EUR" && "border-l border-border"
+                    )}
+                  >
+                    {c === "EUR" ? "€ EUR" : c === "USD" ? "$ USD" : "Ar MGA"}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
