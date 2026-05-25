@@ -131,6 +131,10 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
   const [amount, setAmount] = useState("0");
   const [currency, setCurrency] = useState<Currency>("EUR");
   const [status, setStatus] = useState<POStatus>("issued");
+  const [documentUrl, setDocumentUrl] = useState<string | undefined>();
+  const [documentName, setDocumentName] = useState<string | undefined>();
+  const [documentType, setDocumentType] = useState<string | undefined>();
+  const [uploadError, setUploadError] = useState<string>("");
 
   useEffect(() => {
     if (!open) return;
@@ -140,12 +144,28 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
       setProjectId(editing.projectId ?? ""); setQuoteId(editing.quoteId ?? "");
       setIssueDate(editing.issueDate); setAmount(String(editing.amount));
       setCurrency(editing.currency); setStatus(editing.status);
+      setDocumentUrl(editing.documentUrl); setDocumentName(editing.documentName); setDocumentType(editing.documentType);
     } else {
       setNumber(`PO-${Date.now().toString().slice(-6)}`); setClientReference("");
       setCompanyId(companies[0]?.id ?? ""); setClientId(""); setProjectId(""); setQuoteId("");
       setIssueDate(today); setAmount("0"); setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("issued");
+      setDocumentUrl(undefined); setDocumentName(undefined); setDocumentType(undefined);
     }
+    setUploadError("");
   }, [open, editing, companies, today]);
+
+  const handleFile = (file: File) => {
+    setUploadError("");
+    if (file.size > 5 * 1024 * 1024) { setUploadError("Max 5 MB"); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setDocumentUrl(reader.result as string);
+      setDocumentName(file.name);
+      setDocumentType(file.type);
+    };
+    reader.readAsDataURL(file);
+  };
+
 
   const companyClients = clients.filter((c) => c.companyId === companyId);
   const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
