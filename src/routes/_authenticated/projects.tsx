@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, Wand2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
+import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
 
 export const Route = createFileRoute("/_authenticated/projects")({ component: ProjectsPage });
 
@@ -77,22 +78,22 @@ function Body() {
     alert(`Linked ${orphanInvoices.length} invoice(s) to ${created} new project(s).`);
   };
 
+  const reconcileChecks: ReconcileCheck[] = [
+    {
+      id: "orphan-invoices",
+      label: "Invoices without a project",
+      description: "Create one project per (company, client) and link orphans.",
+      count: orphanInvoices.length,
+      fix: () => { const n = orphanInvoices.length; if (n > 0) backfillFromInvoices(); return n; },
+    },
+  ];
+
   return (
     <div className="p-8 space-y-5">
       <div className="flex items-center justify-between">
         <CrudToolbar count={list.length} label="projects" onCreate={openCreate} />
+        <ReconcileButton checks={reconcileChecks} />
       </div>
-      {orphanInvoices.length > 0 && (
-        <div className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 flex items-center justify-between">
-          <div className="text-sm">
-            <span className="font-medium text-warning">{orphanInvoices.length} invoice(s)</span>
-            <span className="text-muted-foreground"> have no project. Auto-create projects from clients to track sales properly.</span>
-          </div>
-          <Button size="sm" variant="outline" onClick={backfillFromInvoices} className="gap-1.5">
-            <Wand2 className="h-4 w-4" /> Create projects from invoices
-          </Button>
-        </div>
-      )}
       {list.length === 0 ? (
         <EmptyState label="projects" onCreate={openCreate} />
       ) : (

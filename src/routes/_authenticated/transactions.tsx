@@ -2,11 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useTransactions, useCompanies, useAccounts, useClients, useSuppliers, useCategories, useProjects,
-  transactionsStore, categoriesStore, fmtCompact, type Transaction, type Currency,
+  useTransactions, useCompanies, useAccounts, useClients, useSuppliers, useCategories, useProjects, useInvoices,
+  transactionsStore, categoriesStore, invoicesStore, fmtCompact, type Transaction, type Currency,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
+import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
 import { format, parseISO } from "date-fns";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -44,6 +45,7 @@ function Body() {
   const clients = useClients();
   const suppliers = useSuppliers();
   const projects = useProjects();
+  const invoices = useInvoices();
   const { q } = Route.useSearch();
   const [filter, setFilter] = useState<(typeof types)[number]>("all");
   const [open, setOpen] = useState(false);
@@ -87,7 +89,52 @@ function Body() {
             </button>
           ))}
         </div>
-        <CrudToolbar count={list.length} label="transactions" onCreate={openCreate} />
+        <div className="flex items-center gap-4">
+          <ReconcileButton checks={(() => {
+            const scoped = inScope(transactions, scope);
+            const checks: ReconcileCheck[] = [
+              {
+                id: "tx-no-project",
+                label: "Income transactions linked to a client but no project",
+                description: "Infers the project from the matching invoice or first client project.",
+                count: scoped.filter((t) => t.type === "income" && t.clientId && !t.projectId).length,
+                fix: () => {
+                  let n = 0;
+                  scoped.forEach((t) => {
+                    if (t.type !== "income" || !t.clientId || t.projectId) return;
+                    const inv = t.invoiceId ? invoices.find((i) => i.id === t.invoiceId) : undefined;
+                    const projId = inv?.projectId ?? projects.find((p) => p.companyId === t.companyId && p.clientId === t.clientId)?.id;
+                    if (projId) { transactionsStore.update(t.id, { projectId: projId }); n++; }
+                  });
+                  return n;
+                },
+              },
+              {
+                id: "tx-unlinked-payment",
+                label: "Income transactions matching an open invoice (not linked)",
+                description: "Links the transaction to the invoice and marks the invoice paid.",
+                count: scoped.filter((t) => t.type === "income" && t.clientId && !t.invoiceId &&
+                  invoices.some((i) => i.clientId === t.clientId && i.companyId === t.companyId && i.status !== "paid" && i.status !== "cancelled" && Math.abs(i.amount - t.amount) < 0.01 && i.currency === t.currency)
+                ).length,
+                fix: () => {
+                  let n = 0;
+                  scoped.forEach((t) => {
+                    if (t.type !== "income" || !t.clientId || t.invoiceId) return;
+                    const inv = invoices.find((i) => i.clientId === t.clientId && i.companyId === t.companyId && i.status !== "paid" && i.status !== "cancelled" && Math.abs(i.amount - t.amount) < 0.01 && i.currency === t.currency);
+                    if (inv) {
+                      transactionsStore.update(t.id, { invoiceId: inv.id, projectId: t.projectId ?? inv.projectId });
+                      invoicesStore.update(inv.id, { paid: inv.amount, status: "paid", paidDate: t.date });
+                      n++;
+                    }
+                  });
+                  return n;
+                },
+              },
+            ];
+            return checks;
+          })()} />
+          <CrudToolbar count={list.length} label="transactions" onCreate={openCreate} />
+        </div>
       </div>
 
       {list.length === 0 ? (
