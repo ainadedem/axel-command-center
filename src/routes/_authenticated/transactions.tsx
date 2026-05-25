@@ -18,7 +18,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/transactions")({ component: TransactionsPage });
+export const Route = createFileRoute("/_authenticated/transactions")({
+  component: TransactionsPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    q: typeof search.q === "string" ? search.q : "",
+  }),
+});
 
 const types = ["all", "income", "expense", "transfer", "intercompany"] as const;
 
