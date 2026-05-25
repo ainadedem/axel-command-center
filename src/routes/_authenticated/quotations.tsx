@@ -328,8 +328,8 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                       {mode === "rate-card" && <th className="text-left font-medium px-2 py-2 w-20">Level</th>}
                       <th className="text-left font-medium px-2 py-2 w-20">Unit</th>
                       <th className="text-right font-medium px-2 py-2 w-20">Qty</th>
-                      <th className="text-right font-medium px-2 py-2 w-28">Rate</th>
-                      <th className="text-right font-medium px-2 py-2 w-28">Amount</th>
+                      <th className="text-right font-medium px-2 py-2 w-28">Rate ({currency})</th>
+                      <th className="text-right font-medium px-2 py-2 w-28">Amount ({currency})</th>
                       <th className="w-8" />
                     </tr>
                   </thead>
