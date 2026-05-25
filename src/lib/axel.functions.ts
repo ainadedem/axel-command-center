@@ -45,7 +45,7 @@ export const getAxelThreadMessages = createServerFn({ method: "GET" })
     return (rows ?? []).map((r) => ({
       id: r.id,
       role: r.role as "user" | "assistant",
-      parts: (r.parts ?? []) as unknown[],
+      parts: JSON.parse(JSON.stringify(r.parts ?? [])) as { type: string; text?: string }[],
     }));
   });
 
