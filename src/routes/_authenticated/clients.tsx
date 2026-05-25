@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Users, Wallet, AlertCircle, TrendingUp, ArrowUpRight } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/clients")({ component: ClientsPage });
 
