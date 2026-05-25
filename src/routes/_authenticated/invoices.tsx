@@ -42,6 +42,7 @@ function Body() {
   const invoices = useInvoices();
   const companies = useCompanies();
   const clients = useClients();
+  const projects = useProjects();
   const list = inScope(invoices, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Invoice | null>(null);
