@@ -280,7 +280,7 @@ function DashboardBody() {
                     <div className="text-sm truncate">{t.description}</div>
                     <div className="text-xs text-muted-foreground">{format(parseISO(t.date), "MMM d")} · {t.category}</div>
                   </div>
-                  <div className={`font-tnum text-sm font-medium ${t.type === "income" ? "text-success" : t.type === "expense" ? "text-foreground" : "text-chart-2"}`}>
+                  <div className={`font-tnum text-sm font-medium ${t.type === "income" ? "text-success" : t.type === "expense" ? "text-destructive" : "text-chart-2"}`}>
                     {t.type === "income" ? "+" : t.type === "expense" ? "−" : "↔"} {fmtCompact(t.amount, t.currency)}
                   </div>
                 </div>
