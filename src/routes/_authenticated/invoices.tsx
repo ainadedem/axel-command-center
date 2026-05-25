@@ -155,6 +155,14 @@ function Body() {
       )}
 
       <InvoiceDialog open={open} onOpenChange={setOpen} editing={editing} />
+      <InvoicePreview
+        open={!!previewing}
+        onOpenChange={(v) => { if (!v) setPreviewing(null); }}
+        invoice={previewing}
+        company={previewing ? companies.find((c) => c.id === previewing.companyId) : undefined}
+        client={previewing ? clients.find((c) => c.id === previewing.clientId) : undefined}
+        project={previewing?.projectId ? projects.find((p) => p.id === previewing.projectId) : undefined}
+      />
     </div>
   );
 }
