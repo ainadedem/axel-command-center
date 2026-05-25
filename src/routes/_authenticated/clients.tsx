@@ -117,26 +117,36 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
   const [acquisition, setAcquisition] = useState("");
+  const [acquiredAt, setAcquiredAt] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (!open) return;
     if (editing) {
       setCompanyId(editing.companyId); setName(editing.name); setCountry(editing.country);
       setAcquisition(editing.acquisition ?? "");
+      setAcquiredAt(editing.acquiredAt ?? "");
+      setAvatarUrl(editing.avatarUrl);
     } else {
       setCompanyId(companies[0]?.id ?? ""); setName(""); setCountry(""); setAcquisition("");
+      setAcquiredAt(new Date().toISOString().slice(0, 10));
+      setAvatarUrl(undefined);
     }
   }, [open, editing, companies]);
 
   const submit = () => {
     if (!name.trim() || !companyId) return;
-    const data = { companyId, name, country, acquisition: acquisition.trim() || undefined };
+    const data = {
+      companyId, name, country,
+      acquisition: acquisition.trim() || undefined,
+      acquiredAt: acquiredAt || undefined,
+      avatarUrl,
+    };
     if (editing) clientsStore.update(editing.id, data);
     else clientsStore.add({ id: newId("cli"), ...data });
     onOpenChange(false);
   };
 
-  // If editing a client whose acquisition isn't in the sales team anymore, still surface it.
   const acqOptions = (() => {
     const names = acqPeople.map((p) => p.name);
     if (acquisition && !names.includes(acquisition)) names.push(acquisition);
@@ -148,15 +158,23 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       <DialogContent>
         <DialogHeader><DialogTitle>{editing ? "Edit client" : "New client"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
-          <div>
-            <Label>Company</Label>
-            <Select value={companyId} onValueChange={setCompanyId}>
-              <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
-              <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-            </Select>
+          <div className="flex items-start gap-4">
+            <AvatarUpload value={avatarUrl} onChange={setAvatarUrl} name={name} size={72} />
+            <div className="flex-1 space-y-3">
+              <div><Label>Client name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+              <div>
+                <Label>Company</Label>
+                <Select value={companyId} onValueChange={setCompanyId}>
+                  <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
+                  <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
-          <div><Label>Client name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-          <div><Label>Country</Label><Input value={country} onChange={(e) => setCountry(e.target.value)} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Country</Label><Input value={country} onChange={(e) => setCountry(e.target.value)} /></div>
+            <div><Label>Acquired on</Label><Input type="date" value={acquiredAt} onChange={(e) => setAcquiredAt(e.target.value)} /></div>
+          </div>
           <div>
             <Label>Acquisition</Label>
             {acqOptions.length === 0 ? (
