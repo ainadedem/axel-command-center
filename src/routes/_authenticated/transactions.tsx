@@ -105,11 +105,12 @@ function Body() {
   function ResizableTable() {
     const cols = [
       { key: "date", label: "Date", align: "left" as const, w: 140 },
-      { key: "description", label: "Description", align: "left" as const, w: 280 },
-      { key: "company", label: "Company", align: "left" as const, w: 140 },
-      { key: "counterparty", label: "Counterparty", align: "left" as const, w: 200 },
-      { key: "category", label: "Category", align: "left" as const, w: 180 },
-      { key: "type", label: "Type", align: "left" as const, w: 130 },
+      { key: "description", label: "Description", align: "left" as const, w: 260 },
+      { key: "company", label: "Company", align: "left" as const, w: 130 },
+      { key: "counterparty", label: "Counterparty", align: "left" as const, w: 180 },
+      { key: "project", label: "Project", align: "left" as const, w: 160 },
+      { key: "category", label: "Category", align: "left" as const, w: 160 },
+      { key: "type", label: "Type", align: "left" as const, w: 120 },
       { key: "amount", label: "Amount", align: "right" as const, w: 160 },
       { key: "actions", label: "", align: "right" as const, w: 90 },
     ];
