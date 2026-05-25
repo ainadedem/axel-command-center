@@ -185,7 +185,7 @@ function TopbarNewButton() {
   const resource = resolveResource(pathname);
   if (!resource || !can(resource, "edit")) return null;
   return (
-    <button className="h-9 px-3 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition flex items-center gap-1.5">
+    <button className="h-10 px-4 rounded-full text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition flex items-center gap-1.5 shadow-[var(--shadow-glow)]">
       <Plus className="h-4 w-4" /> New
     </button>
   );
