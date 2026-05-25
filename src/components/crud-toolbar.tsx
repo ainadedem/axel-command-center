@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { CREATE_EVENT } from "@/components/app-shell";
 
