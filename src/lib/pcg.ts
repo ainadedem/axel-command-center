@@ -648,6 +648,12 @@ if (typeof window !== "undefined") {
       seedAxiomInvoices(true);
       localStorage.setItem("axiom-invoices-version", AXIOM_INVOICES_VERSION);
     }
+
+    const axBankCurrent = localStorage.getItem("axiom-bank-version");
+    if (axBankCurrent !== AXIOM_BANK_VERSION) {
+      seedAxiomBankStatement(true);
+      localStorage.setItem("axiom-bank-version", AXIOM_BANK_VERSION);
+    }
   } catch { /* ignore */ }
 }
 
