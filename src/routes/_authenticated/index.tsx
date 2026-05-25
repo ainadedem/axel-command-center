@@ -338,6 +338,35 @@ function DashboardBody() {
         </div>
       </div>
 
+      {/* Sales (closed) + forecast */}
+      <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
+        <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+          <div>
+            <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Sales — closed & forecast</div>
+            <div className="font-display text-lg font-semibold mt-1">Last 12 months closed · next 3 months weighted (M MGA)</div>
+          </div>
+          <div className="flex items-center gap-4 text-xs">
+            <span className="text-muted-foreground">Closed 12mo <span className="font-tnum text-foreground">{fmtCompact(totalClosed12mo * 1_000_000, "MGA")}</span></span>
+            <span className="text-muted-foreground">Forecast 3mo <span className="font-tnum text-foreground">{fmtCompact(totalForecast3mo * 1_000_000, "MGA")}</span></span>
+            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary" />Closed</span>
+            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-chart-2/70 border border-dashed" />Forecast</span>
+          </div>
+        </div>
+        <div className="h-64">
+          <ResponsiveContainer>
+            <BarChart data={salesData} margin={{ top: 6, right: 8, left: -16, bottom: 0 }}>
+              <CartesianGrid stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="date" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+              <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} cursor={{ fill: "color-mix(in oklab, var(--primary) 6%, transparent)" }} />
+              <Bar dataKey="closed" stackId="s" radius={[0, 0, 0, 0]} fill="oklch(0.78 0.14 165)" name="Closed" />
+              <Bar dataKey="forecast" stackId="s" radius={[6, 6, 0, 0]} fill="oklch(0.72 0.13 220)" fillOpacity={0.55} name="Forecast (weighted)" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+
       {/* Pipeline + Recent */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
