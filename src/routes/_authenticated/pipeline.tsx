@@ -256,7 +256,7 @@ function ListView({ list, onEdit, acqOf }: { list: Opportunity[]; onEdit: (o: Op
         <div className="col-span-3">Opportunity</div>
         <div className="col-span-2">Stage</div>
         <div className="col-span-2">Acquisition</div>
-        <div className="col-span-1">Closer</div>
+        <div className="col-span-1">Deal Closer</div>
         <div className="col-span-2 text-right">Value</div>
         <div className="col-span-2 text-right">Close</div>
       </div>
