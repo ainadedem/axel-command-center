@@ -71,7 +71,7 @@ function Body() {
   const list = inScope(opportunities, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Opportunity | null>(null);
-  const [view, setView] = useState<"kanban" | "list" | "owner" | "forecast">("kanban");
+  const [view, setView] = useState<"kanban" | "list" | "acquisition" | "closer" | "forecast">("kanban");
 
   const active = list.filter((o) => o.stage !== "Won" && o.stage !== "Lost");
   const total = active.reduce((s, o) => s + toMGA(o.value, o.currency), 0);
