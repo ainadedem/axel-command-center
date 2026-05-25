@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useTransactions, useCompanies, useAccounts, useClients, useSuppliers,
-  transactionsStore, fmtCompact, type Transaction, type Currency,
+  useTransactions, useCompanies, useAccounts, useClients, useSuppliers, useCategories,
+  transactionsStore, categoriesStore, fmtCompact, type Transaction, type Currency,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
@@ -189,11 +189,13 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
   const accounts = useAccounts();
   const clients = useClients();
   const suppliers = useSuppliers();
+  const categories = useCategories();
   const [companyId, setCompanyId] = useState("");
   const [accountId, setAccountId] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [type, setType] = useState<Transaction["type"]>("expense");
-  const [category, setCategory] = useState("");
+  const [categoryId, setCategoryId] = useState<string>("");
+  const [categoryName, setCategoryName] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("0");
   const [currency, setCurrency] = useState<Currency>("MGA");
@@ -204,12 +206,14 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
     if (!open) return;
     if (editing) {
       setCompanyId(editing.companyId); setAccountId(editing.accountId); setDate(editing.date);
-      setType(editing.type); setCategory(editing.category); setDescription(editing.description);
+      setType(editing.type); setCategoryId(editing.categoryId ?? ""); setCategoryName(editing.category);
+      setDescription(editing.description);
       setAmount(String(editing.amount)); setCurrency(editing.currency);
       setClientId(editing.clientId ?? ""); setSupplierId(editing.supplierId ?? "");
     } else {
       const c = companies[0]; setCompanyId(c?.id ?? ""); setAccountId(""); setDate(new Date().toISOString().slice(0, 10));
-      setType("expense"); setCategory(""); setDescription(""); setAmount("0"); setCurrency(c?.baseCurrency ?? "MGA");
+      setType("expense"); setCategoryId(""); setCategoryName(""); setDescription(""); setAmount("0");
+      setCurrency(c?.baseCurrency ?? "MGA");
       setClientId(""); setSupplierId("");
     }
   }, [open, editing, companies]);
@@ -217,11 +221,38 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
   const companyAccounts = accounts.filter((a) => a.companyId === companyId);
   const companyClients = clients.filter((c) => c.companyId === companyId);
   const companySuppliers = suppliers.filter((s) => s.companyId === companyId);
+  const kind: "income" | "expense" | null =
+    type === "income" ? "income" : type === "expense" ? "expense" : null;
+  const companyCategories = categories.filter(
+    (c) => c.companyId === companyId && (kind ? c.kind === kind : true),
+  );
 
   const submit = () => {
     if (!description.trim() || !companyId || !accountId) return;
+    // Resolve category: explicit selection wins, otherwise create a new one
+    // from the free-text name when provided.
+    let resolvedId = categoryId || undefined;
+    let resolvedName = categoryName.trim();
+    if (!resolvedId && resolvedName && kind) {
+      const existing = companyCategories.find(
+        (c) => c.name.toLowerCase() === resolvedName.toLowerCase(),
+      );
+      if (existing) {
+        resolvedId = existing.id;
+      } else {
+        const cat = { id: newId("cat"), companyId, name: resolvedName, kind };
+        categoriesStore.add(cat);
+        resolvedId = cat.id;
+      }
+    }
+    if (resolvedId && !resolvedName) {
+      resolvedName = categories.find((c) => c.id === resolvedId)?.name ?? "";
+    }
     const data: Omit<Transaction, "id"> = {
-      companyId, accountId, date, type, category, description,
+      companyId, accountId, date, type,
+      category: resolvedName,
+      categoryId: resolvedId,
+      description,
       amount: Number(amount) || 0, currency,
       clientId: type === "income" ? (clientId || undefined) : undefined,
       supplierId: type === "expense" ? (supplierId || undefined) : undefined,
@@ -230,6 +261,7 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
     else transactionsStore.add({ id: newId("tx"), ...data });
     onOpenChange(false);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -268,7 +300,36 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
             </div>
           </div>
           <div><Label>Description</Label><Input value={description} onChange={(e) => setDescription(e.target.value)} /></div>
-          <div><Label>Category</Label><Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Payroll, Services, …" /></div>
+          <div>
+            <Label>Category</Label>
+            <Select
+              value={categoryId || "__custom"}
+              onValueChange={(v) => {
+                if (v === "__custom") { setCategoryId(""); return; }
+                setCategoryId(v);
+                setCategoryName(companyCategories.find((c) => c.id === v)?.name ?? "");
+              }}
+              disabled={!kind}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={kind ? "Pick or create" : "Only for income / expense"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__custom">— Type a new one —</SelectItem>
+                {companyCategories.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!categoryId && (
+              <Input
+                className="mt-2"
+                value={categoryName}
+                onChange={(e) => setCategoryName(e.target.value)}
+                placeholder="New category name (Payroll, Services, …)"
+              />
+            )}
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Amount</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
             <div>

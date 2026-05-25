@@ -177,8 +177,8 @@ import logiaSeed from "./logia-grand-livre-seed.json";
 import logiaAccountLabels from "./logia-account-labels.json";
 import {
   companiesStore, accountsStore, clientsStore, suppliersStore,
-  invoicesStore, transactionsStore,
-  type Account, type Client, type Supplier, type Invoice, type Transaction,
+  invoicesStore, transactionsStore, categoriesStore,
+  type Account, type Client, type Supplier, type Invoice, type Transaction, type Category,
 } from "./mock-data";
 
 export const journalEntriesStore = createCollection<JournalEntry>("journal-entries", []);
@@ -231,6 +231,25 @@ export function seedLogiaDerivedData(force = false) {
   suppliersStore.replaceAll(suppliersStore.items.filter((s) => s.companyId !== "log"));
   invoicesStore.replaceAll(invoicesStore.items.filter((i) => i.companyId !== "log"));
   transactionsStore.replaceAll(transactionsStore.items.filter((t) => t.companyId !== "log"));
+  categoriesStore.replaceAll(categoriesStore.items.filter((c) => c.companyId !== "log"));
+
+  /* ── Categories (derived from PCG class 6/7 counterpart accounts) ── */
+  const categoryByAccount = new Map<string, Category>();
+  const ensureCategory = (account: string, label: string, kind: Category["kind"]): Category => {
+    const existing = categoryByAccount.get(account);
+    if (existing) return existing;
+    const cat: Category = {
+      id: `cat_log_${account}`,
+      companyId: "log",
+      name: label,
+      kind,
+      account,
+    };
+    categoryByAccount.set(account, cat);
+    categoriesStore.add(cat);
+    return cat;
+  };
+
 
   /* ── Accounts (bank + cash) ─────────────────────────────────────── */
   const accountByCode = new Map<string, Account>();
@@ -351,13 +370,24 @@ export function seedLogiaDerivedData(force = false) {
       }
     }
     const transfer = e.lines.some((l) => l.account === "580000"); // virement interne
+    const txType: Transaction["type"] = transfer ? "transfer" : isIncome ? "income" : "expense";
+    const categoryLabel = counter
+      ? accountLabels[counter.account] ?? counter.label ?? counter.account
+      : "Divers";
+    // Build a Category for any class-6 (charge) or class-7 (produit) counterpart.
+    let categoryId: string | undefined;
+    if (counter && !transfer && (counter.account.startsWith("6") || counter.account.startsWith("7"))) {
+      const cat = ensureCategory(counter.account, categoryLabel, isIncome ? "income" : "expense");
+      categoryId = cat.id;
+    }
     const tx: Transaction = {
       id: `tx_${e.id}`,
       companyId: "log",
       accountId,
       date: e.date,
-      type: transfer ? "transfer" : isIncome ? "income" : "expense",
-      category: counter ? accountLabels[counter.account] ?? counter.label ?? counter.account : "Divers",
+      type: txType,
+      category: categoryLabel,
+      categoryId,
       description: e.description.split("\n")[0].slice(0, 140),
       amount,
       currency: "MGA",
@@ -393,7 +423,7 @@ export const accountLabels = logiaAccountLabels as Record<string, string>;
 
 // Auto-seed on first load (idempotent). Declared AFTER `accountLabels`
 // because seedLogiaDerivedData() reads from it.
-const DERIVED_VERSION = "3"; // bump to force re-derive on existing local data
+const DERIVED_VERSION = "4"; // bump to force re-derive on existing local data
 if (typeof window !== "undefined") {
   try {
     ensureSeedCompanies();
