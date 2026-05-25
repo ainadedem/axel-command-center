@@ -73,13 +73,25 @@ function Body() {
                 const projInvoices = invoices.filter((i) => i.projectId === p.id);
                 const invoiced = projInvoices.reduce((s, i) => s + i.amount, 0);
                 const collected = projInvoices.reduce((s, i) => s + i.paid, 0);
+                const projTx = transactions.filter((t) => t.projectId === p.id);
+                // Sum tx in MGA then convert back to project currency for display parity.
+                const fxToProject = (mga: number) => mga / (p.currency === "MGA" ? 1 : (p.currency === "EUR" ? 4850 : 4480));
+                const spendMGA = projTx.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+                const incomeMGA = projTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+                const spend = fxToProject(spendMGA);
+                const netPL = fxToProject(incomeMGA - spendMGA);
                 return (
                   <tr key={p.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
                     <td className="px-5 py-3.5 font-medium">
                       {p.name}
-                      {projInvoices.length > 0 && (
-                        <span className="ml-2 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-primary/30 text-primary bg-primary/5">{projInvoices.length} inv</span>
-                      )}
+                      <div className="flex gap-1 mt-1">
+                        {projInvoices.length > 0 && (
+                          <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-primary/30 text-primary bg-primary/5">{projInvoices.length} inv</span>
+                        )}
+                        {projTx.length > 0 && (
+                          <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-chart-2/30 text-chart-2 bg-chart-2/5">{projTx.length} tx</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-5 py-3.5 text-muted-foreground">{cl?.name ?? "—"}</td>
                     <td className="px-5 py-3.5 text-xs text-muted-foreground">{cl?.acquisition ?? <span className="text-muted-foreground/50">—</span>}</td>
@@ -92,6 +104,12 @@ function Body() {
                     <td className="px-5 py-3.5 text-right"><span className="font-display text-primary font-tnum">{margin.toFixed(0)}%</span></td>
                     <td className="px-5 py-3.5 text-right font-tnum text-xs">{invoiced > 0 ? fmtCompact(invoiced, p.currency) : <span className="text-muted-foreground/50">—</span>}</td>
                     <td className="px-5 py-3.5 text-right font-tnum text-xs text-success">{collected > 0 ? fmtCompact(collected, p.currency) : <span className="text-muted-foreground/50">—</span>}</td>
+                    <td className="px-5 py-3.5 text-right font-tnum text-xs text-destructive">{spend > 0 ? fmtCompact(spend, p.currency) : <span className="text-muted-foreground/50">—</span>}</td>
+                    <td className="px-5 py-3.5 text-right font-tnum text-xs font-medium">
+                      {projTx.length > 0
+                        ? <span className={netPL >= 0 ? "text-success" : "text-destructive"}>{fmtCompact(netPL, p.currency)}</span>
+                        : <span className="text-muted-foreground/50">—</span>}
+                    </td>
                     <td className="px-5 py-3.5 text-right">
                       <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
                         <button onClick={() => { setEditing(p); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
