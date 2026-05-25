@@ -111,6 +111,8 @@ export interface Invoice {
   number: string;
   companyId: string;
   clientId: string;
+  /** Optional link to the project this invoice bills against. */
+  projectId?: string;
   issueDate: string;
   dueDate: string;
   amount: number;
