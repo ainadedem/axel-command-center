@@ -16,7 +16,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, Upload, FileText, X } from "lucide-react";
+import { Pencil, Trash2, Upload, FileText, X, History, RefreshCw } from "lucide-react";
+
+type DocVersion = { url: string; name?: string; type?: string; uploadedAt: string };
 
 export const Route = createFileRoute("/_authenticated/purchase-orders")({ component: POPage });
 
@@ -134,6 +136,8 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
   const [documentUrl, setDocumentUrl] = useState<string | undefined>();
   const [documentName, setDocumentName] = useState<string | undefined>();
   const [documentType, setDocumentType] = useState<string | undefined>();
+  const [documentUploadedAt, setDocumentUploadedAt] = useState<string | undefined>();
+  const [documentHistory, setDocumentHistory] = useState<DocVersion[]>([]);
   const [uploadError, setUploadError] = useState<string>("");
 
   useEffect(() => {
@@ -145,11 +149,14 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
       setIssueDate(editing.issueDate); setAmount(String(editing.amount));
       setCurrency(editing.currency); setStatus(editing.status);
       setDocumentUrl(editing.documentUrl); setDocumentName(editing.documentName); setDocumentType(editing.documentType);
+      setDocumentUploadedAt(editing.documentUploadedAt);
+      setDocumentHistory(editing.documentHistory ?? []);
     } else {
       setNumber(`PO-${Date.now().toString().slice(-6)}`); setClientReference("");
       setCompanyId(companies[0]?.id ?? ""); setClientId(""); setProjectId(""); setQuoteId("");
       setIssueDate(today); setAmount("0"); setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("issued");
       setDocumentUrl(undefined); setDocumentName(undefined); setDocumentType(undefined);
+      setDocumentUploadedAt(undefined); setDocumentHistory([]);
     }
     setUploadError("");
   }, [open, editing, companies, today]);
@@ -159,9 +166,18 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     if (file.size > 5 * 1024 * 1024) { setUploadError("Max 5 MB"); return; }
     const reader = new FileReader();
     reader.onload = () => {
-      setDocumentUrl(reader.result as string);
+      const url = reader.result as string;
+      // If replacing an existing doc, push the old one onto history.
+      if (documentUrl) {
+        setDocumentHistory((h) => [
+          { url: documentUrl, name: documentName, type: documentType, uploadedAt: documentUploadedAt ?? new Date().toISOString() },
+          ...h,
+        ]);
+      }
+      setDocumentUrl(url);
       setDocumentName(file.name);
       setDocumentType(file.type);
+      setDocumentUploadedAt(new Date().toISOString());
     };
     reader.readAsDataURL(file);
   };
@@ -183,7 +199,9 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
 
   const submit = () => {
     if (!number.trim() || !companyId || !clientId) return;
-    const data = { number, clientReference: clientReference || undefined, companyId, clientId, projectId: projectId || undefined, quoteId: quoteId || undefined, issueDate, amount: Number(amount) || 0, currency, status, documentUrl, documentName, documentType };
+    // Stamp upload time when a document is present but doesn't have one yet (e.g. legacy data).
+    const uploadedAt = documentUrl ? (documentUploadedAt ?? new Date().toISOString()) : undefined;
+    const data = { number, clientReference: clientReference || undefined, companyId, clientId, projectId: projectId || undefined, quoteId: quoteId || undefined, issueDate, amount: Number(amount) || 0, currency, status, documentUrl, documentName, documentType, documentUploadedAt: uploadedAt, documentHistory: documentHistory.length ? documentHistory : undefined };
     if (editing) purchaseOrdersStore.update(editing.id, data);
     else purchaseOrdersStore.add({ id: newId("po"), ...data });
     onOpenChange(false);
@@ -265,10 +283,42 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
           <div>
             <Label>Client PO document</Label>
             {documentUrl ? (
-              <div className="flex items-center gap-2 rounded-md border border-border bg-surface-elevated/40 px-3 py-2 text-sm">
-                <FileText className="h-4 w-4 text-primary shrink-0" />
-                <a href={documentUrl} download={documentName} target="_blank" rel="noreferrer" className="flex-1 truncate text-primary hover:underline">{documentName}</a>
-                <button type="button" onClick={() => { setDocumentUrl(undefined); setDocumentName(undefined); setDocumentType(undefined); }} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><X className="h-3.5 w-3.5" /></button>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 rounded-md border border-border bg-surface-elevated/40 px-3 py-2 text-sm">
+                  <FileText className="h-4 w-4 text-primary shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <a href={documentUrl} download={documentName} target="_blank" rel="noreferrer" className="block truncate text-primary hover:underline">{documentName}</a>
+                    {documentUploadedAt && (
+                      <p className="text-[10px] text-muted-foreground font-tnum">Uploaded {format(parseISO(documentUploadedAt), "MMM d, yyyy · HH:mm")}{documentHistory.length > 0 && ` · v${documentHistory.length + 1}`}</p>
+                    )}
+                  </div>
+                  <label className="h-7 px-2 inline-flex items-center gap-1 cursor-pointer rounded text-[11px] text-muted-foreground hover:text-foreground hover:bg-surface-elevated" title="Replace document">
+                    <RefreshCw className="h-3.5 w-3.5" /> Replace
+                    <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
+                  </label>
+                  <button type="button" onClick={() => { setDocumentUrl(undefined); setDocumentName(undefined); setDocumentType(undefined); setDocumentUploadedAt(undefined); }} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive" title="Remove current version"><X className="h-3.5 w-3.5" /></button>
+                </div>
+                {documentHistory.length > 0 && (
+                  <details className="rounded-md border border-border/60 bg-surface-elevated/20 px-3 py-2 text-xs">
+                    <summary className="cursor-pointer text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5">
+                      <History className="h-3.5 w-3.5" /> Version history ({documentHistory.length})
+                    </summary>
+                    <ul className="mt-2 space-y-1">
+                      {documentHistory.map((v, i) => {
+                        const versionNumber = documentHistory.length - i; // newest entry = highest prior version
+                        return (
+                          <li key={i} className="flex items-center gap-2 py-1 border-t border-border/40 first:border-0">
+                            <span className="text-[10px] text-muted-foreground font-tnum w-8 shrink-0">v{versionNumber}</span>
+                            <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                            <a href={v.url} download={v.name} target="_blank" rel="noreferrer" className="flex-1 truncate text-primary hover:underline">{v.name ?? "PO file"}</a>
+                            <span className="text-[10px] text-muted-foreground font-tnum">{format(parseISO(v.uploadedAt), "MMM d, yyyy · HH:mm")}</span>
+                            <button type="button" onClick={() => setDocumentHistory((h) => h.filter((_, idx) => idx !== i))} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive" title="Delete this version"><X className="h-3 w-3" /></button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </details>
+                )}
               </div>
             ) : (
               <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border bg-surface-elevated/30 hover:bg-surface-elevated/60 px-3 py-2.5 text-sm text-muted-foreground transition-colors">
