@@ -134,6 +134,8 @@ export interface Supplier {
   account: string;
   /** "external" = vendor, "internal" = staff reimbursements / honoraires internes. */
   kind: "external" | "internal";
+  /** Profile picture (data URL or remote URL). */
+  avatarUrl?: string;
 }
 
 /* ─── Team & Sales team ─────────────────────────────────────────────── */
@@ -145,6 +147,8 @@ export interface TeamMember {
   email?: string;
   jobTitle?: string;
   department?: string;
+  /** Profile picture (data URL or remote URL). */
+  avatarUrl?: string;
 }
 
 export type SalesRole = "acquisition" | "closer" | "both";
