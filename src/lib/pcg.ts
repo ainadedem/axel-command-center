@@ -770,7 +770,6 @@ export function seedAxiomInvoices(force = false) {
  * bank statement (Jan–Apr 2026). Idempotent: removes prior seeded rows on
  * each version bump and re-inserts.
  */
-export const AXIOM_BANK_VERSION = "1";
 export function seedAxiomBankStatement(force = false) {
   ensureSeedCompanies();
 
