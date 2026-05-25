@@ -207,6 +207,12 @@ function KanbanView({ list, companies, onEdit }: { list: Opportunity[]; companie
                         {co && <span className="h-2 w-2 rounded-full mt-1.5 shrink-0" style={{ background: co.color }} />}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">{o.client}</div>
+                      {(o.owner || o.closer) && (
+                        <div className="flex flex-wrap gap-1 mt-2 text-[9px]">
+                          {o.owner && <span className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20" title="Acquisition">A · {o.owner}</span>}
+                          {o.closer && <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20" title="Closer">C · {o.closer}</span>}
+                        </div>
+                      )}
                       <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/40">
                         <div className="font-display font-bold text-sm font-tnum">{fmtCompact(o.value, o.currency)}</div>
                         {u ? (
