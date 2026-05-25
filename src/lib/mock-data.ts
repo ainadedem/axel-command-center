@@ -166,6 +166,8 @@ export interface Invoice {
   cancelledAt?: string;
   /** Required comment explaining the cancellation. */
   cancellationReason?: string;
+  /** Line items inherited from the source quote / PO for information consistency. */
+  lines?: QuoteLine[];
 }
 
 /* ─── Sales process: Quote → PO → Invoice ───────────────────────────── */
@@ -230,6 +232,8 @@ export interface PurchaseOrder {
     type?: string;
     uploadedAt: string;
   }>;
+  /** Line items inherited from the source quote for information consistency. */
+  lines?: QuoteLine[];
 }
 
 
