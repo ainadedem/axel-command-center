@@ -318,11 +318,12 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                           )}
                         </td>
                         <td className="px-2 py-1.5">
-                          <Select value={l.unit} onValueChange={(v) => updateLine(l.id, { unit: v as "hour" | "day" })}>
+                          <Select value={l.unit} onValueChange={(v) => updateLine(l.id, { unit: v as Unit })}>
                             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="hour">Hour</SelectItem>
                               <SelectItem value="day">Day</SelectItem>
+                              <SelectItem value="fixed">Fixed</SelectItem>
                             </SelectContent>
                           </Select>
                         </td>
