@@ -302,11 +302,11 @@ function ListView({ list, onEdit, acqOf }: { list: Opportunity[]; onEdit: (o: Op
 
 /* ─── People view (by acquisition or closer) ──────────────────────── */
 
-function PeopleView({ list, onEdit, role }: { list: Opportunity[]; onEdit: (o: Opportunity) => void; role: "acquisition" | "closer" }) {
+function PeopleView({ list, onEdit, role, acqOf }: { list: Opportunity[]; onEdit: (o: Opportunity) => void; role: "acquisition" | "closer"; acqOf: (o: Opportunity) => string }) {
   const grouped = useMemo(() => {
     const m = new Map<string, Opportunity[]>();
     list.forEach((o) => {
-      const k = (role === "acquisition" ? o.owner : o.closer) || "Unassigned";
+      const k = (role === "acquisition" ? acqOf(o) : o.closer) || "Unassigned";
       m.set(k, [...(m.get(k) ?? []), o]);
     });
     return Array.from(m.entries()).sort((a, b) => {
@@ -314,7 +314,7 @@ function PeopleView({ list, onEdit, role }: { list: Opportunity[]; onEdit: (o: O
       const vb = b[1].reduce((s, o) => s + toMGA(o.value, o.currency), 0);
       return vb - va;
     });
-  }, [list, role]);
+  }, [list, role, acqOf]);
 
   const roleLabel = role === "acquisition" ? "Acquisition" : "Closer";
 
@@ -336,6 +336,7 @@ function PeopleView({ list, onEdit, role }: { list: Opportunity[]; onEdit: (o: O
             <div className="space-y-1.5">
               {ops.map((o) => {
                 const st = STAGE_STYLES[o.stage];
+                const otherAcq = acqOf(o);
                 return (
                   <button key={o.id} onClick={() => onEdit(o)} className={`w-full flex items-center justify-between gap-2 text-left rounded-md border-l-2 ${st.ring} bg-surface-elevated/60 hover:bg-surface-elevated px-2.5 py-2 transition`}>
                     <div className="min-w-0">
@@ -343,7 +344,7 @@ function PeopleView({ list, onEdit, role }: { list: Opportunity[]; onEdit: (o: O
                       <div className="text-[10px] text-muted-foreground truncate">
                         {o.client}
                         {role === "acquisition" && o.closer ? ` · closer: ${o.closer}` : ""}
-                        {role === "closer" && o.owner ? ` · acq: ${o.owner}` : ""}
+                        {role === "closer" && otherAcq ? ` · acq: ${otherAcq}` : ""}
                       </div>
                     </div>
                     <div className="flex flex-col items-end shrink-0">
