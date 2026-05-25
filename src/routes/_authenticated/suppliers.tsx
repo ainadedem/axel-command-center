@@ -8,7 +8,7 @@ import {
 import { useJournalEntries, fmtAr } from "@/lib/pcg";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
 import { Pencil, Trash2, Building2, User } from "lucide-react";
+import { useDataView, type FieldDef } from "@/hooks/use-data-view";
+import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 
 export const Route = createFileRoute("/_authenticated/suppliers")({ component: SuppliersPage });
 
@@ -34,13 +36,13 @@ function Body() {
   const suppliers = useSuppliers();
   const companies = useCompanies();
   const entries = useJournalEntries();
-  const list = inScope(suppliers, scope);
+  const baseList = inScope(suppliers, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
 
   // Compute outstanding payable per supplier from journal entries (credit - debit on 401xxx).
   const balances = new Map<string, number>();
-  for (const s of list) {
+  for (const s of baseList) {
     let bal = 0;
     for (const e of entries) {
       if (e.companyId !== s.companyId) continue;
@@ -53,9 +55,24 @@ function Body() {
     balances.set(s.id, bal);
   }
 
+  const fields: FieldDef<Supplier>[] = [
+    { key: "name", label: "Name", type: "string", accessor: (s) => s.name, noGroup: true },
+    { key: "kind", label: "Kind", type: "enum", accessor: (s) => s.kind },
+    { key: "account", label: "PCG account", type: "string", accessor: (s) => s.account },
+    { key: "company", label: "Company", type: "enum", accessor: (s) => companies.find((c) => c.id === s.companyId)?.shortName ?? "" },
+    { key: "country", label: "Country", type: "string", accessor: (s) => s.country ?? "" },
+    { key: "outstanding", label: "Outstanding", type: "number", accessor: (s) => balances.get(s.id) ?? 0, noGroup: true },
+  ];
+  const view = useDataView<Supplier>("suppliers", fields);
+  const groups = view.apply(baseList);
+  const list = groups.flatMap((g) => g.items);
+
   return (
     <div className="p-8 space-y-5">
-      <CrudToolbar count={list.length} label="suppliers" onCreate={() => { setEditing(null); setOpen(true); }} />
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <CrudToolbar count={list.length} label="suppliers" onCreate={() => { setEditing(null); setOpen(true); }} />
+        <DataToolbar view={view} items={baseList} />
+      </div>
       {list.length === 0 ? (
         <EmptyState label="suppliers" onCreate={() => { setEditing(null); setOpen(true); }} />
       ) : (
@@ -72,39 +89,44 @@ function Body() {
               </tr>
             </thead>
             <tbody>
-              {list.map((s) => {
-                const co = companies.find((c) => c.id === s.companyId);
-                const bal = balances.get(s.id) ?? 0;
-                const Icon = s.kind === "internal" ? User : Building2;
-                return (
-                  <tr key={s.id} className="border-t border-border/60 hover:bg-surface-elevated/30 group">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2.5">
-                        <Avatar src={s.avatarUrl} name={s.name} size={32} />
-                        <Icon className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{s.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{s.kind === "internal" ? "Interne" : "Externe"}</td>
-                    <td className="px-4 py-3 font-tnum text-muted-foreground">{s.account}</td>
-                    <td className="px-4 py-3">
-                      {co && (
-                        <span className="inline-flex items-center gap-2 text-xs">
-                          <span className="h-2 w-2 rounded-full" style={{ background: co.color }} />
-                          {co.shortName}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-right font-tnum">{fmtAr(bal)}</td>
-                    <td className="px-4 py-3">
-                      <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 justify-end">
-                        <button onClick={() => { setEditing(s); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                        <button onClick={() => confirm(`Delete ${s.name}?`) && suppliersStore.remove(s.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+              {groups.map((g) => (
+                <Fragment key={g.key}>
+                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={6} />}
+                  {g.items.map((s) => {
+                    const co = companies.find((c) => c.id === s.companyId);
+                    const bal = balances.get(s.id) ?? 0;
+                    const Icon = s.kind === "internal" ? User : Building2;
+                    return (
+                      <tr key={s.id} className="border-t border-border/60 hover:bg-surface-elevated/30 group">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <Avatar src={s.avatarUrl} name={s.name} size={32} />
+                            <Icon className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">{s.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">{s.kind === "internal" ? "Interne" : "Externe"}</td>
+                        <td className="px-4 py-3 font-tnum text-muted-foreground">{s.account}</td>
+                        <td className="px-4 py-3">
+                          {co && (
+                            <span className="inline-flex items-center gap-2 text-xs">
+                              <span className="h-2 w-2 rounded-full" style={{ background: co.color }} />
+                              {co.shortName}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right font-tnum">{fmtAr(bal)}</td>
+                        <td className="px-4 py-3">
+                          <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 justify-end">
+                            <button onClick={() => { setEditing(s); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
+                            <button onClick={() => confirm(`Delete ${s.name}?`) && suppliersStore.remove(s.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </Fragment>
+              ))}
             </tbody>
           </table>
         </div>

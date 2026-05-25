@@ -7,7 +7,7 @@ import {
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2 } from "lucide-react";
 import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
+import { useDataView, type FieldDef } from "@/hooks/use-data-view";
+import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 
 export const Route = createFileRoute("/_authenticated/projects")({ component: ProjectsPage });
 
@@ -35,7 +37,7 @@ function Body() {
   const companies = useCompanies();
   const invoices = useInvoices();
   const transactions = useTransactions();
-  const list = inScope(projects, scope);
+  const baseList = inScope(projects, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Project | null>(null);
   const openCreate = () => { setEditing(null); setOpen(true); };
@@ -89,11 +91,29 @@ function Body() {
     },
   ];
 
+  const fields: FieldDef<Project>[] = [
+    { key: "name", label: "Project", type: "string", accessor: (p) => p.name, noGroup: true },
+    { key: "client", label: "Client", type: "enum", accessor: (p) => clients.find((c) => c.id === p.clientId)?.name ?? "" },
+    { key: "salesRep", label: "Sales rep", type: "enum", accessor: (p) => clients.find((c) => c.id === p.clientId)?.acquisition ?? "" },
+    { key: "company", label: "Company", type: "enum", accessor: (p) => companies.find((c) => c.id === p.companyId)?.shortName ?? "" },
+    { key: "currency", label: "Currency", type: "enum", accessor: (p) => p.currency },
+    { key: "revenue", label: "Revenue", type: "number", accessor: (p) => p.revenue, noGroup: true },
+    { key: "cost", label: "Cost", type: "number", accessor: (p) => p.cost, noGroup: true },
+    { key: "profit", label: "Profit", type: "number", accessor: (p) => p.revenue - p.cost, noGroup: true },
+    { key: "margin", label: "Margin %", type: "number", accessor: (p) => p.revenue > 0 ? ((p.revenue - p.cost) / p.revenue) * 100 : 0, noGroup: true },
+  ];
+  const view = useDataView<Project>("projects", fields);
+  const groups = view.apply(baseList);
+  const list = groups.flatMap((g) => g.items);
+
   return (
     <div className="p-8 space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <CrudToolbar count={list.length} label="projects" onCreate={openCreate} />
-        <ReconcileButton checks={reconcileChecks} />
+        <div className="flex items-center gap-2">
+          <DataToolbar view={view} items={baseList} />
+          <ReconcileButton checks={reconcileChecks} />
+        </div>
       </div>
       {list.length === 0 ? (
         <EmptyState label="projects" onCreate={openCreate} />
@@ -118,7 +138,10 @@ function Body() {
               </tr>
             </thead>
             <tbody>
-              {list.map((p) => {
+              {groups.map((g) => (
+                <Fragment key={g.key}>
+                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={13} />}
+                  {g.items.map((p) => {
                 const cl = clients.find((c) => c.id === p.clientId);
                 const co = companies.find((c) => c.id === p.companyId);
                 const profit = p.revenue - p.cost;
@@ -172,6 +195,8 @@ function Body() {
                   </tr>
                 );
               })}
+                </Fragment>
+              ))}
             </tbody>
           </table>
         </div>

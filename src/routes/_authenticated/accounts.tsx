@@ -8,7 +8,7 @@ import {
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
 import { Landmark, Smartphone, Banknote, Pencil, Trash2, Upload } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { StatementImportDialog } from "@/components/statement-import-dialog";
 import { format, parseISO } from "date-fns";
+import { useDataView, type FieldDef } from "@/hooks/use-data-view";
+import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 
 export const Route = createFileRoute("/_authenticated/accounts")({ component: AccountsPage });
 
@@ -35,8 +37,8 @@ function Body() {
   const { scope } = useCompany();
   const accounts = useAccounts();
   const companies = useCompanies();
-  const list = inScope(accounts, scope);
-  const totalMGA = list.reduce((s, a) => s + toMGA(a.balance, a.currency), 0);
+  const baseList = inScope(accounts, scope);
+  const totalMGA = baseList.reduce((s, a) => s + toMGA(a.balance, a.currency), 0);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Account | null>(null);
   const [importing, setImporting] = useState<Account | null>(null);
@@ -44,9 +46,25 @@ function Body() {
   const openCreate = () => { setEditing(null); setOpen(true); };
   const openEdit = (a: Account) => { setEditing(a); setOpen(true); };
 
+  const fields: FieldDef<Account>[] = [
+    { key: "name", label: "Name", type: "string", accessor: (a) => a.name, noGroup: true },
+    { key: "company", label: "Company", type: "enum", accessor: (a) => companies.find((c) => c.id === a.companyId)?.shortName ?? "" },
+    { key: "type", label: "Type", type: "enum", accessor: (a) => a.type },
+    { key: "currency", label: "Currency", type: "enum", accessor: (a) => a.currency },
+    { key: "balance", label: "Balance", type: "number", accessor: (a) => a.balance, noGroup: true },
+    { key: "balanceMGA", label: "Balance (MGA)", type: "number", accessor: (a) => toMGA(a.balance, a.currency), noGroup: true },
+    { key: "statementUploadedAt", label: "Last statement", type: "date", accessor: (a) => a.statementUploadedAt ?? "", noGroup: true },
+  ];
+  const view = useDataView<Account>("accounts", fields);
+  const groups = view.apply(baseList);
+  const list = groups.flatMap((g) => g.items);
+
   return (
     <div className="p-8 space-y-5">
-      <CrudToolbar count={list.length} label="accounts" onCreate={openCreate} />
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <CrudToolbar count={list.length} label="accounts" onCreate={openCreate} />
+        <DataToolbar view={view} items={baseList} />
+      </div>
 
       {list.length === 0 ? (
         <EmptyState label="accounts" onCreate={openCreate} />
@@ -57,7 +75,7 @@ function Body() {
               <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Total liquidity</div>
               <div className="font-display text-3xl font-bold mt-1 font-tnum">{fmtCompact(totalMGA, "MGA")}</div>
             </div>
-            <div className="text-xs text-muted-foreground">{list.length} accounts</div>
+            <div className="text-xs text-muted-foreground">{baseList.length} accounts</div>
           </div>
 
           <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
@@ -74,44 +92,49 @@ function Body() {
                 </tr>
               </thead>
               <tbody>
-                {list.map((a) => {
-                  const co = companies.find((c) => c.id === a.companyId);
-                  const Icon = iconFor(a.type);
-                  return (
-                    <tr key={a.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/50 group">
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-md bg-surface-elevated grid place-items-center text-muted-foreground"><Icon className="h-4 w-4" /></div>
-                          <div>
-                            <div className="font-medium">{a.name}</div>
-                            <div className="text-xs text-muted-foreground uppercase">{a.currency}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        {co ? <span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.name}</span> : <span className="text-muted-foreground">—</span>}
-                      </td>
-                      <td className="px-5 py-3.5 capitalize text-muted-foreground">{a.type}</td>
-                      <td className="px-5 py-3.5 text-xs text-muted-foreground">
-                        {a.statementUploadedAt ? (
-                          <div className="flex flex-col">
-                            <span className="font-tnum">{format(parseISO(a.statementUploadedAt), "MMM d, yyyy")}</span>
-                            {a.statementName && <span className="text-[10px] text-muted-foreground/70 truncate max-w-[180px]">{a.statementName}</span>}
-                          </div>
-                        ) : <span className="text-muted-foreground/40">—</span>}
-                      </td>
-                      <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(a.balance, a.currency)}</td>
-                      <td className="px-5 py-3.5 text-right font-tnum text-muted-foreground">{fmtCompact(toMGA(a.balance, a.currency), "MGA")}</td>
-                      <td className="px-5 py-3.5 text-right">
-                        <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
-                          <button onClick={() => setImporting(a)} title="Import bank statement CSV" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Upload className="h-3.5 w-3.5" /></button>
-                          <button onClick={() => openEdit(a)} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                          <button onClick={() => confirm(`Delete ${a.name}?`) && accountsStore.remove(a.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {groups.map((g) => (
+                  <Fragment key={g.key}>
+                    {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={7} />}
+                    {g.items.map((a) => {
+                      const co = companies.find((c) => c.id === a.companyId);
+                      const Icon = iconFor(a.type);
+                      return (
+                        <tr key={a.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/50 group">
+                          <td className="px-5 py-3.5">
+                            <div className="flex items-center gap-3">
+                              <div className="h-8 w-8 rounded-md bg-surface-elevated grid place-items-center text-muted-foreground"><Icon className="h-4 w-4" /></div>
+                              <div>
+                                <div className="font-medium">{a.name}</div>
+                                <div className="text-xs text-muted-foreground uppercase">{a.currency}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-5 py-3.5">
+                            {co ? <span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.name}</span> : <span className="text-muted-foreground">—</span>}
+                          </td>
+                          <td className="px-5 py-3.5 capitalize text-muted-foreground">{a.type}</td>
+                          <td className="px-5 py-3.5 text-xs text-muted-foreground">
+                            {a.statementUploadedAt ? (
+                              <div className="flex flex-col">
+                                <span className="font-tnum">{format(parseISO(a.statementUploadedAt), "MMM d, yyyy")}</span>
+                                {a.statementName && <span className="text-[10px] text-muted-foreground/70 truncate max-w-[180px]">{a.statementName}</span>}
+                              </div>
+                            ) : <span className="text-muted-foreground/40">—</span>}
+                          </td>
+                          <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(a.balance, a.currency)}</td>
+                          <td className="px-5 py-3.5 text-right font-tnum text-muted-foreground">{fmtCompact(toMGA(a.balance, a.currency), "MGA")}</td>
+                          <td className="px-5 py-3.5 text-right">
+                            <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
+                              <button onClick={() => setImporting(a)} title="Import bank statement CSV" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Upload className="h-3.5 w-3.5" /></button>
+                              <button onClick={() => openEdit(a)} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
+                              <button onClick={() => confirm(`Delete ${a.name}?`) && accountsStore.remove(a.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </Fragment>
+                ))}
               </tbody>
             </table>
           </div>
