@@ -44,27 +44,31 @@ function TeamPage() {
         ) : (
           <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
             <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
-              <div className="col-span-3">Name</div>
-              <div className="col-span-3">Email</div>
-              <div className="col-span-2">Job title</div>
-              <div className="col-span-2">Department</div>
+              <div className="col-span-2">First name</div>
+              <div className="col-span-2">Last name</div>
+              <div className="col-span-2">Email</div>
+              <div className="col-span-2">Phone</div>
+              <div className="col-span-1">Job</div>
+              <div className="col-span-1">Dept</div>
               <div className="col-span-1">Sales</div>
               <div className="col-span-1 text-right">·</div>
             </div>
             {team
               .slice()
-              .sort((a, b) => a.name.localeCompare(b.name))
+              .sort((a, b) => (a.lastName || a.name).localeCompare(b.lastName || b.name))
               .map((m) => {
                 const s = salesByTm.get(m.id);
                 return (
                   <div key={m.id} className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated/60 transition group">
-                    <div className="col-span-3 flex items-center gap-2.5">
+                    <div className="col-span-2 flex items-center gap-2.5 min-w-0">
                       <Avatar src={m.avatarUrl} name={m.name} size={28} />
-                      <div className="text-sm font-medium truncate">{m.name}</div>
+                      <div className="text-sm font-medium truncate">{m.firstName || m.name}</div>
                     </div>
-                    <div className="col-span-3 text-xs text-muted-foreground truncate">{m.email || "—"}</div>
-                    <div className="col-span-2 text-xs text-muted-foreground truncate">{m.jobTitle || "—"}</div>
-                    <div className="col-span-2 text-xs text-muted-foreground truncate">{m.department || "—"}</div>
+                    <div className="col-span-2 text-sm truncate">{m.lastName || "—"}</div>
+                    <div className="col-span-2 text-xs text-muted-foreground truncate">{m.email || "—"}</div>
+                    <div className="col-span-2 text-xs text-muted-foreground truncate font-tnum">{m.phone || "—"}</div>
+                    <div className="col-span-1 text-xs text-muted-foreground truncate">{m.jobTitle || "—"}</div>
+                    <div className="col-span-1 text-xs text-muted-foreground truncate">{m.department || "—"}</div>
                     <div className="col-span-1">
                       {s ? (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 inline-flex items-center gap-1">
@@ -90,8 +94,10 @@ function TeamPage() {
 }
 
 function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: TeamMember | null }) {
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [department, setDepartment] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
@@ -99,18 +105,30 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
   useEffect(() => {
     if (!open) return;
     if (editing) {
-      setName(editing.name); setEmail(editing.email ?? ""); setJobTitle(editing.jobTitle ?? ""); setDepartment(editing.department ?? "");
+      // Fall back to splitting legacy `name` if firstName/lastName aren't set.
+      const [fnFallback, ...rest] = (editing.name || "").trim().split(/\s+/);
+      setFirstName(editing.firstName ?? fnFallback ?? "");
+      setLastName(editing.lastName ?? rest.join(" "));
+      setEmail(editing.email ?? "");
+      setPhone(editing.phone ?? "");
+      setJobTitle(editing.jobTitle ?? "");
+      setDepartment(editing.department ?? "");
       setAvatarUrl(editing.avatarUrl);
     } else {
-      setName(""); setEmail(""); setJobTitle(""); setDepartment(""); setAvatarUrl(undefined);
+      setFirstName(""); setLastName(""); setEmail(""); setPhone(""); setJobTitle(""); setDepartment(""); setAvatarUrl(undefined);
     }
   }, [open, editing]);
 
+  const displayName = `${firstName.trim()} ${lastName.trim()}`.trim();
+
   const submit = () => {
-    if (!name.trim()) return;
+    if (!displayName) return;
     const data = {
-      name: name.trim(),
+      name: displayName,
+      firstName: firstName.trim() || undefined,
+      lastName: lastName.trim() || undefined,
       email: email.trim() || undefined,
+      phone: phone.trim() || undefined,
       jobTitle: jobTitle.trim() || undefined,
       department: department.trim() || undefined,
       avatarUrl,
@@ -126,11 +144,15 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
         <DialogHeader><DialogTitle>{editing ? "Edit team member" : "New team member"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
           <div className="flex items-start gap-4">
-            <AvatarUpload value={avatarUrl} onChange={setAvatarUrl} name={name} size={72} />
-            <div className="flex-1 space-y-3">
-              <div><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-              <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+            <AvatarUpload value={avatarUrl} onChange={setAvatarUrl} name={displayName} size={72} />
+            <div className="flex-1 grid grid-cols-2 gap-3">
+              <div><Label>First name</Label><Input value={firstName} onChange={(e) => setFirstName(e.target.value)} /></div>
+              <div><Label>Last name</Label><Input value={lastName} onChange={(e) => setLastName(e.target.value)} /></div>
             </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+            <div><Label>Phone</Label><Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+261 …" /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Job title</Label><Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} /></div>
@@ -140,7 +162,7 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit}>{editing ? "Save" : "Create"}</Button>
+          <Button onClick={submit} disabled={!displayName}>{editing ? "Save" : "Create"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
