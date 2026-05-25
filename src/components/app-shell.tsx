@@ -21,6 +21,7 @@ const nav = [
   { to: "/suppliers", label: "Suppliers", icon: Truck },
   { to: "/projects", label: "Projects", icon: Briefcase },
   { to: "/pipeline", label: "Pipeline", icon: TrendingUp },
+  { to: "/budgets", label: "Budgets", icon: Target },
   { to: "/reports", label: "Reports", icon: BarChart3 },
 ];
 
