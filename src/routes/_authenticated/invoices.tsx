@@ -165,9 +165,9 @@ function Body() {
                           <div className="text-[10px] text-muted-foreground mt-1 max-w-[180px] truncate italic" title={inv.cancellationReason}>“{inv.cancellationReason}”</div>
                         )}
                       </td>
-                      <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(inv.amount, inv.currency)}</td>
+                      <td className="px-5 py-3.5 text-right font-tnum">{fmtAmount(inv.amount, inv.currency)}</td>
                       <td className="px-5 py-3.5 text-right font-tnum font-medium">
-                        {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? fmtCompact(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
+                        {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? fmtAmount(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
