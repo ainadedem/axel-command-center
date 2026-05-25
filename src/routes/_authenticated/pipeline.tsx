@@ -39,11 +39,11 @@ type StageStyle = {
 
 const STAGE_STYLES: Record<Stage, StageStyle> = {
   Lead:        { bar: "bg-slate-400",     ring: "border-l-slate-400",   tint: "bg-slate-400/5",   text: "text-slate-400",   pill: "bg-slate-400/10 text-slate-300 border border-slate-400/20",    icon: Clock },
-  Qualified:   { bar: "bg-sky-500",       ring: "border-l-sky-500",     tint: "bg-sky-500/5",     text: "text-sky-400",     pill: "bg-sky-500/10 text-sky-300 border border-sky-500/20",          icon: CheckCircle2 },
-  Proposal:    { bar: "bg-violet-500",    ring: "border-l-violet-500",  tint: "bg-violet-500/5",  text: "text-violet-400",  pill: "bg-violet-500/10 text-violet-300 border border-violet-500/20", icon: Pencil },
-  Negotiation: { bar: "bg-amber-500",     ring: "border-l-amber-500",   tint: "bg-amber-500/5",   text: "text-amber-400",   pill: "bg-amber-500/10 text-amber-300 border border-amber-500/20",    icon: Flame },
-  Won:         { bar: "bg-emerald-500",   ring: "border-l-emerald-500", tint: "bg-emerald-500/5", text: "text-emerald-400", pill: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20", icon: CheckCircle2 },
-  Lost:        { bar: "bg-rose-500",      ring: "border-l-rose-500",    tint: "bg-rose-500/5",    text: "text-rose-400",    pill: "bg-rose-500/10 text-rose-300 border border-rose-500/20",       icon: XCircle },
+  Qualified:   { bar: "bg-sky-500",       ring: "border-l-sky-500",     tint: "bg-sky-500/5",     text: "text-sky-600",     pill: "bg-sky-500/10 text-sky-700 border border-sky-500/20",          icon: CheckCircle2 },
+  Proposal:    { bar: "bg-violet-500",    ring: "border-l-violet-500",  tint: "bg-violet-500/5",  text: "text-violet-400",  pill: "bg-violet-500/10 text-violet-700 border border-violet-500/20", icon: Pencil },
+  Negotiation: { bar: "bg-amber-500",     ring: "border-l-amber-500",   tint: "bg-amber-500/5",   text: "text-amber-400",   pill: "bg-amber-500/10 text-amber-700 border border-amber-500/20",    icon: Flame },
+  Won:         { bar: "bg-emerald-500",   ring: "border-l-emerald-500", tint: "bg-emerald-500/5", text: "text-emerald-400", pill: "bg-emerald-500/10 text-emerald-700 border border-emerald-500/20", icon: CheckCircle2 },
+  Lost:        { bar: "bg-rose-500",      ring: "border-l-rose-500",    tint: "bg-rose-500/5",    text: "text-rose-400",    pill: "bg-rose-500/10 text-rose-700 border border-rose-500/20",       icon: XCircle },
 };
 
 function urgencyOf(o: Opportunity): { label: string; cls: string } | null {
@@ -51,7 +51,7 @@ function urgencyOf(o: Opportunity): { label: string; cls: string } | null {
   const days = differenceInDays(parseISO(o.expectedClose), new Date());
   if (days < 0) return { label: `${Math.abs(days)}d overdue`, cls: "text-rose-400 bg-rose-500/10" };
   if (days <= 7) return { label: `${days}d left`, cls: "text-amber-400 bg-amber-500/10" };
-  if (days <= 30) return { label: `${days}d`, cls: "text-sky-400 bg-sky-500/10" };
+  if (days <= 30) return { label: `${days}d`, cls: "text-sky-600 bg-sky-500/10" };
   return null;
 }
 
@@ -223,8 +223,8 @@ function KanbanView({ list, companies, onEdit, acqOf }: { list: Opportunity[]; c
                       <div className="text-xs text-muted-foreground mt-1">{o.client}</div>
                       {(acq || o.closer) && (
                         <div className="flex flex-wrap gap-1 mt-2 text-[9px]">
-                          {acq && <span className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20" title="Acquisition (from client)">A · {acq}</span>}
-                          {o.closer && <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20" title="Closer">C · {o.closer}</span>}
+                          {acq && <span className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-700 border border-sky-500/20" title="Acquisition (from client)">A · {acq}</span>}
+                          {o.closer && <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 border border-emerald-500/20" title="Closer">C · {o.closer}</span>}
                         </div>
                       )}
                       <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/40">

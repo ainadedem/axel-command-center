@@ -109,9 +109,9 @@ function ClientsPage() {
                           </div>
                         )}
                         <div className="flex flex-wrap gap-1 mt-2">
-                          {cl.acquisition && <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30 font-medium">Acq · {cl.acquisition}</span>}
-                          {cl.referral && <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-medium">Ref · {cl.referral}</span>}
-                          {cl.acquiredAt && <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-300 border border-violet-500/30 font-medium">Since {cl.acquisitionYear ?? cl.acquiredAt}</span>}
+                          {cl.acquisition && <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-700 border border-sky-500/30 font-medium">Acq · {cl.acquisition}</span>}
+                          {cl.referral && <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 border border-emerald-500/30 font-medium">Ref · {cl.referral}</span>}
+                          {cl.acquiredAt && <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-700 border border-violet-500/30 font-medium">Since {cl.acquisitionYear ?? cl.acquiredAt}</span>}
                           {overdue && <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-destructive/20 text-destructive border border-destructive/40 font-semibold uppercase tracking-wider">Overdue</span>}
                         </div>
                       </div>
@@ -320,8 +320,8 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
 
 function StatBold({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "good" | "warn" | "bad" }) {
   const color =
-    tone === "good" ? "text-emerald-400" :
-    tone === "warn" ? "text-amber-400" :
+    tone === "good" ? "text-emerald-600" :
+    tone === "warn" ? "text-amber-600" :
     tone === "bad" ? "text-destructive" : "text-foreground";
   return (
     <div>
