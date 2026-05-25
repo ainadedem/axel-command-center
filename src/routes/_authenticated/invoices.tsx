@@ -68,16 +68,25 @@ function Body() {
     setNumberFormat(next);
   }, [numMode]);
 
+  const quarterOf = (iso: string) => {
+    const d = parseISO(iso);
+    return `${d.getFullYear()} Q${Math.floor(d.getMonth() / 3) + 1}`;
+  };
+  const monthOf = (iso: string) => format(parseISO(iso), "MMM yyyy");
+  const dayOf = (iso: string) => format(parseISO(iso), "MMM d, yyyy");
+
   const fields: FieldDef<Invoice>[] = [
     { key: "number", label: "Number", type: "string", accessor: (i) => i.number, noGroup: true },
     { key: "client", label: "Client", type: "enum", accessor: (i) => clients.find((c) => c.id === i.clientId)?.name ?? "" },
     { key: "project", label: "Project", type: "enum", accessor: (i) => projects.find((p) => p.id === i.projectId)?.name ?? "" },
-    { key: "rep", label: "Sales rep", type: "enum", accessor: (i) => clients.find((c) => c.id === i.clientId)?.acquisition ?? "" },
     { key: "company", label: "Company", type: "enum", accessor: (i) => companies.find((c) => c.id === i.companyId)?.shortName ?? "" },
     { key: "status", label: "Status", type: "enum", accessor: (i) => i.status },
     { key: "currency", label: "Currency", type: "enum", accessor: (i) => i.currency },
     { key: "issueDate", label: "Issued", type: "date", accessor: (i) => i.issueDate, noGroup: true },
     { key: "dueDate", label: "Due", type: "date", accessor: (i) => i.dueDate, noGroup: true },
+    { key: "issuedDay", label: "Issued (day)", type: "string", accessor: (i) => dayOf(i.issueDate), noSort: true, noFilter: true },
+    { key: "issuedMonth", label: "Issued (month)", type: "string", accessor: (i) => monthOf(i.issueDate), noSort: true, noFilter: true },
+    { key: "issuedQuarter", label: "Issued (quarter)", type: "string", accessor: (i) => quarterOf(i.issueDate), noSort: true, noFilter: true },
     { key: "amount", label: "Amount", type: "number", accessor: (i) => i.amount, noGroup: true },
     { key: "balance", label: "Balance", type: "number", accessor: (i) => i.amount - i.paid, noGroup: true },
   ];
