@@ -708,22 +708,49 @@ export function seedAxiomInvoices(force = false) {
     if (!clientsStore.items.some((x) => x.id === c.id)) clientsStore.add(c);
   }
 
+  // Wipe previously seeded Axiom projects so re-runs are clean.
+  const seededProjectIds = new Set([
+    "proj_axi_deindeal_2026", "proj_axi_trembley_jan", "proj_axi_trembley_feb",
+    "proj_axi_logia_webflow",
+  ]);
+  projectsStore.replaceAll(
+    projectsStore.items.filter((p) => !seededProjectIds.has(p.id)),
+  );
+
+  // Projects:
+  // - Dein Deal: ONE recurring monthly project, 4 invoices.
+  // - Trembley: each invoice is its OWN project (same client, distinct deliverables).
+  // - Logia: one Webflow project.
+  const projectSeeds: Project[] = [
+    { id: "proj_axi_deindeal_2026", companyId: "axi", clientId: "cli_axi_deindeal",
+      name: "Dein Deal — Production mensuelle 2026", revenue: 2350 * 4, cost: 0, currency: "EUR" },
+    { id: "proj_axi_trembley_jan", companyId: "axi", clientId: "cli_axi_trembley",
+      name: "Trembley — Modélisation Meubles (Jan)", revenue: 1230, cost: 0, currency: "EUR" },
+    { id: "proj_axi_trembley_feb", companyId: "axi", clientId: "cli_axi_trembley",
+      name: "Trembley — Modélisation Meubles (Feb)", revenue: 1230, cost: 0, currency: "EUR" },
+    { id: "proj_axi_logia_webflow", companyId: "axi", clientId: "cli_axi_logia",
+      name: "Logia — Intégration Webflow", revenue: 1_800_000, cost: 0, currency: "MGA" },
+  ];
+  for (const p of projectSeeds) {
+    if (!projectsStore.items.some((x) => x.id === p.id)) projectsStore.add(p);
+  }
+
   const inv = (
-    n: string, clientId: string, issue: string, amount: number,
+    n: string, clientId: string, projectId: string, issue: string, amount: number,
     currency: "EUR" | "MGA",
   ): Invoice => ({
-    id: `inv_axi_${n}`, number: n, companyId: "axi", clientId,
+    id: `inv_axi_${n}`, number: n, companyId: "axi", clientId, projectId,
     issueDate: issue, dueDate: issue, amount, paid: 0, currency, status: "sent",
   });
 
   const seeds: Invoice[] = [
-    inv("INV-26-0001", "cli_axi_deindeal", "2026-01-26", 2350, "EUR"),
-    inv("INV-26-0002", "cli_axi_trembley", "2026-01-26", 1230, "EUR"),
-    inv("INV-26-0003", "cli_axi_trembley", "2026-02-25", 1230, "EUR"),
-    inv("INV-26-0004", "cli_axi_deindeal", "2026-02-25", 2350, "EUR"),
-    inv("INV-26-0005", "cli_axi_deindeal", "2026-03-25", 2350, "EUR"),
-    inv("INV-26-0006", "cli_axi_deindeal", "2026-04-25", 2350, "EUR"),
-    inv("INV-26-0008", "cli_axi_logia",    "2026-05-15", 1_800_000, "MGA"),
+    inv("INV-26-0001", "cli_axi_deindeal", "proj_axi_deindeal_2026", "2026-01-26", 2350, "EUR"),
+    inv("INV-26-0002", "cli_axi_trembley", "proj_axi_trembley_jan",  "2026-01-26", 1230, "EUR"),
+    inv("INV-26-0003", "cli_axi_trembley", "proj_axi_trembley_feb",  "2026-02-25", 1230, "EUR"),
+    inv("INV-26-0004", "cli_axi_deindeal", "proj_axi_deindeal_2026", "2026-02-25", 2350, "EUR"),
+    inv("INV-26-0005", "cli_axi_deindeal", "proj_axi_deindeal_2026", "2026-03-25", 2350, "EUR"),
+    inv("INV-26-0006", "cli_axi_deindeal", "proj_axi_deindeal_2026", "2026-04-25", 2350, "EUR"),
+    inv("INV-26-0008", "cli_axi_logia",    "proj_axi_logia_webflow", "2026-05-15", 1_800_000, "MGA"),
   ];
   for (const i of seeds) invoicesStore.add(i);
 
