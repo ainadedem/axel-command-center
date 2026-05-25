@@ -174,6 +174,7 @@ function Sidebar() {
         <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-chart-2 grid place-items-center shadow-[var(--shadow-glow)]">
           <span className="font-display text-base font-bold text-primary-foreground">A</span>
         </div>
+        <span className="font-display text-sm font-semibold text-sidebar-foreground">Axel - AXWG</span>
       </div>
       <div className="px-3 pb-3">
         <CompanySwitcher />
