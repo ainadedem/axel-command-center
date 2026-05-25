@@ -157,6 +157,8 @@ function Body() {
 function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Transaction | null }) {
   const companies = useCompanies();
   const accounts = useAccounts();
+  const clients = useClients();
+  const suppliers = useSuppliers();
   const [companyId, setCompanyId] = useState("");
   const [accountId, setAccountId] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -165,6 +167,8 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("0");
   const [currency, setCurrency] = useState<Currency>("MGA");
+  const [clientId, setClientId] = useState<string>("");
+  const [supplierId, setSupplierId] = useState<string>("");
 
   useEffect(() => {
     if (!open) return;
@@ -172,17 +176,26 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
       setCompanyId(editing.companyId); setAccountId(editing.accountId); setDate(editing.date);
       setType(editing.type); setCategory(editing.category); setDescription(editing.description);
       setAmount(String(editing.amount)); setCurrency(editing.currency);
+      setClientId(editing.clientId ?? ""); setSupplierId(editing.supplierId ?? "");
     } else {
       const c = companies[0]; setCompanyId(c?.id ?? ""); setAccountId(""); setDate(new Date().toISOString().slice(0, 10));
       setType("expense"); setCategory(""); setDescription(""); setAmount("0"); setCurrency(c?.baseCurrency ?? "MGA");
+      setClientId(""); setSupplierId("");
     }
   }, [open, editing, companies]);
 
   const companyAccounts = accounts.filter((a) => a.companyId === companyId);
+  const companyClients = clients.filter((c) => c.companyId === companyId);
+  const companySuppliers = suppliers.filter((s) => s.companyId === companyId);
 
   const submit = () => {
     if (!description.trim() || !companyId || !accountId) return;
-    const data = { companyId, accountId, date, type, category, description, amount: Number(amount) || 0, currency };
+    const data: Omit<Transaction, "id"> = {
+      companyId, accountId, date, type, category, description,
+      amount: Number(amount) || 0, currency,
+      clientId: type === "income" ? (clientId || undefined) : undefined,
+      supplierId: type === "expense" ? (supplierId || undefined) : undefined,
+    };
     if (editing) transactionsStore.update(editing.id, data);
     else transactionsStore.add({ id: newId("tx"), ...data });
     onOpenChange(false);
