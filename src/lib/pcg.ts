@@ -328,11 +328,26 @@ export function seedLogiaDerivedData(force = false) {
     const client = clientByName.get((clientLine.label || "").trim());
     if (!client) continue;
     const amount = clientLine.debit;
-    // A receivable is "paid" once a matching 411 credit lands in any journal.
-    const paid = entries
-      .filter((x) => x.lines.some((l) => l.account.startsWith("411") && l.credit > 0 && l.label === clientLine.label && new Date(x.date) >= new Date(e.date)))
-      .reduce((s, x) => s + x.lines.filter((l) => l.account.startsWith("411") && l.credit > 0 && l.label === clientLine.label).reduce((a, l) => a + l.credit, 0), 0);
+    // Collect every matching 411 credit (payment) on/after the issue date.
+    const payments: { date: string; amount: number }[] = [];
+    for (const x of entries) {
+      if (new Date(x.date) < new Date(e.date)) continue;
+      for (const l of x.lines) {
+        if (l.account.startsWith("411") && l.credit > 0 && l.label === clientLine.label) {
+          payments.push({ date: x.date, amount: l.credit });
+        }
+      }
+    }
+    payments.sort((a, b) => a.date.localeCompare(b.date));
+    const paid = payments.reduce((s, p) => s + p.amount, 0);
     const cappedPaid = Math.min(paid, amount);
+    // paidDate = date on which the cumulative payments first cover the invoice amount.
+    let paidDate: string | undefined;
+    let acc = 0;
+    for (const p of payments) {
+      acc += p.amount;
+      if (acc >= amount) { paidDate = p.date; break; }
+    }
     const dueDate = addDays(e.date, 30);
     const overdue = new Date(dueDate) < new Date() && cappedPaid < amount;
     const status: Invoice["status"] =
@@ -346,6 +361,7 @@ export function seedLogiaDerivedData(force = false) {
       dueDate,
       amount,
       paid: cappedPaid,
+      paidDate,
       currency: "MGA",
       status,
     };
