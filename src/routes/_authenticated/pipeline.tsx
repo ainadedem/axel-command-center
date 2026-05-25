@@ -156,22 +156,22 @@ function StageDistribution({ list }: { list: Opportunity[] }) {
   }));
   const grand = totals.reduce((s, t) => s + t.value, 0) || 1;
   return (
-    <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4">
+    <div className="rounded-lg border border-border bg-surface p-4">
       <div className="flex items-center justify-between mb-3">
-        <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Stage distribution</div>
+        <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Stage distribution</div>
         <div className="text-[11px] text-muted-foreground font-tnum">{fmtCompact(grand, "MGA")}</div>
       </div>
-      <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface">
+      <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
         {totals.map((t) => (
-          <div key={t.stage} className={`${STAGE_STYLES[t.stage].bar} transition-all`} style={{ width: `${(t.value / grand) * 100}%` }} title={`${t.stage} · ${fmtCompact(t.value, "MGA")}`} />
+          <div key={t.stage} className={`${STAGE_STYLES[t.stage].dot} transition-all`} style={{ width: `${(t.value / grand) * 100}%` }} title={`${t.stage} · ${fmtCompact(t.value, "MGA")}`} />
         ))}
       </div>
-      <div className="flex flex-wrap gap-3 mt-3">
+      <div className="flex flex-wrap gap-4 mt-3">
         {totals.map((t) => (
-          <div key={t.stage} className="flex items-center gap-2 text-xs">
-            <span className={`h-2 w-2 rounded-full ${STAGE_STYLES[t.stage].bar}`} />
+          <div key={t.stage} className="flex items-center gap-1.5 text-xs">
+            <span className={`h-1.5 w-1.5 rounded-full ${STAGE_STYLES[t.stage].dot}`} />
             <span className="text-muted-foreground">{t.stage}</span>
-            <span className="font-tnum">{t.count}</span>
+            <span className="font-tnum text-foreground/80">{t.count}</span>
           </div>
         ))}
       </div>
@@ -188,58 +188,55 @@ function KanbanView({ list, companies, onEdit, acqOf }: { list: Opportunity[]; c
         const st = STAGE_STYLES[s];
         const col = list.filter((o) => o.stage === s);
         const sum = col.reduce((acc, o) => acc + toMGA(o.value, o.currency), 0);
-        const Icon = st.icon;
         return (
-          <div key={s} className={`rounded-xl border border-border ${st.tint} overflow-hidden min-h-[280px] flex flex-col`}>
-            <div className={`${st.bar} h-1`} />
-            <div className="p-3 flex flex-col gap-3 flex-1">
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-2">
-                  <Icon className={`h-3.5 w-3.5 ${st.text}`} />
-                  <div>
-                    <div className="text-xs font-semibold">{s}</div>
-                    <div className="text-[10px] text-muted-foreground font-tnum">{col.length} · {fmtCompact(sum, "MGA")}</div>
-                  </div>
-                </div>
-                <span className={`text-[10px] font-tnum px-1.5 py-0.5 rounded ${st.pill}`}>{Math.round(stageProbability[s] * 100)}%</span>
+          <div key={s} className="rounded-lg border border-border bg-surface overflow-hidden min-h-[280px] flex flex-col">
+            <div className="px-3 py-2.5 flex items-center justify-between border-b border-border">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${st.dot}`} />
+                <div className="text-xs font-medium truncate">{s}</div>
               </div>
-              <div className="space-y-2">
-                {col.map((o) => {
-                  const co = companies.find((c) => c.id === o.companyId);
-                  const u = urgencyOf(o);
-                  const acq = acqOf(o);
-                  return (
-                    <div key={o.id} className={`rounded-lg bg-surface-elevated border-l-2 ${st.ring} border-y border-r border-border/60 p-3 hover:border-primary/40 transition group`}>
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="text-sm font-medium leading-snug">{o.name}</div>
-                        {co && <span className="h-2 w-2 rounded-full mt-1.5 shrink-0" style={{ background: co.color }} />}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">{o.client}</div>
-                      {(acq || o.closer) && (
-                        <div className="flex flex-wrap gap-1 mt-2 text-[9px]">
-                          {acq && <span className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-700 border border-sky-500/20" title="Acquisition (from client)">A · {acq}</span>}
-                          {o.closer && <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 border border-emerald-500/20" title="Closer">C · {o.closer}</span>}
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/40">
-                        <div className="font-display font-bold text-sm font-tnum">{fmtCompact(o.value, o.currency)}</div>
-                        {u ? (
-                          <span className={`text-[10px] font-tnum px-1.5 py-0.5 rounded ${u.cls} inline-flex items-center gap-1`}>
-                            {u.label.includes("overdue") && <AlertTriangle className="h-2.5 w-2.5" />}
-                            {u.label}
-                          </span>
-                        ) : (
-                          <div className="text-[10px] text-muted-foreground font-tnum">{format(parseISO(o.expectedClose), "MMM d")}</div>
-                        )}
-                      </div>
-                      <div className="opacity-0 group-hover:opacity-100 flex gap-1 mt-2 pt-2 border-t border-border/30">
-                        <button onClick={() => onEdit(o)} className="h-6 px-2 text-[10px] rounded hover:bg-surface text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><Pencil className="h-3 w-3" /> Edit</button>
-                        <button onClick={() => confirm(`Delete ${o.name}?`) && opportunitiesStore.remove(o.id)} className="h-6 px-2 text-[10px] rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive inline-flex items-center gap-1"><Trash2 className="h-3 w-3" /> Delete</button>
-                      </div>
+              <div className="text-[10px] text-muted-foreground font-tnum shrink-0">{col.length}</div>
+            </div>
+            <div className="px-3 py-2 text-[10px] text-muted-foreground font-tnum border-b border-border/50">
+              {fmtCompact(sum, "MGA")} · {Math.round(stageProbability[s] * 100)}%
+            </div>
+            <div className="p-2 space-y-1.5 flex-1">
+              {col.map((o) => {
+                const co = companies.find((c) => c.id === o.companyId);
+                const u = urgencyOf(o);
+                const acq = acqOf(o);
+                return (
+                  <div key={o.id} className="rounded-md bg-surface-elevated border border-border/60 p-2.5 hover:border-border transition group cursor-pointer" onClick={() => onEdit(o)}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="text-sm font-medium leading-snug truncate">{o.name}</div>
+                      {co && <span className="h-1.5 w-1.5 rounded-full mt-1.5 shrink-0" style={{ background: co.color }} />}
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="text-xs text-muted-foreground mt-0.5 truncate">{o.client}</div>
+                    {(acq || o.closer) && (
+                      <div className="text-[10px] text-muted-foreground mt-1.5 truncate">
+                        {acq && <span>A: {acq}</span>}
+                        {acq && o.closer && <span> · </span>}
+                        {o.closer && <span>C: {o.closer}</span>}
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40">
+                      <div className="font-tnum text-sm font-semibold">{fmtCompact(o.value, o.currency)}</div>
+                      {u ? (
+                        <span className={`text-[10px] font-tnum inline-flex items-center gap-1 ${u.cls}`}>
+                          {u.label.includes("overdue") && <AlertTriangle className="h-2.5 w-2.5" />}
+                          {u.label}
+                        </span>
+                      ) : (
+                        <div className="text-[10px] text-muted-foreground font-tnum">{format(parseISO(o.expectedClose), "MMM d")}</div>
+                      )}
+                    </div>
+                    <div className="opacity-0 group-hover:opacity-100 flex gap-1 mt-2">
+                      <button onClick={(e) => { e.stopPropagation(); onEdit(o); }} className="h-6 px-2 text-[10px] rounded hover:bg-surface text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><Pencil className="h-3 w-3" /> Edit</button>
+                      <button onClick={(e) => { e.stopPropagation(); if (confirm(`Delete ${o.name}?`)) opportunitiesStore.remove(o.id); }} className="h-6 px-2 text-[10px] rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive inline-flex items-center gap-1"><Trash2 className="h-3 w-3" /> Delete</button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         );
@@ -253,8 +250,8 @@ function KanbanView({ list, companies, onEdit, acqOf }: { list: Opportunity[]; c
 function ListView({ list, onEdit, acqOf }: { list: Opportunity[]; onEdit: (o: Opportunity) => void; acqOf: (o: Opportunity) => string }) {
   const sorted = [...list].sort((a, b) => toMGA(b.value, b.currency) - toMGA(a.value, a.currency));
   return (
-    <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-      <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+    <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="grid grid-cols-12 gap-2 px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
         <div className="col-span-3">Opportunity</div>
         <div className="col-span-2">Stage</div>
         <div className="col-span-2">Acquisition</div>
@@ -265,16 +262,16 @@ function ListView({ list, onEdit, acqOf }: { list: Opportunity[]; onEdit: (o: Op
       {sorted.map((o) => {
         const st = STAGE_STYLES[o.stage];
         const u = urgencyOf(o);
-        const Icon = st.icon;
         return (
-          <div key={o.id} className={`grid grid-cols-12 gap-2 px-4 py-3 items-center border-b border-border/40 last:border-0 border-l-2 ${st.ring} hover:bg-surface-elevated transition cursor-pointer`} onClick={() => onEdit(o)}>
-            <div className="col-span-3">
-              <div className="text-sm font-medium">{o.name}</div>
-              <div className="text-xs text-muted-foreground">{o.client}</div>
+          <div key={o.id} className="grid grid-cols-12 gap-2 px-4 py-3 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated transition cursor-pointer" onClick={() => onEdit(o)}>
+            <div className="col-span-3 min-w-0">
+              <div className="text-sm font-medium truncate">{o.name}</div>
+              <div className="text-xs text-muted-foreground truncate">{o.client}</div>
             </div>
             <div className="col-span-2">
-              <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded ${st.pill}`}>
-                <Icon className="h-3 w-3" /> {o.stage}
+              <span className="inline-flex items-center gap-1.5 text-xs">
+                <span className={`h-1.5 w-1.5 rounded-full ${st.dot}`} />
+                <span className={st.text}>{o.stage}</span>
               </span>
             </div>
             <div className="col-span-2 text-xs text-muted-foreground truncate">{acqOf(o) || "—"}</div>
@@ -282,7 +279,7 @@ function ListView({ list, onEdit, acqOf }: { list: Opportunity[]; onEdit: (o: Op
             <div className="col-span-2 text-right font-tnum text-sm font-semibold">{fmtCompact(o.value, o.currency)}</div>
             <div className="col-span-2 text-right">
               {u ? (
-                <span className={`text-[10px] font-tnum px-1.5 py-0.5 rounded ${u.cls}`}>{u.label}</span>
+                <span className={`text-[11px] font-tnum ${u.cls}`}>{u.label}</span>
               ) : (
                 <span className="text-xs text-muted-foreground font-tnum">{format(parseISO(o.expectedClose), "MMM d, yy")}</span>
               )}
@@ -293,6 +290,7 @@ function ListView({ list, onEdit, acqOf }: { list: Opportunity[]; onEdit: (o: Op
     </div>
   );
 }
+
 
 /* ─── People view (by acquisition or closer) ──────────────────────── */
 
