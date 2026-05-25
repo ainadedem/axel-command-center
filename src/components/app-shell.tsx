@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Building2, Wallet, ArrowLeftRight, FileText,
   Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus, Truck,
-  ChevronDown, Check, LogOut,
+  ChevronDown, Check, LogOut, Target,
   BookOpen, BookText, Scale, Library, Receipt,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
