@@ -18,6 +18,7 @@ const nav = [
   { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { to: "/invoices", label: "Invoices", icon: FileText },
   { to: "/clients", label: "Clients", icon: Users },
+  { to: "/suppliers", label: "Suppliers", icon: Truck },
   { to: "/projects", label: "Projects", icon: Briefcase },
   { to: "/pipeline", label: "Pipeline", icon: TrendingUp },
   { to: "/reports", label: "Reports", icon: BarChart3 },
