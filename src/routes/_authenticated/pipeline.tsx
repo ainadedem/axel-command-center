@@ -187,7 +187,7 @@ function StageDistribution({ list }: { list: Opportunity[] }) {
 
 /* ─── Kanban view ─────────────────────────────────────────────────── */
 
-function KanbanView({ list, companies, onEdit }: { list: Opportunity[]; companies: ReturnType<typeof useCompanies>; onEdit: (o: Opportunity) => void }) {
+function KanbanView({ list, companies, onEdit, acqOf }: { list: Opportunity[]; companies: ReturnType<typeof useCompanies>; onEdit: (o: Opportunity) => void; acqOf: (o: Opportunity) => string }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
       {stages.map((s) => {
@@ -213,6 +213,7 @@ function KanbanView({ list, companies, onEdit }: { list: Opportunity[]; companie
                 {col.map((o) => {
                   const co = companies.find((c) => c.id === o.companyId);
                   const u = urgencyOf(o);
+                  const acq = acqOf(o);
                   return (
                     <div key={o.id} className={`rounded-lg bg-surface-elevated border-l-2 ${st.ring} border-y border-r border-border/60 p-3 hover:border-primary/40 transition group`}>
                       <div className="flex items-start justify-between gap-2">
@@ -220,9 +221,9 @@ function KanbanView({ list, companies, onEdit }: { list: Opportunity[]; companie
                         {co && <span className="h-2 w-2 rounded-full mt-1.5 shrink-0" style={{ background: co.color }} />}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">{o.client}</div>
-                      {(o.owner || o.closer) && (
+                      {(acq || o.closer) && (
                         <div className="flex flex-wrap gap-1 mt-2 text-[9px]">
-                          {o.owner && <span className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20" title="Acquisition">A · {o.owner}</span>}
+                          {acq && <span className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20" title="Acquisition (from client)">A · {acq}</span>}
                           {o.closer && <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20" title="Closer">C · {o.closer}</span>}
                         </div>
                       )}
