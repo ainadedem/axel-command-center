@@ -174,10 +174,6 @@ function Sidebar() {
         <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-chart-2 grid place-items-center shadow-[var(--shadow-glow)]">
           <span className="font-display text-base font-bold text-primary-foreground">A</span>
         </div>
-        <div>
-          <div className="font-display text-lg font-bold tracking-tight leading-none">AXEL</div>
-          <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mt-0.5">Control System</div>
-        </div>
       </div>
       <div className="px-3 pb-3">
         <CompanySwitcher />
