@@ -110,10 +110,36 @@ function Body() {
 
   return (
     <div className="p-8 space-y-6">
+      <div className="flex items-center justify-between rounded-lg border border-border bg-surface px-4 py-2.5">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+          {syncError ? (
+            <>
+              <AlertCircle className="h-3.5 w-3.5 text-rose-500 shrink-0" />
+              <span className="truncate text-rose-500">Notion sync failed: {syncError}</span>
+            </>
+          ) : (
+            <>
+              <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${isFetching ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`} />
+              <span>{isLoading ? "Loading from Notion…" : `Synced from Notion · ${opportunities.length} deal${opportunities.length === 1 ? "" : "s"}`}</span>
+            </>
+          )}
+        </div>
+        <button
+          onClick={() => qc.invalidateQueries({ queryKey: ["notion-deals"] })}
+          disabled={isFetching}
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
+        >
+          <RefreshCw className={`h-3 w-3 ${isFetching ? "animate-spin" : ""}`} />
+          Refresh
+        </button>
+      </div>
+
       <CrudToolbar count={list.length} label="opportunities" onCreate={openCreate} />
 
       {list.length === 0 ? (
-        <EmptyState label="opportunities" onCreate={openCreate} />
+        isLoading
+          ? <div className="rounded-lg border border-border bg-surface p-8 text-center text-sm text-muted-foreground">Loading deals from Notion…</div>
+          : <EmptyState label="opportunities" onCreate={openCreate} />
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
