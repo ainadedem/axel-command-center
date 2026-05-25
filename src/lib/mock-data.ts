@@ -115,6 +115,8 @@ export interface Invoice {
   dueDate: string;
   amount: number;
   paid: number;
+  /** ISO date of the latest client payment (411 credit) applied to this invoice. */
+  paidDate?: string;
   currency: Currency;
   status: "draft" | "sent" | "partial" | "paid" | "overdue";
 }
