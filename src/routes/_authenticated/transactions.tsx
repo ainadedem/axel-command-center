@@ -130,6 +130,43 @@ function Body() {
                   return n;
                 },
               },
+              {
+                id: "tx-income-no-counterparty",
+                label: "Income transactions without a counterparty (client)",
+                description: "Infers the client from a linked invoice or by matching the description against client names.",
+                count: scoped.filter((t) => t.type === "income" && !t.clientId).length,
+                fix: () => {
+                  let n = 0;
+                  scoped.forEach((t) => {
+                    if (t.type !== "income" || t.clientId) return;
+                    const inv = t.invoiceId ? invoices.find((i) => i.id === t.invoiceId) : undefined;
+                    let cliId: string | undefined = inv?.clientId;
+                    if (!cliId) {
+                      const desc = t.description.toLowerCase();
+                      const match = clients.find((c) => c.companyId === t.companyId && c.name && desc.includes(c.name.toLowerCase()));
+                      cliId = match?.id;
+                    }
+                    if (cliId) { transactionsStore.update(t.id, { clientId: cliId }); n++; }
+                  });
+                  return n;
+                },
+              },
+              {
+                id: "tx-expense-no-counterparty",
+                label: "Expense transactions without a counterparty (supplier)",
+                description: "Infers the supplier by matching the transaction description against supplier names.",
+                count: scoped.filter((t) => t.type === "expense" && !t.supplierId).length,
+                fix: () => {
+                  let n = 0;
+                  scoped.forEach((t) => {
+                    if (t.type !== "expense" || t.supplierId) return;
+                    const desc = t.description.toLowerCase();
+                    const match = suppliers.find((s) => s.companyId === t.companyId && s.name && desc.includes(s.name.toLowerCase()));
+                    if (match) { transactionsStore.update(t.id, { supplierId: match.id }); n++; }
+                  });
+                  return n;
+                },
+              },
             ];
             return checks;
           })()} />
