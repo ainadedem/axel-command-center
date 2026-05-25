@@ -31,6 +31,8 @@ const sections: NavSection[] = [
     items: [
       { to: "/accounts", label: "Accounts", icon: Wallet },
       { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+      { to: "/quotations", label: "Quotations", icon: FileSignature },
+      { to: "/purchase-orders", label: "Purchase orders", icon: ClipboardList },
       { to: "/invoices", label: "Invoices", icon: FileText },
       { to: "/budgets", label: "Budgets", icon: Target },
       { to: "/reports", label: "Reports", icon: BarChart3 },
