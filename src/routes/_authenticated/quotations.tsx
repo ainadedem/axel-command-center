@@ -137,6 +137,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const [validUntil, setValidUntil] = useState(addDays(new Date(), 30).toISOString().slice(0, 10));
   const [currency, setCurrency] = useState<Currency>("EUR");
   const [status, setStatus] = useState<QuoteStatus>("draft");
+  const [mode, setMode] = useState<QuoteMode>("rate-card");
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [notes, setNotes] = useState("");
 
@@ -147,12 +148,14 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setProjectId(editing.projectId ?? "");
       setIssueDate(editing.issueDate); setValidUntil(editing.validUntil);
       setCurrency(editing.currency); setStatus(editing.status);
+      setMode(editing.mode ?? "rate-card");
       setLines(editing.lines ?? []);
       setNotes(editing.notes ?? "");
     } else {
       setNumber(`Q-${Date.now().toString().slice(-6)}`); setCompanyId(companies[0]?.id ?? ""); setClientId("");
       setProjectId(""); setIssueDate(today); setValidUntil(addDays(new Date(), 30).toISOString().slice(0, 10));
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
+      setMode("rate-card");
       setLines([]); setNotes("");
     }
   }, [open, editing, companies, today]);
@@ -163,6 +166,14 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const total = useMemo(() => lines.reduce((s, l) => s + (Number(l.quantity) || 0) * (Number(l.rate) || 0), 0), [lines]);
 
   const addLine = () => {
+    if (mode === "standard") {
+      setLines((prev) => [...prev, {
+        id: newId("ql"),
+        description: "",
+        unit: "fixed", quantity: 1, rate: 0,
+      }]);
+      return;
+    }
     const cap: Capability = "CREATIVE";
     const lvl: Level = "P7";
     setLines((prev) => [...prev, {
