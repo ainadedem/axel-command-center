@@ -41,8 +41,18 @@ export interface Client {
   acquisition?: string;
   /** ISO date (YYYY-MM-DD) when the client was acquired. */
   acquiredAt?: string;
+  /** Year the client was acquired (used when only a year is known). */
+  acquisitionYear?: number;
   /** Profile picture stored as a data URL or remote URL. */
   avatarUrl?: string;
+  /** Marketing/contact info. */
+  website?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  industry?: string;
+  /** Free-text list of key contacts at the company. */
+  contacts?: string;
 }
 
 export interface Project {

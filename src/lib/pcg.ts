@@ -176,6 +176,7 @@ export interface JournalEntry {
 import logiaSeed from "./logia-grand-livre-seed.json";
 import logiaAccountLabels from "./logia-account-labels.json";
 import logiaOpportunitiesSeed from "./logia-opportunities-seed.json";
+import clientsEnrichmentSeed from "./clients-enrichment-seed.json";
 import {
   companiesStore, accountsStore, clientsStore, suppliersStore,
   invoicesStore, transactionsStore, categoriesStore, opportunitiesStore,
@@ -567,9 +568,49 @@ export function seedLogiaOpportunities() {
   return cleaned.length;
 }
 
+/** Normalise a client name for fuzzy matching (lowercase, ascii-only, alphanumeric+space). */
+function normalizeClientKey(s: string): string {
+  return s.normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+interface ClientEnrichmentRow {
+  name: string; nameKey: string;
+  website?: string | null; email?: string | null; phone?: string | null;
+  address?: string | null; industry?: string | null; contacts?: string | null;
+  acquisition?: string | null; acquisitionYear?: number | null;
+}
+
+/** Fill in missing fields on existing clients from the Notion accounts export.
+ *  Existing values are never overwritten — this only adds info that's missing. */
+export function enrichClientsFromAccounts() {
+  const rows = clientsEnrichmentSeed as ClientEnrichmentRow[];
+  const byKey = new Map<string, ClientEnrichmentRow>();
+  for (const r of rows) byKey.set(r.nameKey, r);
+
+  const updated = clientsStore.items.map((c) => {
+    const r = byKey.get(normalizeClientKey(c.name));
+    if (!r) return c;
+    const next: Client = { ...c };
+    if (!next.website && r.website) next.website = r.website;
+    if (!next.email && r.email) next.email = r.email;
+    if (!next.phone && r.phone) next.phone = r.phone;
+    if (!next.address && r.address) next.address = r.address;
+    if (!next.industry && r.industry) next.industry = r.industry;
+    if (!next.contacts && r.contacts) next.contacts = r.contacts;
+    if (!next.acquisition && r.acquisition) next.acquisition = r.acquisition;
+    if (!next.acquisitionYear && r.acquisitionYear) {
+      next.acquisitionYear = r.acquisitionYear;
+      if (!next.acquiredAt) next.acquiredAt = `${r.acquisitionYear}-01-01`;
+    }
+    return next;
+  });
+  clientsStore.replaceAll(updated);
+}
+
 // Auto-seed on first load (idempotent). Declared AFTER `accountLabels`
 // because seedLogiaDerivedData() reads from it.
-const DERIVED_VERSION = "10"; // bump to force re-derive on existing local data
+const DERIVED_VERSION = "11"; // bump to force re-derive on existing local data
 if (typeof window !== "undefined") {
   try {
     ensureSeedCompanies();
@@ -582,6 +623,7 @@ if (typeof window !== "undefined") {
       seedLogiaOpportunities();
       localStorage.setItem("logia-derived-version", DERIVED_VERSION);
     }
+    if (force) enrichClientsFromAccounts();
   } catch { /* ignore */ }
 }
 
