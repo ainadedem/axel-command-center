@@ -1,11 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useOpportunities, useCompanies, useClients, useSalesPeople, opportunitiesStore, clientsStore,
+  useCompanies, useClients, useSalesPeople, opportunitiesStore, clientsStore,
   stages, fmtCompact, toMGA, stageProbability,
   type Stage, type Opportunity, type Currency, type Client,
 } from "@/lib/mock-data";
+import { getNotionDeals } from "@/lib/notion-deals.functions";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO, differenceInDays } from "date-fns";
@@ -17,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { Pencil, Trash2, AlertTriangle, RefreshCw, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/pipeline")({ component: PipelinePage });
 
@@ -49,7 +52,7 @@ function urgencyOf(o: Opportunity): { label: string; cls: string } | null {
 function PipelinePage() {
   return (
     <AppShell>
-      <PageHeader title="Pipeline" description="Future revenue — by stage, weighted by probability." />
+      <PageHeader title="Pipeline" description="Synced live from Notion · Logia Sales CRM." />
       <Body />
     </AppShell>
   );
@@ -73,9 +76,18 @@ function useAcqLookup(clients: Client[]): (o: Opportunity) => string {
 
 function Body() {
   const { scope } = useCompany();
-  const opportunities = useOpportunities();
   const companies = useCompanies();
   const clients = useClients();
+  const fetchDeals = useServerFn(getNotionDeals);
+  const qc = useQueryClient();
+  const { data, isLoading, isFetching, error } = useQuery({
+    queryKey: ["notion-deals"],
+    queryFn: () => fetchDeals(),
+    staleTime: 60_000,
+    refetchOnWindowFocus: true,
+  });
+  const opportunities = data?.deals ?? [];
+  const syncError = data?.error ?? (error instanceof Error ? error.message : null);
   const list = inScope(opportunities, scope);
   const acqOf = useAcqLookup(clients);
   const [open, setOpen] = useState(false);
@@ -98,10 +110,36 @@ function Body() {
 
   return (
     <div className="p-8 space-y-6">
+      <div className="flex items-center justify-between rounded-lg border border-border bg-surface px-4 py-2.5">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+          {syncError ? (
+            <>
+              <AlertCircle className="h-3.5 w-3.5 text-rose-500 shrink-0" />
+              <span className="truncate text-rose-500">Notion sync failed: {syncError}</span>
+            </>
+          ) : (
+            <>
+              <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${isFetching ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`} />
+              <span>{isLoading ? "Loading from Notion…" : `Synced from Notion · ${opportunities.length} deal${opportunities.length === 1 ? "" : "s"}`}</span>
+            </>
+          )}
+        </div>
+        <button
+          onClick={() => qc.invalidateQueries({ queryKey: ["notion-deals"] })}
+          disabled={isFetching}
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
+        >
+          <RefreshCw className={`h-3 w-3 ${isFetching ? "animate-spin" : ""}`} />
+          Refresh
+        </button>
+      </div>
+
       <CrudToolbar count={list.length} label="opportunities" onCreate={openCreate} />
 
       {list.length === 0 ? (
-        <EmptyState label="opportunities" onCreate={openCreate} />
+        isLoading
+          ? <div className="rounded-lg border border-border bg-surface p-8 text-center text-sm text-muted-foreground">Loading deals from Notion…</div>
+          : <EmptyState label="opportunities" onCreate={openCreate} />
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
