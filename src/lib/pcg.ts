@@ -289,11 +289,13 @@ export function seedLogiaDerivedData(force = false) {
 
   /* ── Suppliers (401) ────────────────────────────────────────────── */
   const supplierByName = new Map<string, Supplier>();
+  const internalNames = new Set<string>();
   for (const e of entries) {
     for (const l of e.lines) {
       if (!l.account.startsWith("401")) continue;
       const name = (l.label || "").trim();
       if (!name || name.toUpperCase() === "FOURNISSEURS") continue;
+      if (l.account === "401200") internalNames.add(name);
       if (supplierByName.has(name)) continue;
       const supplier: Supplier = {
         id: `sup_log_${slug(name)}`,
@@ -306,6 +308,9 @@ export function seedLogiaDerivedData(force = false) {
       suppliersStore.add(supplier);
     }
   }
+
+  /* ── Team members (derived from internal 401200 payees) ─────────── */
+  seedTeamFromInternalNames(internalNames);
 
   /* ── Invoices (VTE journal entries) ─────────────────────────────── */
   for (const e of entries) {
@@ -424,6 +429,51 @@ function guessCountry(name: string): string {
 /** Labels for sub-accounts (6-digit codes) used in the imported Grand Livre. */
 export const accountLabels = logiaAccountLabels as Record<string, string>;
 
+/** Skip non-person internal labels (categories rather than people). */
+const NON_PERSON_INTERNAL = new Set(["HONORAIRES CONSULTANTS INTERNE", "FOURNISSEURS"]);
+
+/** Convert "PRIVAT JOVIN" → "Privat Jovin", keep single words capitalised. */
+function titleCase(s: string): string {
+  return s.toLowerCase().replace(/\b\p{L}/gu, (c) => c.toUpperCase());
+}
+
+/** Derive Team members from the internal supplier names found in the Grand Livre.
+ *  Convention: first token = first name, remaining tokens = last name. */
+function seedTeamFromInternalNames(names: Set<string>) {
+  const existing = teamMembersStore.items;
+  const byName = new Map(existing.map((t) => [t.name.toLowerCase(), t]));
+  const next: TeamMember[] = [...existing];
+  for (const raw of names) {
+    if (NON_PERSON_INTERNAL.has(raw.toUpperCase())) continue;
+    const tokens = raw.trim().split(/\s+/).map(titleCase);
+    const firstName = tokens[0] ?? "";
+    const lastName = tokens.slice(1).join(" ");
+    const fullName = [firstName, lastName].filter(Boolean).join(" ");
+    if (!fullName) continue;
+    const existingTm = byName.get(fullName.toLowerCase());
+    if (existingTm) {
+      // Backfill split fields if missing (legacy rows).
+      if (!existingTm.firstName || !existingTm.lastName) {
+        const idx = next.findIndex((t) => t.id === existingTm.id);
+        if (idx >= 0) next[idx] = { ...existingTm, firstName, lastName: lastName || existingTm.lastName };
+      }
+      continue;
+    }
+    const tm: TeamMember = {
+      id: newId("tm"),
+      name: fullName,
+      firstName,
+      lastName: lastName || undefined,
+      department: "Interne",
+      jobTitle: "Consultant interne",
+    };
+    next.push(tm);
+    byName.set(fullName.toLowerCase(), tm);
+  }
+  teamMembersStore.replaceAll(next);
+}
+
+
 /** Replace all Logia-scoped opportunities with the imported Notion CRM snapshot,
  *  and propagate each client's acquisition person onto the Clients table
  *  (single source of truth — same person across every opportunity for that client). */
@@ -504,7 +554,7 @@ export function seedLogiaOpportunities() {
 
 // Auto-seed on first load (idempotent). Declared AFTER `accountLabels`
 // because seedLogiaDerivedData() reads from it.
-const DERIVED_VERSION = "8"; // bump to force re-derive on existing local data
+const DERIVED_VERSION = "9"; // bump to force re-derive on existing local data
 if (typeof window !== "undefined") {
   try {
     ensureSeedCompanies();
