@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as ApiAxelChatRouteImport } from './routes/api/axel-chat'
 import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
@@ -47,6 +48,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const ApiAxelChatRoute = ApiAxelChatRouteImport.update({
+  id: '/api/axel-chat',
+  path: '/api/axel-chat',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTransactionsRoute =
   AuthenticatedTransactionsRouteImport.update({
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/team': typeof AuthenticatedTeamRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
+  '/api/axel-chat': typeof ApiAxelChatRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -206,6 +213,7 @@ export interface FileRoutesByTo {
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/team': typeof AuthenticatedTeamRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
+  '/api/axel-chat': typeof ApiAxelChatRoute
   '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesById {
@@ -233,6 +241,7 @@ export interface FileRoutesById {
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
+  '/api/axel-chat': typeof ApiAxelChatRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
 }
 export interface FileRouteTypes {
@@ -261,6 +270,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/team'
     | '/transactions'
+    | '/api/axel-chat'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -285,6 +295,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/team'
     | '/transactions'
+    | '/api/axel-chat'
     | '/'
   id:
     | '__root__'
@@ -311,12 +322,14 @@ export interface FileRouteTypes {
     | '/_authenticated/suppliers'
     | '/_authenticated/team'
     | '/_authenticated/transactions'
+    | '/api/axel-chat'
     | '/_authenticated/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiAxelChatRoute: typeof ApiAxelChatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -341,6 +354,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/api/axel-chat': {
+      id: '/api/axel-chat'
+      path: '/api/axel-chat'
+      fullPath: '/api/axel-chat'
+      preLoaderRoute: typeof ApiAxelChatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/transactions': {
       id: '/_authenticated/transactions'
@@ -549,17 +569,8 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiAxelChatRoute: ApiAxelChatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

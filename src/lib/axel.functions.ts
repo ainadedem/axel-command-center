@@ -42,12 +42,11 @@ export const getAxelThreadMessages = createServerFn({ method: "GET" })
       .eq("thread_id", data.threadId)
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
-    const messages: UIMessage[] = (rows ?? []).map((r) => ({
+    return (rows ?? []).map((r) => ({
       id: r.id,
-      role: r.role as "user" | "assistant" | "system",
-      parts: (r.parts ?? []) as UIMessage["parts"],
+      role: r.role as "user" | "assistant",
+      parts: (r.parts ?? []) as unknown[],
     }));
-    return messages;
   });
 
 export const renameAxelThread = createServerFn({ method: "POST" })

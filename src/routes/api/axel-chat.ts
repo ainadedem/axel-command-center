@@ -53,7 +53,7 @@ export const Route = createFileRoute("/api/axel-chat")({
         const result = streamText({
           model: openai("gpt-4o-mini"),
           system,
-          messages: convertToModelMessages(body.messages),
+          messages: await convertToModelMessages(body.messages),
         });
 
         return result.toUIMessageStreamResponse({
