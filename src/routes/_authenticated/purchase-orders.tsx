@@ -262,7 +262,25 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <Label>Client PO document</Label>
+            {documentUrl ? (
+              <div className="flex items-center gap-2 rounded-md border border-border bg-surface-elevated/40 px-3 py-2 text-sm">
+                <FileText className="h-4 w-4 text-primary shrink-0" />
+                <a href={documentUrl} download={documentName} target="_blank" rel="noreferrer" className="flex-1 truncate text-primary hover:underline">{documentName}</a>
+                <button type="button" onClick={() => { setDocumentUrl(undefined); setDocumentName(undefined); setDocumentType(undefined); }} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><X className="h-3.5 w-3.5" /></button>
+              </div>
+            ) : (
+              <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border bg-surface-elevated/30 hover:bg-surface-elevated/60 px-3 py-2.5 text-sm text-muted-foreground transition-colors">
+                <Upload className="h-4 w-4" />
+                <span>Upload PDF or image (max 5 MB)</span>
+                <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
+              </label>
+            )}
+            {uploadError && <p className="text-[11px] text-destructive mt-1">{uploadError}</p>}
+          </div>
         </div>
+
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={submit}>{editing ? "Save" : "Create"}</Button>
