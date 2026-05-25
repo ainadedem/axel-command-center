@@ -3,7 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
   useClients, useCompanies, useProjects, useInvoices, useTransactions,
-  useSalesPeople,
+  useSalesPeople, useTeamMembers,
   clientsStore, fmtCompact, toMGA, type Client,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
