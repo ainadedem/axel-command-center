@@ -164,4 +164,36 @@
   .font-tnum {
     font-variant-numeric: tabular-nums;
   }
+
+  /* Global smooth interactivity */
+  a, button, [role="button"], [role="tab"], [role="menuitem"],
+  [data-slot="trigger"], summary, label[for], input[type="checkbox"], input[type="radio"] {
+    transition: color 300ms cubic-bezier(0.22, 1, 0.36, 1),
+                background-color 300ms cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 300ms cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 300ms cubic-bezier(0.22, 1, 0.36, 1),
+                transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+                opacity 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Subtle lift for interactive cards */
+  .hover-lift {
+    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-elevated;
+  }
+
+  /* Smooth icon nudge on hover (e.g. arrows) */
+  .group:hover .icon-nudge,
+  .icon-nudge:hover {
+    transform: translateX(2px);
+  }
+  .icon-nudge {
+    transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
 }
