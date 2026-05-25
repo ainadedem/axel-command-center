@@ -432,7 +432,7 @@ export function seedLogiaOpportunities() {
 
 // Auto-seed on first load (idempotent). Declared AFTER `accountLabels`
 // because seedLogiaDerivedData() reads from it.
-const DERIVED_VERSION = "5"; // bump to force re-derive on existing local data
+const DERIVED_VERSION = "6"; // bump to force re-derive on existing local data
 if (typeof window !== "undefined") {
   try {
     ensureSeedCompanies();
