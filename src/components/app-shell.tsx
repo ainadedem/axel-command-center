@@ -275,6 +275,7 @@ function Topbar() {
         <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
       </form>
       <div className="flex items-center gap-2">
+        <FxBadge />
         <button
           onClick={handleNew}
           className="h-9 px-3 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition flex items-center gap-1.5"
