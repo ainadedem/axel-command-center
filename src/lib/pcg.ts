@@ -662,8 +662,11 @@ if (typeof window !== "undefined") {
     // Re-runs whenever invoices, bank statement, or the reconcile logic version bump.
     const reconcileKey = `${AXIOM_INVOICES_VERSION}.${AXIOM_BANK_VERSION}.${AXIOM_RECONCILE_VERSION}`;
     if (localStorage.getItem("axiom-reconcile-key") !== reconcileKey) {
-      reconcileAxiomInvoices();
-      localStorage.setItem("axiom-reconcile-key", reconcileKey);
+      // Defer to ensure function declaration is hoisted in all bundling modes
+      queueMicrotask(() => {
+        reconcileAxiomInvoices();
+        localStorage.setItem("axiom-reconcile-key", reconcileKey);
+      });
     }
   } catch { /* ignore */ }
 }
