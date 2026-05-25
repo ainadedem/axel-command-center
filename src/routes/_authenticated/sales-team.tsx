@@ -66,9 +66,7 @@ function SalesTeamPage() {
                 <div key={s.id} className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 hover:border-primary/40 transition group">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/30 to-chart-2/30 grid place-items-center text-xs font-semibold shrink-0">
-                        {tm.name.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase()}
-                      </div>
+                      <Avatar src={tm.avatarUrl} name={tm.name} size={40} />
                       <div className="min-w-0">
                         <div className="font-medium text-sm truncate">{tm.name}</div>
                         <div className="text-[11px] text-muted-foreground truncate">{tm.jobTitle || tm.email || "—"}</div>
