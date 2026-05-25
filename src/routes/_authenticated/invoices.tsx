@@ -368,3 +368,12 @@ function ProcessStrip({ hasQuote, hasPO }: { hasQuote: boolean; hasPO: boolean }
     </div>
   );
 }
+
+function Stat({ label, value, danger, good }: { label: string; value: string; danger?: boolean; good?: boolean }) {
+  return (
+    <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
+      <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
+      <div className={cn("font-display text-2xl font-bold mt-2 font-tnum", danger && "text-destructive", good && "text-success")}>{value}</div>
+    </div>
+  );
+}
