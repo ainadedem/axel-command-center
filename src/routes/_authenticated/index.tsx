@@ -65,15 +65,53 @@ function DashboardBody() {
     .filter((o) => o.stage !== "Won" && o.stage !== "Lost")
     .reduce((s, o) => s + toMGA(o.value, o.currency) * stageProbability[o.stage], 0);
 
-  // 30-day cash flow chart
-  const days = Array.from({ length: 30 }).map((_, i) => {
-    const d = subDays(new Date(), 29 - i);
-    const key = d.toISOString().slice(0, 10);
-    const dayTx = tx.filter((t) => t.date === key);
-    const income = dayTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
-    const expense = dayTx.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
-    return { date: format(d, "MMM d"), income: income / 1_000_000, expense: expense / 1_000_000 };
-  });
+  // Cash flow chart with view modes
+  const [cashView, setCashView] = useState<"daily" | "monthly" | "yearly">("daily");
+
+  const cashFlowData = useMemo(() => {
+    if (cashView === "daily") {
+      return Array.from({ length: 30 }).map((_, i) => {
+        const d = subDays(new Date(), 29 - i);
+        const key = d.toISOString().slice(0, 10);
+        const dayTx = tx.filter((t) => t.date === key);
+        const income = dayTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+        const expense = dayTx.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+        return { date: format(d, "MMM d"), income: income / 1_000_000, expense: expense / 1_000_000 };
+      });
+    }
+    if (cashView === "monthly") {
+      return Array.from({ length: 12 }).map((_, i) => {
+        const d = subMonths(new Date(), 11 - i);
+        const start = startOfMonth(d);
+        const end = endOfMonth(d);
+        const mTx = tx.filter((t) => {
+          const td = parseISO(t.date);
+          return td >= start && td <= end;
+        });
+        const income = mTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+        const expense = mTx.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+        return { date: format(d, "MMM yy"), income: income / 1_000_000, expense: expense / 1_000_000 };
+      });
+    }
+    // yearly
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 5 }).map((_, i) => {
+      const year = currentYear - 4 + i;
+      const start = startOfYear(new Date(year, 0, 1));
+      const end = new Date(year, 11, 31, 23, 59, 59);
+      const yTx = tx.filter((t) => {
+        const td = parseISO(t.date);
+        return td >= start && td <= end;
+      });
+      const income = yTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+      const expense = yTx.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+      return { date: String(year), income: income / 1_000_000, expense: expense / 1_000_000 };
+    });
+  }, [cashView, tx]);
+
+  const cashViewLabel = cashView === "daily" ? "30 days" : cashView === "monthly" ? "12 months" : "5 years";
+
+
 
   // per-company profit
   const perCompany = companies.map((c) => {
