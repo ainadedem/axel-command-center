@@ -136,6 +136,10 @@ export interface Invoice {
   clientId: string;
   /** Optional link to the project this invoice bills against. */
   projectId?: string;
+  /** Required (in workflow) — the accepted PO this invoice fulfils. */
+  poId?: string;
+  /** Convenience: quote that the PO descends from. */
+  quoteId?: string;
   issueDate: string;
   dueDate: string;
   amount: number;
@@ -144,6 +148,41 @@ export interface Invoice {
   paidDate?: string;
   currency: Currency;
   status: "draft" | "sent" | "partial" | "paid" | "overdue";
+}
+
+/* ─── Sales process: Quote → PO → Invoice ───────────────────────────── */
+
+export type QuoteStatus = "draft" | "sent" | "accepted" | "rejected" | "expired";
+export interface Quote {
+  id: string;
+  number: string;
+  companyId: string;
+  clientId: string;
+  projectId?: string;
+  issueDate: string;
+  /** Date the quote stops being valid. */
+  validUntil: string;
+  amount: number;
+  currency: Currency;
+  status: QuoteStatus;
+  notes?: string;
+}
+
+export type POStatus = "draft" | "issued" | "fulfilled" | "cancelled";
+export interface PurchaseOrder {
+  id: string;
+  number: string;
+  companyId: string;
+  clientId: string;
+  projectId?: string;
+  /** Quote this PO descends from (recommended). */
+  quoteId?: string;
+  /** Client-side PO reference (their internal number). */
+  clientReference?: string;
+  issueDate: string;
+  amount: number;
+  currency: Currency;
+  status: POStatus;
 }
 
 export type Stage = "Lead" | "Qualified" | "Proposal" | "Negotiation" | "Won" | "Lost";
