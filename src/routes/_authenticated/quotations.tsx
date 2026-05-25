@@ -61,6 +61,7 @@ function Body() {
       amount: q.amount,
       currency: q.currency,
       status: "issued",
+      lines: q.lines ? q.lines.map((l) => ({ ...l })) : undefined,
     });
     quotesStore.update(q.id, { status: "accepted" });
   };

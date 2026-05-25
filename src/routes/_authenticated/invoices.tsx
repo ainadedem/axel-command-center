@@ -412,12 +412,15 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     const a = Number(amount) || 0;
     const p = Number(paid) || 0;
     const finalStatus = status === "draft" ? "draft" : deriveStatus(a, p, dueDate);
+    // Inherit lines from PO (preferred) or directly from the linked quote.
+    const inheritedLines = selectedPO?.lines ?? linkedQuote?.lines;
     const data = {
       number, companyId, clientId,
       projectId: projectId || undefined,
       poId: poId || undefined,
       quoteId: linkedQuote?.id,
       issueDate, dueDate, amount: a, paid: p, currency, status: finalStatus,
+      lines: inheritedLines ? inheritedLines.map((l) => ({ ...l })) : (editing?.lines ?? undefined),
     };
     if (editing) invoicesStore.update(editing.id, data);
     else invoicesStore.add({ id: newId("inv"), ...data });
