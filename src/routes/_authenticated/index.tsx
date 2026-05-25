@@ -523,7 +523,7 @@ function DashboardBody() {
                 <Tooltip
                   contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
                   cursor={{ fill: "color-mix(in oklab, var(--primary) 6%, transparent)" }}
-                  formatter={(v: number) => `${v.toFixed(1)} M MGA`}
+                  formatter={(v) => `${Number(v).toFixed(1)} M MGA`}
                 />
                 <Bar dataKey="gross" radius={[4, 4, 0, 0]} fill="oklch(0.72 0.13 220)" fillOpacity={0.3} name="Gross" />
                 <Bar dataKey="weighted" radius={[6, 6, 0, 0]} fill="oklch(0.58 0.21 268)" name="Weighted" />
