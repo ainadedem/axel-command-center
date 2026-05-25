@@ -149,17 +149,24 @@ function Body() {
                         )}
                       </td>
                       <td className="px-5 py-3.5">
-                        <span className={cn("text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[inv.status])}>{inv.status}</span>
+                        <span className={cn("text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[inv.status])} title={inv.status === "cancelled" && inv.cancellationReason ? `Cancelled: ${inv.cancellationReason}` : undefined}>{inv.status}</span>
+                        {inv.status === "cancelled" && inv.cancellationReason && (
+                          <div className="text-[10px] text-muted-foreground mt-1 max-w-[180px] truncate italic" title={inv.cancellationReason}>“{inv.cancellationReason}”</div>
+                        )}
                       </td>
                       <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(inv.amount, inv.currency)}</td>
                       <td className="px-5 py-3.5 text-right font-tnum font-medium">
-                        {balance > 0 ? fmtCompact(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
+                        {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? fmtCompact(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
                           <button onClick={() => setPreviewing(inv)} title="Preview & export PDF" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
-                          {inv.status !== "paid" && (
-                            <button onClick={() => setPaying(inv)} title="Add payment" className="h-7 w-7 grid place-items-center rounded hover:bg-success/10 text-muted-foreground hover:text-success"><Wallet className="h-3.5 w-3.5" /></button>
+                          {inv.status !== "paid" && inv.status !== "cancelled" && (
+                            <>
+                              <button onClick={() => setPaying(inv)} title="Add payment" className="h-7 w-7 grid place-items-center rounded hover:bg-success/10 text-muted-foreground hover:text-success"><Wallet className="h-3.5 w-3.5" /></button>
+                              <button onClick={() => markPaid(inv)} title="Mark as paid" className="h-7 w-7 grid place-items-center rounded hover:bg-success/10 text-muted-foreground hover:text-success"><BadgeCheck className="h-3.5 w-3.5" /></button>
+                              <button onClick={() => setCancelling(inv)} title="Cancel invoice" className="h-7 w-7 grid place-items-center rounded hover:bg-warning/10 text-muted-foreground hover:text-warning"><Ban className="h-3.5 w-3.5" /></button>
+                            </>
                           )}
                           <button onClick={() => { setEditing(inv); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
                           <button onClick={() => confirm(`Delete invoice ${inv.number}?`) && invoicesStore.remove(inv.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
