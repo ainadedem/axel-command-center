@@ -339,6 +339,59 @@ function Topbar() {
 
 export { CREATE_EVENT };
 
+function FxBadge() {
+  const { rates, updatedAt, source, refresh } = useFxRates();
+  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
+  const stamp = updatedAt
+    ? new Date(updatedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
+    : "never";
+  const onRefresh = async () => { setBusy(true); try { await refresh(); } finally { setBusy(false); } };
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        title={`FX rates · ${source} · updated ${stamp}`}
+        className="hidden md:flex items-center gap-1.5 h-9 px-2.5 rounded-md border border-border bg-surface hover:bg-surface-elevated text-[11px] font-tnum text-muted-foreground"
+      >
+        <span className="text-foreground/80">€</span>
+        <span>{rates.EUR.toLocaleString()}</span>
+        <span className="text-border">·</span>
+        <span className="text-foreground/80">$</span>
+        <span>{rates.USD.toLocaleString()}</span>
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 mt-2 w-64 rounded-lg border border-border bg-popover shadow-2xl z-50 overflow-hidden">
+            <div className="px-3 py-2.5 border-b border-border flex items-center justify-between">
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">FX rates (per MGA)</div>
+              <button
+                onClick={onRefresh}
+                disabled={busy}
+                className="h-6 w-6 grid place-items-center rounded hover:bg-accent text-muted-foreground disabled:opacity-50"
+                title="Refresh now"
+              >
+                <RefreshCw className={cn("h-3.5 w-3.5", busy && "animate-spin")} />
+              </button>
+            </div>
+            <div className="p-3 text-xs space-y-1.5 font-tnum">
+              <div className="flex justify-between"><span className="text-muted-foreground">1 EUR</span><span>{rates.EUR.toLocaleString()} MGA</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">1 USD</span><span>{rates.USD.toLocaleString()} MGA</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">1 MGA</span><span>1 MGA</span></div>
+            </div>
+            <div className="px-3 py-2 border-t border-border text-[10px] text-muted-foreground flex items-center justify-between">
+              <span className="uppercase tracking-wider">{source}</span>
+              <span>updated {stamp}</span>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <CompanyProvider>
