@@ -15,7 +15,8 @@ import {
 import { format, subDays, subMonths, startOfMonth, endOfMonth, startOfYear, parseISO } from "date-fns";
 import { useState, useMemo } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, AlertOctagon, ShieldCheck } from "lucide-react";
+import { AlertTriangle, AlertOctagon, ShieldCheck, Rocket } from "lucide-react";
+import { FX, type Currency } from "@/lib/mock-data";
 
 const pct = (cur: number, prev: number) => {
   if (prev === 0) return cur === 0 ? 0 : cur > 0 ? 100 : -100;
