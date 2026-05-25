@@ -175,13 +175,27 @@ export interface JournalEntry {
 
 import logiaSeed from "./logia-grand-livre-seed.json";
 import logiaAccountLabels from "./logia-account-labels.json";
+import { companiesStore } from "./mock-data";
 
 export const journalEntriesStore = createCollection<JournalEntry>("journal-entries", []);
 export const journalEntries = journalEntriesStore.items;
 export const useJournalEntries = () => useCollection(journalEntriesStore);
 
+/** Ensure the companies referenced by the imported Grand Livre exist. */
+function ensureSeedCompanies() {
+  const seeds = [
+    { id: "log", name: "Logia Madagascar", shortName: "LOG", color: "oklch(0.78 0.14 165)", baseCurrency: "MGA" as const },
+    { id: "win", name: "Winford Next",     shortName: "WIN", color: "oklch(0.72 0.13 220)", baseCurrency: "USD" as const },
+    { id: "axi", name: "Axiom Unlimited",  shortName: "AXI", color: "oklch(0.78 0.13 75)",  baseCurrency: "MGA" as const },
+  ];
+  for (const s of seeds) {
+    if (!companiesStore.items.some((c) => c.id === s.id)) companiesStore.add(s);
+  }
+}
+
 /** Seed Logia's Grand Livre (imported from Google Drive snapshot) if absent. */
 export function seedLogiaGrandLivre(force = false) {
+  ensureSeedCompanies();
   const seed = logiaSeed as JournalEntry[];
   const hasLogia = journalEntriesStore.items.some((e) => e.companyId === "log");
   if (hasLogia && !force) return 0;
@@ -190,9 +204,12 @@ export function seedLogiaGrandLivre(force = false) {
   return seed.length;
 }
 
-// Auto-seed on first load (idempotent: only adds when Logia has no entries).
+// Auto-seed on first load (idempotent).
 if (typeof window !== "undefined") {
-  try { seedLogiaGrandLivre(false); } catch { /* ignore */ }
+  try {
+    ensureSeedCompanies();
+    seedLogiaGrandLivre(false);
+  } catch { /* ignore */ }
 }
 
 /** Labels for sub-accounts (6-digit codes) used in the imported Grand Livre. */
