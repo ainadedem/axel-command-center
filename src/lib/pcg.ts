@@ -627,6 +627,7 @@ export function enrichClientsFromAccounts() {
 // Auto-seed on first load (idempotent). Declared AFTER `accountLabels`
 // because seedLogiaDerivedData() reads from it.
 const DERIVED_VERSION = "12"; // bump to force re-derive on existing local data
+const AXIOM_INVOICES_VERSION = "1";
 if (typeof window !== "undefined") {
   try {
     ensureSeedCompanies();
@@ -640,7 +641,93 @@ if (typeof window !== "undefined") {
       localStorage.setItem("logia-derived-version", DERIVED_VERSION);
     }
     if (force) enrichClientsFromAccounts();
+
+    const axCurrent = localStorage.getItem("axiom-invoices-version");
+    if (axCurrent !== AXIOM_INVOICES_VERSION) {
+      seedAxiomInvoices(true);
+      localStorage.setItem("axiom-invoices-version", AXIOM_INVOICES_VERSION);
+    }
   } catch { /* ignore */ }
+}
+
+/**
+ * Seed Axiom Unlimited (id "axi") with the real invoices issued under the
+ * Axiom Winford Group brand. Idempotent: wipes Axiom-scoped clients/invoices
+ * created by previous seeds before re-inserting.
+ */
+export function seedAxiomInvoices(force = false) {
+  ensureSeedCompanies();
+
+  // Upgrade the Axiom company record with full billing/legal info.
+  const axi = companiesStore.items.find((c) => c.id === "axi");
+  if (axi) {
+    companiesStore.update("axi", {
+      legalName: "Axiom Winford Group",
+      address: "Lot 047 D Ambohibao Antananarivo 105 Madagascar",
+      email: "hello@weaxiom.com",
+      phone: "+261 34 25 886 11",
+      website: "www.weaxiom.com",
+      bankName: "The Mauritius Commercial Bank (Madagascar)",
+      bankAccount: "00006 00005 00000834602 28",
+    });
+  }
+
+  const hasAxiomInvoices = invoicesStore.items.some(
+    (i) => i.companyId === "axi" && i.number.startsWith("INV-26-"),
+  );
+  if (hasAxiomInvoices && !force) return 0;
+
+  // Wipe previously seeded Axiom clients + INV-26- invoices.
+  invoicesStore.replaceAll(
+    invoicesStore.items.filter(
+      (i) => !(i.companyId === "axi" && i.number.startsWith("INV-26-")),
+    ),
+  );
+  const seededClientIds = new Set(["cli_axi_deindeal", "cli_axi_trembley", "cli_axi_logia"]);
+  clientsStore.replaceAll(
+    clientsStore.items.filter((c) => !seededClientIds.has(c.id)),
+  );
+
+  const clientSeeds: Client[] = [
+    {
+      id: "cli_axi_deindeal", companyId: "axi", name: "Dein Deal",
+      country: "Switzerland", address: "Flurstrasse 55, Zurich 8048, Switzerland",
+    },
+    {
+      id: "cli_axi_trembley", companyId: "axi", name: "Trembley et Burgermeister SA",
+      country: "Switzerland", address: "Chemin de l'Epinglier 4, Switzerland",
+    },
+    {
+      id: "cli_axi_logia", companyId: "axi", name: "Logia Madagascar",
+      country: "Madagascar",
+      address: "047 D Ambohibao Antehiroka Antananarivo, Madagascar",
+      phone: "+261 32 03 886 12", nif: "4017782704", stat: "58111 11 2023 0 10439",
+    },
+  ];
+  for (const c of clientSeeds) {
+    if (!clientsStore.items.some((x) => x.id === c.id)) clientsStore.add(c);
+  }
+
+  const inv = (
+    n: string, clientId: string, issue: string, amount: number,
+    currency: "EUR" | "MGA",
+  ): Invoice => ({
+    id: `inv_axi_${n}`, number: n, companyId: "axi", clientId,
+    issueDate: issue, dueDate: issue, amount, paid: 0, currency, status: "sent",
+  });
+
+  const seeds: Invoice[] = [
+    inv("INV-26-0001", "cli_axi_deindeal", "2026-01-26", 2350, "EUR"),
+    inv("INV-26-0002", "cli_axi_trembley", "2026-01-26", 1230, "EUR"),
+    inv("INV-26-0003", "cli_axi_trembley", "2026-02-25", 1230, "EUR"),
+    inv("INV-26-0004", "cli_axi_deindeal", "2026-02-25", 2350, "EUR"),
+    inv("INV-26-0005", "cli_axi_deindeal", "2026-03-25", 2350, "EUR"),
+    inv("INV-26-0006", "cli_axi_deindeal", "2026-04-25", 2350, "EUR"),
+    inv("INV-26-0008", "cli_axi_logia",    "2026-05-15", 1_800_000, "MGA"),
+  ];
+  for (const i of seeds) invoicesStore.add(i);
+
+  return seeds.length;
 }
 
 
