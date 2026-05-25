@@ -177,6 +177,7 @@ import logiaSeed from "./logia-grand-livre-seed.json";
 import logiaAccountLabels from "./logia-account-labels.json";
 import logiaOpportunitiesSeed from "./logia-opportunities-seed.json";
 import clientsEnrichmentSeed from "./clients-enrichment-seed.json";
+import axiomBankSeed from "./axiom-bank-seed.json";
 import {
   companiesStore, accountsStore, clientsStore, suppliersStore,
   invoicesStore, transactionsStore, categoriesStore, opportunitiesStore,
