@@ -9,7 +9,7 @@ import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
