@@ -15,6 +15,14 @@ import {
 import { format, subDays, subMonths, startOfMonth, endOfMonth, startOfYear, parseISO } from "date-fns";
 import { useState, useMemo } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertTriangle, AlertOctagon, ShieldCheck } from "lucide-react";
+
+const pct = (cur: number, prev: number) => {
+  if (prev === 0) return cur === 0 ? 0 : cur > 0 ? 100 : -100;
+  return ((cur - prev) / Math.abs(prev)) * 100;
+};
+const fmtPct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(1)}%`;
+
 
 export const Route = createFileRoute("/_authenticated/")({ component: Dashboard });
 
@@ -58,12 +66,35 @@ function DashboardBody() {
   const burnMGA = expenseMGA; // last 30d
   const runwayMonths = burnMGA > 0 ? totalMGA / burnMGA : 99;
 
+  // Prior 30d window for real trend deltas
+  const prev30 = tx.filter((t) => {
+    const d = parseISO(t.date);
+    return d < subDays(new Date(), 30) && d >= subDays(new Date(), 60);
+  });
+  const prevIncomeMGA = prev30.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+  const prevExpenseMGA = prev30.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+  const prevProfitMGA = prevIncomeMGA - prevExpenseMGA;
+
+  // Cash delta last 30d as % of opening cash (totalMGA - profitMGA approximation)
+  const openingCash = Math.max(totalMGA - profitMGA, 1);
+  const cashPct = (profitMGA / openingCash) * 100;
+  const profitPct = pct(profitMGA, prevProfitMGA);
+  const receivablesPct = pct(receivablesMGA, prevIncomeMGA); // proxy
+  const prevBurn = prevExpenseMGA;
+  const prevRunway = prevBurn > 0 ? totalMGA / prevBurn : runwayMonths;
+  const runwayDeltaPct = pct(runwayMonths, prevRunway);
+
+  // Runway health: danger if burning cash (profit < 0), warning if runway < 4mo
+  const runwayTone: "default" | "warning" | "danger" | "success" =
+    profitMGA < 0 ? "danger" : runwayMonths < 4 ? "warning" : runwayMonths >= 6 ? "success" : "default";
+
   const pipelineMGA = opp
     .filter((o) => o.stage !== "Won" && o.stage !== "Lost")
     .reduce((s, o) => s + toMGA(o.value, o.currency), 0);
   const weightedMGA = opp
     .filter((o) => o.stage !== "Won" && o.stage !== "Lost")
     .reduce((s, o) => s + toMGA(o.value, o.currency) * stageProbability[o.stage], 0);
+
 
   // Cash flow chart with view modes
   const [cashView, setCashView] = useState<"daily" | "monthly" | "yearly">("daily");
@@ -138,30 +169,64 @@ function DashboardBody() {
               ))}
             </div>
           }
-          trend="+12.4%"
-          trendDir="up"
-          highlight
+          trend={fmtPct(cashPct)}
+          trendDir={cashPct > 0.1 ? "up" : cashPct < -0.1 ? "down" : "flat"}
+          highlight={cashPct >= 0}
+          tone={totalMGA < 0 ? "danger" : "default"}
         />
         <KpiCard
           label="Profit · last 30d"
-          value={<span className={profitMGA > 0 ? "text-success" : profitMGA < 0 ? "text-destructive" : ""}>{fmtCompact(profitMGA, "MGA")}</span>}
+          value={fmtCompact(profitMGA, "MGA")}
           sub={`Income ${fmtCompact(incomeMGA, "MGA")} · Spend ${fmtCompact(expenseMGA, "MGA")}`}
-          trend={profitMGA >= 0 ? "+8.1%" : "−8.1%"}
-          trendDir={profitMGA >= 0 ? "up" : "down"}
+          trend={fmtPct(profitPct)}
+          trendDir={profitPct > 0.1 ? "up" : profitPct < -0.1 ? "down" : "flat"}
+          tone={profitMGA < 0 ? "danger" : profitMGA > 0 ? "success" : "default"}
+          badge={profitMGA < 0 ? (
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-destructive/15 text-destructive border border-destructive/30">
+              <AlertOctagon className="h-3 w-3" /> Danger
+            </span>
+          ) : undefined}
         />
         <KpiCard
           label="Receivables"
           value={fmtCompact(receivablesMGA, "MGA")}
           sub={`${overdueCount} overdue · ${inv.filter(i => i.status !== "paid").length} open`}
-          trend={overdueCount > 0 ? `${overdueCount} overdue` : "On track"}
-          trendDir={overdueCount > 0 ? "down" : "up"}
+          trend={overdueCount > 0 ? `${overdueCount} overdue` : fmtPct(receivablesPct)}
+          trendDir={overdueCount > 0 ? "down" : receivablesPct < 0 ? "up" : "flat"}
+          tone={overdueCount >= 5 ? "warning" : "default"}
+          badge={overdueCount >= 5 ? (
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500 border border-amber-500/30">
+              <AlertTriangle className="h-3 w-3" /> Warning
+            </span>
+          ) : undefined}
         />
         <KpiCard
           label="Runway"
           value={`${runwayMonths.toFixed(1)} mo`}
           sub={`Burn ${fmtCompact(burnMGA, "MGA")} / 30d`}
-          trend="Healthy"
-          trendDir="up"
+          trend={
+            profitMGA < 0 ? "Burning cash"
+              : runwayMonths < 4 ? "Low runway"
+                : runwayMonths >= 6 ? "Healthy"
+                  : fmtPct(runwayDeltaPct)
+          }
+          trendDir={profitMGA < 0 || runwayMonths < 4 ? "down" : "up"}
+          tone={runwayTone}
+          badge={
+            profitMGA < 0 ? (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-destructive/15 text-destructive border border-destructive/30">
+                <AlertOctagon className="h-3 w-3" /> Danger Zone
+              </span>
+            ) : runwayMonths < 4 ? (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                <AlertTriangle className="h-3 w-3" /> Warning Zone
+              </span>
+            ) : runwayMonths >= 6 ? (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-success/15 text-success border border-success/30">
+                <ShieldCheck className="h-3 w-3" /> Healthy
+              </span>
+            ) : undefined
+          }
         />
       </div>
 
