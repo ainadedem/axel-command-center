@@ -77,6 +77,11 @@ function ClientsPage() {
                               Acq · {cl.acquisition}
                             </span>
                           )}
+                          {cl.referral && (
+                            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20" title="Referral">
+                              Ref · {cl.referral}
+                            </span>
+                          )}
                           {cl.acquiredAt && (
                             <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-300 border border-violet-500/20" title="Acquired on">
                               Since {cl.acquisitionYear ?? cl.acquiredAt}
