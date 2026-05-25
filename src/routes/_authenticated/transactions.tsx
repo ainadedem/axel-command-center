@@ -253,6 +253,30 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
               </Select>
             </div>
           </div>
+          {type === "income" && (
+            <div>
+              <Label>Client</Label>
+              <Select value={clientId || "none"} onValueChange={(v) => setClientId(v === "none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder={companyClients.length ? "Link a client" : "No clients for this company"} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— None —</SelectItem>
+                  {companyClients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {type === "expense" && (
+            <div>
+              <Label>Supplier</Label>
+              <Select value={supplierId || "none"} onValueChange={(v) => setSupplierId(v === "none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder={companySuppliers.length ? "Link a supplier" : "No suppliers for this company"} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— None —</SelectItem>
+                  {companySuppliers.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
