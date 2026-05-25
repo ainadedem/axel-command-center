@@ -886,3 +886,112 @@ export const fmtDateFR = (iso: string) => {
 
 // Madagascar standard TVA rate
 export const TVA_RATE = 0.2;
+
+/**
+ * Reconcile Axiom invoices against MCB bank transactions.
+ * For each Axiom invoice, scans imported MCB transactions for the invoice number
+ * in the description, applies the received amount as payment (handles MGA-vs-EUR/USD
+ * conversion via the FX table), updates status + paidDate, and writes a separate
+ * "Gain de change" / "Perte de change" transaction for any FX variance.
+ * Idempotent: resets each Axiom invoice's paid/paidDate first, and removes any
+ * previously inserted FX adjustment entries before re-running.
+ */
+export function reconcileAxiomInvoices() {
+  const ACCOUNT_ID = "acc_axi_mcb";
+  const account = accountsStore.items.find((a) => a.id === ACCOUNT_ID);
+  if (!account) return;
+
+  // Reset Axiom invoices to unpaid before reconciling
+  const axiomInvoices = invoicesStore.items.filter((i) => i.companyId === "axi");
+  for (const inv of axiomInvoices) {
+    invoicesStore.update(inv.id, { paid: 0, paidDate: undefined, status: "sent" });
+  }
+
+  // Remove any previously generated FX adjustment entries
+  const fxIds = transactionsStore.items
+    .filter((t) => t.companyId === "axi" && (t.category === "Gain de change" || t.category === "Perte de change"))
+    .map((t) => t.id);
+  for (const id of fxIds) transactionsStore.remove(id);
+
+  // Index Axiom income transactions on the MCB account for matching
+  const mcbIncome = transactionsStore.items.filter(
+    (t) => t.accountId === ACCOUNT_ID && t.type === "income",
+  );
+
+  // Aggregate payments per invoice
+  const payments = new Map<string, { received: number; latestDate: string; txIds: string[] }>();
+  for (const tx of mcbIncome) {
+    const desc = tx.description.toLowerCase();
+    const descNorm = desc.replace(/[^a-z0-9]/g, "");
+    const match = axiomInvoices.find((inv) => {
+      const n = inv.number.toLowerCase();
+      const nNorm = n.replace(/[^a-z0-9]/g, "");
+      return n.length >= 3 && (desc.includes(n) || (nNorm.length >= 4 && descNorm.includes(nNorm)));
+    });
+    if (!match) continue;
+    const cur = payments.get(match.id) ?? { received: 0, latestDate: tx.date, txIds: [] };
+    cur.received += tx.amount;
+    if (tx.date > cur.latestDate) cur.latestDate = tx.date;
+    cur.txIds.push(tx.id);
+    payments.set(match.id, cur);
+    // Backlink the source transaction to the invoice
+    transactionsStore.update(tx.id, {
+      invoiceId: match.id,
+      clientId: match.clientId,
+      projectId: match.projectId,
+      category: "Encaissements clients",
+    });
+  }
+
+  // Apply payments + emit FX adjustments
+  for (const [invId, { received, latestDate }] of payments) {
+    const inv = invoicesStore.items.find((i) => i.id === invId);
+    if (!inv) continue;
+    let invoicePaid: number;
+    let fxDelta = 0;
+    if (inv.currency === account.currency) {
+      invoicePaid = received;
+    } else {
+      const receivedInInvCcy = toMGA(received, account.currency) / FX[inv.currency];
+      invoicePaid = Math.min(receivedInInvCcy, inv.amount);
+      const settledInAcctCcy = toMGA(invoicePaid, inv.currency) / FX[account.currency];
+      fxDelta = received - settledInAcctCcy;
+    }
+    const newStatus: Invoice["status"] =
+      invoicePaid + 0.01 >= inv.amount && inv.amount > 0 ? "paid"
+      : invoicePaid > 0 ? "partial"
+      : inv.status;
+    invoicesStore.update(invId, {
+      paid: invoicePaid,
+      paidDate: latestDate,
+      status: newStatus,
+    });
+
+    if (Math.abs(fxDelta) >= 1) {
+      const isGain = fxDelta > 0;
+      transactionsStore.add({
+        id: newId("tx"),
+        companyId: "axi",
+        accountId: "",
+        date: latestDate,
+        type: isGain ? "income" : "expense",
+        category: isGain ? "Gain de change" : "Perte de change",
+        description: `FX ${isGain ? "gain" : "loss"} · ${inv.number} (${inv.currency} → ${account.currency})`,
+        amount: Math.abs(fxDelta),
+        currency: account.currency,
+        clientId: inv.clientId,
+        projectId: inv.projectId,
+        invoiceId: inv.id,
+        source: "statement",
+      });
+    }
+  }
+
+  // Mark still-unpaid Axiom invoices as overdue when past due
+  const today = new Date().toISOString().slice(0, 10);
+  for (const inv of invoicesStore.items.filter((i) => i.companyId === "axi" && i.paid <= 0)) {
+    if (inv.dueDate < today) {
+      invoicesStore.update(inv.id, { status: "overdue" });
+    }
+  }
+}
