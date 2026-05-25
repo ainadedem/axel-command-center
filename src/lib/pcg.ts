@@ -370,13 +370,24 @@ export function seedLogiaDerivedData(force = false) {
       }
     }
     const transfer = e.lines.some((l) => l.account === "580000"); // virement interne
+    const txType: Transaction["type"] = transfer ? "transfer" : isIncome ? "income" : "expense";
+    const categoryLabel = counter
+      ? accountLabels[counter.account] ?? counter.label ?? counter.account
+      : "Divers";
+    // Build a Category for any class-6 (charge) or class-7 (produit) counterpart.
+    let categoryId: string | undefined;
+    if (counter && !transfer && (counter.account.startsWith("6") || counter.account.startsWith("7"))) {
+      const cat = ensureCategory(counter.account, categoryLabel, isIncome ? "income" : "expense");
+      categoryId = cat.id;
+    }
     const tx: Transaction = {
       id: `tx_${e.id}`,
       companyId: "log",
       accountId,
       date: e.date,
-      type: transfer ? "transfer" : isIncome ? "income" : "expense",
-      category: counter ? accountLabels[counter.account] ?? counter.label ?? counter.account : "Divers",
+      type: txType,
+      category: categoryLabel,
+      categoryId,
       description: e.description.split("\n")[0].slice(0, 140),
       amount,
       currency: "MGA",
