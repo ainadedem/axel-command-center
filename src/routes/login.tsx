@@ -141,6 +141,14 @@ function LoginPage() {
             >
               {busy ? "…" : mode === "signup" ? "Create account" : "Sign in"}
             </button>
+
+            {mode === "signin" && (
+              <div className="text-right">
+                <Link to="/forgot-password" className="text-xs text-muted-foreground hover:text-foreground transition">
+                  Forgot password?
+                </Link>
+              </div>
+            )}
           </form>
 
           <p className="mt-8 text-[10px] text-muted-foreground/70 text-center">
