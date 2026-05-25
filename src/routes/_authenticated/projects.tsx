@@ -40,8 +40,9 @@ function Body() {
   const [editing, setEditing] = useState<Project | null>(null);
   const openCreate = () => { setEditing(null); setOpen(true); };
 
-  // Count invoices for this scope that have no project link → candidates for backfill.
-  const orphanInvoices = inScope(invoices, scope).filter((i) => !i.projectId);
+  // Count invoices for this scope with no project link OR pointing to a missing project → backfill candidates.
+  const projectIds = new Set(projects.map((p) => p.id));
+  const orphanInvoices = inScope(invoices, scope).filter((i) => !i.projectId || !projectIds.has(i.projectId));
   const backfillFromInvoices = () => {
     if (orphanInvoices.length === 0) return;
     // Group orphans by (companyId, clientId); one project per group.
@@ -81,8 +82,8 @@ function Body() {
   const reconcileChecks: ReconcileCheck[] = [
     {
       id: "orphan-invoices",
-      label: "Invoices without a project",
-      description: "Create one project per (company, client) and link orphans.",
+      label: "Invoices without a valid project",
+      description: "Invoices with no project link, or pointing to a deleted project. Creates one project per (company, client) and relinks.",
       count: orphanInvoices.length,
       fix: () => { const n = orphanInvoices.length; if (n > 0) backfillFromInvoices(); return n; },
     },
