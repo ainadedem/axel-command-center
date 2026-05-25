@@ -3,7 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
   useQuotes, useCompanies, useClients, useProjects, quotesStore, purchaseOrdersStore,
-  fmt, fmtCompact, type Quote, type QuoteLine, type QuoteStatus, type Currency,
+  fmt, fmtCompact, type Quote, type QuoteLine, type QuoteStatus, type QuoteMode, type Currency,
 } from "@/lib/mock-data";
 import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
 import { newId } from "@/lib/data-store";
@@ -137,6 +137,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const [validUntil, setValidUntil] = useState(addDays(new Date(), 30).toISOString().slice(0, 10));
   const [currency, setCurrency] = useState<Currency>("EUR");
   const [status, setStatus] = useState<QuoteStatus>("draft");
+  const [mode, setMode] = useState<QuoteMode>("rate-card");
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [notes, setNotes] = useState("");
 
@@ -147,12 +148,14 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setProjectId(editing.projectId ?? "");
       setIssueDate(editing.issueDate); setValidUntil(editing.validUntil);
       setCurrency(editing.currency); setStatus(editing.status);
+      setMode(editing.mode ?? "rate-card");
       setLines(editing.lines ?? []);
       setNotes(editing.notes ?? "");
     } else {
       setNumber(`Q-${Date.now().toString().slice(-6)}`); setCompanyId(companies[0]?.id ?? ""); setClientId("");
       setProjectId(""); setIssueDate(today); setValidUntil(addDays(new Date(), 30).toISOString().slice(0, 10));
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
+      setMode("rate-card");
       setLines([]); setNotes("");
     }
   }, [open, editing, companies, today]);
@@ -163,6 +166,14 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const total = useMemo(() => lines.reduce((s, l) => s + (Number(l.quantity) || 0) * (Number(l.rate) || 0), 0), [lines]);
 
   const addLine = () => {
+    if (mode === "standard") {
+      setLines((prev) => [...prev, {
+        id: newId("ql"),
+        description: "",
+        unit: "fixed", quantity: 1, rate: 0,
+      }]);
+      return;
+    }
     const cap: Capability = "CREATIVE";
     const lvl: Level = "P7";
     setLines((prev) => [...prev, {
@@ -203,7 +214,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
 
   const submit = () => {
     if (!number.trim() || !companyId || !clientId) return;
-    const data = { number, companyId, clientId, projectId: projectId || undefined, issueDate, validUntil, amount: Math.round(total), currency, status, lines, notes: notes || undefined };
+    const data = { number, companyId, clientId, projectId: projectId || undefined, issueDate, validUntil, amount: Math.round(total), currency, status, mode, lines, notes: notes || undefined };
     if (editing) quotesStore.update(editing.id, data);
     else quotesStore.add({ id: newId("q"), ...data });
     onOpenChange(false);
@@ -274,22 +285,39 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
             <div><Label>Valid until</Label><Input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} /></div>
           </div>
 
-          {/* Rate-card line items */}
+          {/* Pricing mode */}
+          <div className="pt-2">
+            <Label>Quotation type</Label>
+            <div className="mt-1 inline-flex rounded-md border border-border overflow-hidden text-xs">
+              <button
+                type="button"
+                onClick={() => setMode("rate-card")}
+                className={cn("px-3 py-1.5", mode === "rate-card" ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground hover:bg-surface-elevated")}
+              >Rate card</button>
+              <button
+                type="button"
+                onClick={() => setMode("standard")}
+                className={cn("px-3 py-1.5 border-l border-border", mode === "standard" ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground hover:bg-surface-elevated")}
+              >Standard</button>
+            </div>
+          </div>
+
+          {/* Line items */}
           <div className="space-y-2 pt-2">
             <div className="flex items-center justify-between">
-              <Label>Line items (priced from rate card)</Label>
+              <Label>{mode === "rate-card" ? "Line items (priced from rate card)" : "Line items"}</Label>
               <Button type="button" size="sm" variant="outline" onClick={addLine}><Plus className="h-3.5 w-3.5" /> Add line</Button>
             </div>
             {lines.length === 0 ? (
-              <p className="text-xs text-muted-foreground border border-dashed border-border rounded-md py-6 text-center">No lines yet — add roles from the rate card.</p>
+              <p className="text-xs text-muted-foreground border border-dashed border-border rounded-md py-6 text-center">{mode === "rate-card" ? "No lines yet — add roles from the rate card." : "No lines yet — add a free-form item."}</p>
             ) : (
               <div className="rounded-md border border-border overflow-hidden">
                 <table className="w-full text-xs">
                   <thead className="bg-surface-elevated/40 text-[10px] uppercase tracking-wider text-muted-foreground">
                     <tr>
                       <th className="text-left font-medium px-2 py-2">Description</th>
-                      <th className="text-left font-medium px-2 py-2 w-28">Capability</th>
-                      <th className="text-left font-medium px-2 py-2 w-20">Level</th>
+                      {mode === "rate-card" && <th className="text-left font-medium px-2 py-2 w-28">Capability</th>}
+                      {mode === "rate-card" && <th className="text-left font-medium px-2 py-2 w-20">Level</th>}
                       <th className="text-left font-medium px-2 py-2 w-20">Unit</th>
                       <th className="text-right font-medium px-2 py-2 w-20">Qty</th>
                       <th className="text-right font-medium px-2 py-2 w-28">Rate</th>
@@ -301,22 +329,26 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                     {lines.map((l) => (
                       <tr key={l.id} className="border-t border-border/40">
                         <td className="px-2 py-1.5"><Input className="h-8 text-xs" value={l.description} onChange={(e) => updateLine(l.id, { description: e.target.value })} /></td>
-                        <td className="px-2 py-1.5">
-                          <Select value={l.capability ?? "CREATIVE"} onValueChange={(v) => updateLine(l.id, { capability: v })}>
-                            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                            <SelectContent>{capabilities.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                          </Select>
-                        </td>
-                        <td className="px-2 py-1.5">
-                          {l.capability === "PROJECT" ? (
-                            <span className="text-xs text-muted-foreground px-2 py-1.5 block">—</span>
-                          ) : (
-                            <Select value={l.level ?? "P7"} onValueChange={(v) => updateLine(l.id, { level: v })}>
+                        {mode === "rate-card" && (
+                          <td className="px-2 py-1.5">
+                            <Select value={l.capability ?? "CREATIVE"} onValueChange={(v) => updateLine(l.id, { capability: v })}>
                               <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                              <SelectContent>{levels.map((lv) => <SelectItem key={lv.code} value={lv.code}>{lv.code} · {lv.title}</SelectItem>)}</SelectContent>
+                              <SelectContent>{capabilities.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                             </Select>
-                          )}
-                        </td>
+                          </td>
+                        )}
+                        {mode === "rate-card" && (
+                          <td className="px-2 py-1.5">
+                            {l.capability === "PROJECT" ? (
+                              <span className="text-xs text-muted-foreground px-2 py-1.5 block">—</span>
+                            ) : (
+                              <Select value={l.level ?? "P7"} onValueChange={(v) => updateLine(l.id, { level: v })}>
+                                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                                <SelectContent>{levels.map((lv) => <SelectItem key={lv.code} value={lv.code}>{lv.code} · {lv.title}</SelectItem>)}</SelectContent>
+                              </Select>
+                            )}
+                          </td>
+                        )}
                         <td className="px-2 py-1.5">
                           <Select value={l.unit} onValueChange={(v) => updateLine(l.id, { unit: v as Unit })}>
                             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
@@ -336,7 +368,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                   </tbody>
                   <tfoot>
                     <tr className="border-t border-border bg-surface-elevated/30">
-                      <td colSpan={6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Total</td>
+                      <td colSpan={mode === "rate-card" ? 6 : 4} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Total</td>
                       <td className="px-2 py-2 text-right font-tnum font-semibold">{fmt(total, currency)}</td>
                       <td />
                     </tr>
@@ -344,7 +376,11 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                 </table>
               </div>
             )}
-            <p className="text-[11px] text-muted-foreground">Rates auto-fill from the rate card (benefits 35%, OH 70%, margin 15%, 1760h / 218d per year). Override by editing the Rate cell — that detaches the line from the card.</p>
+            {mode === "rate-card" ? (
+              <p className="text-[11px] text-muted-foreground">Rates auto-fill from the rate card (benefits 35%, OH 70%, margin 15%, 1760h / 218d per year). Override by editing the Rate cell — that detaches the line from the card.</p>
+            ) : (
+              <p className="text-[11px] text-muted-foreground">Standard quotation — enter description, quantity and unit price freely. Nothing is auto-priced.</p>
+            )}
           </div>
 
           <div>
