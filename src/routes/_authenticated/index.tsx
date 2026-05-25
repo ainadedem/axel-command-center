@@ -266,7 +266,7 @@ function DashboardBody() {
         <div className="xl:col-span-2 rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Recent activity</div>
-            <a href="/transactions" className="text-xs text-primary hover:underline">All transactions →</a>
+            <Link to="/transactions" className="text-xs text-primary hover:underline">All transactions →</Link>
           </div>
           <div className="divide-y divide-border/60">
             {tx.slice(0, 6).map((t) => {
