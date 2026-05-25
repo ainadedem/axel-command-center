@@ -58,6 +58,11 @@ function ClientsPage() {
                     <div>
                       <div className="font-medium text-base">{cl.name}</div>
                       <div className="text-xs text-muted-foreground mt-0.5">{cl.country}</div>
+                      {cl.acquisition && (
+                        <div className="mt-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20" title="Client acquisition">
+                          Acq · {cl.acquisition}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       {co && (
