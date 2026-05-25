@@ -21,10 +21,11 @@ export function KpiCard({
 }) {
   return (
     <div className={cn(
-      "relative rounded-2xl p-6 overflow-hidden bg-card shadow-[var(--shadow-elevated)]",
-      highlight && "ring-1 ring-primary/20",
+      "relative rounded-xl border border-border p-5 overflow-hidden",
+      highlight
+        ? "bg-gradient-to-br from-surface-elevated to-surface shadow-[var(--shadow-glow)]"
+        : "bg-[var(--gradient-surface)]",
     )}>
-
       <div className="flex items-center justify-between mb-3">
         <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-medium">{label}</div>
         {trend && (

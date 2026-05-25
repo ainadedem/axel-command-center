@@ -1,9 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { can, type Action, type AppRole, type Resource } from "./permissions";
 
-export type { AppRole } from "./permissions";
+export type AppRole = "group_admin" | "company_admin" | "finance" | "viewer";
 
 export interface Profile {
   user_id: string;
@@ -20,7 +19,6 @@ interface AuthState {
   loading: boolean;
   isAuthenticated: boolean;
   hasRole: (role: AppRole) => boolean;
-  can: (resource: Resource, action: Action) => boolean;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -45,30 +43,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Set up listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s);
       if (s?.user) {
-        setLoading(true);
-        setSession(s);
         // defer to avoid deadlock
-        setTimeout(() => {
-          loadUserData(s.user.id).finally(() => setLoading(false));
-        }, 0);
+        setTimeout(() => loadUserData(s.user.id), 0);
       } else {
-        setSession(null);
         setProfile(null);
         setRoles([]);
-        setLoading(false);
       }
     });
 
     supabase.auth.getSession().then(({ data: { session: s } }) => {
-      if (s?.user) {
-        setLoading(true);
-        setSession(s);
-        loadUserData(s.user.id).finally(() => setLoading(false));
-      } else {
-        setSession(null);
-        setLoading(false);
-      }
+      setSession(s);
+      if (s?.user) loadUserData(s.user.id).finally(() => setLoading(false));
+      else setLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -82,7 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     isAuthenticated: !!session,
     hasRole: (r) => roles.includes(r),
-    can: (resource, action) => can(roles, resource, action),
     signOut: async () => { await supabase.auth.signOut(); },
     refresh: async () => { if (session?.user) await loadUserData(session.user.id); },
   };

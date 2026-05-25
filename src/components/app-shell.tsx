@@ -8,20 +8,18 @@ import { useState, type ReactNode } from "react";
 import { CompanyProvider, useCompany } from "@/lib/company-context";
 import { companies } from "@/lib/mock-data";
 import { useAuth } from "@/lib/auth-context";
-import { ROLE_LABEL, ROUTE_RESOURCE, type Resource } from "@/lib/permissions";
-import { AccessGate } from "@/components/access-gate";
 import { cn } from "@/lib/utils";
 
-const nav: { to: string; label: string; icon: typeof LayoutDashboard; resource: Resource }[] = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, resource: "dashboard" },
-  { to: "/companies", label: "Companies", icon: Building2, resource: "companies" },
-  { to: "/accounts", label: "Accounts", icon: Wallet, resource: "accounts" },
-  { to: "/transactions", label: "Transactions", icon: ArrowLeftRight, resource: "transactions" },
-  { to: "/invoices", label: "Invoices", icon: FileText, resource: "invoices" },
-  { to: "/clients", label: "Clients", icon: Users, resource: "clients" },
-  { to: "/projects", label: "Projects", icon: Briefcase, resource: "projects" },
-  { to: "/pipeline", label: "Pipeline", icon: TrendingUp, resource: "pipeline" },
-  { to: "/reports", label: "Reports", icon: BarChart3, resource: "reports" },
+const nav = [
+  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/companies", label: "Companies", icon: Building2 },
+  { to: "/accounts", label: "Accounts", icon: Wallet },
+  { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+  { to: "/invoices", label: "Invoices", icon: FileText },
+  { to: "/clients", label: "Clients", icon: Users },
+  { to: "/projects", label: "Projects", icon: Briefcase },
+  { to: "/pipeline", label: "Pipeline", icon: TrendingUp },
+  { to: "/reports", label: "Reports", icon: BarChart3 },
 ];
 
 function CompanySwitcher() {
@@ -77,12 +75,10 @@ function CompanySwitcher() {
 
 function Sidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const { can } = useAuth();
-  const visibleNav = nav.filter((item) => can(item.resource, "view"));
   return (
     <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
       <div className="px-5 py-5 flex items-center gap-2.5">
-        <div className="h-8 w-8 rounded-xl bg-primary grid place-items-center">
+        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-chart-2 grid place-items-center shadow-[var(--shadow-glow)]">
           <span className="font-display text-base font-bold text-primary-foreground">A</span>
         </div>
         <div>
@@ -94,7 +90,7 @@ function Sidebar() {
         <CompanySwitcher />
       </div>
       <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
-        {visibleNav.map((item) => {
+        {nav.map((item) => {
           const active = pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to));
           const Icon = item.icon;
           return (
@@ -130,28 +126,30 @@ function Topbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const name = profile?.display_name || user?.email || "—";
   const initials = name.split(/\s+/).map((s) => s[0]).slice(0, 2).join("").toUpperCase();
-  const role = roles[0] ? ROLE_LABEL[roles[0]] : "No role";
+  const role = roles[0]?.replace("_", " ") ?? "no role";
 
   return (
-    <header className="h-16 shrink-0 border-b border-border bg-background/80 backdrop-blur px-8 flex items-center gap-4 sticky top-0 z-30">
+    <header className="h-14 shrink-0 border-b border-border bg-background/70 backdrop-blur px-6 flex items-center gap-4 sticky top-0 z-30">
       <div className="flex-1 max-w-md relative">
-        <Search className="h-4 w-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2" />
+        <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
         <input
           placeholder="Search transactions, invoices, clients…"
-          className="w-full h-10 pl-10 pr-3 rounded-full bg-surface border border-border text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full h-9 pl-9 pr-3 rounded-md bg-surface border border-border text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring"
         />
-        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5 bg-background">⌘K</kbd>
+        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
       </div>
       <div className="flex items-center gap-2">
-        <TopbarNewButton />
-        <button className="h-10 w-10 grid place-items-center rounded-full hover:bg-muted relative">
+        <button className="h-9 px-3 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition flex items-center gap-1.5">
+          <Plus className="h-4 w-4" /> New
+        </button>
+        <button className="h-9 w-9 grid place-items-center rounded-md hover:bg-surface relative">
           <Bell className="h-4 w-4" />
-          <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-full bg-destructive" />
+          <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-primary" />
         </button>
         <div className="relative">
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="h-9 w-9 rounded-full bg-primary grid place-items-center text-xs font-display font-bold text-primary-foreground"
+            className="h-8 w-8 rounded-full bg-gradient-to-br from-chart-2 to-chart-4 grid place-items-center text-xs font-display font-bold"
           >
             {initials || "?"}
           </button>
@@ -179,40 +177,6 @@ function Topbar() {
   );
 }
 
-function TopbarNewButton() {
-  const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const { can } = useAuth();
-  const resource = resolveResource(pathname);
-  if (!resource || !can(resource, "edit")) return null;
-  return (
-    <button className="h-10 px-4 rounded-full text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition flex items-center gap-1.5 shadow-[var(--shadow-glow)]">
-      <Plus className="h-4 w-4" /> New
-    </button>
-  );
-}
-
-function resolveResource(pathname: string): Resource | null {
-  if (ROUTE_RESOURCE[pathname]) return ROUTE_RESOURCE[pathname];
-  // Match longest prefix (e.g. /invoices/123 -> /invoices)
-  const match = Object.keys(ROUTE_RESOURCE)
-    .filter((k) => k !== "/" && pathname.startsWith(k))
-    .sort((a, b) => b.length - a.length)[0];
-  return match ? ROUTE_RESOURCE[match] : null;
-}
-
-function GatedMain({ children }: { children: ReactNode }) {
-  const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const resource = resolveResource(pathname);
-  return (
-    <main className="flex-1 overflow-y-auto">
-      <div className="absolute inset-0 pointer-events-none [background:var(--gradient-glow)] opacity-60" />
-      <div className="relative">
-        {resource ? <AccessGate resource={resource}>{children}</AccessGate> : children}
-      </div>
-    </main>
-  );
-}
-
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <CompanyProvider>
@@ -220,7 +184,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <Topbar />
-          <GatedMain>{children}</GatedMain>
+          <main className="flex-1 overflow-y-auto">
+            <div className="absolute inset-0 pointer-events-none [background:var(--gradient-glow)] opacity-60" />
+            <div className="relative">{children}</div>
+          </main>
         </div>
       </div>
     </CompanyProvider>
