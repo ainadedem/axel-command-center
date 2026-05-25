@@ -153,6 +153,18 @@ export interface Invoice {
 /* ─── Sales process: Quote → PO → Invoice ───────────────────────────── */
 
 export type QuoteStatus = "draft" | "sent" | "accepted" | "rejected" | "expired";
+export interface QuoteLine {
+  id: string;
+  description: string;
+  /** Capability bucket from the rate card (CREATIVE / PR / PRODUCTION / MEDIA). */
+  capability?: string;
+  /** Level code (P1…P10). */
+  level?: string;
+  unit: "hour" | "day";
+  quantity: number;
+  /** Per-unit price in the quote's currency. */
+  rate: number;
+}
 export interface Quote {
   id: string;
   number: string;
@@ -166,6 +178,8 @@ export interface Quote {
   currency: Currency;
   status: QuoteStatus;
   notes?: string;
+  /** Line items priced from the rate card. */
+  lines?: QuoteLine[];
 }
 
 export type POStatus = "draft" | "issued" | "fulfilled" | "cancelled";
