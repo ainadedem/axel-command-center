@@ -269,6 +269,7 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
       amount: Number(amount) || 0, currency,
       clientId: type === "income" ? (clientId || undefined) : undefined,
       supplierId: type === "expense" ? (supplierId || undefined) : undefined,
+      projectId: projectId || undefined,
     };
     if (editing) transactionsStore.update(editing.id, data);
     else transactionsStore.add({ id: newId("tx"), ...data });
