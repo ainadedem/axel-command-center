@@ -81,7 +81,7 @@ function LoginPage() {
             </div>
           </div>
           <h1 className="font-display text-5xl font-bold tracking-tight leading-[1.05] max-w-md">
-            The Axiom<br />Winford<br />Group.
+            Axel
           </h1>
           <p className="mt-6 text-muted-foreground max-w-sm leading-relaxed">
             Multi-company, multi-currency control of cash, revenue, and pipeline — engineered for clarity.
