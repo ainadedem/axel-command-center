@@ -286,19 +286,40 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
           </div>
 
           {/* Pricing mode */}
-          <div className="pt-2">
-            <Label>Quotation type</Label>
-            <div className="mt-1 inline-flex rounded-md border border-border overflow-hidden text-xs">
-              <button
-                type="button"
-                onClick={() => setMode("rate-card")}
-                className={cn("px-3 py-1.5", mode === "rate-card" ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground hover:bg-surface-elevated")}
-              >Rate card</button>
-              <button
-                type="button"
-                onClick={() => setMode("standard")}
-                className={cn("px-3 py-1.5 border-l border-border", mode === "standard" ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground hover:bg-surface-elevated")}
-              >Standard</button>
+          <div className="flex items-center justify-between pt-2">
+            <div>
+              <Label>Quotation type</Label>
+              <div className="mt-1 inline-flex rounded-md border border-border overflow-hidden text-xs">
+                <button
+                  type="button"
+                  onClick={() => setMode("rate-card")}
+                  className={cn("px-3 py-1.5", mode === "rate-card" ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground hover:bg-surface-elevated")}
+                >Rate card</button>
+                <button
+                  type="button"
+                  onClick={() => setMode("standard")}
+                  className={cn("px-3 py-1.5 border-l border-border", mode === "standard" ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground hover:bg-surface-elevated")}
+                >Standard</button>
+              </div>
+            </div>
+            <div className="text-right">
+              <Label>Currency</Label>
+              <div className="mt-1 inline-flex rounded-md border border-border overflow-hidden text-xs">
+                {(["EUR", "USD", "MGA"] as Currency[]).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCurrency(c)}
+                    className={cn(
+                      "px-3 py-1.5 font-tnum",
+                      currency === c ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground hover:bg-surface-elevated",
+                      c !== "MGA" && "border-l border-border"
+                    )}
+                  >
+                    {c === "EUR" ? "€ EUR" : c === "USD" ? "$ USD" : "Ar MGA"}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
