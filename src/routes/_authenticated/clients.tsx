@@ -21,6 +21,8 @@ function ClientsPage() {
   const clients = useClients();
   const companies = useCompanies();
   const projects = useProjects();
+  const invoices = useInvoices();
+  const transactions = useTransactions();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
   const openCreate = () => { setEditing(null); setOpen(true); };
@@ -37,9 +39,17 @@ function ClientsPage() {
             {clients.map((cl) => {
               const co = companies.find((c) => c.id === cl.companyId);
               const cliProjects = projects.filter((p) => p.clientId === cl.id);
-              const revenue = cliProjects.reduce((s, p) => s + toMGA(p.revenue, p.currency), 0);
+              const cliInvoices = invoices.filter((i) => i.clientId === cl.id);
+              const cliTx = transactions.filter((t) => t.clientId === cl.id);
+              // Revenue: prefer invoices when present, else project revenue, else income transactions.
+              const invoicedMGA = cliInvoices.reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
+              const paidMGA = cliInvoices.reduce((s, i) => s + toMGA(i.paid, i.currency), 0);
+              const projectRevenue = cliProjects.reduce((s, p) => s + toMGA(p.revenue, p.currency), 0);
+              const incomeTxMGA = cliTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+              const revenue = invoicedMGA || projectRevenue || incomeTxMGA;
               const cost = cliProjects.reduce((s, p) => s + toMGA(p.cost, p.currency), 0);
               const margin = revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0;
+              const outstanding = Math.max(0, invoicedMGA - paidMGA);
               return (
                 <div key={cl.id} className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 hover:border-primary/40 transition group">
                   <div className="flex items-start justify-between mb-4">
