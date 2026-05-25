@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, Flame, Clock, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { Pencil, Trash2, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/pipeline")({ component: PipelinePage });
 
