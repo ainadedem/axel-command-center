@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Building2, Wallet, ArrowLeftRight, FileText,
   Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus, Truck,
   ChevronDown, ChevronRight, Check, LogOut, Target, UserCog, Handshake,
-  BookOpen, BookText, Scale, Library, Receipt,
+  BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CompanyProvider, useCompany } from "@/lib/company-context";
@@ -31,6 +31,8 @@ const sections: NavSection[] = [
     items: [
       { to: "/accounts", label: "Accounts", icon: Wallet },
       { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+      { to: "/quotations", label: "Quotations", icon: FileSignature },
+      { to: "/purchase-orders", label: "Purchase orders", icon: ClipboardList },
       { to: "/invoices", label: "Invoices", icon: FileText },
       { to: "/budgets", label: "Budgets", icon: Target },
       { to: "/reports", label: "Reports", icon: BarChart3 },
@@ -199,6 +201,8 @@ const NEW_BUTTON_ROUTES: { match: (p: string) => boolean; to: string; label: str
   { match: (p) => p.startsWith("/accounts"), to: "/accounts", label: "New account" },
   { match: (p) => p.startsWith("/transactions"), to: "/transactions", label: "New transaction" },
   { match: (p) => p.startsWith("/invoices"), to: "/invoices", label: "New invoice" },
+  { match: (p) => p.startsWith("/quotations"), to: "/quotations", label: "New quote" },
+  { match: (p) => p.startsWith("/purchase-orders"), to: "/purchase-orders", label: "New PO" },
   { match: (p) => p.startsWith("/clients"), to: "/clients", label: "New client" },
   { match: (p) => p.startsWith("/suppliers"), to: "/suppliers", label: "New supplier" },
   { match: (p) => p.startsWith("/projects"), to: "/projects", label: "New project" },

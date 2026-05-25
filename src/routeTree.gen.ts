@@ -18,6 +18,8 @@ import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authentica
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSalesTeamRouteImport } from './routes/_authenticated/sales-team'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedQuotationsRouteImport } from './routes/_authenticated/quotations'
+import { Route as AuthenticatedPurchaseOrdersRouteImport } from './routes/_authenticated/purchase-orders'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedPlanComptableRouteImport } from './routes/_authenticated/plan-comptable'
 import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated/pipeline'
@@ -77,6 +79,17 @@ const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedQuotationsRoute = AuthenticatedQuotationsRouteImport.update({
+  id: '/quotations',
+  path: '/quotations',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedPurchaseOrdersRoute =
+  AuthenticatedPurchaseOrdersRouteImport.update({
+    id: '/purchase-orders',
+    path: '/purchase-orders',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
@@ -161,6 +174,8 @@ export interface FileRoutesByFullPath {
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/plan-comptable': typeof AuthenticatedPlanComptableRoute
   '/projects': typeof AuthenticatedProjectsRoute
+  '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
+  '/quotations': typeof AuthenticatedQuotationsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/sales-team': typeof AuthenticatedSalesTeamRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -183,6 +198,8 @@ export interface FileRoutesByTo {
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/plan-comptable': typeof AuthenticatedPlanComptableRoute
   '/projects': typeof AuthenticatedProjectsRoute
+  '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
+  '/quotations': typeof AuthenticatedQuotationsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/sales-team': typeof AuthenticatedSalesTeamRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -208,6 +225,8 @@ export interface FileRoutesById {
   '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
   '/_authenticated/plan-comptable': typeof AuthenticatedPlanComptableRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
+  '/_authenticated/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
+  '/_authenticated/quotations': typeof AuthenticatedQuotationsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/sales-team': typeof AuthenticatedSalesTeamRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -234,6 +253,8 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/plan-comptable'
     | '/projects'
+    | '/purchase-orders'
+    | '/quotations'
     | '/reports'
     | '/sales-team'
     | '/settings'
@@ -256,6 +277,8 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/plan-comptable'
     | '/projects'
+    | '/purchase-orders'
+    | '/quotations'
     | '/reports'
     | '/sales-team'
     | '/settings'
@@ -280,6 +303,8 @@ export interface FileRouteTypes {
     | '/_authenticated/pipeline'
     | '/_authenticated/plan-comptable'
     | '/_authenticated/projects'
+    | '/_authenticated/purchase-orders'
+    | '/_authenticated/quotations'
     | '/_authenticated/reports'
     | '/_authenticated/sales-team'
     | '/_authenticated/settings'
@@ -357,6 +382,20 @@ declare module '@tanstack/react-router' {
       path: '/reports'
       fullPath: '/reports'
       preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/quotations': {
+      id: '/_authenticated/quotations'
+      path: '/quotations'
+      fullPath: '/quotations'
+      preLoaderRoute: typeof AuthenticatedQuotationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/purchase-orders': {
+      id: '/_authenticated/purchase-orders'
+      path: '/purchase-orders'
+      fullPath: '/purchase-orders'
+      preLoaderRoute: typeof AuthenticatedPurchaseOrdersRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/projects': {
@@ -467,6 +506,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
   AuthenticatedPlanComptableRoute: typeof AuthenticatedPlanComptableRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
+  AuthenticatedPurchaseOrdersRoute: typeof AuthenticatedPurchaseOrdersRoute
+  AuthenticatedQuotationsRoute: typeof AuthenticatedQuotationsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSalesTeamRoute: typeof AuthenticatedSalesTeamRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -490,6 +531,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
   AuthenticatedPlanComptableRoute: AuthenticatedPlanComptableRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
+  AuthenticatedPurchaseOrdersRoute: AuthenticatedPurchaseOrdersRoute,
+  AuthenticatedQuotationsRoute: AuthenticatedQuotationsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSalesTeamRoute: AuthenticatedSalesTeamRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,

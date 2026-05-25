@@ -136,6 +136,10 @@ export interface Invoice {
   clientId: string;
   /** Optional link to the project this invoice bills against. */
   projectId?: string;
+  /** Required (in workflow) — the accepted PO this invoice fulfils. */
+  poId?: string;
+  /** Convenience: quote that the PO descends from. */
+  quoteId?: string;
   issueDate: string;
   dueDate: string;
   amount: number;
@@ -144,6 +148,41 @@ export interface Invoice {
   paidDate?: string;
   currency: Currency;
   status: "draft" | "sent" | "partial" | "paid" | "overdue";
+}
+
+/* ─── Sales process: Quote → PO → Invoice ───────────────────────────── */
+
+export type QuoteStatus = "draft" | "sent" | "accepted" | "rejected" | "expired";
+export interface Quote {
+  id: string;
+  number: string;
+  companyId: string;
+  clientId: string;
+  projectId?: string;
+  issueDate: string;
+  /** Date the quote stops being valid. */
+  validUntil: string;
+  amount: number;
+  currency: Currency;
+  status: QuoteStatus;
+  notes?: string;
+}
+
+export type POStatus = "draft" | "issued" | "fulfilled" | "cancelled";
+export interface PurchaseOrder {
+  id: string;
+  number: string;
+  companyId: string;
+  clientId: string;
+  projectId?: string;
+  /** Quote this PO descends from (recommended). */
+  quoteId?: string;
+  /** Client-side PO reference (their internal number). */
+  clientReference?: string;
+  issueDate: string;
+  amount: number;
+  currency: Currency;
+  status: POStatus;
 }
 
 export type Stage = "Lead" | "Qualified" | "Proposal" | "Negotiation" | "Won" | "Lost";
@@ -236,6 +275,8 @@ export const categoriesStore = createCollection<Category>("categories", []);
 export const budgetsStore = createCollection<Budget>("budgets", []);
 export const teamMembersStore = createCollection<TeamMember>("team-members", []);
 export const salesMembersStore = createCollection<SalesMember>("sales-members", []);
+export const quotesStore = createCollection<Quote>("quotes", []);
+export const purchaseOrdersStore = createCollection<PurchaseOrder>("purchase-orders", []);
 
 /* ─── Live array exports (backward compatibility) ───────────────────── */
 
@@ -251,6 +292,8 @@ export const categories = categoriesStore.items;
 export const budgets = budgetsStore.items;
 export const teamMembers = teamMembersStore.items;
 export const salesMembers = salesMembersStore.items;
+export const quotes = quotesStore.items;
+export const purchaseOrders = purchaseOrdersStore.items;
 
 /* ─── Hooks ─────────────────────────────────────────────────────────── */
 
@@ -266,6 +309,8 @@ export const useCategories = () => useCollection(categoriesStore);
 export const useBudgets = () => useCollection(budgetsStore);
 export const useTeamMembers = () => useCollection(teamMembersStore);
 export const useSalesMembers = () => useCollection(salesMembersStore);
+export const useQuotes = () => useCollection(quotesStore);
+export const usePurchaseOrders = () => useCollection(purchaseOrdersStore);
 
 /** Convenience: list of sales-team people (with team name) filtered by role. */
 export function useSalesPeople(role: "acquisition" | "closer"): { id: string; teamMemberId: string; name: string }[] {

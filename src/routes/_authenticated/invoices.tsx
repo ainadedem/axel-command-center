@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useInvoices, useCompanies, useClients, useProjects, invoicesStore,
+  useInvoices, useCompanies, useClients, useProjects, usePurchaseOrders, useQuotes, invoicesStore,
   fmtCompact, toMGA, type Invoice, type Currency,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { InvoicePreview } from "@/components/invoice-preview";
 
 export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage });
@@ -179,11 +179,14 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const companies = useCompanies();
   const clients = useClients();
   const projects = useProjects();
+  const pos = usePurchaseOrders();
+  const quotes = useQuotes();
   const today = new Date().toISOString().slice(0, 10);
   const [number, setNumber] = useState("");
   const [companyId, setCompanyId] = useState("");
   const [clientId, setClientId] = useState("");
   const [projectId, setProjectId] = useState<string>("");
+  const [poId, setPoId] = useState<string>("");
   const [issueDate, setIssueDate] = useState(today);
   const [dueDate, setDueDate] = useState(today);
   const [amount, setAmount] = useState("0");
@@ -195,13 +198,13 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     if (!open) return;
     if (editing) {
       setNumber(editing.number); setCompanyId(editing.companyId); setClientId(editing.clientId);
-      setProjectId(editing.projectId ?? "");
+      setProjectId(editing.projectId ?? ""); setPoId(editing.poId ?? "");
       setIssueDate(editing.issueDate); setDueDate(editing.dueDate);
       setAmount(String(editing.amount)); setPaid(String(editing.paid));
       setCurrency(editing.currency); setStatus(editing.status);
     } else {
       setNumber(`INV-${Date.now().toString().slice(-6)}`); setCompanyId(companies[0]?.id ?? ""); setClientId("");
-      setProjectId("");
+      setProjectId(""); setPoId("");
       setIssueDate(today); setDueDate(today); setAmount("0"); setPaid("0");
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
     }
@@ -209,14 +212,37 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
 
   const companyClients = clients.filter((c) => c.companyId === companyId);
   const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
+  const clientPOs = pos.filter((p) => p.companyId === companyId && p.clientId === clientId && p.status !== "cancelled");
   const selectedClient = clients.find((c) => c.id === clientId);
+  const selectedPO = pos.find((p) => p.id === poId);
+  const linkedQuote = selectedPO?.quoteId ? quotes.find((q) => q.id === selectedPO.quoteId) : undefined;
+
+  // When PO is picked, prefill amount/currency/project from it.
+  useEffect(() => {
+    if (!poId) return;
+    const po = pos.find((x) => x.id === poId);
+    if (po) {
+      setAmount(String(po.amount)); setCurrency(po.currency);
+      if (po.projectId) setProjectId(po.projectId);
+    }
+  }, [poId, pos]);
+
+  const processOk = Boolean(poId);
+  const blocked = !processOk && status !== "draft";
 
   const submit = () => {
     if (!number.trim() || !companyId || !clientId) return;
+    if (blocked) return;
     const a = Number(amount) || 0;
     const p = Number(paid) || 0;
     const finalStatus = status === "draft" ? "draft" : deriveStatus(a, p, dueDate);
-    const data = { number, companyId, clientId, projectId: projectId || undefined, issueDate, dueDate, amount: a, paid: p, currency, status: finalStatus };
+    const data = {
+      number, companyId, clientId,
+      projectId: projectId || undefined,
+      poId: poId || undefined,
+      quoteId: linkedQuote?.id,
+      issueDate, dueDate, amount: a, paid: p, currency, status: finalStatus,
+    };
     if (editing) invoicesStore.update(editing.id, data);
     else invoicesStore.add({ id: newId("inv"), ...data });
     onOpenChange(false);
@@ -224,8 +250,12 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader><DialogTitle>{editing ? "Edit invoice" : "New invoice"}</DialogTitle></DialogHeader>
+
+        {/* Process strip */}
+        <ProcessStrip hasQuote={Boolean(linkedQuote)} hasPO={Boolean(selectedPO)} />
+
         <div className="space-y-4 py-2">
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Number</Label><Input value={number} onChange={(e) => setNumber(e.target.value)} /></div>
@@ -235,7 +265,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="sent">Sent (auto)</SelectItem>
+                  <SelectItem value="sent" disabled={!processOk}>Sent {!processOk && "(needs PO)"}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -243,14 +273,14 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Company</Label>
-              <Select value={companyId} onValueChange={(v) => { setCompanyId(v); setClientId(""); }}>
+              <Select value={companyId} onValueChange={(v) => { setCompanyId(v); setClientId(""); setPoId(""); }}>
                 <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <Label>Client</Label>
-              <Select value={clientId} onValueChange={(v) => { setClientId(v); setProjectId(""); }}>
+              <Select value={clientId} onValueChange={(v) => { setClientId(v); setProjectId(""); setPoId(""); }}>
                 <SelectTrigger><SelectValue placeholder={companyClients.length ? "Select" : "Create client first"} /></SelectTrigger>
                 <SelectContent>{companyClients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
@@ -259,6 +289,26 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               )}
             </div>
           </div>
+
+          <div>
+            <Label>Purchase order <span className="text-destructive">*</span></Label>
+            <Select value={poId || "__none__"} onValueChange={(v) => setPoId(v === "__none__" ? "" : v)} disabled={!clientId}>
+              <SelectTrigger className={cn(!processOk && status !== "draft" && "border-destructive")}>
+                <SelectValue placeholder={clientId ? (clientPOs.length ? "Select PO" : "No PO for this client") : "Select client first"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— No PO —</SelectItem>
+                {clientPOs.map((p) => <SelectItem key={p.id} value={p.id}>{p.number} · {fmtCompact(p.amount, p.currency)} · {p.status}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {blocked && (
+              <p className="text-[11px] text-destructive mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Process: link an accepted PO before sending the invoice.</p>
+            )}
+            {!blocked && processOk && (
+              <p className="text-[11px] text-success mt-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Quote → PO → Invoice process complete.</p>
+            )}
+          </div>
+
           <div>
             <Label>Project</Label>
             <Select value={projectId || "__none__"} onValueChange={(v) => setProjectId(v === "__none__" ? "" : v)} disabled={!clientId}>
@@ -268,7 +318,6 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                 {clientProjects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            <p className="text-[11px] text-muted-foreground mt-1">Linking the invoice to a project ties it back to the sales team via the client.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Issue date</Label><Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
@@ -292,10 +341,31 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit}>{editing ? "Save" : "Create"}</Button>
+          <Button onClick={submit} disabled={blocked}>{editing ? "Save" : "Create"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ProcessStrip({ hasQuote, hasPO }: { hasQuote: boolean; hasPO: boolean }) {
+  const Step = ({ n, label, done, current }: { n: number; label: string; done: boolean; current?: boolean }) => (
+    <div className="flex items-center gap-2">
+      <div className={cn("h-6 w-6 rounded-full grid place-items-center text-[11px] font-bold border",
+        done ? "bg-success/15 border-success/40 text-success" : current ? "bg-primary/15 border-primary/40 text-primary" : "bg-muted/30 border-border text-muted-foreground")}>
+        {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : n}
+      </div>
+      <span className={cn("text-xs", done ? "text-success" : current ? "text-foreground" : "text-muted-foreground")}>{label}</span>
+    </div>
+  );
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-border bg-surface/40 p-2.5">
+      <Step n={1} label="Quote" done={hasQuote} current={!hasQuote} />
+      <div className="h-px flex-1 bg-border" />
+      <Step n={2} label="PO" done={hasPO} current={hasQuote && !hasPO} />
+      <div className="h-px flex-1 bg-border" />
+      <Step n={3} label="Invoice" done={false} current={hasPO} />
+    </div>
   );
 }
 
