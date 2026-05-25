@@ -270,14 +270,22 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
             </div>
             <div>
               <Label>Currency</Label>
-              <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MGA">MGA</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="USD">USD</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="mt-1 inline-flex rounded-md border border-border overflow-hidden text-xs">
+                {(["EUR", "USD", "MGA"] as Currency[]).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCurrency(c)}
+                    className={cn(
+                      "px-3 py-1.5 font-tnum",
+                      currency === c ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground hover:bg-surface-elevated",
+                      c !== "EUR" && "border-l border-border"
+                    )}
+                  >
+                    {c === "EUR" ? "€ EUR" : c === "USD" ? "$ USD" : "Ar MGA"}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
