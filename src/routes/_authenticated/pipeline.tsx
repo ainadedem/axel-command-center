@@ -64,11 +64,24 @@ function PipelinePage() {
   );
 }
 
+/** Map (companyId, client name) → acquisition person from the Clients table. */
+function useAcqLookup(clients: Client[]): (o: Opportunity) => string {
+  return useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of clients) {
+      if (c.acquisition) map.set(`${c.companyId}::${c.name.toLowerCase()}`, c.acquisition);
+    }
+    return (o: Opportunity) => map.get(`${o.companyId}::${(o.client || "").toLowerCase()}`) ?? "";
+  }, [clients]);
+}
+
 function Body() {
   const { scope } = useCompany();
   const opportunities = useOpportunities();
   const companies = useCompanies();
+  const clients = useClients();
   const list = inScope(opportunities, scope);
+  const acqOf = useAcqLookup(clients);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Opportunity | null>(null);
   const [view, setView] = useState<"kanban" | "list" | "acquisition" | "closer" | "forecast">("kanban");
