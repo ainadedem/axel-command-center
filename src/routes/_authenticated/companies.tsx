@@ -85,47 +85,94 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [shortName, setShortName] = useState("");
   const [color, setColor] = useState(PALETTE[0]);
   const [baseCurrency, setBaseCurrency] = useState<Currency>("MGA");
+  const [legalName, setLegalName] = useState("");
+  const [address, setAddress] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [website, setWebsite] = useState("");
+  const [nif, setNif] = useState("");
+  const [stat, setStat] = useState("");
+  const [rcs, setRcs] = useState("");
+  const [taxId, setTaxId] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [bankAccount, setBankAccount] = useState("");
+  const [bankSwift, setBankSwift] = useState("");
 
   useEffect(() => {
     if (!open) return;
-    if (editing) { setName(editing.name); setShortName(editing.shortName); setColor(editing.color); setBaseCurrency(editing.baseCurrency); }
-    else { setName(""); setShortName(""); setColor(PALETTE[0]); setBaseCurrency("MGA"); }
+    if (editing) {
+      setName(editing.name); setShortName(editing.shortName); setColor(editing.color); setBaseCurrency(editing.baseCurrency);
+      setLegalName(editing.legalName ?? ""); setAddress(editing.address ?? "");
+      setEmail(editing.email ?? ""); setPhone(editing.phone ?? ""); setWebsite(editing.website ?? "");
+      setNif(editing.nif ?? ""); setStat(editing.stat ?? ""); setRcs(editing.rcs ?? ""); setTaxId(editing.taxId ?? "");
+      setBankName(editing.bankName ?? ""); setBankAccount(editing.bankAccount ?? ""); setBankSwift(editing.bankSwift ?? "");
+    } else {
+      setName(""); setShortName(""); setColor(PALETTE[0]); setBaseCurrency("MGA");
+      setLegalName(""); setAddress(""); setEmail(""); setPhone(""); setWebsite("");
+      setNif(""); setStat(""); setRcs(""); setTaxId(""); setBankName(""); setBankAccount(""); setBankSwift("");
+    }
   }, [open, editing]);
-
-  const reset = () => { setName(""); setShortName(""); setColor(PALETTE[0]); setBaseCurrency("MGA"); };
 
   const submit = () => {
     if (!name.trim() || !shortName.trim()) return;
-    if (editing) companiesStore.update(editing.id, { name, shortName, color, baseCurrency });
-    else companiesStore.add({ id: newId("co"), name, shortName, color, baseCurrency });
-    reset();
+    const data = {
+      name, shortName, color, baseCurrency,
+      legalName: legalName || undefined, address: address || undefined,
+      email: email || undefined, phone: phone || undefined, website: website || undefined,
+      nif: nif || undefined, stat: stat || undefined, rcs: rcs || undefined, taxId: taxId || undefined,
+      bankName: bankName || undefined, bankAccount: bankAccount || undefined, bankSwift: bankSwift || undefined,
+    };
+    if (editing) companiesStore.update(editing.id, data);
+    else companiesStore.add({ id: newId("co"), ...data });
     onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) reset(); }}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[80vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{editing ? "Edit company" : "New company"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
-          <div><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Logia Madagascar" /></div>
-          <div><Label>Short name</Label><Input value={shortName} onChange={(e) => setShortName(e.target.value.toUpperCase().slice(0, 4))} placeholder="LOG" /></div>
-          <div>
-            <Label>Base currency</Label>
-            <Select value={baseCurrency} onValueChange={(v) => setBaseCurrency(v as Currency)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="MGA">MGA — Ariary</SelectItem>
-                <SelectItem value="EUR">EUR — Euro</SelectItem>
-                <SelectItem value="USD">USD — Dollar</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Trading name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Logia Madagascar" /></div>
+            <div><Label>Short name</Label><Input value={shortName} onChange={(e) => setShortName(e.target.value.toUpperCase().slice(0, 4))} placeholder="LOG" /></div>
           </div>
-          <div>
-            <Label>Color</Label>
-            <div className="flex gap-2 mt-2">
-              {PALETTE.map((p) => (
-                <button key={p} type="button" onClick={() => setColor(p)} className={`h-8 w-8 rounded-md border-2 transition ${color === p ? "border-foreground" : "border-transparent"}`} style={{ background: p }} />
-              ))}
+          <div><Label>Legal name (on invoices)</Label><Input value={legalName} onChange={(e) => setLegalName(e.target.value)} placeholder="LOGIA SARL" /></div>
+          <div><Label>Registered address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Lot II M 73 ter Antananarivo 101" /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Email</Label><Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="contact@logia.mg" /></div>
+            <div><Label>Phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+261 20 22 000 00" /></div>
+          </div>
+          <div><Label>Website</Label><Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://logia.mg" /></div>
+          <div className="grid grid-cols-3 gap-3">
+            <div><Label>NIF</Label><Input value={nif} onChange={(e) => setNif(e.target.value)} /></div>
+            <div><Label>STAT</Label><Input value={stat} onChange={(e) => setStat(e.target.value)} /></div>
+            <div><Label>RCS</Label><Input value={rcs} onChange={(e) => setRcs(e.target.value)} /></div>
+          </div>
+          <div><Label>Tax / VAT ID (intl.)</Label><Input value={taxId} onChange={(e) => setTaxId(e.target.value)} /></div>
+          <div className="grid grid-cols-3 gap-3">
+            <div><Label>Bank name</Label><Input value={bankName} onChange={(e) => setBankName(e.target.value)} /></div>
+            <div><Label>Account / IBAN</Label><Input value={bankAccount} onChange={(e) => setBankAccount(e.target.value)} /></div>
+            <div><Label>SWIFT / BIC</Label><Input value={bankSwift} onChange={(e) => setBankSwift(e.target.value)} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Base currency</Label>
+              <Select value={baseCurrency} onValueChange={(v) => setBaseCurrency(v as Currency)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MGA">MGA — Ariary</SelectItem>
+                  <SelectItem value="EUR">EUR — Euro</SelectItem>
+                  <SelectItem value="USD">USD — Dollar</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Color</Label>
+              <div className="flex gap-2 mt-2">
+                {PALETTE.map((p) => (
+                  <button key={p} type="button" onClick={() => setColor(p)} className={`h-8 w-8 rounded-md border-2 transition ${color === p ? "border-foreground" : "border-transparent"}`} style={{ background: p }} />
+                ))}
+              </div>
             </div>
           </div>
         </div>
