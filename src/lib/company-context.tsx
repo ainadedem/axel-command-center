@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import { companies, type Company } from "./mock-data";
+import { useCompanies, type Company } from "./mock-data";
 
 type Scope = { id: "group" } | { id: "company"; companyId: string };
 
@@ -14,6 +14,7 @@ const CompanyCtx = createContext<Ctx | null>(null);
 
 export function CompanyProvider({ children }: { children: ReactNode }) {
   const [scope, setScope] = useState<Scope>({ id: "group" });
+  const companies = useCompanies();
 
   const value = useMemo<Ctx>(() => {
     const scopedCompanies =
@@ -21,7 +22,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     const label =
       scope.id === "group" ? "Group · All companies" : companies.find((c) => c.id === scope.companyId)?.name ?? "—";
     return { scope, setScope, scopedCompanies, label };
-  }, [scope]);
+  }, [scope, companies]);
 
   return <CompanyCtx.Provider value={value}>{children}</CompanyCtx.Provider>;
 }
