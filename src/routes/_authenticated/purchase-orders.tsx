@@ -16,7 +16,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, Upload, FileText, X } from "lucide-react";
+import { Pencil, Trash2, Upload, FileText, X, History, RefreshCw } from "lucide-react";
+
+type DocVersion = { url: string; name?: string; type?: string; uploadedAt: string };
 
 export const Route = createFileRoute("/_authenticated/purchase-orders")({ component: POPage });
 
