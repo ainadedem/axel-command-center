@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
+import { Avatar, AvatarUpload } from "@/components/avatar-upload";
 import { Pencil, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/clients")({ component: ClientsPage });
@@ -55,17 +56,27 @@ function ClientsPage() {
               const outstanding = Math.max(0, invoicedMGA - paidMGA);
               return (
                 <div key={cl.id} className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 hover:border-primary/40 transition group">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <div className="font-medium text-base">{cl.name}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">{cl.country}</div>
-                      {cl.acquisition && (
-                        <div className="mt-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20" title="Client acquisition">
-                          Acq · {cl.acquisition}
+                  <div className="flex items-start justify-between mb-4 gap-3">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <Avatar src={cl.avatarUrl} name={cl.name} size={44} />
+                      <div className="min-w-0">
+                        <div className="font-medium text-base truncate">{cl.name}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">{cl.country}</div>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {cl.acquisition && (
+                            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20" title="Client acquisition">
+                              Acq · {cl.acquisition}
+                            </span>
+                          )}
+                          {cl.acquiredAt && (
+                            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-300 border border-violet-500/20" title="Acquired on">
+                              Since {cl.acquiredAt}
+                            </span>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       {co && (
                         <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
                           <span className="h-2 w-2 rounded-full" style={{ background: co.color }} />
