@@ -138,6 +138,7 @@ function Body() {
               </th>
             ))}
           </tr>
+        </thead>
         <tbody>
           {list.map((t) => {
             const co = companies.find((c) => c.id === t.companyId);
