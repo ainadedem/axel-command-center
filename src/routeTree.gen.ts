@@ -9,100 +9,100 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TransactionsRouteImport } from './routes/transactions'
-import { Route as ReportsRouteImport } from './routes/reports'
-import { Route as ProjectsRouteImport } from './routes/projects'
-import { Route as PipelineRouteImport } from './routes/pipeline'
-import { Route as InvoicesRouteImport } from './routes/invoices'
-import { Route as CompaniesRouteImport } from './routes/companies'
-import { Route as ClientsRouteImport } from './routes/clients'
-import { Route as AccountsRouteImport } from './routes/accounts'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
+import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated/pipeline'
+import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
+import { Route as AuthenticatedCompaniesRouteImport } from './routes/_authenticated/companies'
+import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
+import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
 
-const TransactionsRoute = TransactionsRouteImport.update({
-  id: '/transactions',
-  path: '/transactions',
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/_authenticated/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ReportsRoute = ReportsRouteImport.update({
-  id: '/reports',
+const AuthenticatedTransactionsRoute =
+  AuthenticatedTransactionsRouteImport.update({
+    id: '/_authenticated/transactions',
+    path: '/transactions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/_authenticated/reports',
   path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProjectsRoute = ProjectsRouteImport.update({
-  id: '/projects',
+const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
+  id: '/_authenticated/projects',
   path: '/projects',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PipelineRoute = PipelineRouteImport.update({
-  id: '/pipeline',
+const AuthenticatedPipelineRoute = AuthenticatedPipelineRouteImport.update({
+  id: '/_authenticated/pipeline',
   path: '/pipeline',
   getParentRoute: () => rootRouteImport,
 } as any)
-const InvoicesRoute = InvoicesRouteImport.update({
-  id: '/invoices',
+const AuthenticatedInvoicesRoute = AuthenticatedInvoicesRouteImport.update({
+  id: '/_authenticated/invoices',
   path: '/invoices',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CompaniesRoute = CompaniesRouteImport.update({
-  id: '/companies',
+const AuthenticatedCompaniesRoute = AuthenticatedCompaniesRouteImport.update({
+  id: '/_authenticated/companies',
   path: '/companies',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ClientsRoute = ClientsRouteImport.update({
-  id: '/clients',
+const AuthenticatedClientsRoute = AuthenticatedClientsRouteImport.update({
+  id: '/_authenticated/clients',
   path: '/clients',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AccountsRoute = AccountsRouteImport.update({
-  id: '/accounts',
+const AuthenticatedAccountsRoute = AuthenticatedAccountsRouteImport.update({
+  id: '/_authenticated/accounts',
   path: '/accounts',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/accounts': typeof AccountsRoute
-  '/clients': typeof ClientsRoute
-  '/companies': typeof CompaniesRoute
-  '/invoices': typeof InvoicesRoute
-  '/pipeline': typeof PipelineRoute
-  '/projects': typeof ProjectsRoute
-  '/reports': typeof ReportsRoute
-  '/transactions': typeof TransactionsRoute
+  '/accounts': typeof AuthenticatedAccountsRoute
+  '/clients': typeof AuthenticatedClientsRoute
+  '/companies': typeof AuthenticatedCompaniesRoute
+  '/invoices': typeof AuthenticatedInvoicesRoute
+  '/pipeline': typeof AuthenticatedPipelineRoute
+  '/projects': typeof AuthenticatedProjectsRoute
+  '/reports': typeof AuthenticatedReportsRoute
+  '/transactions': typeof AuthenticatedTransactionsRoute
+  '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/accounts': typeof AccountsRoute
-  '/clients': typeof ClientsRoute
-  '/companies': typeof CompaniesRoute
-  '/invoices': typeof InvoicesRoute
-  '/pipeline': typeof PipelineRoute
-  '/projects': typeof ProjectsRoute
-  '/reports': typeof ReportsRoute
-  '/transactions': typeof TransactionsRoute
+  '/accounts': typeof AuthenticatedAccountsRoute
+  '/clients': typeof AuthenticatedClientsRoute
+  '/companies': typeof AuthenticatedCompaniesRoute
+  '/invoices': typeof AuthenticatedInvoicesRoute
+  '/pipeline': typeof AuthenticatedPipelineRoute
+  '/projects': typeof AuthenticatedProjectsRoute
+  '/reports': typeof AuthenticatedReportsRoute
+  '/transactions': typeof AuthenticatedTransactionsRoute
+  '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/accounts': typeof AccountsRoute
-  '/clients': typeof ClientsRoute
-  '/companies': typeof CompaniesRoute
-  '/invoices': typeof InvoicesRoute
-  '/pipeline': typeof PipelineRoute
-  '/projects': typeof ProjectsRoute
-  '/reports': typeof ReportsRoute
-  '/transactions': typeof TransactionsRoute
+  '/_authenticated/accounts': typeof AuthenticatedAccountsRoute
+  '/_authenticated/clients': typeof AuthenticatedClientsRoute
+  '/_authenticated/companies': typeof AuthenticatedCompaniesRoute
+  '/_authenticated/invoices': typeof AuthenticatedInvoicesRoute
+  '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
+  '/_authenticated/projects': typeof AuthenticatedProjectsRoute
+  '/_authenticated/reports': typeof AuthenticatedReportsRoute
+  '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/accounts'
     | '/clients'
     | '/companies'
@@ -111,9 +111,9 @@ export interface FileRouteTypes {
     | '/projects'
     | '/reports'
     | '/transactions'
+    | '/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/accounts'
     | '/clients'
     | '/companies'
@@ -122,110 +122,121 @@ export interface FileRouteTypes {
     | '/projects'
     | '/reports'
     | '/transactions'
+    | '/'
   id:
     | '__root__'
-    | '/'
-    | '/accounts'
-    | '/clients'
-    | '/companies'
-    | '/invoices'
-    | '/pipeline'
-    | '/projects'
-    | '/reports'
-    | '/transactions'
+    | '/_authenticated/accounts'
+    | '/_authenticated/clients'
+    | '/_authenticated/companies'
+    | '/_authenticated/invoices'
+    | '/_authenticated/pipeline'
+    | '/_authenticated/projects'
+    | '/_authenticated/reports'
+    | '/_authenticated/transactions'
+    | '/_authenticated/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AccountsRoute: typeof AccountsRoute
-  ClientsRoute: typeof ClientsRoute
-  CompaniesRoute: typeof CompaniesRoute
-  InvoicesRoute: typeof InvoicesRoute
-  PipelineRoute: typeof PipelineRoute
-  ProjectsRoute: typeof ProjectsRoute
-  ReportsRoute: typeof ReportsRoute
-  TransactionsRoute: typeof TransactionsRoute
+  AuthenticatedAccountsRoute: typeof AuthenticatedAccountsRoute
+  AuthenticatedClientsRoute: typeof AuthenticatedClientsRoute
+  AuthenticatedCompaniesRoute: typeof AuthenticatedCompaniesRoute
+  AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRoute
+  AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
+  AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
+  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
+  AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/transactions': {
-      id: '/transactions'
-      path: '/transactions'
-      fullPath: '/transactions'
-      preLoaderRoute: typeof TransactionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reports': {
-      id: '/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof ReportsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/projects': {
-      id: '/projects'
-      path: '/projects'
-      fullPath: '/projects'
-      preLoaderRoute: typeof ProjectsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pipeline': {
-      id: '/pipeline'
-      path: '/pipeline'
-      fullPath: '/pipeline'
-      preLoaderRoute: typeof PipelineRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/invoices': {
-      id: '/invoices'
-      path: '/invoices'
-      fullPath: '/invoices'
-      preLoaderRoute: typeof InvoicesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/companies': {
-      id: '/companies'
-      path: '/companies'
-      fullPath: '/companies'
-      preLoaderRoute: typeof CompaniesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/clients': {
-      id: '/clients'
-      path: '/clients'
-      fullPath: '/clients'
-      preLoaderRoute: typeof ClientsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/accounts': {
-      id: '/accounts'
-      path: '/accounts'
-      fullPath: '/accounts'
-      preLoaderRoute: typeof AccountsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/transactions': {
+      id: '/_authenticated/transactions'
+      path: '/transactions'
+      fullPath: '/transactions'
+      preLoaderRoute: typeof AuthenticatedTransactionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/projects': {
+      id: '/_authenticated/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof AuthenticatedProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/pipeline': {
+      id: '/_authenticated/pipeline'
+      path: '/pipeline'
+      fullPath: '/pipeline'
+      preLoaderRoute: typeof AuthenticatedPipelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/invoices': {
+      id: '/_authenticated/invoices'
+      path: '/invoices'
+      fullPath: '/invoices'
+      preLoaderRoute: typeof AuthenticatedInvoicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/companies': {
+      id: '/_authenticated/companies'
+      path: '/companies'
+      fullPath: '/companies'
+      preLoaderRoute: typeof AuthenticatedCompaniesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/clients': {
+      id: '/_authenticated/clients'
+      path: '/clients'
+      fullPath: '/clients'
+      preLoaderRoute: typeof AuthenticatedClientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/accounts': {
+      id: '/_authenticated/accounts'
+      path: '/accounts'
+      fullPath: '/accounts'
+      preLoaderRoute: typeof AuthenticatedAccountsRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AccountsRoute: AccountsRoute,
-  ClientsRoute: ClientsRoute,
-  CompaniesRoute: CompaniesRoute,
-  InvoicesRoute: InvoicesRoute,
-  PipelineRoute: PipelineRoute,
-  ProjectsRoute: ProjectsRoute,
-  ReportsRoute: ReportsRoute,
-  TransactionsRoute: TransactionsRoute,
+  AuthenticatedAccountsRoute: AuthenticatedAccountsRoute,
+  AuthenticatedClientsRoute: AuthenticatedClientsRoute,
+  AuthenticatedCompaniesRoute: AuthenticatedCompaniesRoute,
+  AuthenticatedInvoicesRoute: AuthenticatedInvoicesRoute,
+  AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
+  AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
+  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
+  AuthenticatedTransactionsRoute: AuthenticatedTransactionsRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

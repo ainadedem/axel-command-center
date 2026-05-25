@@ -5,7 +5,7 @@ import { accounts, companies, fmtCompact, toMGA } from "@/lib/mock-data";
 import { inScope, useCompany } from "@/lib/company-context";
 import { Landmark, Smartphone, Banknote } from "lucide-react";
 
-export const Route = createFileRoute("/accounts")({ component: AccountsPage });
+export const Route = createFileRoute("/_authenticated/accounts")({ component: AccountsPage });
 
 const iconFor = (t: string) => t === "bank" ? Landmark : t === "mobile" ? Smartphone : Banknote;
 

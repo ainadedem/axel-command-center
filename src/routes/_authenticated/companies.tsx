@@ -3,7 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { companies, accounts, transactions, toMGA, fmtCompact } from "@/lib/mock-data";
 
-export const Route = createFileRoute("/companies")({ component: CompaniesPage });
+export const Route = createFileRoute("/_authenticated/companies")({ component: CompaniesPage });
 
 function CompaniesPage() {
   return (

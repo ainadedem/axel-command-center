@@ -6,7 +6,7 @@ import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/invoices")({ component: InvoicesPage });
+export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage });
 
 const statusStyles: Record<string, string> = {
   draft: "border-muted text-muted-foreground bg-muted/30",

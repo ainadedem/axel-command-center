@@ -3,7 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { clients, companies, projects, fmtCompact, toMGA } from "@/lib/mock-data";
 
-export const Route = createFileRoute("/clients")({ component: ClientsPage });
+export const Route = createFileRoute("/_authenticated/clients")({ component: ClientsPage });
 
 function ClientsPage() {
   return (
