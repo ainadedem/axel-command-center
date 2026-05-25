@@ -110,7 +110,8 @@ function Body() {
             <TabsList>
               <TabsTrigger value="kanban">Kanban</TabsTrigger>
               <TabsTrigger value="list">List</TabsTrigger>
-              <TabsTrigger value="owner">By owner</TabsTrigger>
+              <TabsTrigger value="acquisition">By acquisition</TabsTrigger>
+              <TabsTrigger value="closer">By closer</TabsTrigger>
               <TabsTrigger value="forecast">Forecast</TabsTrigger>
             </TabsList>
 
@@ -120,8 +121,11 @@ function Body() {
             <TabsContent value="list" className="mt-4">
               <ListView list={list} onEdit={onEdit} />
             </TabsContent>
-            <TabsContent value="owner" className="mt-4">
-              <OwnerView list={list} onEdit={onEdit} />
+            <TabsContent value="acquisition" className="mt-4">
+              <PeopleView list={list} onEdit={onEdit} role="acquisition" />
+            </TabsContent>
+            <TabsContent value="closer" className="mt-4">
+              <PeopleView list={list} onEdit={onEdit} role="closer" />
             </TabsContent>
             <TabsContent value="forecast" className="mt-4">
               <ForecastView list={list} />
