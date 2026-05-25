@@ -395,6 +395,7 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
   const [name, setName] = useState("");
   const [client, setClient] = useState("");
   const [owner, setOwner] = useState("");
+  const [closer, setCloser] = useState("");
   const [stage, setStage] = useState<Stage>("Lead");
   const [value, setValue] = useState("0");
   const [currency, setCurrency] = useState<Currency>("EUR");
@@ -403,17 +404,19 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
   useEffect(() => {
     if (!open) return;
     if (editing) {
-      setCompanyId(editing.companyId); setName(editing.name); setClient(editing.client); setOwner(editing.owner);
+      setCompanyId(editing.companyId); setName(editing.name); setClient(editing.client);
+      setOwner(editing.owner); setCloser(editing.closer ?? "");
       setStage(editing.stage); setValue(String(editing.value)); setCurrency(editing.currency); setExpectedClose(editing.expectedClose);
     } else {
-      const c = companies[0]; setCompanyId(c?.id ?? ""); setName(""); setClient(""); setOwner("");
+      const c = companies[0]; setCompanyId(c?.id ?? ""); setName(""); setClient("");
+      setOwner(""); setCloser("");
       setStage("Lead"); setValue("0"); setCurrency(c?.baseCurrency ?? "EUR"); setExpectedClose(new Date().toISOString().slice(0, 10));
     }
   }, [open, editing, companies]);
 
   const submit = () => {
     if (!name.trim() || !companyId) return;
-    const data = { companyId, name, client, owner, stage, value: Number(value) || 0, currency, expectedClose };
+    const data = { companyId, name, client, owner, closer: closer.trim() || undefined, stage, value: Number(value) || 0, currency, expectedClose };
     if (editing) opportunitiesStore.update(editing.id, data);
     else opportunitiesStore.add({ id: newId("opp"), ...data });
     onOpenChange(false);
@@ -432,9 +435,10 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
             </Select>
           </div>
           <div><Label>Opportunity name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div><Label>Client</Label><Input value={client} onChange={(e) => setClient(e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Client</Label><Input value={client} onChange={(e) => setClient(e.target.value)} /></div>
-            <div><Label>Owner</Label><Input value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="M.R." /></div>
+            <div><Label>Acquisition (client owner)</Label><Input value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="Who brought the client" /></div>
+            <div><Label>Closer</Label><Input value={closer} onChange={(e) => setCloser(e.target.value)} placeholder="Who closes the deal" /></div>
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div>
