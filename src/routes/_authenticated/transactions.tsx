@@ -108,12 +108,19 @@ function Body() {
             <tbody>
               {list.map((t) => {
                 const co = companies.find((c) => c.id === t.companyId);
+                const cli = t.clientId ? clients.find((c) => c.id === t.clientId) : null;
+                const sup = t.supplierId ? suppliers.find((s) => s.id === t.supplierId) : null;
                 return (
                   <tr key={t.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
                     <td className="px-5 py-3.5 text-muted-foreground font-tnum text-xs">{format(parseISO(t.date), "MMM d, yyyy")}</td>
                     <td className="px-5 py-3.5 font-medium">{t.description}</td>
                     <td className="px-5 py-3.5">
                       {co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}
+                    </td>
+                    <td className="px-5 py-3.5 text-xs">
+                      {cli ? <span className="text-success">↑ {cli.name}</span>
+                        : sup ? <span className="text-muted-foreground">↓ {sup.name}</span>
+                        : <span className="text-muted-foreground/50">—</span>}
                     </td>
                     <td className="px-5 py-3.5 text-muted-foreground">{t.category}</td>
                     <td className="px-5 py-3.5">
