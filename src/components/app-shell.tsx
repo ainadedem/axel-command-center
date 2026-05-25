@@ -167,6 +167,7 @@ const NEW_BUTTON_ROUTES: { match: (p: string) => boolean; to: string; label: str
   { match: (p) => p.startsWith("/suppliers"), to: "/suppliers", label: "New supplier" },
   { match: (p) => p.startsWith("/projects"), to: "/projects", label: "New project" },
   { match: (p) => p.startsWith("/pipeline"), to: "/pipeline", label: "New opportunity" },
+  { match: (p) => p.startsWith("/budgets"), to: "/budgets", label: "New category" },
   { match: (p) => p.startsWith("/companies"), to: "/companies", label: "New company" },
   { match: (p) => p.startsWith("/journal"), to: "/journal", label: "New entry" },
 ];
