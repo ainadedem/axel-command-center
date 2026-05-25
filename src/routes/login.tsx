@@ -16,6 +16,7 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -26,8 +27,20 @@ function LoginPage() {
     setError(null);
     setBusy(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      if (mode === "signup") {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: `${window.location.origin}/` },
+        });
+        if (error) throw error;
+        // auto-confirm is on, so sign in immediately
+        const { error: siErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (siErr) throw siErr;
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      }
       navigate({ to: search.redirect });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");
@@ -68,10 +81,29 @@ function LoginPage() {
             <span className="font-display text-lg font-bold tracking-tight">AXEL</span>
           </div>
 
-          <h2 className="font-display text-2xl font-bold tracking-tight">Sign in</h2>
-          <p className="text-sm text-muted-foreground mt-1">Welcome back to your control room.</p>
+          <h2 className="font-display text-2xl font-bold tracking-tight">
+            {mode === "signup" ? "Create admin account" : "Sign in"}
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            {mode === "signup"
+              ? "The first account becomes the Group Admin."
+              : "Welcome back to your control room."}
+          </p>
 
-          <form onSubmit={handleEmail} className="space-y-3 mt-7">
+          <div className="mt-5 inline-flex rounded-md border border-border p-0.5 bg-surface text-xs">
+            <button
+              type="button"
+              onClick={() => { setMode("signin"); setError(null); }}
+              className={`px-3 h-7 rounded ${mode === "signin" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+            >Sign in</button>
+            <button
+              type="button"
+              onClick={() => { setMode("signup"); setError(null); }}
+              className={`px-3 h-7 rounded ${mode === "signup" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+            >Create account</button>
+          </div>
+
+          <form onSubmit={handleEmail} className="space-y-3 mt-5">
             <div>
               <label className="text-xs font-medium text-muted-foreground">Email</label>
               <input
@@ -107,7 +139,7 @@ function LoginPage() {
               disabled={busy}
               className="w-full h-10 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
             >
-              {busy ? "…" : "Sign in"}
+              {busy ? "…" : mode === "signup" ? "Create account" : "Sign in"}
             </button>
           </form>
 
