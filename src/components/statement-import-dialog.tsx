@@ -379,9 +379,22 @@ export function StatementImportDialog({
                           <td className="px-3 py-2 truncate max-w-[260px]">{r.description}</td>
                           <td className="px-3 py-2">
                             {inv ? (
-                              <span className="inline-flex items-center gap-1 text-success">
-                                <CheckCircle2 className="h-3 w-3" /> {inv.number}
-                              </span>
+                              <div className="flex flex-col">
+                                <span className="inline-flex items-center gap-1 text-success">
+                                  <CheckCircle2 className="h-3 w-3" /> {inv.number}
+                                </span>
+                                {account && inv.currency !== account.currency && (() => {
+                                  const remainingInv = Math.max(0, inv.amount - inv.paid);
+                                  const settledInAcct = toMGA(Math.min(toMGA(r.amount, account.currency) / FX[inv.currency], remainingInv), inv.currency) / FX[account.currency];
+                                  const fx = r.amount - settledInAcct;
+                                  if (Math.abs(fx) < 1) return null;
+                                  return (
+                                    <span className={cn("text-[10px] font-tnum", fx > 0 ? "text-success" : "text-destructive")}>
+                                      FX {fx > 0 ? "gain" : "loss"} {Math.abs(fx).toLocaleString(undefined, { maximumFractionDigits: 0 })} {account.currency}
+                                    </span>
+                                  );
+                                })()}
+                              </div>
                             ) : (
                               <span className="text-muted-foreground/60">—</span>
                             )}
