@@ -586,6 +586,63 @@ export function seedLogiaOpportunities() {
   return cleaned.length;
 }
 
+/** Replace all Axiom-scoped opportunities with the AXD Sales CRM snapshot.
+ *  Mirrors the Notion view: Trembley (Modélisation Meubles, monthly, €1,230 invoiced
+ *  in Jan/Feb then €0 pipeline through Aug) + Dein Deal (Ad prevision, monthly €2,350
+ *  Jan–Dec). Jan/Feb deals are already Closed/Paid (linked to INV-26-0001..0004),
+ *  later months are Closed/Not started in Notion. */
+export function seedAxiomOpportunities() {
+  const closer = "Dedem";
+  const seeds: Opportunity[] = [];
+  const months = [
+    { m: "01", label: "Jan", close: "2026-01-26" },
+    { m: "02", label: "Feb", close: "2026-02-25" },
+    { m: "03", label: "Mar", close: "2026-03-25" },
+    { m: "04", label: "Apr", close: "2026-04-24" },
+    { m: "05", label: "May", close: "2026-05-22" },
+    { m: "06", label: "Jun", close: "2026-06-30" },
+    { m: "07", label: "Jul", close: "2026-07-31" },
+    { m: "08", label: "Aug", close: "2026-08-31" },
+    { m: "09", label: "Sep", close: "2026-09-30" },
+    { m: "10", label: "Oct", close: "2026-10-31" },
+    { m: "11", label: "Nov", close: "2026-11-30" },
+    { m: "12", label: "Dec", close: "2026-12-31" },
+  ];
+
+  for (const mo of months) {
+    // Trembley — Modélisation Meubles. Jan/Feb invoiced (€1,230). Mar–Aug pipeline (€0 in Notion).
+    if (["01", "02"].includes(mo.m)) {
+      seeds.push({
+        id: `opp_axi_trembley_${mo.m}`, companyId: "axi",
+        name: `Production Modélisation Meubles (${mo.label} 2026)`,
+        client: "Trembley et Burgermeister SA", clientId: "cli_axi_trembley",
+        closer, stage: "Closed", value: 1230, currency: "EUR", expectedClose: mo.close,
+      });
+    } else if (["03", "04", "05", "06", "07", "08"].includes(mo.m)) {
+      seeds.push({
+        id: `opp_axi_trembley_${mo.m}`, companyId: "axi",
+        name: `Production Modélisation Meubles (${mo.label} 2026)`,
+        client: "Trembley et Burgermeister SA", clientId: "cli_axi_trembley",
+        closer, stage: "Closed", value: 0, currency: "EUR", expectedClose: mo.close,
+      });
+    }
+
+    // Dein Deal — Ad prevision, every month Jan–Dec at €2,350.
+    const name = mo.m === "01"
+      ? "Production January 2026"
+      : `Dein Deal — Ad prevision (${mo.label} 2026)`;
+    seeds.push({
+      id: `opp_axi_deindeal_${mo.m}`, companyId: "axi",
+      name, client: "Dein Deal", clientId: "cli_axi_deindeal",
+      closer, stage: "Closed", value: 2350, currency: "EUR", expectedClose: mo.close,
+    });
+  }
+
+  const others = opportunitiesStore.items.filter((o) => o.companyId !== "axi");
+  opportunitiesStore.replaceAll([...others, ...seeds]);
+  return seeds.length;
+}
+
 /** Normalise a client name for fuzzy matching (lowercase, ascii-only, alphanumeric+space). */
 function normalizeClientKey(s: string): string {
   return s.normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
