@@ -382,6 +382,22 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
               </Select>
             </div>
           )}
+          {(type === "income" || type === "expense") && (() => {
+            const companyProjects = projects.filter((p) => p.companyId === companyId && (type === "expense" || !clientId || p.clientId === clientId));
+            return (
+              <div>
+                <Label>Project</Label>
+                <Select value={projectId || "none"} onValueChange={(v) => setProjectId(v === "none" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder={companyProjects.length ? "Link a project" : "No projects for this company"} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— None —</SelectItem>
+                    {companyProjects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground mt-1">Used to track P&L per project (sales & expenses).</p>
+              </div>
+            );
+          })()}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
