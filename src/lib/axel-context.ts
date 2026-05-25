@@ -46,10 +46,10 @@ export function buildAxelDataSnapshot(scope: { companyId?: string }): string {
     .map((m) => `${m}: +${Math.round(byMonth[m].in).toLocaleString()} / -${Math.round(byMonth[m].out).toLocaleString()}`)
     .join("\n  ");
 
-  // Invoices summary
-  const paid = inv.filter((i) => (i as { paid?: boolean }).paid);
-  const unpaid = inv.filter((i) => !(i as { paid?: boolean }).paid);
-  const invAmt = (i: unknown) => Number((i as { amount?: number; total?: number }).amount ?? (i as { total?: number }).total ?? 0);
+  // Invoices summary (paid is a numeric amount; status indicates lifecycle)
+  const paid = inv.filter((i) => i.status === "paid");
+  const unpaid = inv.filter((i) => i.status !== "paid" && i.status !== "cancelled");
+  const invAmt = (i: { amount?: number }) => Number(i.amount ?? 0);
   const today = new Date().toISOString().slice(0, 10);
   const overdue = unpaid.filter((i) => {
     const d = (i as { dueDate?: string }).dueDate;
