@@ -231,6 +231,25 @@ export function seedLogiaDerivedData(force = false) {
   suppliersStore.replaceAll(suppliersStore.items.filter((s) => s.companyId !== "log"));
   invoicesStore.replaceAll(invoicesStore.items.filter((i) => i.companyId !== "log"));
   transactionsStore.replaceAll(transactionsStore.items.filter((t) => t.companyId !== "log"));
+  categoriesStore.replaceAll(categoriesStore.items.filter((c) => c.companyId !== "log"));
+
+  /* ── Categories (derived from PCG class 6/7 counterpart accounts) ── */
+  const categoryByAccount = new Map<string, Category>();
+  const ensureCategory = (account: string, label: string, kind: Category["kind"]): Category => {
+    const existing = categoryByAccount.get(account);
+    if (existing) return existing;
+    const cat: Category = {
+      id: `cat_log_${account}`,
+      companyId: "log",
+      name: label,
+      kind,
+      account,
+    };
+    categoryByAccount.set(account, cat);
+    categoriesStore.add(cat);
+    return cat;
+  };
+
 
   /* ── Accounts (bank + cash) ─────────────────────────────────────── */
   const accountByCode = new Map<string, Account>();
