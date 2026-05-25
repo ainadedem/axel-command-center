@@ -25,14 +25,15 @@ export const Route = createFileRoute("/_authenticated/pipeline")({ component: Pi
 
 type StageStyle = { dot: string; text: string };
 
+// Colors mirror Notion "Logia Sales CRM" Status option colors.
 const STAGE_STYLES: Record<Stage, StageStyle> = {
-  Lead:        { dot: "bg-slate-400",   text: "text-slate-500" },
-  Qualified:   { dot: "bg-sky-500",     text: "text-sky-600" },
-  Proposal:    { dot: "bg-violet-500",  text: "text-violet-500" },
-  Negotiation: { dot: "bg-amber-500",   text: "text-amber-500" },
-  "In progress": { dot: "bg-blue-500",    text: "text-blue-500" },
-  Closed:      { dot: "bg-emerald-500", text: "text-emerald-500" },
-  Lost:        { dot: "bg-rose-500",    text: "text-rose-500" },
+  Lead:        { dot: "bg-slate-400",   text: "text-slate-500" },   // gray
+  Qualified:   { dot: "bg-orange-500",  text: "text-orange-500" },  // orange
+  Proposal:    { dot: "bg-blue-500",    text: "text-blue-500" },    // blue
+  Negotiation: { dot: "bg-violet-500",  text: "text-violet-500" },  // purple
+  "In progress": { dot: "bg-sky-500",   text: "text-sky-500" },     // blue (distinct from Proposal)
+  Closed:      { dot: "bg-emerald-500", text: "text-emerald-500" }, // green
+  Lost:        { dot: "bg-rose-500",    text: "text-rose-500" },    // red
 };
 
 function urgencyOf(o: Opportunity): { label: string; cls: string } | null {
