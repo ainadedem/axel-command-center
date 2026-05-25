@@ -157,7 +157,7 @@ function Body() {
                           {inv.status !== "paid" && inv.status !== "cancelled" && (
                             <>
                               <button onClick={() => setPaying(inv)} title="Add payment" className="h-7 w-7 grid place-items-center rounded hover:bg-success/10 text-muted-foreground hover:text-success"><Wallet className="h-3.5 w-3.5" /></button>
-                              <button onClick={() => markPaid(inv)} title="Mark as paid" className="h-7 w-7 grid place-items-center rounded hover:bg-success/10 text-muted-foreground hover:text-success"><BadgeCheck className="h-3.5 w-3.5" /></button>
+                              <button onClick={() => setMarking(inv)} title="Mark as paid" className="h-7 w-7 grid place-items-center rounded hover:bg-success/10 text-muted-foreground hover:text-success"><BadgeCheck className="h-3.5 w-3.5" /></button>
                               <button onClick={() => setCancelling(inv)} title="Cancel invoice" className="h-7 w-7 grid place-items-center rounded hover:bg-warning/10 text-muted-foreground hover:text-warning"><Ban className="h-3.5 w-3.5" /></button>
                             </>
                           )}
