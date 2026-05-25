@@ -16,7 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, Upload, FileText, X, History, RefreshCw } from "lucide-react";
+import { Pencil, Trash2, Upload, FileText, X, History, RefreshCw, Eye } from "lucide-react";
+import { DocumentPreview, type DocumentData } from "@/components/document-preview";
 
 type DocVersion = { url: string; name?: string; type?: string; uploadedAt: string };
 
@@ -48,6 +49,7 @@ function Body() {
   const list = inScope(pos, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<PurchaseOrder | null>(null);
+  const [previewing, setPreviewing] = useState<PurchaseOrder | null>(null);
   const openCreate = () => { setEditing(null); setOpen(true); };
 
   return (
@@ -101,6 +103,7 @@ function Body() {
 
                     <td className="px-5 py-3.5 text-right">
                       <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
+                        <button onClick={() => setPreviewing(po)} title="Preview & export PDF" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
                         <button onClick={() => { setEditing(po); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
                         <button onClick={() => confirm(`Delete PO ${po.number}?`) && purchaseOrdersStore.remove(po.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
                       </div>
@@ -113,8 +116,30 @@ function Body() {
         </div>
       )}
       <PODialog open={open} onOpenChange={setOpen} editing={editing} />
+      <DocumentPreview
+        open={!!previewing}
+        onOpenChange={(v) => { if (!v) setPreviewing(null); }}
+        doc={previewing ? poToDoc(previewing, quotes.find((q) => q.id === previewing.quoteId)?.number) : null}
+        company={previewing ? companies.find((c) => c.id === previewing.companyId) : undefined}
+        client={previewing ? clients.find((c) => c.id === previewing.clientId) : undefined}
+        project={previewing?.projectId ? projects.find((p) => p.id === previewing.projectId) : undefined}
+      />
     </div>
   );
+}
+
+function poToDoc(po: PurchaseOrder, quoteNumber?: string): DocumentData {
+  return {
+    kind: "po",
+    number: po.number,
+    status: po.status,
+    issueDate: po.issueDate,
+    amount: po.amount,
+    currency: po.currency,
+    lines: po.lines,
+    clientReference: po.clientReference,
+    references: quoteNumber ? [{ label: "Quote", value: quoteNumber }] : undefined,
+  };
 }
 
 function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: PurchaseOrder | null }) {
