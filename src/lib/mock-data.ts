@@ -97,20 +97,8 @@ const dayOffset = (d: number) => {
   return x.toISOString().slice(0, 10);
 };
 
-export const transactions: Transaction[] = [
-  { id: "t1", companyId: "win", accountId: "a3", date: dayOffset(2), type: "income", category: "Services", description: "Linear — Milestone 2", amount: 16000, currency: "EUR", clientId: "c1", projectId: "p1" },
-  { id: "t2", companyId: "log", accountId: "a1", date: dayOffset(3), type: "expense", category: "Payroll", description: "Salaires Octobre", amount: 38_400_000, currency: "MGA" },
-  { id: "t3", companyId: "axi", accountId: "a5", date: dayOffset(4), type: "income", category: "Services", description: "Vertex — Phase 1", amount: 24000, currency: "USD", clientId: "c3", projectId: "p3" },
-  { id: "t4", companyId: "win", accountId: "a4", date: dayOffset(6), type: "expense", category: "Software", description: "Figma + Linear annual", amount: 1840, currency: "EUR" },
-  { id: "t5", companyId: "log", accountId: "a1", date: dayOffset(7), type: "expense", category: "Office", description: "Loyer Q4 — Antananarivo", amount: 18_000_000, currency: "MGA" },
-  { id: "t6", companyId: "axi", accountId: "a6", date: dayOffset(8), type: "income", category: "Services", description: "Helsinki — Sprint 4", amount: 19500, currency: "EUR", clientId: "c4", projectId: "p4" },
-  { id: "t7", companyId: "win", accountId: "a3", date: dayOffset(11), type: "intercompany", category: "Internal", description: "→ Logia Madagascar (shared infra)", amount: 4200, currency: "EUR" },
-  { id: "t8", companyId: "axi", accountId: "a7", date: dayOffset(12), type: "expense", category: "Contractors", description: "Équipe dev externe", amount: 14_200_000, currency: "MGA" },
-  { id: "t9", companyId: "axi", accountId: "a5", date: dayOffset(14), type: "expense", category: "Logistics", description: "Shipping — SGP", amount: 3850, currency: "USD" },
-  { id: "t10", companyId: "win", accountId: "a3", date: dayOffset(18), type: "income", category: "Services", description: "Margiela — Deposit", amount: 12000, currency: "EUR", clientId: "c2", projectId: "p2" },
-  { id: "t11", companyId: "axi", accountId: "a6", date: dayOffset(22), type: "income", category: "Services", description: "Atelier Noir — Sprint 1", amount: 8500, currency: "EUR", clientId: "c5", projectId: "p5" },
-  { id: "t12", companyId: "log", accountId: "a2", date: dayOffset(25), type: "expense", category: "Travel", description: "Vol Paris — fondateur", amount: 3_800_000, currency: "MGA" },
-];
+export const transactions: Transaction[] = [];
+
 
 export interface Invoice {
   id: string;
