@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import {
   useInvoices, useCompanies, useClients, useProjects, usePurchaseOrders, useQuotes, useAccounts,
   invoicesStore, transactionsStore,
-  fmtAmount, fmtCompact, toMGA, FX, type Invoice, type Currency,
+  fmtAmount, toMGA, FX, type Invoice, type Currency,
   getNumberFormat, setNumberFormat, type NumberFormatMode,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
