@@ -149,11 +149,14 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
       setIssueDate(editing.issueDate); setAmount(String(editing.amount));
       setCurrency(editing.currency); setStatus(editing.status);
       setDocumentUrl(editing.documentUrl); setDocumentName(editing.documentName); setDocumentType(editing.documentType);
+      setDocumentUploadedAt(editing.documentUploadedAt);
+      setDocumentHistory(editing.documentHistory ?? []);
     } else {
       setNumber(`PO-${Date.now().toString().slice(-6)}`); setClientReference("");
       setCompanyId(companies[0]?.id ?? ""); setClientId(""); setProjectId(""); setQuoteId("");
       setIssueDate(today); setAmount("0"); setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("issued");
       setDocumentUrl(undefined); setDocumentName(undefined); setDocumentType(undefined);
+      setDocumentUploadedAt(undefined); setDocumentHistory([]);
     }
     setUploadError("");
   }, [open, editing, companies, today]);
@@ -163,9 +166,18 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     if (file.size > 5 * 1024 * 1024) { setUploadError("Max 5 MB"); return; }
     const reader = new FileReader();
     reader.onload = () => {
-      setDocumentUrl(reader.result as string);
+      const url = reader.result as string;
+      // If replacing an existing doc, push the old one onto history.
+      if (documentUrl) {
+        setDocumentHistory((h) => [
+          { url: documentUrl, name: documentName, type: documentType, uploadedAt: documentUploadedAt ?? new Date().toISOString() },
+          ...h,
+        ]);
+      }
+      setDocumentUrl(url);
       setDocumentName(file.name);
       setDocumentType(file.type);
+      setDocumentUploadedAt(new Date().toISOString());
     };
     reader.readAsDataURL(file);
   };
