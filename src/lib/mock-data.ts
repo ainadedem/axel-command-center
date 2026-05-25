@@ -164,6 +164,8 @@ export const invoicesStore = createCollection<Invoice>("invoices", []);
 export const opportunitiesStore = createCollection<Opportunity>("opportunities", []);
 export const categoriesStore = createCollection<Category>("categories", []);
 export const budgetsStore = createCollection<Budget>("budgets", []);
+export const teamMembersStore = createCollection<TeamMember>("team-members", []);
+export const salesMembersStore = createCollection<SalesMember>("sales-members", []);
 
 /* ─── Live array exports (backward compatibility) ───────────────────── */
 
