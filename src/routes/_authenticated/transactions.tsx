@@ -189,11 +189,13 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
   const accounts = useAccounts();
   const clients = useClients();
   const suppliers = useSuppliers();
+  const categories = useCategories();
   const [companyId, setCompanyId] = useState("");
   const [accountId, setAccountId] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [type, setType] = useState<Transaction["type"]>("expense");
-  const [category, setCategory] = useState("");
+  const [categoryId, setCategoryId] = useState<string>("");
+  const [categoryName, setCategoryName] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("0");
   const [currency, setCurrency] = useState<Currency>("MGA");
@@ -204,12 +206,14 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
     if (!open) return;
     if (editing) {
       setCompanyId(editing.companyId); setAccountId(editing.accountId); setDate(editing.date);
-      setType(editing.type); setCategory(editing.category); setDescription(editing.description);
+      setType(editing.type); setCategoryId(editing.categoryId ?? ""); setCategoryName(editing.category);
+      setDescription(editing.description);
       setAmount(String(editing.amount)); setCurrency(editing.currency);
       setClientId(editing.clientId ?? ""); setSupplierId(editing.supplierId ?? "");
     } else {
       const c = companies[0]; setCompanyId(c?.id ?? ""); setAccountId(""); setDate(new Date().toISOString().slice(0, 10));
-      setType("expense"); setCategory(""); setDescription(""); setAmount("0"); setCurrency(c?.baseCurrency ?? "MGA");
+      setType("expense"); setCategoryId(""); setCategoryName(""); setDescription(""); setAmount("0");
+      setCurrency(c?.baseCurrency ?? "MGA");
       setClientId(""); setSupplierId("");
     }
   }, [open, editing, companies]);
@@ -217,11 +221,38 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
   const companyAccounts = accounts.filter((a) => a.companyId === companyId);
   const companyClients = clients.filter((c) => c.companyId === companyId);
   const companySuppliers = suppliers.filter((s) => s.companyId === companyId);
+  const kind: "income" | "expense" | null =
+    type === "income" ? "income" : type === "expense" ? "expense" : null;
+  const companyCategories = categories.filter(
+    (c) => c.companyId === companyId && (kind ? c.kind === kind : true),
+  );
 
   const submit = () => {
     if (!description.trim() || !companyId || !accountId) return;
+    // Resolve category: explicit selection wins, otherwise create a new one
+    // from the free-text name when provided.
+    let resolvedId = categoryId || undefined;
+    let resolvedName = categoryName.trim();
+    if (!resolvedId && resolvedName && kind) {
+      const existing = companyCategories.find(
+        (c) => c.name.toLowerCase() === resolvedName.toLowerCase(),
+      );
+      if (existing) {
+        resolvedId = existing.id;
+      } else {
+        const cat = { id: newId("cat"), companyId, name: resolvedName, kind };
+        categoriesStore.add(cat);
+        resolvedId = cat.id;
+      }
+    }
+    if (resolvedId && !resolvedName) {
+      resolvedName = categories.find((c) => c.id === resolvedId)?.name ?? "";
+    }
     const data: Omit<Transaction, "id"> = {
-      companyId, accountId, date, type, category, description,
+      companyId, accountId, date, type,
+      category: resolvedName,
+      categoryId: resolvedId,
+      description,
       amount: Number(amount) || 0, currency,
       clientId: type === "income" ? (clientId || undefined) : undefined,
       supplierId: type === "expense" ? (supplierId || undefined) : undefined,
@@ -230,6 +261,7 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
     else transactionsStore.add({ id: newId("tx"), ...data });
     onOpenChange(false);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
