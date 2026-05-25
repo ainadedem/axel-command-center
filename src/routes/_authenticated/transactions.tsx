@@ -7,7 +7,7 @@ import { format, parseISO } from "date-fns";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/transactions")({ component: TransactionsPage });
+export const Route = createFileRoute("/_authenticated/transactions")({ component: TransactionsPage });
 
 const types = ["all", "income", "expense", "transfer", "intercompany"] as const;
 

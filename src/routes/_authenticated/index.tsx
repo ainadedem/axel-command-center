@@ -14,7 +14,7 @@ import {
 } from "recharts";
 import { format, subDays, parseISO } from "date-fns";
 
-export const Route = createFileRoute("/")({ component: Dashboard });
+export const Route = createFileRoute("/_authenticated/")({ component: Dashboard });
 
 function Dashboard() {
   return (

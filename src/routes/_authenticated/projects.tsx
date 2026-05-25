@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { projects, clients, companies, fmtCompact, toMGA } from "@/lib/mock-data";
 import { inScope, useCompany } from "@/lib/company-context";
 
-export const Route = createFileRoute("/projects")({ component: ProjectsPage });
+export const Route = createFileRoute("/_authenticated/projects")({ component: ProjectsPage });
 
 function ProjectsPage() {
   return (

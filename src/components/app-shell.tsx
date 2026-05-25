@@ -1,12 +1,13 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Building2, Wallet, ArrowLeftRight, FileText,
   Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus,
-  ChevronDown, Check,
+  ChevronDown, Check, LogOut,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { CompanyProvider, useCompany } from "@/lib/company-context";
 import { companies } from "@/lib/mock-data";
+import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 
 const nav = [
@@ -120,6 +121,13 @@ function Sidebar() {
 }
 
 function Topbar() {
+  const { profile, user, signOut, roles } = useAuth();
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const name = profile?.display_name || user?.email || "—";
+  const initials = name.split(/\s+/).map((s) => s[0]).slice(0, 2).join("").toUpperCase();
+  const role = roles[0]?.replace("_", " ") ?? "no role";
+
   return (
     <header className="h-14 shrink-0 border-b border-border bg-background/70 backdrop-blur px-6 flex items-center gap-4 sticky top-0 z-30">
       <div className="flex-1 max-w-md relative">
@@ -138,7 +146,32 @@ function Topbar() {
           <Bell className="h-4 w-4" />
           <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-primary" />
         </button>
-        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-chart-2 to-chart-4 grid place-items-center text-xs font-display font-bold">MR</div>
+        <div className="relative">
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            className="h-8 w-8 rounded-full bg-gradient-to-br from-chart-2 to-chart-4 grid place-items-center text-xs font-display font-bold"
+          >
+            {initials || "?"}
+          </button>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+              <div className="absolute right-0 mt-2 w-60 rounded-lg border border-border bg-popover shadow-2xl z-50 overflow-hidden">
+                <div className="px-3 py-3 border-b border-border">
+                  <div className="text-sm font-medium truncate">{name}</div>
+                  <div className="text-[11px] text-muted-foreground truncate">{user?.email}</div>
+                  <div className="text-[10px] uppercase tracking-wider text-primary mt-1">{role}</div>
+                </div>
+                <button
+                  onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-accent"
+                >
+                  <LogOut className="h-4 w-4" /> Sign out
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );

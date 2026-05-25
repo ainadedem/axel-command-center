@@ -5,7 +5,7 @@ import { opportunities, stages, companies, fmtCompact, toMGA, stageProbability, 
 import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO } from "date-fns";
 
-export const Route = createFileRoute("/pipeline")({ component: PipelinePage });
+export const Route = createFileRoute("/_authenticated/pipeline")({ component: PipelinePage });
 
 function PipelinePage() {
   return (

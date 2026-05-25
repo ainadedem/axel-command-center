@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { transactions, companies, toMGA, fmtCompact } from "@/lib/mock-data";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 
-export const Route = createFileRoute("/reports")({ component: ReportsPage });
+export const Route = createFileRoute("/_authenticated/reports")({ component: ReportsPage });
 
 function ReportsPage() {
   return (
