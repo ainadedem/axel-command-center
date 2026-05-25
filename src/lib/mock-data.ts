@@ -60,6 +60,7 @@ export interface Transaction {
   amount: number;
   currency: Currency;
   clientId?: string;
+  supplierId?: string;
   projectId?: string;
 }
 

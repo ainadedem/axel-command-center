@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useTransactions, useCompanies, useAccounts, transactionsStore,
-  fmtCompact, type Transaction, type Currency,
+  useTransactions, useCompanies, useAccounts, useClients, useSuppliers,
+  transactionsStore, fmtCompact, type Transaction, type Currency,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
@@ -40,6 +40,8 @@ function Body() {
   const { scope } = useCompany();
   const transactions = useTransactions();
   const companies = useCompanies();
+  const clients = useClients();
+  const suppliers = useSuppliers();
   const { q } = Route.useSearch();
   const [filter, setFilter] = useState<(typeof types)[number]>("all");
   const [open, setOpen] = useState(false);
@@ -96,6 +98,7 @@ function Body() {
                 <th className="text-left font-medium px-5 py-3">Date</th>
                 <th className="text-left font-medium px-5 py-3">Description</th>
                 <th className="text-left font-medium px-5 py-3">Company</th>
+                <th className="text-left font-medium px-5 py-3">Counterparty</th>
                 <th className="text-left font-medium px-5 py-3">Category</th>
                 <th className="text-left font-medium px-5 py-3">Type</th>
                 <th className="text-right font-medium px-5 py-3">Amount</th>
@@ -105,12 +108,19 @@ function Body() {
             <tbody>
               {list.map((t) => {
                 const co = companies.find((c) => c.id === t.companyId);
+                const cli = t.clientId ? clients.find((c) => c.id === t.clientId) : null;
+                const sup = t.supplierId ? suppliers.find((s) => s.id === t.supplierId) : null;
                 return (
                   <tr key={t.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
                     <td className="px-5 py-3.5 text-muted-foreground font-tnum text-xs">{format(parseISO(t.date), "MMM d, yyyy")}</td>
                     <td className="px-5 py-3.5 font-medium">{t.description}</td>
                     <td className="px-5 py-3.5">
                       {co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}
+                    </td>
+                    <td className="px-5 py-3.5 text-xs">
+                      {cli ? <span className="text-success">↑ {cli.name}</span>
+                        : sup ? <span className="text-muted-foreground">↓ {sup.name}</span>
+                        : <span className="text-muted-foreground/50">—</span>}
                     </td>
                     <td className="px-5 py-3.5 text-muted-foreground">{t.category}</td>
                     <td className="px-5 py-3.5">
@@ -147,6 +157,8 @@ function Body() {
 function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Transaction | null }) {
   const companies = useCompanies();
   const accounts = useAccounts();
+  const clients = useClients();
+  const suppliers = useSuppliers();
   const [companyId, setCompanyId] = useState("");
   const [accountId, setAccountId] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -155,6 +167,8 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("0");
   const [currency, setCurrency] = useState<Currency>("MGA");
+  const [clientId, setClientId] = useState<string>("");
+  const [supplierId, setSupplierId] = useState<string>("");
 
   useEffect(() => {
     if (!open) return;
@@ -162,17 +176,26 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
       setCompanyId(editing.companyId); setAccountId(editing.accountId); setDate(editing.date);
       setType(editing.type); setCategory(editing.category); setDescription(editing.description);
       setAmount(String(editing.amount)); setCurrency(editing.currency);
+      setClientId(editing.clientId ?? ""); setSupplierId(editing.supplierId ?? "");
     } else {
       const c = companies[0]; setCompanyId(c?.id ?? ""); setAccountId(""); setDate(new Date().toISOString().slice(0, 10));
       setType("expense"); setCategory(""); setDescription(""); setAmount("0"); setCurrency(c?.baseCurrency ?? "MGA");
+      setClientId(""); setSupplierId("");
     }
   }, [open, editing, companies]);
 
   const companyAccounts = accounts.filter((a) => a.companyId === companyId);
+  const companyClients = clients.filter((c) => c.companyId === companyId);
+  const companySuppliers = suppliers.filter((s) => s.companyId === companyId);
 
   const submit = () => {
     if (!description.trim() || !companyId || !accountId) return;
-    const data = { companyId, accountId, date, type, category, description, amount: Number(amount) || 0, currency };
+    const data: Omit<Transaction, "id"> = {
+      companyId, accountId, date, type, category, description,
+      amount: Number(amount) || 0, currency,
+      clientId: type === "income" ? (clientId || undefined) : undefined,
+      supplierId: type === "expense" ? (supplierId || undefined) : undefined,
+    };
     if (editing) transactionsStore.update(editing.id, data);
     else transactionsStore.add({ id: newId("tx"), ...data });
     onOpenChange(false);
@@ -230,6 +253,30 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
               </Select>
             </div>
           </div>
+          {type === "income" && (
+            <div>
+              <Label>Client</Label>
+              <Select value={clientId || "none"} onValueChange={(v) => setClientId(v === "none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder={companyClients.length ? "Link a client" : "No clients for this company"} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— None —</SelectItem>
+                  {companyClients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {type === "expense" && (
+            <div>
+              <Label>Supplier</Label>
+              <Select value={supplierId || "none"} onValueChange={(v) => setSupplierId(v === "none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder={companySuppliers.length ? "Link a supplier" : "No suppliers for this company"} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— None —</SelectItem>
+                  {companySuppliers.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
