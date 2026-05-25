@@ -289,11 +289,13 @@ export function seedLogiaDerivedData(force = false) {
 
   /* ── Suppliers (401) ────────────────────────────────────────────── */
   const supplierByName = new Map<string, Supplier>();
+  const internalNames = new Set<string>();
   for (const e of entries) {
     for (const l of e.lines) {
       if (!l.account.startsWith("401")) continue;
       const name = (l.label || "").trim();
       if (!name || name.toUpperCase() === "FOURNISSEURS") continue;
+      if (l.account === "401200") internalNames.add(name);
       if (supplierByName.has(name)) continue;
       const supplier: Supplier = {
         id: `sup_log_${slug(name)}`,
@@ -306,6 +308,9 @@ export function seedLogiaDerivedData(force = false) {
       suppliersStore.add(supplier);
     }
   }
+
+  /* ── Team members (derived from internal 401200 payees) ─────────── */
+  seedTeamFromInternalNames(internalNames);
 
   /* ── Invoices (VTE journal entries) ─────────────────────────────── */
   for (const e of entries) {
