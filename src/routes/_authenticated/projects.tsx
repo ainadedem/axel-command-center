@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useProjects, useClients, useCompanies, useInvoices, useTransactions, projectsStore,
+  useProjects, useClients, useCompanies, useInvoices, useTransactions, invoicesStore, projectsStore,
   fmtCompact, toMGA, type Project, type Currency,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Wand2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/projects")({ component: ProjectsPage });
 
