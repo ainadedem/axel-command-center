@@ -148,13 +148,27 @@ function Sidebar() {
         })}
       </nav>
       <div className="p-3 border-t border-sidebar-border">
-        <Link to="/" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50">
+        <Link to="/settings" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50">
           <Settings className="h-4 w-4" /> Settings
         </Link>
       </div>
     </aside>
   );
 }
+
+// Map current path → the create action exposed by that page (via window event)
+const CREATE_EVENT = "axel:open-create";
+const NEW_BUTTON_ROUTES: { match: (p: string) => boolean; to: string; label: string }[] = [
+  { match: (p) => p.startsWith("/accounts"), to: "/accounts", label: "New account" },
+  { match: (p) => p.startsWith("/transactions"), to: "/transactions", label: "New transaction" },
+  { match: (p) => p.startsWith("/invoices"), to: "/invoices", label: "New invoice" },
+  { match: (p) => p.startsWith("/clients"), to: "/clients", label: "New client" },
+  { match: (p) => p.startsWith("/suppliers"), to: "/suppliers", label: "New supplier" },
+  { match: (p) => p.startsWith("/projects"), to: "/projects", label: "New project" },
+  { match: (p) => p.startsWith("/pipeline"), to: "/pipeline", label: "New opportunity" },
+  { match: (p) => p.startsWith("/companies"), to: "/companies", label: "New company" },
+  { match: (p) => p.startsWith("/journal"), to: "/journal", label: "New entry" },
+];
 
 function Topbar() {
   const { profile, user, signOut, roles } = useAuth();
