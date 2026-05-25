@@ -66,12 +66,35 @@ function DashboardBody() {
   const burnMGA = expenseMGA; // last 30d
   const runwayMonths = burnMGA > 0 ? totalMGA / burnMGA : 99;
 
+  // Prior 30d window for real trend deltas
+  const prev30 = tx.filter((t) => {
+    const d = parseISO(t.date);
+    return d < subDays(new Date(), 30) && d >= subDays(new Date(), 60);
+  });
+  const prevIncomeMGA = prev30.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+  const prevExpenseMGA = prev30.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+  const prevProfitMGA = prevIncomeMGA - prevExpenseMGA;
+
+  // Cash delta last 30d as % of opening cash (totalMGA - profitMGA approximation)
+  const openingCash = Math.max(totalMGA - profitMGA, 1);
+  const cashPct = (profitMGA / openingCash) * 100;
+  const profitPct = pct(profitMGA, prevProfitMGA);
+  const receivablesPct = pct(receivablesMGA, prevIncomeMGA); // proxy
+  const prevBurn = prevExpenseMGA;
+  const prevRunway = prevBurn > 0 ? totalMGA / prevBurn : runwayMonths;
+  const runwayDeltaPct = pct(runwayMonths, prevRunway);
+
+  // Runway health: danger if burning cash (profit < 0), warning if runway < 4mo
+  const runwayTone: "default" | "warning" | "danger" | "success" =
+    profitMGA < 0 ? "danger" : runwayMonths < 4 ? "warning" : runwayMonths >= 6 ? "success" : "default";
+
   const pipelineMGA = opp
     .filter((o) => o.stage !== "Won" && o.stage !== "Lost")
     .reduce((s, o) => s + toMGA(o.value, o.currency), 0);
   const weightedMGA = opp
     .filter((o) => o.stage !== "Won" && o.stage !== "Lost")
     .reduce((s, o) => s + toMGA(o.value, o.currency) * stageProbability[o.stage], 0);
+
 
   // Cash flow chart with view modes
   const [cashView, setCashView] = useState<"daily" | "monthly" | "yearly">("daily");
