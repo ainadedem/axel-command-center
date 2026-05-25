@@ -200,10 +200,18 @@ export interface PurchaseOrder {
   amount: number;
   currency: Currency;
   status: POStatus;
-  /** Uploaded client PO document (data URL). */
+  /** Uploaded client PO document (data URL) — current/latest version. */
   documentUrl?: string;
   documentName?: string;
   documentType?: string;
+  documentUploadedAt?: string;
+  /** Previous versions of the client PO document, newest first. */
+  documentHistory?: Array<{
+    url: string;
+    name?: string;
+    type?: string;
+    uploadedAt: string;
+  }>;
 }
 
 
