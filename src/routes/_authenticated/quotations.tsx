@@ -177,9 +177,14 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     setLines((prev) => prev.map((l) => {
       if (l.id !== id) return l;
       const next = { ...l, ...patch };
+      if (patch.capability === "PROJECT") {
+        next.level = undefined;
+        next.unit = "fixed" as Unit;
+        next.description = next.description || "PROJECT — Fixed fee";
+      }
       // Recompute rate when capability/level/unit/currency drivers change.
-      if ((patch.level || patch.unit || patch.capability) && next.level) {
-        next.rate = getRate(next.level as Level, next.unit, currency);
+      if ((patch.level || patch.unit || patch.capability) && next.level && next.unit !== "fixed") {
+        next.rate = getRate(next.level as Level, next.unit as Unit, currency);
         if (patch.capability || patch.level) {
           const title = levels.find((x) => x.code === next.level)?.title ?? next.level;
           next.description = `${next.capability} — ${title}`;
