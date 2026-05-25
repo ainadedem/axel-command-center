@@ -47,11 +47,26 @@ function Body() {
   const companies = useCompanies();
   const clients = useClients();
   const projects = useProjects();
-  const list = inScope(quotes, scope);
+  const baseList = inScope(quotes, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Quote | null>(null);
   const [previewing, setPreviewing] = useState<Quote | null>(null);
   const openCreate = () => { setEditing(null); setOpen(true); };
+
+  const fields: FieldDef<Quote>[] = [
+    { key: "number", label: "Number", type: "string", accessor: (q) => q.number, noGroup: true },
+    { key: "client", label: "Client", type: "enum", accessor: (q) => clients.find((c) => c.id === q.clientId)?.name ?? "" },
+    { key: "project", label: "Project", type: "enum", accessor: (q) => projects.find((p) => p.id === q.projectId)?.name ?? "" },
+    { key: "company", label: "Company", type: "enum", accessor: (q) => companies.find((c) => c.id === q.companyId)?.shortName ?? "" },
+    { key: "status", label: "Status", type: "enum", accessor: (q) => q.status },
+    { key: "currency", label: "Currency", type: "enum", accessor: (q) => q.currency },
+    { key: "issueDate", label: "Issued", type: "date", accessor: (q) => q.issueDate, noGroup: true },
+    { key: "validUntil", label: "Valid until", type: "date", accessor: (q) => q.validUntil, noGroup: true },
+    { key: "amount", label: "Amount", type: "number", accessor: (q) => q.amount, noGroup: true },
+  ];
+  const view = useDataView<Quote>("quotations", fields);
+  const groups = view.apply(baseList);
+  const list = groups.flatMap((g) => g.items);
 
   const convertToPO = (q: Quote) => {
     purchaseOrdersStore.add({
