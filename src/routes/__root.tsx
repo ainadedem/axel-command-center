@@ -19,7 +19,7 @@ function NotFoundComponent() {
         <div className="font-display text-7xl font-bold tracking-tight text-foreground">404</div>
         <h2 className="mt-3 text-lg font-medium">Page not found</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          That route doesn't exist in AXEL.
+          That route doesn't exist in onlogia.
         </p>
         <Link
           to="/"
@@ -56,10 +56,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "AXEL — ERP" },
+      { title: "onlogia" },
       { name: "description", content: "Premium multi-company, multi-currency finance command center." },
-      { property: "og:title", content: "AXEL — ERP" },
-      { name: "twitter:title", content: "AXEL — ERP" },
+      { property: "og:title", content: "onlogia" },
+      { name: "twitter:title", content: "onlogia" },
       { property: "og:description", content: "Premium multi-company, multi-currency finance command center." },
       { name: "twitter:description", content: "Premium multi-company, multi-currency finance command center." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/cea62933-31f5-4d43-8fcc-dd1c845d357d/id-preview-d680f478--6d852ac6-4d80-4857-bc8c-05e21302d63c.lovable.app-1779703926078.png" },

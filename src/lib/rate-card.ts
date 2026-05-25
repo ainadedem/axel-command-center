@@ -1,4 +1,4 @@
-// AXEL rate card — derived from the Publicis ERP rate-card template.
+// onlogia rate card — derived from the Publicis ERP rate-card template.
 // Defines annual salaries by Capability × Level (MGA), then computes
 // fully-loaded hourly / day rates using the standard chain:
 //   staff_cost = salary * (1 + benefits)

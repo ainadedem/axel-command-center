@@ -4,7 +4,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* AXEL — Premium Financial Control System */
+/* onlogia — Premium Financial Control System */
 
 @theme inline {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
