@@ -308,10 +308,14 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                           </Select>
                         </td>
                         <td className="px-2 py-1.5">
-                          <Select value={l.level ?? "P7"} onValueChange={(v) => updateLine(l.id, { level: v })}>
-                            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                            <SelectContent>{levels.map((lv) => <SelectItem key={lv.code} value={lv.code}>{lv.code} · {lv.title}</SelectItem>)}</SelectContent>
-                          </Select>
+                          {l.capability === "PROJECT" ? (
+                            <span className="text-xs text-muted-foreground px-2 py-1.5 block">—</span>
+                          ) : (
+                            <Select value={l.level ?? "P7"} onValueChange={(v) => updateLine(l.id, { level: v })}>
+                              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent>{levels.map((lv) => <SelectItem key={lv.code} value={lv.code}>{lv.code} · {lv.title}</SelectItem>)}</SelectContent>
+                            </Select>
+                          )}
                         </td>
                         <td className="px-2 py-1.5">
                           <Select value={l.unit} onValueChange={(v) => updateLine(l.id, { unit: v as "hour" | "day" })}>
