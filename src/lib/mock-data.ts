@@ -309,6 +309,8 @@ export const useCategories = () => useCollection(categoriesStore);
 export const useBudgets = () => useCollection(budgetsStore);
 export const useTeamMembers = () => useCollection(teamMembersStore);
 export const useSalesMembers = () => useCollection(salesMembersStore);
+export const useQuotes = () => useCollection(quotesStore);
+export const usePurchaseOrders = () => useCollection(purchaseOrdersStore);
 
 /** Convenience: list of sales-team people (with team name) filtered by role. */
 export function useSalesPeople(role: "acquisition" | "closer"): { id: string; teamMemberId: string; name: string }[] {
