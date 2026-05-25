@@ -73,18 +73,109 @@ function Body() {
   const openCreate = () => { setEditing(null); setOpen(true); };
 
 
+  const scopedInvoices = list;
+  const scopedTx = transactionsStore.items; // raw for matching
+  const checks: ReconcileCheck[] = [
+    {
+      id: "no-project",
+      label: "Invoices without a project",
+      description: "Auto-create one project per (company, client) and link orphans.",
+      count: scopedInvoices.filter((i) => !i.projectId).length,
+      fix: () => {
+        const orphans = invoicesStore.items.filter((i) => !i.projectId && inScope([i], scope).length);
+        const groups = new Map<string, Invoice[]>();
+        orphans.forEach((inv) => {
+          const k = `${inv.companyId}::${inv.clientId}`;
+          if (!groups.has(k)) groups.set(k, []);
+          groups.get(k)!.push(inv);
+        });
+        let linked = 0;
+        groups.forEach((invs, k) => {
+          const [companyId, clientId] = k.split("::");
+          const cl = clients.find((c) => c.id === clientId);
+          let proj = projects.find((p) => p.companyId === companyId && p.clientId === clientId);
+          if (!proj) {
+            const newProj: Project = {
+              id: newId("prj"), companyId, clientId,
+              name: cl ? `${cl.name} — engagement` : "Untitled engagement",
+              revenue: invs.reduce((s, i) => s + i.amount, 0), cost: 0, currency: invs[0].currency,
+            };
+            projectsStore.add(newProj); proj = newProj;
+          }
+          invs.forEach((inv) => { invoicesStore.update(inv.id, { projectId: proj!.id }); linked++; });
+        });
+        return linked;
+      },
+    },
+    {
+      id: "should-be-paid",
+      label: "Invoices fully covered by payments but not marked paid",
+      description: "Sets status to paid when balance is zero.",
+      count: scopedInvoices.filter((i) => i.status !== "paid" && i.status !== "cancelled" && i.paid >= i.amount && i.amount > 0).length,
+      fix: () => {
+        let n = 0;
+        scopedInvoices.forEach((i) => {
+          if (i.status !== "paid" && i.status !== "cancelled" && i.paid >= i.amount && i.amount > 0) {
+            invoicesStore.update(i.id, { status: "paid", paidDate: i.paidDate ?? new Date().toISOString().slice(0, 10) });
+            n++;
+          }
+        });
+        return n;
+      },
+    },
+    {
+      id: "should-be-partial",
+      label: "Invoices with partial payment not marked partial",
+      count: scopedInvoices.filter((i) => i.paid > 0 && i.paid < i.amount && i.status !== "partial" && i.status !== "cancelled").length,
+      fix: () => {
+        let n = 0;
+        scopedInvoices.forEach((i) => {
+          if (i.paid > 0 && i.paid < i.amount && i.status !== "partial" && i.status !== "cancelled") {
+            invoicesStore.update(i.id, { status: "partial" }); n++;
+          }
+        });
+        return n;
+      },
+    },
+    {
+      id: "paid-no-tx",
+      label: "Invoices marked paid with no matching transaction",
+      description: "Creates an income transaction so the cashflow ties out.",
+      count: scopedInvoices.filter((i) => i.status === "paid" && !scopedTx.some((t) => t.invoiceId === i.id)).length,
+      fix: () => {
+        let n = 0;
+        scopedInvoices.forEach((i) => {
+          if (i.status !== "paid") return;
+          if (scopedTx.some((t) => t.invoiceId === i.id)) return;
+          transactionsStore.add({
+            id: newId("tx"), companyId: i.companyId, accountId: "",
+            date: i.paidDate ?? new Date().toISOString().slice(0, 10),
+            type: "income", category: "Sales", description: `Payment ${i.number}`,
+            amount: i.amount, currency: i.currency, clientId: i.clientId,
+            projectId: i.projectId, invoiceId: i.id, source: "manual",
+          });
+          n++;
+        });
+        return n;
+      },
+    },
+  ];
+
   return (
     <div className="p-8 space-y-5">
       <div className="flex items-center justify-between gap-4">
         <CrudToolbar count={list.length} label="invoices" onCreate={openCreate} />
-        <button
-          onClick={toggleMode}
-          className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          title={numMode === "compact" ? "Switch to full numbers" : "Switch to compact numbers"}
-        >
-          {numMode === "compact" ? <ToggleLeft className="h-4 w-4" /> : <ToggleRight className="h-4 w-4" />}
-          <span className="hidden sm:inline">{numMode === "compact" ? "Compact" : "Full"}</span>
-        </button>
+        <div className="flex items-center gap-4">
+          <ReconcileButton checks={checks} />
+          <button
+            onClick={toggleMode}
+            className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            title={numMode === "compact" ? "Switch to full numbers" : "Switch to compact numbers"}
+          >
+            {numMode === "compact" ? <ToggleLeft className="h-4 w-4" /> : <ToggleRight className="h-4 w-4" />}
+            <span className="hidden sm:inline">{numMode === "compact" ? "Compact" : "Full"}</span>
+          </button>
+        </div>
       </div>
 
       {list.length === 0 ? (
