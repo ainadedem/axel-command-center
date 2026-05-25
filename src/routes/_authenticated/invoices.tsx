@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useInvoices, useCompanies, useClients, useProjects, usePurchaseOrders, useQuotes, invoicesStore,
-  fmtCompact, toMGA, type Invoice, type Currency,
+  useInvoices, useCompanies, useClients, useProjects, usePurchaseOrders, useQuotes, useAccounts,
+  invoicesStore, transactionsStore,
+  fmtCompact, toMGA, FX, type Invoice, type Currency,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
@@ -54,6 +55,7 @@ function Body() {
   const [previewing, setPreviewing] = useState<Invoice | null>(null);
   const [paying, setPaying] = useState<Invoice | null>(null);
   const [cancelling, setCancelling] = useState<Invoice | null>(null);
+  const [marking, setMarking] = useState<Invoice | null>(null);
 
   const active = list.filter((i) => i.status !== "cancelled");
   const totalOpen = active.filter((i) => i.status !== "paid").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
@@ -61,15 +63,6 @@ function Body() {
   const totalPaid = active.filter((i) => i.status === "paid").reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
   const openCreate = () => { setEditing(null); setOpen(true); };
 
-  const markPaid = (inv: Invoice) => {
-    if (inv.status === "cancelled") return;
-    if (!confirm(`Mark invoice ${inv.number} as fully paid?`)) return;
-    invoicesStore.update(inv.id, {
-      paid: inv.amount,
-      paidDate: new Date().toISOString().slice(0, 10),
-      status: "paid",
-    });
-  };
 
   return (
     <div className="p-8 space-y-5">
@@ -164,7 +157,7 @@ function Body() {
                           {inv.status !== "paid" && inv.status !== "cancelled" && (
                             <>
                               <button onClick={() => setPaying(inv)} title="Add payment" className="h-7 w-7 grid place-items-center rounded hover:bg-success/10 text-muted-foreground hover:text-success"><Wallet className="h-3.5 w-3.5" /></button>
-                              <button onClick={() => markPaid(inv)} title="Mark as paid" className="h-7 w-7 grid place-items-center rounded hover:bg-success/10 text-muted-foreground hover:text-success"><BadgeCheck className="h-3.5 w-3.5" /></button>
+                              <button onClick={() => setMarking(inv)} title="Mark as paid" className="h-7 w-7 grid place-items-center rounded hover:bg-success/10 text-muted-foreground hover:text-success"><BadgeCheck className="h-3.5 w-3.5" /></button>
                               <button onClick={() => setCancelling(inv)} title="Cancel invoice" className="h-7 w-7 grid place-items-center rounded hover:bg-warning/10 text-muted-foreground hover:text-warning"><Ban className="h-3.5 w-3.5" /></button>
                             </>
                           )}
@@ -192,6 +185,7 @@ function Body() {
       />
       <RecordPaymentDialog open={!!paying} onOpenChange={(v) => { if (!v) setPaying(null); }} invoice={paying} />
       <CancelInvoiceDialog open={!!cancelling} onOpenChange={(v) => { if (!v) setCancelling(null); }} invoice={cancelling} />
+      <MarkPaidDialog open={!!marking} onOpenChange={(v) => { if (!v) setMarking(null); }} invoice={marking} />
     </div>
   );
 }
@@ -471,5 +465,135 @@ function Stat({ label, value, danger, good }: { label: string; value: string; da
       <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
       <div className={cn("font-display text-2xl font-bold mt-2 font-tnum", danger && "text-destructive", good && "text-success")}>{value}</div>
     </div>
+  );
+}
+
+function MarkPaidDialog({ open, onOpenChange, invoice }: { open: boolean; onOpenChange: (v: boolean) => void; invoice: Invoice | null }) {
+  const accounts = useAccounts();
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [accountId, setAccountId] = useState<string>("");
+  const [receivedMga, setReceivedMga] = useState<string>("");
+
+  const coAccounts = invoice ? accounts.filter((a) => a.companyId === invoice.companyId) : [];
+  const expectedMga = invoice ? Math.round(toMGA(invoice.amount - invoice.paid, invoice.currency)) : 0;
+  const isForeign = !!invoice && invoice.currency !== "MGA";
+
+  useEffect(() => {
+    if (open && invoice) {
+      setDate(new Date().toISOString().slice(0, 10));
+      setReceivedMga(String(expectedMga));
+      // Prefer first MGA account of the same company
+      const mgaAcc = coAccounts.find((a) => a.currency === "MGA") ?? coAccounts[0];
+      setAccountId(mgaAcc?.id ?? "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, invoice]);
+
+  if (!invoice) return null;
+
+  const account = coAccounts.find((a) => a.id === accountId);
+  const remaining = invoice.amount - invoice.paid;
+  const receivedNum = Number(receivedMga) || 0;
+  // FX delta in MGA: positive = gain, negative = loss (perte de change)
+  const fxDelta = isForeign ? receivedNum - expectedMga : 0;
+
+  const submit = () => {
+    if (invoice.status === "cancelled") return;
+    invoicesStore.update(invoice.id, {
+      paid: invoice.amount,
+      paidDate: date,
+      status: "paid",
+    });
+    // Payment transaction (in invoice currency, for ledger consistency)
+    if (account && remaining > 0) {
+      transactionsStore.add({
+        id: newId("tx"),
+        companyId: invoice.companyId,
+        accountId: account.id,
+        date,
+        type: "income",
+        category: "Encaissements clients",
+        description: `Payment · ${invoice.number}`,
+        amount: remaining,
+        currency: invoice.currency,
+        clientId: invoice.clientId,
+        projectId: invoice.projectId,
+        invoiceId: invoice.id,
+        source: "manual",
+      });
+    }
+    // FX gain/loss (in MGA — the difference between what was expected and what landed)
+    if (isForeign && Math.abs(fxDelta) >= 1 && account) {
+      const isGain = fxDelta > 0;
+      transactionsStore.add({
+        id: newId("tx"),
+        companyId: invoice.companyId,
+        accountId: account.id,
+        date,
+        type: isGain ? "income" : "expense",
+        category: isGain ? "Gain de change" : "Perte de change",
+        description: `FX ${isGain ? "gain" : "loss"} · ${invoice.number} (${invoice.currency} → MGA)`,
+        amount: Math.abs(fxDelta),
+        currency: "MGA",
+        clientId: invoice.clientId,
+        projectId: invoice.projectId,
+        invoiceId: invoice.id,
+        source: "manual",
+      });
+    }
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Mark as paid · {invoice.number}</DialogTitle></DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="rounded-md border border-border bg-surface/40 p-3 text-xs space-y-1">
+            <div className="flex justify-between"><span className="text-muted-foreground">Invoice total</span><span className="font-tnum">{invoice.amount.toLocaleString()} {invoice.currency}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Remaining</span><span className="font-tnum">{remaining.toLocaleString()} {invoice.currency}</span></div>
+            {isForeign && (
+              <div className="flex justify-between"><span className="text-muted-foreground">Expected in MGA (rate {FX[invoice.currency].toLocaleString()})</span><span className="font-tnum">{expectedMga.toLocaleString()} MGA</span></div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Payment date</Label>
+              <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
+                className="w-full h-9 rounded-md border border-input bg-transparent px-3 text-sm" />
+            </div>
+            <div>
+              <Label>Account</Label>
+              <Select value={accountId} onValueChange={setAccountId}>
+                <SelectTrigger className="h-9"><SelectValue placeholder="Select account" /></SelectTrigger>
+                <SelectContent>
+                  {coAccounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>{a.name} ({a.currency})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {isForeign && (
+            <div>
+              <Label>Actual MGA received</Label>
+              <input type="number" value={receivedMga} onChange={(e) => setReceivedMga(e.target.value)}
+                className="w-full h-9 rounded-md border border-input bg-transparent px-3 text-sm font-tnum" />
+              {Math.abs(fxDelta) >= 1 && (
+                <div className={cn("mt-1.5 text-[11px] font-tnum", fxDelta > 0 ? "text-success" : "text-destructive")}>
+                  {fxDelta > 0 ? "Gain" : "Perte"} de change: {fxDelta > 0 ? "+" : "−"}{Math.abs(fxDelta).toLocaleString()} MGA
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={submit}>Mark paid</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
