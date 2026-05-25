@@ -133,8 +133,9 @@ function BilanBody() {
           <Total label="TOTAL PASSIF" value={totalPassif} co={co} />
         </Panel>
       </div>
-    </AppShell>
+    </>
   );
+
 }
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
