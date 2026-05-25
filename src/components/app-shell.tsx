@@ -3,11 +3,12 @@ import {
   LayoutDashboard, Building2, Wallet, ArrowLeftRight, FileText,
   Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus, Truck,
   ChevronDown, ChevronRight, Check, LogOut, Target, UserCog, Handshake,
-  BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList,
+  BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList, RefreshCw,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CompanyProvider, useCompany } from "@/lib/company-context";
 import { useCompanies } from "@/lib/mock-data";
+import { useFxRates } from "@/lib/fx";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -274,6 +275,7 @@ function Topbar() {
         <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
       </form>
       <div className="flex items-center gap-2">
+        <FxBadge />
         <button
           onClick={handleNew}
           className="h-9 px-3 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition flex items-center gap-1.5"
@@ -336,6 +338,59 @@ function Topbar() {
 }
 
 export { CREATE_EVENT };
+
+function FxBadge() {
+  const { rates, updatedAt, source, refresh } = useFxRates();
+  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
+  const stamp = updatedAt
+    ? new Date(updatedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
+    : "never";
+  const onRefresh = async () => { setBusy(true); try { await refresh(); } finally { setBusy(false); } };
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        title={`FX rates · ${source} · updated ${stamp}`}
+        className="hidden md:flex items-center gap-1.5 h-9 px-2.5 rounded-md border border-border bg-surface hover:bg-surface-elevated text-[11px] font-tnum text-muted-foreground"
+      >
+        <span className="text-foreground/80">€</span>
+        <span>{rates.EUR.toLocaleString()}</span>
+        <span className="text-border">·</span>
+        <span className="text-foreground/80">$</span>
+        <span>{rates.USD.toLocaleString()}</span>
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 mt-2 w-64 rounded-lg border border-border bg-popover shadow-2xl z-50 overflow-hidden">
+            <div className="px-3 py-2.5 border-b border-border flex items-center justify-between">
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">FX rates (per MGA)</div>
+              <button
+                onClick={onRefresh}
+                disabled={busy}
+                className="h-6 w-6 grid place-items-center rounded hover:bg-accent text-muted-foreground disabled:opacity-50"
+                title="Refresh now"
+              >
+                <RefreshCw className={cn("h-3.5 w-3.5", busy && "animate-spin")} />
+              </button>
+            </div>
+            <div className="p-3 text-xs space-y-1.5 font-tnum">
+              <div className="flex justify-between"><span className="text-muted-foreground">1 EUR</span><span>{rates.EUR.toLocaleString()} MGA</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">1 USD</span><span>{rates.USD.toLocaleString()} MGA</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">1 MGA</span><span>1 MGA</span></div>
+            </div>
+            <div className="px-3 py-2 border-t border-border text-[10px] text-muted-foreground flex items-center justify-between">
+              <span className="uppercase tracking-wider">{source}</span>
+              <span>updated {stamp}</span>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
