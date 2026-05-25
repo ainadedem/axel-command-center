@@ -102,16 +102,16 @@ function Body() {
         <EmptyState label="opportunities" onCreate={openCreate} />
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <Stat label="Pipeline" value={fmtCompact(total, "MGA")} accent="bg-primary" highlight />
-            <Stat label="Weighted" value={fmtCompact(weighted, "MGA")} accent="bg-violet-500" />
-            <Stat label="Won" value={fmtCompact(won, "MGA")} accent="bg-emerald-500" />
-            <Stat label="Lost" value={fmtCompact(lost, "MGA")} accent="bg-rose-500" />
-            <Stat label="Win rate" value={`${winRate}%`} accent="bg-amber-500" />
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <Stat label="Pipeline" value={fmtCompact(total, "MGA")} />
+            <Stat label="Weighted" value={fmtCompact(weighted, "MGA")} />
+            <Stat label="Won" value={fmtCompact(won, "MGA")} />
+            <Stat label="Lost" value={fmtCompact(lost, "MGA")} />
+            <Stat label="Win rate" value={`${winRate}%`} />
           </div>
 
-          {/* Stage distribution bar */}
           <StageDistribution list={list} />
+
 
           <Tabs value={view} onValueChange={(v) => setView(v as typeof view)}>
             <TabsList>
