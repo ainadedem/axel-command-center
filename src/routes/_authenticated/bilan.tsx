@@ -33,7 +33,16 @@ function sumPrefix(soldes: Map<string, number>, prefixes: string[]) {
 }
 
 function BilanPage() {
+  return (
+    <AppShell>
+      <BilanBody />
+    </AppShell>
+  );
+}
+
+function BilanBody() {
   const { soldes, co } = useSoldes();
+
 
   // ACTIF (débiteur normal)
   const immoIncorp = sumPrefix(soldes, ["20"]);
@@ -77,8 +86,9 @@ function BilanPage() {
   const totalPassif = totalCapitaux + totalDettesFin + totalDettesExpl;
 
   return (
-    <AppShell>
+    <>
       <PageHeader title="Bilan" description={`État du patrimoine — PCG Madagascar 2005 · ${co.name}`} />
+
       <div className="p-8 grid lg:grid-cols-2 gap-5">
         {/* ACTIF */}
         <Panel title="ACTIF">
@@ -123,8 +133,9 @@ function BilanPage() {
           <Total label="TOTAL PASSIF" value={totalPassif} co={co} />
         </Panel>
       </div>
-    </AppShell>
+    </>
   );
+
 }
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
