@@ -16,6 +16,7 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -26,8 +27,20 @@ function LoginPage() {
     setError(null);
     setBusy(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      if (mode === "signup") {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: `${window.location.origin}/` },
+        });
+        if (error) throw error;
+        // auto-confirm is on, so sign in immediately
+        const { error: siErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (siErr) throw siErr;
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      }
       navigate({ to: search.redirect });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");
