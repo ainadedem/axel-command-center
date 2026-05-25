@@ -57,6 +57,13 @@ function Body() {
   const [paying, setPaying] = useState<Invoice | null>(null);
   const [cancelling, setCancelling] = useState<Invoice | null>(null);
   const [marking, setMarking] = useState<Invoice | null>(null);
+  const [numMode, setNumMode] = useState<NumberFormatMode>(getNumberFormat());
+
+  const toggleMode = useCallback(() => {
+    const next: NumberFormatMode = numMode === "compact" ? "full" : "compact";
+    setNumMode(next);
+    setNumberFormat(next);
+  }, [numMode]);
 
   const active = list.filter((i) => i.status !== "cancelled");
   const totalOpen = active.filter((i) => i.status !== "paid").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
@@ -67,16 +74,26 @@ function Body() {
 
   return (
     <div className="p-8 space-y-5">
-      <CrudToolbar count={list.length} label="invoices" onCreate={openCreate} />
+      <div className="flex items-center justify-between gap-4">
+        <CrudToolbar count={list.length} label="invoices" onCreate={openCreate} />
+        <button
+          onClick={toggleMode}
+          className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          title={numMode === "compact" ? "Switch to full numbers" : "Switch to compact numbers"}
+        >
+          {numMode === "compact" ? <ToggleLeft className="h-4 w-4" /> : <ToggleRight className="h-4 w-4" />}
+          <span className="hidden sm:inline">{numMode === "compact" ? "Compact" : "Full"}</span>
+        </button>
+      </div>
 
       {list.length === 0 ? (
         <EmptyState label="invoices" onCreate={openCreate} />
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Stat label="Open receivables" value={fmtCompact(totalOpen, "MGA")} />
-            <Stat label="Overdue" value={fmtCompact(totalOverdue, "MGA")} danger />
-            <Stat label="Collected (period)" value={fmtCompact(totalPaid, "MGA")} good />
+            <Stat label="Open receivables" value={fmtAmount(totalOpen, "MGA")} />
+            <Stat label="Overdue" value={fmtAmount(totalOverdue, "MGA")} danger />
+            <Stat label="Collected (period)" value={fmtAmount(totalPaid, "MGA")} good />
           </div>
 
           <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
