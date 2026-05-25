@@ -8,18 +8,19 @@ import { useState, type ReactNode } from "react";
 import { CompanyProvider, useCompany } from "@/lib/company-context";
 import { companies } from "@/lib/mock-data";
 import { useAuth } from "@/lib/auth-context";
+import { ROLE_LABEL, type Resource } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 
-const nav = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/companies", label: "Companies", icon: Building2 },
-  { to: "/accounts", label: "Accounts", icon: Wallet },
-  { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-  { to: "/invoices", label: "Invoices", icon: FileText },
-  { to: "/clients", label: "Clients", icon: Users },
-  { to: "/projects", label: "Projects", icon: Briefcase },
-  { to: "/pipeline", label: "Pipeline", icon: TrendingUp },
-  { to: "/reports", label: "Reports", icon: BarChart3 },
+const nav: { to: string; label: string; icon: typeof LayoutDashboard; resource: Resource }[] = [
+  { to: "/", label: "Dashboard", icon: LayoutDashboard, resource: "dashboard" },
+  { to: "/companies", label: "Companies", icon: Building2, resource: "companies" },
+  { to: "/accounts", label: "Accounts", icon: Wallet, resource: "accounts" },
+  { to: "/transactions", label: "Transactions", icon: ArrowLeftRight, resource: "transactions" },
+  { to: "/invoices", label: "Invoices", icon: FileText, resource: "invoices" },
+  { to: "/clients", label: "Clients", icon: Users, resource: "clients" },
+  { to: "/projects", label: "Projects", icon: Briefcase, resource: "projects" },
+  { to: "/pipeline", label: "Pipeline", icon: TrendingUp, resource: "pipeline" },
+  { to: "/reports", label: "Reports", icon: BarChart3, resource: "reports" },
 ];
 
 function CompanySwitcher() {
@@ -75,7 +76,8 @@ function CompanySwitcher() {
 
 function Sidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  return (
+  const { can } = useAuth();
+  const visibleNav = nav.filter((item) => can(item.resource, "view"));
     <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
       <div className="px-5 py-5 flex items-center gap-2.5">
         <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-chart-2 grid place-items-center shadow-[var(--shadow-glow)]">
