@@ -233,11 +233,20 @@ export interface PurchaseOrder {
 }
 
 
-export type Stage = "Lead" | "Qualified" | "Proposal" | "Negotiation" | "Won" | "Lost";
-export const stages: Stage[] = ["Lead", "Qualified", "Proposal", "Negotiation", "Won", "Lost"];
+/** Mirrors the "Status" property of the Notion "Logia Sales CRM" database. */
+export type Stage = "Lead" | "Qualified" | "Proposal" | "Negotiation" | "In progress" | "Closed" | "Lost";
+export const stages: Stage[] = ["Lead", "Qualified", "Proposal", "Negotiation", "In progress", "Closed", "Lost"];
 export const stageProbability: Record<Stage, number> = {
-  Lead: 0.1, Qualified: 0.25, Proposal: 0.5, Negotiation: 0.75, Won: 1, Lost: 0,
+  Lead: 0.1, Qualified: 0.25, Proposal: 0.5, Negotiation: 0.75, "In progress": 0.9, Closed: 1, Lost: 0,
 };
+
+/** Mirrors the "Paiement" status of the Notion "Logia Sales CRM" database. */
+export type PaiementStatus = "Not started" | "Processing" | "Partial Paiement" | "Overdue" | "Paid";
+export const paiementStatuses: PaiementStatus[] = ["Not started", "Processing", "Partial Paiement", "Overdue", "Paid"];
+
+/** Mirrors the "Priority" property of the Notion "Logia Sales CRM" database. */
+export type Priority = "Low" | "Medium" | "High";
+export const priorities: Priority[] = ["Low", "Medium", "High"];
 
 export interface Opportunity {
   id: string;
