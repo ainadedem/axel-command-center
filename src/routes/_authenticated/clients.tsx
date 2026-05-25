@@ -72,8 +72,13 @@ function ClientsPage() {
                   </div>
                   <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-border/60">
                     <Stat label="Revenue" value={fmtCompact(revenue, "MGA")} />
-                    <Stat label="Cost" value={fmtCompact(cost, "MGA")} />
+                    <Stat label="Outstanding" value={fmtCompact(outstanding, "MGA")} />
                     <Stat label="Margin" value={`${margin.toFixed(0)}%`} accent />
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 mt-3 text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <div>{cliInvoices.length} invoice{cliInvoices.length === 1 ? "" : "s"}</div>
+                    <div>{cliTx.length} txn{cliTx.length === 1 ? "" : "s"}</div>
+                    <div>{cliProjects.length} project{cliProjects.length === 1 ? "" : "s"}</div>
                   </div>
                 </div>
               );
