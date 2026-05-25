@@ -33,6 +33,7 @@ function Body() {
   const clients = useClients();
   const companies = useCompanies();
   const invoices = useInvoices();
+  const transactions = useTransactions();
   const list = inScope(projects, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Project | null>(null);
