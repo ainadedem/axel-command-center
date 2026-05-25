@@ -391,7 +391,7 @@ function ForecastView({ list }: { list: Opportunity[] }) {
             <div className="flex h-6 rounded-md overflow-hidden bg-surface" style={{ width: `${(total / maxVal) * 100}%`, minWidth: "8%" }}>
               {byStage.map((b) =>
                 b.value > 0 ? (
-                  <div key={b.stage} className={`${STAGE_STYLES[b.stage].bar} flex items-center justify-center text-[10px] font-tnum text-white/90`} style={{ width: `${(b.value / total) * 100}%` }} title={`${b.stage} · ${fmtCompact(b.value, "MGA")}`}>
+                  <div key={b.stage} className={`${STAGE_STYLES[b.stage].dot} flex items-center justify-center text-[10px] font-tnum text-white/90`} style={{ width: `${(b.value / total) * 100}%` }} title={`${b.stage} · ${fmtCompact(b.value, "MGA")}`}>
                     {(b.value / total) > 0.12 ? b.stage[0] : ""}
                   </div>
                 ) : null
