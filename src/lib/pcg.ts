@@ -426,6 +426,14 @@ function addDays(iso: string, days: number): string {
   const d = new Date(iso); d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
 }
+/** Merge known client-name spelling variants onto a single canonical name. */
+const CLIENT_NAME_ALIASES: Record<string, string> = {
+  "AIRLINES MADAGASCAR": "MADAGASCAR AIRLINES",
+};
+function canonicalClientName(name: string): string {
+  return CLIENT_NAME_ALIASES[name.toUpperCase()] ?? name;
+}
+
 function guessCountry(name: string): string {
   const u = name.toUpperCase();
   if (u.includes("CANADA")) return "Canada";
