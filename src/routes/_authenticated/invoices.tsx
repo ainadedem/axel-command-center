@@ -33,7 +33,7 @@ export const Route = createFileRoute("/_authenticated/invoices")({ component: In
 
 const statusStyles: Record<string, string> = {
   draft: "border-muted text-muted-foreground bg-muted/30",
-  sent: "border-chart-2/40 text-chart-2 bg-chart-2/10",
+  sent: "border-primary/30 text-primary bg-primary/10",
   partial: "border-warning/40 text-warning bg-warning/10",
   paid: "border-success/40 text-success bg-success/10",
   overdue: "border-destructive/40 text-destructive bg-destructive/10",
