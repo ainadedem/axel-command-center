@@ -316,6 +316,115 @@ export interface Supplier {
   categories?: ContactCategory[];
 }
 
+/* ─── Expenses (supplier bills + ad-hoc) ────────────────────────────── */
+
+export type ExpenseKind = "bill" | "adhoc";
+export type ExpenseStatus = "draft" | "unpaid" | "partial" | "paid" | "overdue" | "cancelled";
+
+export interface Expense {
+  id: string;
+  companyId: string;
+  /** "bill" = formal supplier invoice (number + due date). "adhoc" = receipt / petty cash. */
+  kind: ExpenseKind;
+  supplierId?: string;
+  /** Free-text name when no supplier is linked (mostly for ad-hoc entries). */
+  payee?: string;
+  /** Supplier-issued document number. */
+  number?: string;
+  issueDate: string;
+  /** Optional for ad-hoc expenses. */
+  dueDate?: string;
+  amount: number;
+  paid: number;
+  currency: Currency;
+  status: ExpenseStatus;
+  /** PCG account this expense posts to (e.g. 622600). */
+  account?: string;
+  /** Free-text category for grouping/reporting. */
+  category?: string;
+  description?: string;
+  projectId?: string;
+  /** Receipt / scan (data URL). */
+  attachmentUrl?: string;
+  attachmentName?: string;
+}
+
+/* ─── Recurring billing schedules ──────────────────────────────────── */
+
+export type BillingFrequency = "monthly" | "quarterly" | "yearly";
+
+export interface RecurringBilling {
+  id: string;
+  companyId: string;
+  clientId: string;
+  projectId?: string;
+  /** Display name (e.g. "Monthly retainer – Acme"). */
+  name: string;
+  amount: number;
+  currency: Currency;
+  frequency: BillingFrequency;
+  /** ISO date — first invoice issue date. */
+  startDate: string;
+  /** ISO date — next scheduled run. */
+  nextRunDate: string;
+  /** Optional ISO date — schedule ends after this. */
+  endDate?: string;
+  /** Net payment terms (days) used when generating invoices. */
+  paymentTermsDays?: number;
+  /** When false, no invoice is generated on the next run. */
+  active: boolean;
+  /** ISO timestamp of the last generated invoice. */
+  lastGeneratedAt?: string;
+  /** Optional description that copies onto generated invoices. */
+  notes?: string;
+}
+
+/* ─── Salaries & Payroll ───────────────────────────────────────────── */
+
+export interface SalaryRegisterEntry {
+  id: string;
+  teamMemberId: string;
+  /** Employer company paying this person. */
+  companyId: string;
+  /** Gross monthly salary. */
+  gross: number;
+  currency: Currency;
+  /** Employee social charge rates (percent, e.g. 1 = 1%). */
+  cnapsRate: number; // default 1
+  ostieRate: number; // default 1
+  /** IRSA — flat estimated rate (percent). For demo purposes only. */
+  irsaRate: number;
+  /** ISO date the salary register entry takes effect. */
+  startDate: string;
+  active: boolean;
+}
+
+export type PayrollRunStatus = "draft" | "validated";
+
+export interface PayrollEntry {
+  teamMemberId: string;
+  gross: number;
+  cnaps: number;
+  ostie: number;
+  irsa: number;
+  net: number;
+  paid: boolean;
+}
+
+export interface PayrollRun {
+  id: string;
+  companyId: string;
+  /** YYYY-MM */
+  month: string;
+  status: PayrollRunStatus;
+  currency: Currency;
+  entries: PayrollEntry[];
+  /** ISO timestamp when validated. */
+  validatedAt?: string;
+  /** Transaction IDs created on validation (to allow reversal). */
+  postedTransactionIds?: string[];
+}
+
 /* ─── Team & Sales team ─────────────────────────────────────────────── */
 
 /** A person in the organization (Team database, source of truth). */
