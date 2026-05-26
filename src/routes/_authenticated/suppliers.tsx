@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useSuppliers, useCompanies, suppliersStore, contactCompanyIds,
+  useSuppliers, useCompanies, useClients, suppliersStore, contactCompanyIds,
   type Supplier, type ContactCategory,
 } from "@/lib/mock-data";
 import { useJournalEntries, fmtAr } from "@/lib/pcg";
@@ -37,9 +37,41 @@ function SuppliersPage() {
 
 function Body() {
   const suppliers = useSuppliers();
+  const clients = useClients();
   const companies = useCompanies();
   const entries = useJournalEntries();
-  const baseList = suppliers;
+
+  // Synthesize Supplier-shaped entries from clients tagged "supplier".
+  // These appear automatically here so users don't double-enter contacts.
+  const derived: Supplier[] = useMemo(() => {
+    return clients
+      .filter((c) => (c.categories ?? []).includes("supplier"))
+      .map((c) => ({
+        id: `client:${c.id}`,
+        companyId: c.companyId,
+        companyIds: contactCompanyIds(c),
+        name: c.name,
+        account: "401000",
+        kind: "external" as const,
+        avatarUrl: c.avatarUrl,
+        email: c.email,
+        phone: c.phone,
+        website: c.website,
+        address: c.address,
+        country: c.country,
+        taxId: c.taxId, nif: c.nif, stat: c.stat, rcs: c.rcs,
+        categories: c.categories,
+      }));
+  }, [clients]);
+
+  const fromClientIds = useMemo(() => new Set(derived.map((d) => d.id)), [derived]);
+  const baseList = useMemo(() => {
+    // Avoid duplicates if a real supplier with the same name already exists for the same primary company.
+    const realKeys = new Set(suppliers.map((s) => `${s.companyId}::${s.name.toLowerCase()}`));
+    const filteredDerived = derived.filter((d) => !realKeys.has(`${d.companyId}::${d.name.toLowerCase()}`));
+    return [...suppliers, ...filteredDerived];
+  }, [suppliers, derived]);
+
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [view, setView] = useState<"grid" | "list">("grid");
@@ -166,9 +198,9 @@ function Body() {
       {visibleCount === 0 ? (
         <EmptyState label="contacts" onCreate={openCreate} />
       ) : view === "grid" ? (
-        <SupplierGridView suppliers={sorted.map((s) => s.s)} companies={companies} balances={balances} onEdit={(s) => { setEditing(s); setOpen(true); }} group={group} grouped={grouped} />
+        <SupplierGridView suppliers={sorted.map((s) => s.s)} companies={companies} balances={balances} onEdit={(s) => { setEditing(s); setOpen(true); }} group={group} grouped={grouped} fromClientIds={fromClientIds} />
       ) : (
-        <SupplierListView suppliers={sorted.map((s) => s.s)} companies={companies} balances={balances} onEdit={(s) => { setEditing(s); setOpen(true); }} group={group} grouped={grouped} />
+        <SupplierListView suppliers={sorted.map((s) => s.s)} companies={companies} balances={balances} onEdit={(s) => { setEditing(s); setOpen(true); }} group={group} grouped={grouped} fromClientIds={fromClientIds} />
       )}
 
       <SupplierDialog open={open} onOpenChange={setOpen} editing={editing} />
@@ -178,7 +210,7 @@ function Body() {
 
 /* ── Grid View ── */
 function SupplierGridView({
-  suppliers, companies, balances, onEdit, group, grouped,
+  suppliers, companies, balances, onEdit, group, grouped, fromClientIds,
 }: {
   suppliers: Supplier[];
   companies: ReturnType<typeof useCompanies>;
@@ -186,6 +218,7 @@ function SupplierGridView({
   onEdit: (s: Supplier) => void;
   group: string;
   grouped: { key: string; label: string; items: Supplier[] }[];
+  fromClientIds: Set<string>;
 }) {
   if (group !== "none") {
     return (
@@ -198,7 +231,7 @@ function SupplierGridView({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
               {g.items.map((s) => (
-                <SupplierCard key={s.id} s={s} companies={companies} balances={balances} onEdit={onEdit} />
+                <SupplierCard key={s.id} s={s} companies={companies} balances={balances} onEdit={onEdit} fromClient={fromClientIds.has(s.id)} />
               ))}
             </div>
           </div>
@@ -210,19 +243,20 @@ function SupplierGridView({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
       {suppliers.map((s) => (
-        <SupplierCard key={s.id} s={s} companies={companies} balances={balances} onEdit={onEdit} />
+        <SupplierCard key={s.id} s={s} companies={companies} balances={balances} onEdit={onEdit} fromClient={fromClientIds.has(s.id)} />
       ))}
     </div>
   );
 }
 
 function SupplierCard({
-  s, companies, balances, onEdit,
+  s, companies, balances, onEdit, fromClient,
 }: {
   s: Supplier;
   companies: ReturnType<typeof useCompanies>;
   balances: Map<string, number>;
   onEdit: (s: Supplier) => void;
+  fromClient?: boolean;
 }) {
   const co = companies.find((c) => c.id === s.companyId);
   const bal = balances.get(s.id) ?? 0;
@@ -238,6 +272,7 @@ function SupplierCard({
           <div className="font-display font-semibold text-[13px] truncate flex items-center gap-1">
             <Icon className="h-3 w-3 text-muted-foreground shrink-0" />
             {s.name}
+            {fromClient && <span className="ml-1 text-[8px] uppercase tracking-wider px-1 py-px rounded bg-accent/60 text-muted-foreground font-mono" title="Linked from Clients">from clients</span>}
           </div>
           <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
             {[s.kind === "internal" ? "Interne" : "Externe", s.country].filter(Boolean).join(" · ")}
@@ -249,10 +284,12 @@ function SupplierCard({
           )}
           <div className="mt-1 flex flex-wrap items-center gap-1"><CategoryChips value={s.categories} /><CompanyTags ids={contactCompanyIds(s)} companies={companies} /></div>
         </div>
-        <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={() => onEdit(s)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
-          <button onClick={() => confirm(`Delete ${s.name}?`) && suppliersStore.remove(s.id)} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
-        </div>
+        {!fromClient && (
+          <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onClick={() => onEdit(s)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
+            <button onClick={() => confirm(`Delete ${s.name}?`) && suppliersStore.remove(s.id)} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+          </div>
+        )}
       </div>
       <div className="mt-2 border-t border-border/50 pt-2 grid grid-cols-2 gap-2">
         <div>
@@ -270,7 +307,7 @@ function SupplierCard({
 
 /* ── List View ── */
 function SupplierListView({
-  suppliers, companies, balances, onEdit, group, grouped,
+  suppliers, companies, balances, onEdit, group, grouped, fromClientIds,
 }: {
   suppliers: Supplier[];
   companies: ReturnType<typeof useCompanies>;
@@ -278,11 +315,13 @@ function SupplierListView({
   onEdit: (s: Supplier) => void;
   group: string;
   grouped: { key: string; label: string; items: Supplier[] }[];
+  fromClientIds: Set<string>;
 }) {
   const renderRow = (s: Supplier) => {
     const co = companies.find((c) => c.id === s.companyId);
     const bal = balances.get(s.id) ?? 0;
     const Icon = s.kind === "internal" ? User : Building2;
+    const fromClient = fromClientIds.has(s.id);
     return (
       <div key={s.id} className="grid grid-cols-[1fr_140px_100px_120px_40px] gap-3 px-4 py-2.5 items-center border-b border-border/50 last:border-b-0 hover:bg-accent/40 transition group">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -294,6 +333,7 @@ function SupplierListView({
             <div className="font-medium text-[13px] truncate flex items-center gap-1">
               <Icon className="h-3 w-3 text-muted-foreground" />
               {s.name}
+              {fromClient && <span className="ml-1 text-[8px] uppercase tracking-wider px-1 py-px rounded bg-accent/60 text-muted-foreground font-mono" title="Linked from Clients">from clients</span>}
             </div>
             <div className="text-[11px] text-muted-foreground truncate">{[s.country, s.email].filter(Boolean).join(" · ")}</div>
           </div>
@@ -302,10 +342,12 @@ function SupplierListView({
         <div className="text-right font-tnum text-[13px] text-muted-foreground">{s.account}</div>
         <div className={`text-right font-tnum text-[13px] ${bal > 0 ? "text-amber-600" : ""}`}>{fmtAr(bal)}</div>
         <div className="flex justify-end">
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button onClick={() => onEdit(s)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
-            <button onClick={() => confirm(`Delete ${s.name}?`) && suppliersStore.remove(s.id)} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
-          </div>
+          {!fromClient && (
+            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onClick={() => onEdit(s)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
+              <button onClick={() => confirm(`Delete ${s.name}?`) && suppliersStore.remove(s.id)} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+            </div>
+          )}
         </div>
       </div>
     );
