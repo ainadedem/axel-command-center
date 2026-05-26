@@ -33,19 +33,21 @@ export function CategoryChips({ value, size = "sm" }: { value?: ContactCategory[
   );
 }
 
-/** Tiny pill showing which company a contact is linked to. */
+/** Tiny pill showing which company a contact is linked to.
+ *  Prefers the compact `code` over the full trading name. */
 export function CompanyTag({
-  name, color, size = "sm",
-}: { name?: string | null; color?: string | null; size?: "xs" | "sm" }) {
-  if (!name) return null;
+  code, name, color, size = "sm",
+}: { code?: string | null; name?: string | null; color?: string | null; size?: "xs" | "sm" }) {
+  const label = (code || name || "").trim();
+  if (!label) return null;
   const text = size === "xs" ? "text-[9px]" : "text-[10px]";
   return (
     <span
-      className={`inline-flex items-center gap-1 ${text} uppercase tracking-wider px-1.5 py-0.5 rounded-full font-semibold border border-border bg-surface text-muted-foreground max-w-[120px]`}
-      title={`Linked to ${name}`}
+      className={`inline-flex items-center gap-1 ${text} uppercase tracking-wider px-1.5 py-0.5 rounded-full font-mono font-semibold border border-border bg-surface text-muted-foreground`}
+      title={name ? `Linked to ${name}` : undefined}
     >
       <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: color ?? "var(--muted-foreground)" }} />
-      <span className="truncate">{name}</span>
+      <span>{label}</span>
     </span>
   );
 }
