@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useSuppliers, useCompanies, suppliersStore, contactCompanyIds,
+  useSuppliers, useCompanies, useClients, suppliersStore, contactCompanyIds,
   type Supplier, type ContactCategory,
 } from "@/lib/mock-data";
 import { useJournalEntries, fmtAr } from "@/lib/pcg";
