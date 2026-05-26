@@ -62,6 +62,7 @@ const sections: NavSection[] = [
     label: "Organization",
     items: [
       { to: "/companies", label: "Companies", icon: Building2 },
+      { to: "/users-access", label: "Users & Access", icon: Users },
       { to: "/projects", label: "Projects", icon: Briefcase },
       { to: "/team", label: "Team", icon: UserCog },
       { to: "/sales-team", label: "Sales team", icon: Handshake },

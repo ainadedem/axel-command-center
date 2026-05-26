@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as ApiAxelChatRouteImport } from './routes/api/axel-chat'
+import { Route as AuthenticatedUsersAccessRouteImport } from './routes/_authenticated/users-access'
 import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
@@ -60,6 +61,12 @@ const ApiAxelChatRoute = ApiAxelChatRouteImport.update({
   path: '/api/axel-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedUsersAccessRoute =
+  AuthenticatedUsersAccessRouteImport.update({
+    id: '/users-access',
+    path: '/users-access',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedTransactionsRoute =
   AuthenticatedTransactionsRouteImport.update({
     id: '/transactions',
@@ -229,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/team': typeof AuthenticatedTeamRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
+  '/users-access': typeof AuthenticatedUsersAccessRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
   '/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
   '/axel/': typeof AuthenticatedAxelIndexRoute
@@ -259,6 +267,7 @@ export interface FileRoutesByTo {
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/team': typeof AuthenticatedTeamRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
+  '/users-access': typeof AuthenticatedUsersAccessRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
   '/': typeof AuthenticatedIndexRoute
   '/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
@@ -293,6 +302,7 @@ export interface FileRoutesById {
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
+  '/_authenticated/users-access': typeof AuthenticatedUsersAccessRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
@@ -328,6 +338,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/team'
     | '/transactions'
+    | '/users-access'
     | '/api/axel-chat'
     | '/axel/$threadId'
     | '/axel/'
@@ -358,6 +369,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/team'
     | '/transactions'
+    | '/users-access'
     | '/api/axel-chat'
     | '/'
     | '/axel/$threadId'
@@ -391,6 +403,7 @@ export interface FileRouteTypes {
     | '/_authenticated/suppliers'
     | '/_authenticated/team'
     | '/_authenticated/transactions'
+    | '/_authenticated/users-access'
     | '/api/axel-chat'
     | '/_authenticated/'
     | '/_authenticated/axel/$threadId'
@@ -432,6 +445,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/axel-chat'
       preLoaderRoute: typeof ApiAxelChatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/users-access': {
+      id: '/_authenticated/users-access'
+      path: '/users-access'
+      fullPath: '/users-access'
+      preLoaderRoute: typeof AuthenticatedUsersAccessRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/transactions': {
       id: '/_authenticated/transactions'
@@ -664,6 +684,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
   AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRoute
+  AuthenticatedUsersAccessRoute: typeof AuthenticatedUsersAccessRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
@@ -693,6 +714,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
   AuthenticatedTransactionsRoute: AuthenticatedTransactionsRoute,
+  AuthenticatedUsersAccessRoute: AuthenticatedUsersAccessRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 
