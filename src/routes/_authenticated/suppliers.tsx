@@ -21,7 +21,7 @@ import {
   Search, ArrowUpDown, ChevronDown, Plus,
 } from "lucide-react";
 import {
-  CategoryChips, CategoryMultiSelect, CategoryFilterTabs, CompanyTag, defaultCategoriesFor,
+  CategoryChips, CategoryMultiSelect, CategoryFilterTabs, CompanyTag, CompanyTags, defaultCategoriesFor,
 } from "@/components/category-chips";
 
 export const Route = createFileRoute("/_authenticated/suppliers")({ component: SuppliersPage });
