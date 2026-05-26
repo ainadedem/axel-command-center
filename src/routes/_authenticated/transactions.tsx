@@ -4,7 +4,8 @@ import { PageHeader } from "@/components/page-header";
 import {
   useTransactions, useCompanies, useAccounts, useClients, useSuppliers, useCategories, useProjects, useInvoices,
   transactionsStore, categoriesStore, invoicesStore, fmtCompact, type Transaction, type Currency,
-, contactBelongsTo } from "@/lib/mock-data";
+  contactBelongsTo,
+} from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
 import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";

@@ -6,7 +6,8 @@ import {
   invoicesStore, transactionsStore, projectsStore, purchaseOrdersStore, quotesStore,
   fmtAmount, toMGA, FX, type Invoice, type Project, type Currency,
   getNumberFormat, setNumberFormat, type NumberFormatMode,
-, contactBelongsTo } from "@/lib/mock-data";
+  contactBelongsTo,
+} from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
 import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";

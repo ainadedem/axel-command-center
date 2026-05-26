@@ -5,7 +5,8 @@ import {
   useOpportunities, useCompanies, useClients, useSalesPeople, opportunitiesStore, clientsStore,
   stages, fmtCompact, toMGA, stageProbability,
   type Stage, type Opportunity, type Currency, type Client,
-, contactBelongsTo } from "@/lib/mock-data";
+  contactBelongsTo,
+} from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO, differenceInDays } from "date-fns";
