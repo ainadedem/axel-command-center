@@ -12,8 +12,16 @@ import { Loader2, ShieldAlert, Search } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/users-access")({
-  component: UsersAccessPage,
+  component: UsersAccessRoute,
 });
+
+function UsersAccessRoute() {
+  return (
+    <AppShell>
+      <UsersAccessPage />
+    </AppShell>
+  );
+}
 
 type Profile = {
   user_id: string;
