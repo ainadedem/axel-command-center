@@ -210,7 +210,7 @@ function Body() {
 
 /* ── Grid View ── */
 function SupplierGridView({
-  suppliers, companies, balances, onEdit, group, grouped,
+  suppliers, companies, balances, onEdit, group, grouped, fromClientIds,
 }: {
   suppliers: Supplier[];
   companies: ReturnType<typeof useCompanies>;
@@ -218,6 +218,7 @@ function SupplierGridView({
   onEdit: (s: Supplier) => void;
   group: string;
   grouped: { key: string; label: string; items: Supplier[] }[];
+  fromClientIds: Set<string>;
 }) {
   if (group !== "none") {
     return (
