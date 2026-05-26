@@ -527,7 +527,8 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setStatus(editing.status ?? "client");
       setCategories(defaultCategoriesFor("client", editing.categories));
     } else {
-      setCompanyId(companies[0]?.id ?? ""); setName(""); setCountry(""); setAcquisition(""); setReferral("");
+      const fallback = companies[0]?.id ?? "";
+      setCompanyId(fallback); setCompanyIds(fallback ? [fallback] : []); setName(""); setCountry(""); setAcquisition(""); setReferral("");
       setAcquiredAt(new Date().toISOString().slice(0, 10));
       setWebsite(""); setEmail(""); setPhone(""); setAddress(""); setIndustry(""); setContacts("");
       setAvatarUrl(undefined);
