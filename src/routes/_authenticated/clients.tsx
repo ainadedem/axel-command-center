@@ -466,6 +466,11 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
             </div>
             <div><Label>Country</Label><Input value={country} onChange={(e) => setCountry(e.target.value)} /></div>
           </div>
+          <div>
+            <Label>Categories</Label>
+            <div className="mt-1.5"><CategoryMultiSelect value={categories} onChange={setCategories} /></div>
+            <p className="text-[11px] text-muted-foreground mt-1.5">Tag this contact with one or more roles. Defaults to <span className="font-medium text-foreground">Client</span>.</p>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Acquired on</Label><Input type="date" value={acquiredAt} onChange={(e) => setAcquiredAt(e.target.value)} /></div>
             <div />
