@@ -7,6 +7,8 @@ import {
   clientsStore, fmtCompact, toMGA, contactCompanyIds, contactBelongsTo,
   type Client, type ContactCategory,
 } from "@/lib/mock-data";
+import { upsertClient, deleteClientDb } from "@/lib/db-sync";
+
 import { newId } from "@/lib/data-store";
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -340,7 +342,7 @@ function ClientCard({
             <button onClick={() => onPromote(cl)} title="Promote to client" className="h-6 w-6 grid place-items-center rounded hover:bg-emerald-500/15 text-muted-foreground hover:text-emerald-700"><UserCheck className="h-3 w-3" /></button>
           )}
           <button onClick={() => onEdit(cl)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
-          <button onClick={() => confirm(`Delete ${cl.name}?`) && clientsStore.remove(cl.id)} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+          <button onClick={() => { if (confirm(`Delete ${cl.name}?`)) { clientsStore.remove(cl.id); void deleteClientDb(cl.id); } }} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
         </div>
       </div>
 
@@ -431,7 +433,7 @@ function ClientListView({
               <button onClick={() => onPromote(cl)} title="Promote" className="h-6 w-6 grid place-items-center rounded hover:bg-emerald-500/15 text-muted-foreground hover:text-emerald-700"><UserCheck className="h-3 w-3" /></button>
             )}
             <button onClick={() => onEdit(cl)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
-            <button onClick={() => confirm(`Delete ${cl.name}?`) && clientsStore.remove(cl.id)} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+            <button onClick={() => { if (confirm(`Delete ${cl.name}?`)) { clientsStore.remove(cl.id); void deleteClientDb(cl.id); } }} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
           </div>
         </div>
       </div>
@@ -561,10 +563,23 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       avatarUrl,
       categories: categories.length > 0 ? categories : undefined,
     };
-    if (editing) clientsStore.update(editing.id, data);
-    else clientsStore.add({ id: newId("cli"), ...data });
+    if (editing) {
+      clientsStore.update(editing.id, data);
+      void upsertClient({ ...editing, ...data } as Client);
+    } else {
+      const localId = newId("cli");
+      const local = { id: localId, ...data } as Client;
+      clientsStore.add(local);
+      void upsertClient(local).then((dbId) => {
+        if (dbId && dbId !== localId) {
+          // Re-id the local record to match DB so future updates align.
+          clientsStore.replaceAll(clientsStore.items.map((c) => c.id === localId ? { ...c, id: dbId } : c));
+        }
+      });
+    }
     onOpenChange(false);
   };
+
 
   const acqOptions = (() => {
     const names = acqPeople.map((p) => p.name);

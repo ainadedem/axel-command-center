@@ -73,6 +73,92 @@ export type Database = {
         }
         Relationships: []
       }
+      clients: {
+        Row: {
+          acquired_at: string | null
+          acquisition: string | null
+          acquisition_year: number | null
+          address: string | null
+          avatar_url: string | null
+          categories: string[] | null
+          company_id: string
+          contacts: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          id: string
+          industry: string | null
+          name: string
+          nif: string | null
+          phone: string | null
+          rcs: string | null
+          referral: string | null
+          stat: string | null
+          status: string | null
+          tax_id: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          acquired_at?: string | null
+          acquisition?: string | null
+          acquisition_year?: number | null
+          address?: string | null
+          avatar_url?: string | null
+          categories?: string[] | null
+          company_id: string
+          contacts?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          industry?: string | null
+          name: string
+          nif?: string | null
+          phone?: string | null
+          rcs?: string | null
+          referral?: string | null
+          stat?: string | null
+          status?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          acquired_at?: string | null
+          acquisition?: string | null
+          acquisition_year?: number | null
+          address?: string | null
+          avatar_url?: string | null
+          categories?: string[] | null
+          company_id?: string
+          contacts?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          industry?: string | null
+          name?: string
+          nif?: string | null
+          phone?: string | null
+          rcs?: string | null
+          referral?: string | null
+          stat?: string | null
+          status?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
@@ -174,6 +260,146 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      projects: {
+        Row: {
+          client_id: string | null
+          company_id: string
+          cost: number
+          created_at: string
+          currency: string
+          id: string
+          name: string
+          revenue: number
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          company_id: string
+          cost?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          name: string
+          revenue?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          company_id?: string
+          cost?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          name?: string
+          revenue?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          account: string
+          address: string | null
+          avatar_url: string | null
+          bank_account: string | null
+          bank_name: string | null
+          bank_swift: string | null
+          categories: string[] | null
+          company_id: string
+          contact_person: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          id: string
+          kind: string
+          name: string
+          nif: string | null
+          notes: string | null
+          payment_terms: number | null
+          phone: string | null
+          rcs: string | null
+          stat: string | null
+          tax_id: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          account: string
+          address?: string | null
+          avatar_url?: string | null
+          bank_account?: string | null
+          bank_name?: string | null
+          bank_swift?: string | null
+          categories?: string[] | null
+          company_id: string
+          contact_person?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          kind?: string
+          name: string
+          nif?: string | null
+          notes?: string | null
+          payment_terms?: number | null
+          phone?: string | null
+          rcs?: string | null
+          stat?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          account?: string
+          address?: string | null
+          avatar_url?: string | null
+          bank_account?: string | null
+          bank_name?: string | null
+          bank_swift?: string | null
+          categories?: string[] | null
+          company_id?: string
+          contact_person?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          kind?: string
+          name?: string
+          nif?: string | null
+          notes?: string | null
+          payment_terms?: number | null
+          phone?: string | null
+          rcs?: string | null
+          stat?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_company_access: {
         Row: {
