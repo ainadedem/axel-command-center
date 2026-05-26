@@ -344,6 +344,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
   const companies = useCompanies();
   const [name, setName] = useState("");
   const [companyId, setCompanyId] = useState("");
+  const [companyIds, setCompanyIds] = useState<string[]>([]);
   const [account, setAccount] = useState("401000");
   const [kind, setKind] = useState<Supplier["kind"]>("external");
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
