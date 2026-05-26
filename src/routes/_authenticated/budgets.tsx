@@ -300,7 +300,7 @@ function CategoryRow({ cat, year, spent, company, onEdit }: {
             </div>
             {statusBadge && (
               <div className="flex items-center justify-between mt-1.5">
-                <span className={cn("text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full border font-semibold", statusBadge.cls)}>
+                <span className={cn("text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full border font-semibold", statusBadge.cls)}>
                   {statusBadge.label}
                 </span>
                 {projected !== null && (

@@ -20,6 +20,8 @@ import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-but
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { cn } from "@/lib/utils";
+import { KpiCard } from "@/components/kpi-card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/projects")({ component: ProjectsPage });
 
@@ -176,21 +178,12 @@ function Body() {
             />
           </div>
 
-          {/* View toggle */}
-          <div className="flex items-center gap-1 rounded-lg border border-border bg-surface p-1 w-fit">
-            <button
-              onClick={() => setMainTab("projects")}
-              className={cn("px-3 py-1.5 rounded-md text-sm transition", mainTab === "projects" ? "bg-primary text-primary-foreground font-medium" : "text-muted-foreground hover:text-foreground")}
-            >
-              By project
-            </button>
-            <button
-              onClick={() => setMainTab("clients")}
-              className={cn("px-3 py-1.5 rounded-md text-sm transition", mainTab === "clients" ? "bg-primary text-primary-foreground font-medium" : "text-muted-foreground hover:text-foreground")}
-            >
-              By client
-            </button>
-          </div>
+          <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as typeof mainTab)}>
+            <TabsList>
+              <TabsTrigger value="projects">By project</TabsTrigger>
+              <TabsTrigger value="clients">By client</TabsTrigger>
+            </TabsList>
+          </Tabs>
 
           {mainTab === "projects" ? (
             <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
@@ -328,7 +321,7 @@ function Body() {
                           <td className="px-5 py-3.5 text-right font-tnum text-warning">{outstanding > 0 ? fmtCompact(outstanding, "MGA") : <span className="text-muted-foreground/50">—</span>}</td>
                           <td className="px-5 py-3.5 text-right">
                             {row.invoicedMGA > 0 || row.revMGA > 0 ? (
-                              <span className={cn("font-display font-bold font-tnum text-base", row.margin >= 50 ? "text-success" : row.margin >= 20 ? "" : row.margin >= 0 ? "text-warning" : "text-destructive")}>
+                              <span className={cn("font-display font-tnum", row.margin >= 30 ? "text-success" : row.margin >= 0 ? "text-primary" : "text-destructive")}>
                                 {row.margin.toFixed(0)}%
                               </span>
                             ) : <span className="text-muted-foreground/50">—</span>}
@@ -379,10 +372,10 @@ function ProjectDetail({
   const grossMargin = totalInvoiced > 0 ? ((totalInvoiced - totalSpend) / totalInvoiced) * 100 : 0;
 
   return (
-    <div className="px-8 py-5 grid grid-cols-3 gap-8 text-sm border-t border-border/40">
+    <div className="px-5 py-5 grid grid-cols-3 gap-6 text-sm border-t border-border">
       {/* Mini P&L */}
       <div>
-        <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground mb-3">P&L summary</div>
+        <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">P&L summary</div>
         <div className="space-y-2">
           <div className="flex justify-between text-xs"><span className="text-muted-foreground">Invoiced</span><span className="font-tnum">{fmtCompact(totalInvoiced, "MGA")}</span></div>
           <div className="flex justify-between text-xs"><span className="text-muted-foreground">Collected</span><span className="font-tnum text-success">{fmtCompact(totalCollected, "MGA")}</span></div>
@@ -399,7 +392,7 @@ function ProjectDetail({
 
       {/* Invoices */}
       <div>
-        <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground mb-3">
+        <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">
           Invoices {projInvoices.length > 0 && <span className="font-tnum">({projInvoices.length})</span>}
         </div>
         {projInvoices.length === 0 ? (
@@ -422,7 +415,7 @@ function ProjectDetail({
 
       {/* Expense breakdown */}
       <div>
-        <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground mb-3">
+        <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">
           Expenses by category {byCategory.size > 0 && <span className="font-tnum">({expenses.length} tx)</span>}
         </div>
         {byCategory.size === 0 ? (
@@ -440,19 +433,6 @@ function ProjectDetail({
             ))}
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-/* ── KPI card ── */
-
-function KpiCard({ label, value, tone = "default" }: { label: string; value: string; tone?: "success" | "danger" | "default" }) {
-  return (
-    <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4">
-      <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
-      <div className={cn("font-display text-xl font-bold mt-1 font-tnum", tone === "success" && "text-success", tone === "danger" && "text-destructive")}>
-        {value}
       </div>
     </div>
   );
