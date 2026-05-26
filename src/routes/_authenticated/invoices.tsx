@@ -26,6 +26,7 @@ import { InvoicePreview } from "@/components/invoice-preview";
 import { RecordPaymentDialog } from "@/components/statement-import-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Wallet } from "lucide-react";
+import { nextNumber } from "@/lib/numbering";
 
 export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage });
 
