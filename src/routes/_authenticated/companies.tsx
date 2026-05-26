@@ -109,6 +109,7 @@ function CompaniesPage() {
 function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Company | null }) {
   const [name, setName] = useState("");
   const [shortName, setShortName] = useState("");
+  const [code, setCode] = useState("");
   const [color, setColor] = useState(PALETTE[0]);
   const [baseCurrency, setBaseCurrency] = useState<Currency>("MGA");
   const [legalName, setLegalName] = useState("");
@@ -128,14 +129,14 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   useEffect(() => {
     if (!open) return;
     if (editing) {
-      setName(editing.name); setShortName(editing.shortName); setColor(editing.color); setBaseCurrency(editing.baseCurrency);
+      setName(editing.name); setShortName(editing.shortName); setCode(editing.code ?? editing.shortName); setColor(editing.color); setBaseCurrency(editing.baseCurrency);
       setLegalName(editing.legalName ?? ""); setAddress(editing.address ?? "");
       setEmail(editing.email ?? ""); setPhone(editing.phone ?? ""); setWebsite(editing.website ?? "");
       setNif(editing.nif ?? ""); setStat(editing.stat ?? ""); setRcs(editing.rcs ?? ""); setTaxId(editing.taxId ?? "");
       setBankName(editing.bankName ?? ""); setBankAccount(editing.bankAccount ?? ""); setBankSwift(editing.bankSwift ?? "");
       setLogoUrl(editing.logoUrl);
     } else {
-      setName(""); setShortName(""); setColor(PALETTE[0]); setBaseCurrency("MGA");
+      setName(""); setShortName(""); setCode(""); setColor(PALETTE[0]); setBaseCurrency("MGA");
       setLegalName(""); setAddress(""); setEmail(""); setPhone(""); setWebsite("");
       setNif(""); setStat(""); setRcs(""); setTaxId(""); setBankName(""); setBankAccount(""); setBankSwift("");
       setLogoUrl(undefined);
@@ -144,8 +145,9 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
 
   const submit = () => {
     if (!name.trim() || !shortName.trim()) return;
+    const finalCode = (code.trim() || shortName.trim()).toUpperCase();
     const data = {
-      name, shortName, color, baseCurrency,
+      name, shortName, code: finalCode, color, baseCurrency,
       legalName: legalName || undefined, address: address || undefined,
       email: email || undefined, phone: phone || undefined, website: website || undefined,
       nif: nif || undefined, stat: stat || undefined, rcs: rcs || undefined, taxId: taxId || undefined,
