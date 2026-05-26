@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { useCompanies, companiesStore, type Company } from "./mock-data";
 import { useAuth } from "./auth-context";
 import { supabase } from "@/integrations/supabase/client";
+import { setCompanyIdMap, hydrateContacts } from "./db-sync";
+
 
 const FALLBACK_COLORS = ["#7c3aed", "#0ea5e9", "#f59e0b", "#10b981", "#ef4444", "#ec4899"];
 
