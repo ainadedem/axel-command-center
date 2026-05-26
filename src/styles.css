@@ -60,72 +60,69 @@
 :root {
   --radius: 1.25rem;
 
-  /* Soft light canvas — Peymen kit */
-  --background: oklch(0.965 0.006 255);
-  --foreground: oklch(0.18 0.03 260);
+  /* Cool soft canvas — Axel violet kit */
+  --background: oklch(0.975 0.006 285);
+  --foreground: oklch(0.17 0.04 285);
 
   --surface: oklch(1 0 0);
   --surface-elevated: oklch(1 0 0);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.03 260);
+  --card-foreground: oklch(0.17 0.04 285);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.03 260);
+  --popover-foreground: oklch(0.17 0.04 285);
 
-  /* Vivid Peymen indigo */
-  --primary: oklch(0.58 0.21 268);
+  /* Axel signature violet (#6B00E0) */
+  --primary: oklch(0.47 0.31 293);
   --primary-foreground: oklch(0.99 0 0);
+  --primary-glow: oklch(0.62 0.27 295);
 
-  --secondary: oklch(0.955 0.012 260);
-  --secondary-foreground: oklch(0.28 0.04 260);
+  --secondary: oklch(0.96 0.012 285);
+  --secondary-foreground: oklch(0.28 0.05 285);
 
-  --muted: oklch(0.955 0.01 260);
-  --muted-foreground: oklch(0.52 0.025 260);
+  --muted: oklch(0.955 0.01 285);
+  --muted-foreground: oklch(0.5 0.025 285);
 
-  --accent: oklch(0.93 0.04 268);
-  --accent-foreground: oklch(0.35 0.16 268);
+  --accent: oklch(0.945 0.05 293);
+  --accent-foreground: oklch(0.4 0.22 293);
 
-  /* Peymen rose for destructive / negative pills */
   --destructive: oklch(0.66 0.21 18);
   --destructive-foreground: oklch(0.99 0 0);
 
-  /* Mint success */
   --success: oklch(0.7 0.16 160);
   --success-foreground: oklch(0.99 0 0);
 
   --warning: oklch(0.8 0.16 70);
   --warning-foreground: oklch(0.22 0.04 60);
 
-  --border: oklch(0.91 0.012 260);
-  --input: oklch(0.94 0.01 260);
-  --ring: oklch(0.58 0.21 268 / 0.4);
+  --border: oklch(0.92 0.012 285);
+  --input: oklch(0.94 0.012 285);
+  --ring: oklch(0.47 0.31 293 / 0.45);
 
-  --chart-1: oklch(0.58 0.21 268);
-  --chart-2: oklch(0.7 0.16 215);
-  --chart-3: oklch(0.78 0.14 165);
+  --chart-1: oklch(0.47 0.31 293);
+  --chart-2: oklch(0.62 0.27 295);
+  --chart-3: oklch(0.7 0.16 215);
   --chart-4: oklch(0.74 0.17 35);
-  --chart-5: oklch(0.66 0.2 320);
+  --chart-5: oklch(0.66 0.2 340);
 
-  /* Peymen sidebar — soft cool gray, indigo active */
   --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.36 0.03 260);
-  --sidebar-primary: oklch(0.58 0.21 268);
+  --sidebar-foreground: oklch(0.34 0.04 285);
+  --sidebar-primary: oklch(0.47 0.31 293);
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.955 0.02 268);
-  --sidebar-accent-foreground: oklch(0.42 0.18 268);
-  --sidebar-border: oklch(0.93 0.01 260);
-  --sidebar-ring: oklch(0.58 0.21 268 / 0.4);
+  --sidebar-accent: oklch(0.955 0.035 293);
+  --sidebar-accent-foreground: oklch(0.4 0.22 293);
+  --sidebar-border: oklch(0.93 0.012 285);
+  --sidebar-ring: oklch(0.47 0.31 293 / 0.45);
 
-  --gradient-surface: linear-gradient(180deg, oklch(1 0 0) 0%, oklch(0.985 0.006 260) 100%);
-  --gradient-primary: linear-gradient(135deg, oklch(0.58 0.21 268) 0%, oklch(0.64 0.18 285) 100%);
-  --gradient-dark: linear-gradient(135deg, oklch(0.24 0.06 268) 0%, oklch(0.18 0.04 268) 100%);
-  --gradient-glow: radial-gradient(ellipse at top, oklch(0.58 0.21 268 / 0.1), transparent 60%);
+  --gradient-surface: linear-gradient(180deg, oklch(1 0 0) 0%, oklch(0.985 0.008 290) 100%);
+  --gradient-primary: linear-gradient(135deg, oklch(0.47 0.31 293) 0%, oklch(0.62 0.27 295) 100%);
+  --gradient-dark: linear-gradient(135deg, oklch(0.22 0.08 290) 0%, oklch(0.15 0.05 290) 100%);
+  --gradient-glow: radial-gradient(ellipse at top, oklch(0.47 0.31 293 / 0.18), transparent 60%);
 
-  /* Peymen-style soft, diffuse shadows */
-  --shadow-soft: 0 1px 2px oklch(0.4 0.05 260 / 0.04), 0 6px 18px -8px oklch(0.4 0.05 260 / 0.08);
-  --shadow-elevated: 0 2px 4px oklch(0.4 0.05 260 / 0.04), 0 20px 48px -16px oklch(0.4 0.05 260 / 0.14);
-  --shadow-glow: 0 12px 32px -8px oklch(0.58 0.21 268 / 0.35);
-  --shadow-card: 0 1px 0 oklch(1 0 0 / 0.6) inset, 0 1px 2px oklch(0.4 0.05 260 / 0.05), 0 8px 24px -12px oklch(0.4 0.05 260 / 0.1);
+  --shadow-soft: 0 1px 2px oklch(0.3 0.08 290 / 0.05), 0 6px 18px -8px oklch(0.3 0.08 290 / 0.1);
+  --shadow-elevated: 0 2px 4px oklch(0.3 0.08 290 / 0.05), 0 20px 48px -16px oklch(0.3 0.08 290 / 0.18);
+  --shadow-glow: 0 12px 32px -8px oklch(0.47 0.31 293 / 0.45);
+  --shadow-card: 0 1px 0 oklch(1 0 0 / 0.6) inset, 0 1px 2px oklch(0.3 0.08 290 / 0.06), 0 8px 24px -12px oklch(0.3 0.08 290 / 0.12);
 }
 
 .dark {
