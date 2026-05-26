@@ -19,8 +19,12 @@ export interface Company {
   id: string;
   name: string;
   shortName: string;
+  /** Short alphanumeric identifier (e.g. "LOG", "WIN") used everywhere we
+   *  need a compact reference instead of the full trading name. */
+  code: string;
   color: string;
   baseCurrency: Currency;
+
   /** Legal / billing information used on invoice PDFs. */
   legalName?: string;
   address?: string;
