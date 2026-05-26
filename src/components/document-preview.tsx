@@ -39,16 +39,18 @@ interface Props {
 }
 
 export function DocumentPreview({ open, onOpenChange, doc, company, client, project }: Props) {
+  const [showStatus, setShowStatus] = useState(true);
+
   const html = useMemo(() => {
     if (!doc) return "";
-    return buildHTML({ doc, company, client, project });
-  }, [doc, company, client, project]);
+    return buildHTML({ doc, company, client, project, showStatus });
+  }, [doc, company, client, project, showStatus]);
 
   const printPdf = () => {
     if (!doc) return;
     const w = window.open("", "_blank", "width=900,height=1100");
     if (!w) return;
-    w.document.write(buildPrintableDocument({ doc, company, client, project }));
+    w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus }));
     w.document.close();
     setTimeout(() => { w.focus(); w.print(); }, 250);
   };
@@ -58,7 +60,11 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
       <DialogContent className="max-w-4xl p-0 gap-0 max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
           <div className="text-sm font-medium">{titleFor(doc?.kind)} preview · {doc?.number}</div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+              <Checkbox checked={showStatus} onCheckedChange={(v) => setShowStatus(!!v)} />
+              Show status
+            </label>
             <Button size="sm" variant="outline" onClick={printPdf}><Printer className="h-3.5 w-3.5 mr-1.5" />Print</Button>
             <Button size="sm" onClick={printPdf}><Download className="h-3.5 w-3.5 mr-1.5" />Export PDF</Button>
             <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)}><X className="h-4 w-4" /></Button>
