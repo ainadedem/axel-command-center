@@ -342,7 +342,7 @@ function ClientCard({
             <button onClick={() => onPromote(cl)} title="Promote to client" className="h-6 w-6 grid place-items-center rounded hover:bg-emerald-500/15 text-muted-foreground hover:text-emerald-700"><UserCheck className="h-3 w-3" /></button>
           )}
           <button onClick={() => onEdit(cl)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
-          <button onClick={() => confirm(`Delete ${cl.name}?`) && clientsStore.remove(cl.id)} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+          <button onClick={() => { if (confirm(`Delete ${cl.name}?`)) { clientsStore.remove(cl.id); void deleteClientDb(cl.id); } }} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
         </div>
       </div>
 
@@ -433,7 +433,7 @@ function ClientListView({
               <button onClick={() => onPromote(cl)} title="Promote" className="h-6 w-6 grid place-items-center rounded hover:bg-emerald-500/15 text-muted-foreground hover:text-emerald-700"><UserCheck className="h-3 w-3" /></button>
             )}
             <button onClick={() => onEdit(cl)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
-            <button onClick={() => confirm(`Delete ${cl.name}?`) && clientsStore.remove(cl.id)} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+            <button onClick={() => { if (confirm(`Delete ${cl.name}?`)) { clientsStore.remove(cl.id); void deleteClientDb(cl.id); } }} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
           </div>
         </div>
       </div>
