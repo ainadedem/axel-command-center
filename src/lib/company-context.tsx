@@ -60,7 +60,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     (async () => {
       const { data, error } = await supabase
         .from("companies")
-        .select("id, name, code, base_currency");
+        .select("*");
       if (cancelled || error || !data) return;
       const existing = companiesStore.items;
 
@@ -78,24 +78,62 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       }
       const deduped: Company[] = [...seen.values(), ...noCode];
 
-      // Add any DB rows whose code isn't represented locally yet.
+      // Merge DB rows into the local store. Existing entries (matched by
+      // code) get their fields refreshed from the DB so updates made in the
+      // Companies page show up everywhere; new rows are appended.
       const byCode = new Map(deduped.map((c) => [(c.code || c.shortName || "").toUpperCase(), c]));
-      let changed = deduped.length !== existing.length;
       const merged: Company[] = [...deduped];
-      data.forEach((row, idx) => {
-        const code = (row.code || "").toUpperCase();
-        if (!code || byCode.has(code)) return;
-        const entry: Company = {
-          id: row.id,
-          name: row.name,
-          shortName: code || row.name.slice(0, 3).toUpperCase(),
-          code: code,
-          color: FALLBACK_COLORS[(deduped.length + idx) % FALLBACK_COLORS.length],
-          baseCurrency: (row.base_currency as Company["baseCurrency"]) || "MGA",
+      let changed = deduped.length !== existing.length;
+
+      const toEntry = (row: Record<string, unknown>, fallbackColorIdx: number): Company => {
+        const code = String(row.code || "").toUpperCase();
+        const shortName = (row.short_name as string) || code || String(row.name).slice(0, 3).toUpperCase();
+        return {
+          id: row.id as string,
+          name: row.name as string,
+          shortName,
+          code,
+          color: (row.color as string) || FALLBACK_COLORS[fallbackColorIdx % FALLBACK_COLORS.length],
+          baseCurrency: ((row.base_currency as Company["baseCurrency"]) || "MGA"),
+          legalName: (row.legal_name as string) || undefined,
+          address: (row.address as string) || undefined,
+          email: (row.email as string) || undefined,
+          phone: (row.phone as string) || undefined,
+          website: (row.website as string) || undefined,
+          nif: (row.nif as string) || undefined,
+          stat: (row.stat as string) || undefined,
+          rcs: (row.rcs as string) || undefined,
+          taxId: (row.tax_id as string) || undefined,
+          bankName: (row.bank_name as string) || undefined,
+          bankAccount: (row.bank_account as string) || undefined,
+          bankSwift: (row.bank_swift as string) || undefined,
+          logoUrl: (row.logo_url as string) || undefined,
         };
-        merged.push(entry);
-        byCode.set(code, entry);
-        changed = true;
+      };
+
+      data.forEach((row, idx) => {
+        const code = String((row as { code?: string }).code || "").toUpperCase();
+        const entry = toEntry(row as Record<string, unknown>, deduped.length + idx);
+        if (!code) {
+          merged.push(entry);
+          changed = true;
+          return;
+        }
+        const existingEntry = byCode.get(code);
+        if (existingEntry) {
+          // Preserve the local seed id (so mock data stays linked) but refresh
+          // every other field from the DB. Keep the local id reference.
+          const refreshed: Company = { ...entry, id: existingEntry.id };
+          const i = merged.indexOf(existingEntry);
+          if (i >= 0 && JSON.stringify(merged[i]) !== JSON.stringify(refreshed)) {
+            merged[i] = refreshed;
+            changed = true;
+          }
+        } else {
+          merged.push(entry);
+          byCode.set(code, entry);
+          changed = true;
+        }
       });
       if (changed) companiesStore.replaceAll(merged);
     })();
@@ -103,6 +141,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, [user]);
+
 
   useEffect(() => {
     let cancelled = false;

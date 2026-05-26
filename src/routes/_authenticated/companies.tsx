@@ -86,7 +86,7 @@ function CompaniesPage() {
                     </div>
                     <div className="opacity-0 group-hover:opacity-100 transition flex gap-1">
                       <button onClick={() => openEdit(c)} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                      <button onClick={async () => { if (confirm(`Delete ${c.name}?`)) { companiesStore.remove(c.id); await supabase.from("companies").delete().eq("id", c.id); } }} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+                      <button onClick={async () => { if (confirm(`Delete ${c.name}?`)) { companiesStore.remove(c.id); await supabase.from("companies").delete().eq("code", (c.code || c.shortName || "").toUpperCase()); } }} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
                     </div>
                   </div>
                   <div className="space-y-3 text-sm">
@@ -144,10 +144,10 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     }
   }, [open, editing]);
 
-  const submit = () => {
+  const submit = async () => {
     if (!name.trim() || !shortName.trim()) return;
     const finalCode = (code.trim() || shortName.trim()).toUpperCase();
-    const data = {
+    const local = {
       name, shortName, code: finalCode, color, baseCurrency,
       legalName: legalName || undefined, address: address || undefined,
       email: email || undefined, phone: phone || undefined, website: website || undefined,
@@ -155,10 +155,26 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       bankName: bankName || undefined, bankAccount: bankAccount || undefined, bankSwift: bankSwift || undefined,
       logoUrl,
     };
-    if (editing) companiesStore.update(editing.id, data);
-    else companiesStore.add({ id: newId("co"), ...data });
+    const dbRow = {
+      name, code: finalCode, short_name: shortName, color, base_currency: baseCurrency,
+      legal_name: legalName || null, address: address || null,
+      email: email || null, phone: phone || null, website: website || null,
+      nif: nif || null, stat: stat || null, rcs: rcs || null, tax_id: taxId || null,
+      bank_name: bankName || null, bank_account: bankAccount || null, bank_swift: bankSwift || null,
+      logo_url: logoUrl || null,
+    };
+    if (editing) {
+      companiesStore.update(editing.id, local);
+      // Match the DB row by code (the local id may be a mock seed id like "log").
+      await supabase.from("companies").update(dbRow).eq("code", finalCode);
+    } else {
+      const { data } = await supabase.from("companies").insert(dbRow).select("id").single();
+      const id = data?.id ?? newId("co");
+      companiesStore.add({ id, ...local });
+    }
     onOpenChange(false);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

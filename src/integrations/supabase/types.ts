@@ -75,28 +75,73 @@ export type Database = {
       }
       companies: {
         Row: {
+          address: string | null
+          bank_account: string | null
+          bank_name: string | null
+          bank_swift: string | null
           base_currency: string
           code: string
+          color: string | null
           created_at: string
+          email: string | null
           id: string
+          legal_name: string | null
+          logo_url: string | null
           name: string
+          nif: string | null
+          phone: string | null
+          rcs: string | null
+          short_name: string | null
+          stat: string | null
+          tax_id: string | null
           updated_at: string
+          website: string | null
         }
         Insert: {
+          address?: string | null
+          bank_account?: string | null
+          bank_name?: string | null
+          bank_swift?: string | null
           base_currency?: string
           code: string
+          color?: string | null
           created_at?: string
+          email?: string | null
           id?: string
+          legal_name?: string | null
+          logo_url?: string | null
           name: string
+          nif?: string | null
+          phone?: string | null
+          rcs?: string | null
+          short_name?: string | null
+          stat?: string | null
+          tax_id?: string | null
           updated_at?: string
+          website?: string | null
         }
         Update: {
+          address?: string | null
+          bank_account?: string | null
+          bank_name?: string | null
+          bank_swift?: string | null
           base_currency?: string
           code?: string
+          color?: string | null
           created_at?: string
+          email?: string | null
           id?: string
+          legal_name?: string | null
+          logo_url?: string | null
           name?: string
+          nif?: string | null
+          phone?: string | null
+          rcs?: string | null
+          short_name?: string | null
+          stat?: string | null
+          tax_id?: string | null
           updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
