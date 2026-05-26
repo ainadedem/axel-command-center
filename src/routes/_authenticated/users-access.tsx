@@ -318,6 +318,6 @@ function UsersAccessPage() {
           tick the companies they can view and work in.
         </p>
       </div>
-    </AppShell>
+    </>
   );
 }
