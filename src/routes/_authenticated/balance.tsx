@@ -1,11 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
-import { journalEntries, pcgAccounts, pcgIndex, fmtMoney, usesPcg, classNames, type PcgClass } from "@/lib/pcg";
-import { companies } from "@/lib/mock-data";
+import { useJournalEntries, pcgAccounts, pcgIndex, fmtMoney, usesPcg, classNames, type PcgClass } from "@/lib/pcg";
+import { useCompanies } from "@/lib/mock-data";
 import { useCompany } from "@/lib/company-context";
+import { PeriodPicker, defaultPeriod, type Period } from "@/components/period-picker";
+import { exportCsvRows } from "@/lib/export-csv";
+import { parseISO } from "date-fns";
+import { useState, useMemo } from "react";
+import { Download, CheckCircle2, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/balance")({ component: BalancePage });
+
+function inPeriod(date: string, p: Period) {
+  const d = parseISO(date);
+  return d >= p.from && d <= p.to;
+}
 
 function BalancePage() {
   return (
@@ -17,50 +27,92 @@ function BalancePage() {
 }
 
 function Body() {
+  const [period, setPeriod] = useState<Period>(defaultPeriod);
   const { scope } = useCompany();
-  const entries = journalEntries.filter((e) => {
-    if (!usesPcg(e.companyId)) return false;
-    if (scope.id === "company" && scope.companyId !== e.companyId) return false;
-    return true;
-  });
+  const companies = useCompanies();
+  const allEntries = useJournalEntries();
 
-  // Aggregate per account
-  const totals = new Map<string, { debit: number; credit: number }>();
-  entries.forEach((e) => {
-    e.lines.forEach((l) => {
-      const cur = totals.get(l.account) ?? { debit: 0, credit: 0 };
-      cur.debit += l.debit;
-      cur.credit += l.credit;
-      totals.set(l.account, cur);
+  const entries = useMemo(() =>
+    allEntries.filter((e) => {
+      if (!usesPcg(e.companyId)) return false;
+      if (scope.id === "company" && scope.companyId !== e.companyId) return false;
+      if (!inPeriod(e.date, period)) return false;
+      return true;
+    }), [allEntries, scope, period]);
+
+  const totals = useMemo(() => {
+    const map = new Map<string, { debit: number; credit: number }>();
+    entries.forEach((e) => {
+      e.lines.forEach((l) => {
+        const cur = map.get(l.account) ?? { debit: 0, credit: 0 };
+        cur.debit += l.debit;
+        cur.credit += l.credit;
+        map.set(l.account, cur);
+      });
     });
-  });
+    return map;
+  }, [entries]);
 
-  // Pick a display currency: if a single company scope, its base; else MGA aggregate (note: simplified, treats numbers as same unit per company).
-  const displayCo = scope.id === "company" ? companies.find((c) => c.id === scope.companyId)! : companies.find((c) => c.id === "log")!;
+  const displayCo = scope.id === "company"
+    ? companies.find((c) => c.id === scope.companyId) ?? companies.find((c) => c.id === "log")!
+    : companies.find((c) => c.id === "log")!;
 
   const rows = pcgAccounts
     .filter((a) => totals.has(a.code))
     .sort((a, b) => a.code.localeCompare(b.code));
 
   let totD = 0, totC = 0;
-  rows.forEach((a) => {
-    const t = totals.get(a.code)!;
-    totD += t.debit; totC += t.credit;
-  });
+  rows.forEach((a) => { const t = totals.get(a.code)!; totD += t.debit; totC += t.credit; });
+  const balanced = Math.round(totD - totC) === 0;
 
-  // Group by class
-  const byClass = new Map<PcgClass, typeof rows>();
-  rows.forEach((a) => {
-    if (!byClass.has(a.class)) byClass.set(a.class, []);
-    byClass.get(a.class)!.push(a);
-  });
+  const byClass = useMemo(() => {
+    const map = new Map<PcgClass, typeof rows>();
+    rows.forEach((a) => {
+      if (!map.has(a.class)) map.set(a.class, []);
+      map.get(a.class)!.push(a);
+    });
+    return map;
+  }, [rows]);
+
+  const handleExport = () => {
+    exportCsvRows(
+      `balance-${period.label.replace(/\s/g, "-")}.csv`,
+      ["Compte", "Libellé", "Débit", "Crédit", "Solde"],
+      rows.map((a) => {
+        const t = totals.get(a.code)!;
+        return [a.code, pcgIndex.get(a.code)?.name ?? a.code, t.debit, t.credit, t.debit - t.credit];
+      }),
+    );
+  };
 
   return (
     <div className="p-8 space-y-5">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <PeriodPicker value={period} onChange={setPeriod} />
+        <button
+          onClick={handleExport}
+          className="flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-surface hover:bg-surface-elevated text-sm transition"
+        >
+          <Download className="h-4 w-4" /> Exporter CSV
+        </button>
+      </div>
+
       <div className="grid grid-cols-3 gap-3">
-        <Stat label="Total débit" value={fmtMoney(totD, displayCo.baseCurrency)} />
-        <Stat label="Total crédit" value={fmtMoney(totC, displayCo.baseCurrency)} />
-        <Stat label="Équilibre" value={Math.round(totD - totC) === 0 ? "✓ Équilibrée" : `Écart ${fmtMoney(totD - totC, displayCo.baseCurrency)}`} ok={Math.round(totD - totC) === 0} />
+        <StatCard label="Total débit" value={fmtMoney(totD, displayCo.baseCurrency)} />
+        <StatCard label="Total crédit" value={fmtMoney(totC, displayCo.baseCurrency)} />
+        <StatCard
+          label="Équilibre"
+          value={balanced ? "✓ Équilibrée" : `Écart ${fmtMoney(totD - totC, displayCo.baseCurrency)}`}
+          ok={balanced}
+        />
+      </div>
+
+      {/* Equilibrium visual indicator */}
+      <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-sm ${balanced ? "border-success/30 bg-success/5 text-success" : "border-destructive/30 bg-destructive/5 text-destructive"}`}>
+        {balanced
+          ? <><CheckCircle2 className="h-4 w-4" /> La balance est équilibrée — total débit = total crédit sur la période.</>
+          : <><AlertTriangle className="h-4 w-4" /> Déséquilibre détecté : écart de {fmtMoney(Math.abs(totD - totC), displayCo.baseCurrency)}. Vérifier les écritures de la période.</>
+        }
       </div>
 
       {([1, 2, 3, 4, 5, 6, 7] as PcgClass[]).map((cls) => {
@@ -105,22 +157,40 @@ function Body() {
                   <td className="px-5 py-2 text-xs uppercase tracking-wider">Sous-total classe {cls}</td>
                   <td className="px-5 py-2 text-right font-tnum">{fmtMoney(subD, displayCo.baseCurrency)}</td>
                   <td className="px-5 py-2 text-right font-tnum">{fmtMoney(subC, displayCo.baseCurrency)}</td>
-                  <td className={`px-5 py-2 text-right font-tnum ${(subD - subC) > 0 ? "text-success" : (subD - subC) < 0 ? "text-destructive" : ""}`}>{fmtMoney(subD - subC, displayCo.baseCurrency)}</td>
+                  <td className={`px-5 py-2 text-right font-tnum ${(subD - subC) > 0 ? "text-success" : (subD - subC) < 0 ? "text-destructive" : ""}`}>
+                    {fmtMoney(subD - subC, displayCo.baseCurrency)}
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
         );
       })}
+
+      {/* Grand total footer */}
+      <div className="rounded-xl border border-border bg-surface-elevated/60 overflow-hidden">
+        <table className="w-full text-sm">
+          <tbody>
+            <tr className="font-bold">
+              <td className="px-5 py-3 text-xs uppercase tracking-wider" colSpan={2}>TOTAL GÉNÉRAL</td>
+              <td className="px-5 py-3 text-right font-tnum w-36">{fmtMoney(totD, displayCo.baseCurrency)}</td>
+              <td className="px-5 py-3 text-right font-tnum w-36">{fmtMoney(totC, displayCo.baseCurrency)}</td>
+              <td className={`px-5 py-3 text-right font-tnum w-36 ${balanced ? "text-success" : "text-destructive"}`}>
+                {fmtMoney(totD - totC, displayCo.baseCurrency)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
 
-function Stat({ label, value, ok }: { label: string; value: string; ok?: boolean }) {
+function StatCard({ label, value, ok }: { label: string; value: string; ok?: boolean }) {
   return (
     <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
       <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
-      <div className={`font-display text-2xl font-bold mt-1 font-tnum ${ok ? "text-success" : ""}`}>{value}</div>
+      <div className={`font-display text-2xl font-bold mt-1 font-tnum ${ok ? "text-success" : ok === false ? "text-destructive" : ""}`}>{value}</div>
     </div>
   );
 }
