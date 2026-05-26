@@ -539,8 +539,9 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
 
   const submit = () => {
     if (!name.trim() || !companyId) return;
+    const ids = Array.from(new Set([companyId, ...companyIds].filter(Boolean)));
     const data = {
-      companyId, name, country,
+      companyId, companyIds: ids, name, country,
       status,
       acquisition: acquisition.trim() || undefined,
       referral: referral.trim() || undefined,
