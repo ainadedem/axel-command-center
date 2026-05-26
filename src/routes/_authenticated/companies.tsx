@@ -170,9 +170,14 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               <div className="mt-2"><AvatarUpload value={logoUrl} onChange={setLogoUrl} name={name || "Logo"} size={72} square /></div>
               <p className="text-[10px] text-muted-foreground mt-1">Shown on invoice / PO / quote PDFs.</p>
             </div>
-            <div className="flex-1 grid grid-cols-2 gap-3">
-              <div><Label>Trading name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Logia Madagascar" /></div>
+            <div className="flex-1 grid grid-cols-3 gap-3">
+              <div className="col-span-3"><Label>Trading name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Logia Madagascar" /></div>
               <div><Label>Short name</Label><Input value={shortName} onChange={(e) => setShortName(e.target.value.toUpperCase().slice(0, 4))} placeholder="LOG" /></div>
+              <div>
+                <Label>Code</Label>
+                <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 6))} placeholder={shortName || "LOG"} />
+                <p className="text-[10px] text-muted-foreground mt-1">Used as a compact tag across the app.</p>
+              </div>
             </div>
           </div>
           <div><Label>Legal name (on invoices)</Label><Input value={legalName} onChange={(e) => setLegalName(e.target.value)} placeholder="LOGIA SARL" /></div>
