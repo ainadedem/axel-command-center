@@ -263,7 +263,7 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
   `;
 }
 
-function buildPrintableDocument(args: { doc: DocumentData; company?: Company; client?: Client; project?: Project }) {
+function buildPrintableDocument(args: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean }) {
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(args.doc.number)}</title>
     <style>@page { size: A4; margin: 22mm; } body { margin: 0; }</style>
     </head><body>${buildHTML(args)}</body></html>`;
