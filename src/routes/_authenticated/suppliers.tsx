@@ -289,7 +289,7 @@ function SupplierCard({
         {!fromClient && (
           <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
             <button onClick={() => onEdit(s)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
-            <button onClick={() => confirm(`Delete ${s.name}?`) && suppliersStore.remove(s.id)} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+            <button onClick={() => { if (confirm(`Delete ${s.name}?`)) { suppliersStore.remove(s.id); void deleteSupplierDb(s.id); } }} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
           </div>
         )}
       </div>
@@ -347,7 +347,7 @@ function SupplierListView({
           {!fromClient && (
             <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
               <button onClick={() => onEdit(s)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
-              <button onClick={() => confirm(`Delete ${s.name}?`) && suppliersStore.remove(s.id)} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+              <button onClick={() => { if (confirm(`Delete ${s.name}?`)) { suppliersStore.remove(s.id); void deleteSupplierDb(s.id); } }} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
             </div>
           )}
         </div>
