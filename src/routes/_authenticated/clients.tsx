@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import {
   useClients, useCompanies, useProjects, useInvoices, useTransactions,
   useSalesPeople, useTeamMembers,
-  clientsStore, fmtCompact, toMGA, type Client,
+  clientsStore, fmtCompact, toMGA, type Client, type ContactCategory,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { useEffect, useState } from "react";
@@ -17,6 +17,7 @@ import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
 import { Pencil, Trash2, Wallet, AlertCircle, TrendingUp, ArrowUpRight, UserCheck, Sparkles, LayoutGrid, List as ListIcon } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { CategoryChips, CategoryMultiSelect, defaultCategoriesFor } from "@/components/category-chips";
 
 export const Route = createFileRoute("/_authenticated/clients")({ component: ClientsPage });
 
@@ -198,6 +199,9 @@ function ClientGridView({
                     {cl.email} {cl.phone && `· ${cl.phone}`}
                   </div>
                 )}
+                {cl.categories && cl.categories.length > 0 && (
+                  <div className="mt-1.5"><CategoryChips value={cl.categories} /></div>
+                )}
               </div>
               <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                 {isLead && (
@@ -364,6 +368,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   const [contacts, setContacts] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [status, setStatus] = useState<"lead" | "client">("client");
+  const [categories, setCategories] = useState<ContactCategory[]>(["client"]);
 
   useEffect(() => {
     if (!open) return;
@@ -380,12 +385,14 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setContacts(editing.contacts ?? "");
       setAvatarUrl(editing.avatarUrl);
       setStatus(editing.status ?? "client");
+      setCategories(defaultCategoriesFor("client", editing.categories));
     } else {
       setCompanyId(companies[0]?.id ?? ""); setName(""); setCountry(""); setAcquisition(""); setReferral("");
       setAcquiredAt(new Date().toISOString().slice(0, 10));
       setWebsite(""); setEmail(""); setPhone(""); setAddress(""); setIndustry(""); setContacts("");
       setAvatarUrl(undefined);
       setStatus("client");
+      setCategories(["client"]);
     }
   }, [open, editing, companies]);
 
@@ -404,6 +411,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       industry: industry.trim() || undefined,
       contacts: contacts.trim() || undefined,
       avatarUrl,
+      categories: categories.length > 0 ? categories : undefined,
     };
     if (editing) clientsStore.update(editing.id, data);
     else clientsStore.add({ id: newId("cli"), ...data });
@@ -457,6 +465,11 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
               </div>
             </div>
             <div><Label>Country</Label><Input value={country} onChange={(e) => setCountry(e.target.value)} /></div>
+          </div>
+          <div>
+            <Label>Categories</Label>
+            <div className="mt-1.5"><CategoryMultiSelect value={categories} onChange={setCategories} /></div>
+            <p className="text-[11px] text-muted-foreground mt-1.5">Tag this contact with one or more roles. Defaults to <span className="font-medium text-foreground">Client</span>.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Acquired on</Label><Input type="date" value={acquiredAt} onChange={(e) => setAcquiredAt(e.target.value)} /></div>

@@ -88,7 +88,12 @@ export interface Client {
   nif?: string;
   stat?: string;
   rcs?: string;
+  /** Contact categories — supports multiple (client, supplier, referral, partner). */
+  categories?: ContactCategory[];
 }
+
+/** Multi-select contact category, shared between Client and Supplier records. */
+export type ContactCategory = "client" | "supplier" | "referral" | "partner";
 
 export interface Project {
   id: string;
@@ -297,6 +302,8 @@ export interface Supplier {
   bankAccount?: string;
   bankSwift?: string;
   notes?: string;
+  /** Contact categories — supports multiple (client, supplier, referral, partner). */
+  categories?: ContactCategory[];
 }
 
 /* ─── Team & Sales team ─────────────────────────────────────────────── */

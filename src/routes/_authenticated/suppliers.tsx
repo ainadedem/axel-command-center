@@ -3,12 +3,12 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
   useSuppliers, useCompanies, suppliersStore,
-  type Supplier,
+  type Supplier, type ContactCategory,
 } from "@/lib/mock-data";
 import { useJournalEntries, fmtAr } from "@/lib/pcg";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,16 +16,17 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
-import { Pencil, Trash2, Building2, User } from "lucide-react";
-import { useDataView, type FieldDef } from "@/hooks/use-data-view";
-import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
+import { Pencil, Trash2, Building2, User, LayoutGrid, List as ListIcon } from "lucide-react";
+import {
+  CategoryChips, CategoryMultiSelect, CategoryFilterTabs, defaultCategoriesFor,
+} from "@/components/category-chips";
 
 export const Route = createFileRoute("/_authenticated/suppliers")({ component: SuppliersPage });
 
 function SuppliersPage() {
   return (
     <AppShell>
-      <PageHeader title="Fournisseurs" description="Vendors and internal payees derived from the Grand-livre (401xxx)." />
+      <PageHeader title="Suppliers" description="Vendors, partners, referrals and internal payees — same database, multi-category." />
       <Body />
     </AppShell>
   );
@@ -39,8 +40,10 @@ function Body() {
   const baseList = inScope(suppliers, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
+  const [view, setView] = useState<"grid" | "list">("grid");
+  const [filter, setFilter] = useState<ContactCategory | "all">("all");
 
-  // Compute outstanding payable per supplier from journal entries (credit - debit on 401xxx).
+  // Compute outstanding payable per supplier from journal entries.
   const balances = new Map<string, number>();
   for (const s of baseList) {
     let bal = 0;
@@ -55,82 +58,128 @@ function Body() {
     balances.set(s.id, bal);
   }
 
-  const fields: FieldDef<Supplier>[] = [
-    { key: "name", label: "Name", type: "string", accessor: (s) => s.name, noGroup: true },
-    { key: "kind", label: "Kind", type: "enum", accessor: (s) => s.kind },
-    { key: "account", label: "PCG account", type: "string", accessor: (s) => s.account },
-    { key: "company", label: "Company", type: "enum", accessor: (s) => companies.find((c) => c.id === s.companyId)?.shortName ?? "" },
-    { key: "country", label: "Country", type: "string", accessor: (s) => s.country ?? "" },
-    { key: "outstanding", label: "Outstanding", type: "number", accessor: (s) => balances.get(s.id) ?? 0, noGroup: true },
-  ];
-  const view = useDataView<Supplier>("suppliers", fields);
-  const groups = view.apply(baseList);
-  const list = groups.flatMap((g) => g.items);
+  // Normalize categories (auto-tag "supplier" when missing).
+  const tagged = baseList.map((s) => ({
+    ...s,
+    categories: defaultCategoriesFor("supplier", s.categories),
+  }));
+
+  const counts = useMemo(() => {
+    const c: Record<ContactCategory | "all", number> = {
+      all: tagged.length, client: 0, supplier: 0, referral: 0, partner: 0,
+    };
+    for (const s of tagged) for (const k of s.categories) c[k]++;
+    return c;
+  }, [tagged]);
+
+  const visible = filter === "all" ? tagged : tagged.filter((s) => s.categories.includes(filter));
+
+  const openCreate = () => { setEditing(null); setOpen(true); };
 
   return (
     <div className="p-8 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <CrudToolbar count={list.length} label="suppliers" onCreate={() => { setEditing(null); setOpen(true); }} />
-        <DataToolbar view={view} items={baseList} />
+        <CrudToolbar count={visible.length} label="contacts" onCreate={openCreate}>
+          <div className="flex items-center border rounded-md overflow-hidden">
+            <button onClick={() => setView("grid")} className={`h-8 w-8 grid place-items-center ${view === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-elevated"}`} title="Grid view"><LayoutGrid className="h-4 w-4" /></button>
+            <button onClick={() => setView("list")} className={`h-8 w-8 grid place-items-center ${view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-elevated"}`} title="List view"><ListIcon className="h-4 w-4" /></button>
+          </div>
+        </CrudToolbar>
+        <CategoryFilterTabs value={filter} onChange={setFilter} counts={counts} />
       </div>
-      {list.length === 0 ? (
-        <EmptyState label="suppliers" onCreate={() => { setEditing(null); setOpen(true); }} />
+
+      {visible.length === 0 ? (
+        <EmptyState label="contacts" onCreate={openCreate} />
+      ) : view === "grid" ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {visible.map((s) => {
+            const co = companies.find((c) => c.id === s.companyId);
+            const bal = balances.get(s.id) ?? 0;
+            const Icon = s.kind === "internal" ? User : Building2;
+            return (
+              <div key={s.id} className="relative rounded-xl border border-border bg-surface-elevated p-4 hover:border-primary/40 transition group">
+                <div className="flex items-start gap-3">
+                  <div className="relative shrink-0">
+                    <Avatar src={s.avatarUrl} name={s.name} size={40} />
+                    {co && <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background" style={{ background: co.color }} title={co.name} />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-display font-semibold text-sm truncate flex items-center gap-1.5">
+                      <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      {s.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                      {[s.kind === "internal" ? "Interne" : "Externe", s.country].filter(Boolean).join(" · ")}
+                    </div>
+                    {(s.email || s.phone) && (
+                      <div className="text-[11px] text-muted-foreground/70 mt-1 truncate">
+                        {s.email} {s.phone && `· ${s.phone}`}
+                      </div>
+                    )}
+                    <div className="mt-1.5"><CategoryChips value={s.categories} /></div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => { setEditing(s); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => confirm(`Delete ${s.name}?`) && suppliersStore.remove(s.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+                  </div>
+                </div>
+                <div className="mt-3 border-t border-border/50 pt-3 grid grid-cols-2 gap-2">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground font-semibold">Outstanding</div>
+                    <div className={`font-tnum font-semibold mt-0.5 text-sm ${bal > 0 ? "text-amber-600" : "text-foreground"}`}>{fmtAr(bal)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground font-semibold">PCG account</div>
+                    <div className="font-tnum text-sm mt-0.5">{s.account}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       ) : (
-        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-surface-elevated/40 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium">Supplier</th>
-                <th className="text-left px-4 py-3 font-medium">Kind</th>
-                <th className="text-left px-4 py-3 font-medium">PCG account</th>
-                <th className="text-left px-4 py-3 font-medium">Company</th>
-                <th className="text-right px-4 py-3 font-medium">Outstanding</th>
-                <th className="w-20" />
-              </tr>
-            </thead>
-            <tbody>
-              {groups.map((g) => (
-                <Fragment key={g.key}>
-                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={6} />}
-                  {g.items.map((s) => {
-                    const co = companies.find((c) => c.id === s.companyId);
-                    const bal = balances.get(s.id) ?? 0;
-                    const Icon = s.kind === "internal" ? User : Building2;
-                    return (
-                      <tr key={s.id} className="border-t border-border/60 hover:bg-surface-elevated/30 group">
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2.5">
-                            <Avatar src={s.avatarUrl} name={s.name} size={32} />
-                            <Icon className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">{s.name}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">{s.kind === "internal" ? "Interne" : "Externe"}</td>
-                        <td className="px-4 py-3 font-tnum text-muted-foreground">{s.account}</td>
-                        <td className="px-4 py-3">
-                          {co && (
-                            <span className="inline-flex items-center gap-2 text-xs">
-                              <span className="h-2 w-2 rounded-full" style={{ background: co.color }} />
-                              {co.shortName}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right font-tnum">{fmtAr(bal)}</td>
-                        <td className="px-4 py-3">
-                          <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 justify-end">
-                            <button onClick={() => { setEditing(s); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                            <button onClick={() => confirm(`Delete ${s.name}?`) && suppliersStore.remove(s.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </Fragment>
-              ))}
-            </tbody>
-          </table>
+        <div className="rounded-xl border border-border bg-surface-elevated overflow-hidden">
+          <div className="grid grid-cols-[1fr_160px_120px_140px_40px] gap-3 px-4 py-2.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border bg-background/50">
+            <div>Contact</div>
+            <div>Categories</div>
+            <div className="text-right">PCG</div>
+            <div className="text-right">Outstanding</div>
+            <div />
+          </div>
+          {visible.map((s) => {
+            const co = companies.find((c) => c.id === s.companyId);
+            const bal = balances.get(s.id) ?? 0;
+            const Icon = s.kind === "internal" ? User : Building2;
+            return (
+              <div key={s.id} className="grid grid-cols-[1fr_160px_120px_140px_40px] gap-3 px-4 py-3 items-center border-b border-border/50 last:border-b-0 hover:bg-accent/40 transition group">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative shrink-0">
+                    <Avatar src={s.avatarUrl} name={s.name} size={32} />
+                    {co && <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background" style={{ background: co.color }} title={co.name} />}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-medium text-sm truncate flex items-center gap-1.5">
+                      <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                      {s.name}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground truncate">{[s.country, s.email].filter(Boolean).join(" · ")}</div>
+                  </div>
+                </div>
+                <div><CategoryChips value={s.categories} size="xs" /></div>
+                <div className="text-right font-tnum text-sm text-muted-foreground">{s.account}</div>
+                <div className={`text-right font-tnum text-sm ${bal > 0 ? "text-amber-600" : ""}`}>{fmtAr(bal)}</div>
+                <div className="flex justify-end">
+                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => { setEditing(s); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => confirm(`Delete ${s.name}?`) && suppliersStore.remove(s.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
+
       <SupplierDialog open={open} onOpenChange={setOpen} editing={editing} />
     </div>
   );
@@ -158,6 +207,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
   const [bankAccount, setBankAccount] = useState("");
   const [bankSwift, setBankSwift] = useState("");
   const [notes, setNotes] = useState("");
+  const [categories, setCategories] = useState<ContactCategory[]>(["supplier"]);
 
   useEffect(() => {
     if (!open) return;
@@ -170,11 +220,13 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
       setTaxId(editing.taxId ?? ""); setNif(editing.nif ?? ""); setStat(editing.stat ?? ""); setRcs(editing.rcs ?? "");
       setBankName(editing.bankName ?? ""); setBankAccount(editing.bankAccount ?? ""); setBankSwift(editing.bankSwift ?? "");
       setNotes(editing.notes ?? "");
+      setCategories(defaultCategoriesFor("supplier", editing.categories));
     } else {
       setName(""); setCompanyId(companies[0]?.id ?? ""); setAccount("401000"); setKind("external");
       setAvatarUrl(undefined); setContactPerson(""); setEmail(""); setPhone(""); setWebsite("");
       setAddress(""); setCountry(""); setPaymentTerms(""); setTaxId(""); setNif(""); setStat(""); setRcs("");
       setBankName(""); setBankAccount(""); setBankSwift(""); setNotes("");
+      setCategories(["supplier"]);
     }
   }, [open, editing, companies]);
 
@@ -188,6 +240,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
       taxId: taxId || undefined, nif: nif || undefined, stat: stat || undefined, rcs: rcs || undefined,
       bankName: bankName || undefined, bankAccount: bankAccount || undefined, bankSwift: bankSwift || undefined,
       notes: notes || undefined,
+      categories: categories.length > 0 ? categories : undefined,
     };
     if (editing) suppliersStore.update(editing.id, data);
     else suppliersStore.add({ id: newId("sup"), ...data });
@@ -197,7 +250,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[80vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>{editing ? "Edit supplier" : "New supplier"}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{editing ? "Edit contact" : "New contact"}</DialogTitle></DialogHeader>
         <div className="space-y-3 py-2">
           <div className="flex items-start gap-4">
             <AvatarUpload value={avatarUrl} onChange={setAvatarUrl} name={name} size={64} square={kind === "external"} />
@@ -205,6 +258,11 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
               <Label>Name</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} />
             </div>
+          </div>
+          <div>
+            <Label>Categories</Label>
+            <div className="mt-1.5"><CategoryMultiSelect value={categories} onChange={setCategories} /></div>
+            <p className="text-[11px] text-muted-foreground mt-1.5">Tag this contact with one or more roles. Defaults to <span className="font-medium text-foreground">Supplier</span>.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Company</Label>
