@@ -282,6 +282,7 @@ function ClientCard({
   onEdit: (cl: Client) => void;
   onPromote: (cl: Client) => void;
 }) {
+  const linkedIds = contactCompanyIds(cl);
   const co = companies.find((c) => c.id === cl.companyId);
   const cliProjects = projects.filter((p) => p.clientId === cl.id);
   const cliInvoices = invoices.filter((i) => i.clientId === cl.id);
