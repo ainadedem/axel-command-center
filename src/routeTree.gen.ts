@@ -24,6 +24,7 @@ import { Route as AuthenticatedPurchaseOrdersRouteImport } from './routes/_authe
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedPlanComptableRouteImport } from './routes/_authenticated/plan-comptable'
 import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated/pipeline'
+import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedGrandLivreRouteImport } from './routes/_authenticated/grand-livre'
@@ -115,6 +116,11 @@ const AuthenticatedPlanComptableRoute =
 const AuthenticatedPipelineRoute = AuthenticatedPipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedPayrollRoute = AuthenticatedPayrollRouteImport.update({
+  id: '/payroll',
+  path: '/payroll',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedJournalRoute = AuthenticatedJournalRouteImport.update({
@@ -211,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/grand-livre': typeof AuthenticatedGrandLivreRoute
   '/invoices': typeof AuthenticatedInvoicesRoute
   '/journal': typeof AuthenticatedJournalRoute
+  '/payroll': typeof AuthenticatedPayrollRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/plan-comptable': typeof AuthenticatedPlanComptableRoute
   '/projects': typeof AuthenticatedProjectsRoute
@@ -240,6 +247,7 @@ export interface FileRoutesByTo {
   '/grand-livre': typeof AuthenticatedGrandLivreRoute
   '/invoices': typeof AuthenticatedInvoicesRoute
   '/journal': typeof AuthenticatedJournalRoute
+  '/payroll': typeof AuthenticatedPayrollRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/plan-comptable': typeof AuthenticatedPlanComptableRoute
   '/projects': typeof AuthenticatedProjectsRoute
@@ -273,6 +281,7 @@ export interface FileRoutesById {
   '/_authenticated/grand-livre': typeof AuthenticatedGrandLivreRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
+  '/_authenticated/payroll': typeof AuthenticatedPayrollRoute
   '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
   '/_authenticated/plan-comptable': typeof AuthenticatedPlanComptableRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
@@ -307,6 +316,7 @@ export interface FileRouteTypes {
     | '/grand-livre'
     | '/invoices'
     | '/journal'
+    | '/payroll'
     | '/pipeline'
     | '/plan-comptable'
     | '/projects'
@@ -336,6 +346,7 @@ export interface FileRouteTypes {
     | '/grand-livre'
     | '/invoices'
     | '/journal'
+    | '/payroll'
     | '/pipeline'
     | '/plan-comptable'
     | '/projects'
@@ -368,6 +379,7 @@ export interface FileRouteTypes {
     | '/_authenticated/grand-livre'
     | '/_authenticated/invoices'
     | '/_authenticated/journal'
+    | '/_authenticated/payroll'
     | '/_authenticated/pipeline'
     | '/_authenticated/plan-comptable'
     | '/_authenticated/projects'
@@ -496,6 +508,13 @@ declare module '@tanstack/react-router' {
       path: '/pipeline'
       fullPath: '/pipeline'
       preLoaderRoute: typeof AuthenticatedPipelineRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/payroll': {
+      id: '/_authenticated/payroll'
+      path: '/payroll'
+      fullPath: '/payroll'
+      preLoaderRoute: typeof AuthenticatedPayrollRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/journal': {
@@ -633,6 +652,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedGrandLivreRoute: typeof AuthenticatedGrandLivreRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
+  AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRoute
   AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
   AuthenticatedPlanComptableRoute: typeof AuthenticatedPlanComptableRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
@@ -661,6 +681,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedGrandLivreRoute: AuthenticatedGrandLivreRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
+  AuthenticatedPayrollRoute: AuthenticatedPayrollRoute,
   AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
   AuthenticatedPlanComptableRoute: AuthenticatedPlanComptableRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
