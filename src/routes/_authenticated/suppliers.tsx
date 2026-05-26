@@ -298,7 +298,7 @@ function SupplierListView({
             <div className="text-[11px] text-muted-foreground truncate">{[s.country, s.email].filter(Boolean).join(" · ")}</div>
           </div>
         </div>
-        <div className="flex items-center gap-1 flex-wrap"><CategoryChips value={s.categories} size="xs" /><CompanyTag code={co?.code} name={co?.name} color={co?.color} size="xs" /></div>
+        <div className="flex items-center gap-1 flex-wrap"><CategoryChips value={s.categories} size="xs" /><CompanyTags ids={contactCompanyIds(s)} companies={companies} size="xs" /></div>
         <div className="text-right font-tnum text-[13px] text-muted-foreground">{s.account}</div>
         <div className={`text-right font-tnum text-[13px] ${bal > 0 ? "text-amber-600" : ""}`}>{fmtAr(bal)}</div>
         <div className="flex justify-end">
