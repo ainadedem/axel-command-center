@@ -411,6 +411,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       industry: industry.trim() || undefined,
       contacts: contacts.trim() || undefined,
       avatarUrl,
+      categories: categories.length > 0 ? categories : undefined,
     };
     if (editing) clientsStore.update(editing.id, data);
     else clientsStore.add({ id: newId("cli"), ...data });
