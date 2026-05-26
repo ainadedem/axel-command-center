@@ -71,14 +71,8 @@ function LoginPage() {
       <div className="absolute inset-0 pointer-events-none [background:var(--gradient-glow)] opacity-70" />
       <div className="hidden lg:flex w-1/2 relative items-end p-12 border-r border-border">
         <div className="relative z-10">
-          <div className="flex items-center gap-2.5 mb-10">
-            <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-chart-2 grid place-items-center shadow-[var(--shadow-glow)]">
-              <span className="font-display text-lg font-bold text-primary-foreground">A</span>
-            </div>
-            <div>
-              <div className="font-display text-xl font-bold tracking-tight leading-none">AXEL</div>
-              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mt-0.5">Control System</div>
-            </div>
+          <div className="flex items-center mb-10">
+            <img src={axelLogo} alt="Axel — Unified Business Platform" className="h-12 w-auto" />
           </div>
           <h1 className="font-display text-5xl font-bold tracking-tight leading-[1.05] max-w-md">
             Axel
@@ -91,11 +85,8 @@ function LoginPage() {
 
       <div className="flex-1 grid place-items-center px-6 py-12 relative z-10">
         <div className="w-full max-w-sm">
-          <div className="lg:hidden flex items-center gap-2.5 mb-8 justify-center">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-chart-2 grid place-items-center">
-              <span className="font-display text-base font-bold text-primary-foreground">A</span>
-            </div>
-            <span className="font-display text-lg font-bold tracking-tight">AXEL</span>
+          <div className="lg:hidden flex items-center mb-8 justify-center">
+            <img src={axelLogo} alt="Axel" className="h-10 w-auto" />
           </div>
 
           <h2 className="font-display text-2xl font-bold tracking-tight">
