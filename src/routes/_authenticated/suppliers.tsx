@@ -5,6 +5,8 @@ import {
   useSuppliers, useCompanies, useClients, suppliersStore, contactCompanyIds,
   type Supplier, type ContactCategory,
 } from "@/lib/mock-data";
+import { upsertSupplier, deleteSupplierDb } from "@/lib/db-sync";
+
 import { useJournalEntries, fmtAr } from "@/lib/pcg";
 import { newId } from "@/lib/data-store";
 
@@ -442,10 +444,22 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
       notes: notes || undefined,
       categories: categories.length > 0 ? categories : undefined,
     };
-    if (editing) suppliersStore.update(editing.id, data);
-    else suppliersStore.add({ id: newId("sup"), ...data });
+    if (editing) {
+      suppliersStore.update(editing.id, data);
+      void upsertSupplier({ ...editing, ...data } as Supplier);
+    } else {
+      const localId = newId("sup");
+      const local = { id: localId, ...data } as Supplier;
+      suppliersStore.add(local);
+      void upsertSupplier(local).then((dbId) => {
+        if (dbId && dbId !== localId) {
+          suppliersStore.replaceAll(suppliersStore.items.map((s) => s.id === localId ? { ...s, id: dbId } : s));
+        }
+      });
+    }
     onOpenChange(false);
   }
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

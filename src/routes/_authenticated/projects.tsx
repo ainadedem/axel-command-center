@@ -6,6 +6,8 @@ import {
   fmtCompact, toMGA, type Project, type Currency,
   contactBelongsTo,
 } from "@/lib/mock-data";
+import { upsertProject, deleteProjectDb } from "@/lib/db-sync";
+
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
 import { Fragment, useEffect, useMemo, useState } from "react";
@@ -465,10 +467,22 @@ function ProjectDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const submit = () => {
     if (!name.trim() || !companyId || !clientId) return;
     const data = { companyId, clientId, name, revenue: Number(revenue) || 0, cost: Number(cost) || 0, currency };
-    if (editing) projectsStore.update(editing.id, data);
-    else projectsStore.add({ id: newId("prj"), ...data });
+    if (editing) {
+      projectsStore.update(editing.id, data);
+      void upsertProject({ ...editing, ...data } as Project);
+    } else {
+      const localId = newId("prj");
+      const local = { id: localId, ...data } as Project;
+      projectsStore.add(local);
+      void upsertProject(local).then((dbId) => {
+        if (dbId && dbId !== localId) {
+          projectsStore.replaceAll(projectsStore.items.map((p) => p.id === localId ? { ...p, id: dbId } : p));
+        }
+      });
+    }
     onOpenChange(false);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
