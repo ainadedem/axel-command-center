@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, FileCheck2, Plus, X, Eye } from "lucide-react";
+import { Pencil, Trash2, FileCheck2, Plus, X, Eye, Copy } from "lucide-react";
 import { DocumentPreview, type DocumentData } from "@/components/document-preview";
 import { nextNumber } from "@/lib/numbering";
 
