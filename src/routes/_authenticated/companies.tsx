@@ -19,23 +19,23 @@ import { AvatarUpload } from "@/components/avatar-upload";
 export const Route = createFileRoute("/_authenticated/companies")({ component: CompaniesPage });
 
 const PALETTE = [
-  // Vivid brand colors
-  "oklch(0.78 0.14 165)", // emerald
-  "oklch(0.72 0.13 220)", // azure
-  "oklch(0.78 0.13 75)",  // amber
-  "oklch(0.72 0.18 25)",  // coral
-  "oklch(0.72 0.15 300)", // violet
-  "oklch(0.78 0.13 130)", // lime
-  "oklch(0.74 0.15 350)", // magenta
-  "oklch(0.76 0.14 195)", // teal
-  "oklch(0.75 0.20 55)",  // tangerine
-  "oklch(0.72 0.18 10)",  // crimson
-  "oklch(0.70 0.16 330)", // hot pink
-  "oklch(0.74 0.15 155)", // grass
-  "oklch(0.70 0.14 265)", // royal blue
-  "oklch(0.76 0.12 45)",  // gold
-  "oklch(0.72 0.16 320)", // fuchsia
-  "oklch(0.78 0.10 200)", // sky
+  // Vivid brand colors — saturated
+  "oklch(0.78 0.22 165)", // emerald
+  "oklch(0.72 0.20 220)", // azure
+  "oklch(0.78 0.22 75)",  // amber
+  "oklch(0.72 0.24 25)",  // coral
+  "oklch(0.72 0.22 300)", // violet
+  "oklch(0.78 0.22 130)", // lime
+  "oklch(0.74 0.24 350)", // magenta
+  "oklch(0.76 0.22 195)", // teal
+  "oklch(0.75 0.24 55)",  // tangerine
+  "oklch(0.72 0.24 10)",  // crimson
+  "oklch(0.70 0.22 330)", // hot pink
+  "oklch(0.74 0.22 155)", // grass
+  "oklch(0.70 0.20 265)", // royal blue
+  "oklch(0.76 0.20 45)",  // gold
+  "oklch(0.72 0.24 320)", // fuchsia
+  "oklch(0.78 0.18 200)", // sky
   // Corporate / muted
   "oklch(0.38 0.08 250)", // navy
   "oklch(0.45 0.06 250)", // steel blue
