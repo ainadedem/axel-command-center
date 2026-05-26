@@ -408,8 +408,9 @@ function ClientListView({
               {isLead && <span className="text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-amber-500/15 text-amber-700 border border-amber-500/30 font-semibold">Lead</span>}
               {overdue && <span className="text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30 font-semibold">Overdue</span>}
             </div>
-            <div className="text-[11px] text-muted-foreground truncate">
-              {[cl.industry, cl.country].filter(Boolean).join(" · ")}
+            <div className="text-[11px] text-muted-foreground truncate flex items-center gap-1.5">
+              <span className="truncate">{[cl.industry, cl.country].filter(Boolean).join(" · ")}</span>
+              <CompanyTag name={co?.name} color={co?.color} size="xs" />
             </div>
           </div>
         </div>
