@@ -46,7 +46,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const allCompanies = useCompanies();
   const { user, roles } = useAuth();
 
-  const isGroupAdmin = roles.includes("group_admin" as never) || (roles as string[]).includes("super_admin");
+  const isGroupAdmin = roles.includes("group_admin") || roles.includes("super_admin");
 
   const [allowedCodes, setAllowedCodes] = useState<string[] | null>(null);
   const [accessLoading, setAccessLoading] = useState(true);
