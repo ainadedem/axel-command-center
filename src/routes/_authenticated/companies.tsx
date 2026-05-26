@@ -19,8 +19,24 @@ import { AvatarUpload } from "@/components/avatar-upload";
 export const Route = createFileRoute("/_authenticated/companies")({ component: CompaniesPage });
 
 const PALETTE = [
-  "oklch(0.78 0.14 165)", "oklch(0.72 0.13 220)", "oklch(0.78 0.13 75)",
-  "oklch(0.72 0.18 25)", "oklch(0.72 0.15 300)", "oklch(0.78 0.13 130)",
+  // Brand / vivid
+  "oklch(0.78 0.14 165)", // emerald
+  "oklch(0.72 0.13 220)", // azure
+  "oklch(0.78 0.13 75)",  // amber
+  "oklch(0.72 0.18 25)",  // coral
+  "oklch(0.72 0.15 300)", // violet
+  "oklch(0.78 0.13 130)", // lime
+  "oklch(0.74 0.15 350)", // magenta
+  "oklch(0.76 0.14 195)", // teal
+  // Corporate / muted
+  "oklch(0.38 0.08 250)", // navy
+  "oklch(0.45 0.06 250)", // steel blue
+  "oklch(0.35 0.04 260)", // graphite
+  "oklch(0.55 0.10 30)",  // brick
+  "oklch(0.50 0.08 145)", // forest
+  "oklch(0.60 0.09 85)",  // bronze
+  "oklch(0.42 0.05 280)", // indigo
+  "oklch(0.30 0.02 250)", // charcoal
 ];
 
 function CompaniesPage() {
@@ -180,9 +196,9 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
             </div>
             <div>
               <Label>Color</Label>
-              <div className="flex gap-2 mt-2">
+              <div className="grid grid-cols-8 gap-2 mt-2">
                 {PALETTE.map((p) => (
-                  <button key={p} type="button" onClick={() => setColor(p)} className={`h-8 w-8 rounded-md border-2 transition ${color === p ? "border-foreground" : "border-transparent"}`} style={{ background: p }} />
+                  <button key={p} type="button" onClick={() => setColor(p)} className={`h-7 w-7 rounded-md border-2 transition ${color === p ? "border-foreground" : "border-transparent"}`} style={{ background: p }} />
                 ))}
               </div>
             </div>
