@@ -30,7 +30,7 @@ function isWonClient(cl: Client, hasActivity: boolean): boolean {
   return hasActivity || true;
 }
 
-export default function ClientsPage() {
+function ClientsPage() {
   const clients = useClients();
   const companies = useCompanies();
   const projects = useProjects();
@@ -630,8 +630,10 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
               <Select value={acquisition || "__none__"} onValueChange={(v) => setAcquisition(v === "__none__" ? "" : v)}>
                 <SelectTrigger><SelectValue placeholder="Select acquisition person" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">— Unassigned —</SelectItem>
-                  {acqOptions.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                  <SelectItem value="__none__">- Unassigned -</SelectItem>
+                  {acqOptions.map((n) => (
+                    <SelectItem key={n} value={n}>{n}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )}
@@ -649,8 +651,10 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
               <Select value={referral || "__none__"} onValueChange={(v) => setReferral(v === "__none__" ? "" : v)}>
                 <SelectTrigger><SelectValue placeholder="Select referral" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">— None —</SelectItem>
-                  {refOptions.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>}
+                  <SelectItem value="__none__">- None -</SelectItem>
+                  {refOptions.map((n) => (
+                    <SelectItem key={n} value={n}>{n}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )}
@@ -667,4 +671,3 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
     </Dialog>
   );
 }
-
