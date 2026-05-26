@@ -243,9 +243,9 @@ function Body() {
                   const b = agingBuckets[key];
                   const tone = i === 0 ? "" : i === 1 ? "text-warning" : "text-destructive";
                   return (
-                    <div key={key} className="px-5 py-3">
+                    <div key={key} className="p-5">
                       <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{key} days</div>
-                      <div className={`font-display text-lg font-bold font-tnum mt-1 ${b.count > 0 ? tone : "text-muted-foreground/40"}`}>
+                      <div className={`font-display text-2xl font-bold font-tnum mt-2 leading-none ${b.count > 0 ? tone : "text-muted-foreground/40"}`}>
                         {b.count > 0 ? fmtAmount(b.amount, "MGA") : "—"}
                       </div>
                       <div className="text-[10px] text-muted-foreground mt-0.5">{b.count} invoice{b.count !== 1 ? "s" : ""}</div>
