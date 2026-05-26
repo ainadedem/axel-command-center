@@ -250,12 +250,13 @@ function SupplierGridView({
 }
 
 function SupplierCard({
-  s, companies, balances, onEdit,
+  s, companies, balances, onEdit, fromClient,
 }: {
   s: Supplier;
   companies: ReturnType<typeof useCompanies>;
   balances: Map<string, number>;
   onEdit: (s: Supplier) => void;
+  fromClient?: boolean;
 }) {
   const co = companies.find((c) => c.id === s.companyId);
   const bal = balances.get(s.id) ?? 0;
@@ -271,6 +272,7 @@ function SupplierCard({
           <div className="font-display font-semibold text-[13px] truncate flex items-center gap-1">
             <Icon className="h-3 w-3 text-muted-foreground shrink-0" />
             {s.name}
+            {fromClient && <span className="ml-1 text-[8px] uppercase tracking-wider px-1 py-px rounded bg-accent/60 text-muted-foreground font-mono" title="Linked from Clients">from clients</span>}
           </div>
           <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
             {[s.kind === "internal" ? "Interne" : "Externe", s.country].filter(Boolean).join(" · ")}
@@ -282,10 +284,12 @@ function SupplierCard({
           )}
           <div className="mt-1 flex flex-wrap items-center gap-1"><CategoryChips value={s.categories} /><CompanyTags ids={contactCompanyIds(s)} companies={companies} /></div>
         </div>
-        <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={() => onEdit(s)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
-          <button onClick={() => confirm(`Delete ${s.name}?`) && suppliersStore.remove(s.id)} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
-        </div>
+        {!fromClient && (
+          <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onClick={() => onEdit(s)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
+            <button onClick={() => confirm(`Delete ${s.name}?`) && suppliersStore.remove(s.id)} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+          </div>
+        )}
       </div>
       <div className="mt-2 border-t border-border/50 pt-2 grid grid-cols-2 gap-2">
         <div>
