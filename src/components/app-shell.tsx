@@ -181,9 +181,7 @@ function Sidebar() {
   return (
     <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
       <div className="px-5 py-5 flex items-center gap-2.5">
-        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-chart-2 grid place-items-center shadow-[var(--shadow-glow)]">
-          <span className="font-display text-base font-bold text-primary-foreground">A</span>
-        </div>
+        <img src={axelIcon} alt="Axel" className="h-8 w-8 rounded-lg shadow-[var(--shadow-glow)]" />
         <span className="font-display text-sm font-semibold text-sidebar-foreground">Axel - AXWG</span>
       </div>
       <div className="px-3 pb-3">
