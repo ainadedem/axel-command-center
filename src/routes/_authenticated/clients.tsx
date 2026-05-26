@@ -199,6 +199,9 @@ function ClientGridView({
                     {cl.email} {cl.phone && `· ${cl.phone}`}
                   </div>
                 )}
+                {cl.categories && cl.categories.length > 0 && (
+                  <div className="mt-1.5"><CategoryChips value={cl.categories} /></div>
+                )}
               </div>
               <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                 {isLead && (
