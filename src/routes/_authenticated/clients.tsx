@@ -314,7 +314,13 @@ function ClientCard({
           <div className="font-display font-semibold text-[13px] truncate flex items-center gap-1">
             {cl.name}
             {isLead && <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-amber-500/15 text-amber-700 border border-amber-500/30 font-semibold">Lead</span>}
-            {overdue && <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30 font-semibold">Overdue</span>}
+            {!isLead && cliInvoices.length > 0 && (
+              overdue
+                ? <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30 font-semibold">Overdue</span>
+                : outstanding > 0
+                  ? <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-warning/15 text-warning border border-warning/30 font-semibold">Outstanding</span>
+                  : <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-success/15 text-success border border-success/30 font-semibold">Healthy</span>
+            )}
           </div>
           <div className="text-[11px] text-muted-foreground truncate">
             {[cl.industry, cl.country].filter(Boolean).join(" · ")}
