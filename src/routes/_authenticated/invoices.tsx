@@ -100,6 +100,19 @@ function Body() {
   const totalOpen = active.filter((i) => i.status !== "paid").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
   const totalOverdue = active.filter((i) => i.status === "overdue").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
   const totalPaid = active.filter((i) => i.status === "paid").reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
+
+  const agingBuckets = { "0-30": { count: 0, amount: 0 }, "31-60": { count: 0, amount: 0 }, "61-90": { count: 0, amount: 0 }, "90+": { count: 0, amount: 0 } } as Record<"0-30"|"31-60"|"61-90"|"90+", { count: number; amount: number }>;
+  const _today = new Date();
+  for (const inv of active) {
+    if (inv.status === "paid") continue;
+    const daysLate = differenceInDays(_today, parseISO(inv.dueDate));
+    if (daysLate <= 0) continue;
+    const balance = toMGA(inv.amount - inv.paid, inv.currency);
+    const key: "0-30"|"31-60"|"61-90"|"90+" = daysLate <= 30 ? "0-30" : daysLate <= 60 ? "31-60" : daysLate <= 90 ? "61-90" : "90+";
+    agingBuckets[key].count++;
+    agingBuckets[key].amount += balance;
+  }
+  const hasAging = Object.values(agingBuckets).some((b) => b.count > 0);
   const openCreate = () => { setEditing(null); setOpen(true); };
 
 
@@ -219,6 +232,29 @@ function Body() {
             <Stat label="Overdue" value={fmtAmount(totalOverdue, "MGA")} danger />
             <Stat label="Collected (period)" value={fmtAmount(totalPaid, "MGA")} good />
           </div>
+
+          {hasAging && (
+            <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
+              <div className="px-5 py-2.5 border-b border-border">
+                <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Receivables aging — days past due</div>
+              </div>
+              <div className="grid grid-cols-4 divide-x divide-border/40">
+                {(["0-30", "31-60", "61-90", "90+"] as const).map((key, i) => {
+                  const b = agingBuckets[key];
+                  const tone = i === 0 ? "" : i === 1 ? "text-warning" : "text-destructive";
+                  return (
+                    <div key={key} className="px-5 py-3">
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{key} days</div>
+                      <div className={`font-display text-lg font-bold font-tnum mt-1 ${b.count > 0 ? tone : "text-muted-foreground/40"}`}>
+                        {b.count > 0 ? fmtAmount(b.amount, "MGA") : "—"}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">{b.count} invoice{b.count !== 1 ? "s" : ""}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
             <table className="w-full text-sm">

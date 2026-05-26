@@ -206,6 +206,29 @@ function CategoryRow({ cat, year, spent, company, onEdit }: {
   const over = budgetMGA > 0 && spent > budgetMGA;
   const isIncome = cat.kind === "income";
 
+  const now = new Date();
+  const paceRatio = (() => {
+    if (year < now.getFullYear()) return 1;
+    if (year > now.getFullYear()) return 0;
+    const start = new Date(year, 0, 1).getTime();
+    const end = new Date(year + 1, 0, 1).getTime();
+    return (now.getTime() - start) / (end - start);
+  })();
+  const spentRatio = budgetMGA > 0 ? spent / budgetMGA : 0;
+  const statusBadge = (() => {
+    if (budgetMGA === 0 || paceRatio === 0) return null;
+    if (isIncome) {
+      if (spentRatio >= 1) return { label: "Target met", cls: "text-success border-success/40 bg-success/10" };
+      if (spentRatio >= paceRatio * 0.9) return { label: "On track", cls: "text-success border-success/40 bg-success/10" };
+      return { label: "Behind target", cls: "text-muted-foreground border-border/60 bg-surface" };
+    }
+    if (over) return { label: "Over budget", cls: "text-destructive border-destructive/40 bg-destructive/10" };
+    if (spentRatio > paceRatio + 0.1) return { label: "Over pace", cls: "text-warning border-warning/40 bg-warning/10" };
+    if (paceRatio > 0.1 && spentRatio < paceRatio * 0.7) return { label: "Underspent", cls: "text-muted-foreground border-border/60 bg-surface" };
+    return { label: "On track", cls: "text-success border-success/40 bg-success/10" };
+  })();
+  const projected = paceRatio > 0 && spentRatio > 0 && !isIncome ? Math.round(spent / paceRatio) : null;
+
   const saveBudget = () => {
     const amt = Number(amount) || 0;
     if (existing) budgetsStore.update(existing.id, { amount: amt, currency });
@@ -275,6 +298,16 @@ function CategoryRow({ cat, year, spent, company, onEdit }: {
                 {over ? "+" : ""}{fmtCompact(spent - budgetMGA, "MGA")}
               </span>
             </div>
+            {statusBadge && (
+              <div className="flex items-center justify-between mt-1.5">
+                <span className={cn("text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full border font-semibold", statusBadge.cls)}>
+                  {statusBadge.label}
+                </span>
+                {projected !== null && (
+                  <span className="text-[10px] text-muted-foreground font-tnum">Proj. {fmtCompact(projected, "MGA")}</span>
+                )}
+              </div>
+            )}
           </>
         ) : (
           <div className="text-[11px] text-muted-foreground italic">No budget set</div>

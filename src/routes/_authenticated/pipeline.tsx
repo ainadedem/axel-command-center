@@ -85,7 +85,7 @@ function Body() {
 
   const active = list.filter((o) => o.stage !== "Closed" && o.stage !== "Lost");
   const total = active.reduce((s, o) => s + toMGA(o.value, o.currency), 0);
-  const weighted = active.reduce((s, o) => s + toMGA(o.value, o.currency) * stageProbability[o.stage], 0);
+  const weighted = active.reduce((s, o) => s + toMGA(o.value, o.currency) * (o.probability !== undefined ? o.probability / 100 : stageProbability[o.stage]), 0);
   const won = list.filter((o) => o.stage === "Closed").reduce((s, o) => s + toMGA(o.value, o.currency), 0);
   const lost = list.filter((o) => o.stage === "Lost").reduce((s, o) => s + toMGA(o.value, o.currency), 0);
   const winRate = (() => {
@@ -317,7 +317,7 @@ function PeopleView({ list, onEdit, role, acqOf }: { list: Opportunity[]; onEdit
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
       {grouped.map(([person, ops]) => {
         const total = ops.reduce((s, o) => s + toMGA(o.value, o.currency), 0);
-        const weighted = ops.reduce((s, o) => s + toMGA(o.value, o.currency) * stageProbability[o.stage], 0);
+        const weighted = ops.reduce((s, o) => s + toMGA(o.value, o.currency) * (o.probability !== undefined ? o.probability / 100 : stageProbability[o.stage]), 0);
         const won = ops.filter((o) => o.stage === "Closed").reduce((s, o) => s + toMGA(o.value, o.currency), 0);
         return (
           <div key={person} className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4">
@@ -384,7 +384,7 @@ function ForecastView({ list }: { list: Opportunity[] }) {
           value: ops.filter((o) => o.stage === s).reduce((a, o) => a + toMGA(o.value, o.currency), 0),
         }));
         const total = byStage.reduce((s, b) => s + b.value, 0);
-        const weighted = ops.reduce((s, o) => s + toMGA(o.value, o.currency) * stageProbability[o.stage], 0);
+        const weighted = ops.reduce((s, o) => s + toMGA(o.value, o.currency) * (o.probability !== undefined ? o.probability / 100 : stageProbability[o.stage]), 0);
         return (
           <div key={month} className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
@@ -422,6 +422,7 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
   const [value, setValue] = useState("0");
   const [currency, setCurrency] = useState<Currency>("EUR");
   const [expectedClose, setExpectedClose] = useState(() => new Date().toISOString().slice(0, 10));
+  const [probability, setProbability] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -435,11 +436,12 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
       setNewLeadName(linked ? "" : (editing.client ?? ""));
       setCloser(editing.closer ?? "");
       setStage(editing.stage); setValue(String(editing.value)); setCurrency(editing.currency); setExpectedClose(editing.expectedClose);
+      setProbability(editing.probability !== undefined ? String(editing.probability) : "");
     } else {
       const c = companies[0]; setCompanyId(c?.id ?? ""); setName("");
       setClientId(""); setNewLeadName("");
       setCloser("");
-      setStage("Lead"); setValue("0"); setCurrency(c?.baseCurrency ?? "EUR"); setExpectedClose(new Date().toISOString().slice(0, 10));
+      setStage("Lead"); setValue("0"); setCurrency(c?.baseCurrency ?? "EUR"); setExpectedClose(new Date().toISOString().slice(0, 10)); setProbability("");
     }
   }, [open, editing, companies, clients]);
 
@@ -513,6 +515,7 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
       client: clientDisplayName,
       closer: closer.trim() || undefined,
       stage, value: Number(value) || 0, currency, expectedClose,
+      probability: probability !== "" ? Math.min(100, Math.max(0, Number(probability))) : undefined,
     };
     if (editing) opportunitiesStore.update(editing.id, data);
     else opportunitiesStore.add({ id: newId("opp"), ...data });
@@ -606,6 +609,10 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
             </div>
           </div>
           <div><Label>Expected close</Label><Input type="date" value={expectedClose} onChange={(e) => setExpectedClose(e.target.value)} /></div>
+          <div>
+            <Label>Win probability % <span className="ml-1 text-[11px] text-muted-foreground font-normal">(blank = stage default: {Math.round(stageProbability[stage] * 100)}%)</span></Label>
+            <Input type="number" min="0" max="100" value={probability} onChange={(e) => setProbability(e.target.value)} placeholder={String(Math.round(stageProbability[stage] * 100))} />
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>

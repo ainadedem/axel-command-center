@@ -278,6 +278,8 @@ export interface Opportunity {
   value: number;
   currency: Currency;
   expectedClose: string;
+  /** Override the stage default (0-100). Undefined = use stageProbability[stage]. */
+  probability?: number;
 }
 
 export interface Supplier {
