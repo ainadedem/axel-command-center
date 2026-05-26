@@ -494,6 +494,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   const acqPeople = useSalesPeople("acquisition");
   const teamMembers = useTeamMembers();
   const [companyId, setCompanyId] = useState("");
+  const [companyIds, setCompanyIds] = useState<string[]>([]);
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
   const [acquisition, setAcquisition] = useState("");
