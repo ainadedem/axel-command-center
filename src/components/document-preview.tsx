@@ -205,7 +205,7 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
           ${refsHtml ? `<div style="margin-top: 6px; font-size: 11px; color: #475569;">${refsHtml}</div>` : ""}
         </div>
         <div class="meta">
-          <div class="pill">${esc(doc.status)}</div>
+          ${showStatus ? `<div class="pill">${esc(doc.status)}</div>` : ""}
           <div style="margin-top: 10px;"><strong>Issued:</strong> ${issued}</div>
           ${due ? `<div><strong>${dueLabel}:</strong> ${due}</div>` : ""}
           ${paidOn ? `<div><strong>Paid:</strong> ${paidOn}</div>` : ""}
