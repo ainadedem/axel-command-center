@@ -141,8 +141,20 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       });
       if (changed) companiesStore.replaceAll(merged);
       setCompanyIdMap(idMap);
-      // Companies + their DB-id map are now ready; pull contacts.
-      hydrateContacts().catch((e) => console.warn("[hydrateContacts]", e));
+      // Push local mock seed → DB once per user, then hydrate from DB.
+      const seedFlag = `axel.seedPushed.${user.id}`;
+      (async () => {
+        try {
+          if (!window.localStorage.getItem(seedFlag)) {
+            const res = await pushLocalSeed();
+            window.localStorage.setItem(seedFlag, new Date().toISOString());
+            console.info("[pushLocalSeed]", res);
+          }
+        } catch (e) {
+          console.warn("[pushLocalSeed]", e);
+        }
+        hydrateContacts().catch((e) => console.warn("[hydrateContacts]", e));
+      })();
     })();
     return () => {
       cancelled = true;
