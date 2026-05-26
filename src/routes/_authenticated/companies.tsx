@@ -204,10 +204,17 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
             </div>
             <div>
               <Label>Color</Label>
-              <div className="grid grid-cols-8 gap-2 mt-2">
-                {PALETTE.map((p) => (
-                  <button key={p} type="button" onClick={() => setColor(p)} className={`h-7 w-7 rounded-md border-2 transition ${color === p ? "border-foreground" : "border-transparent"}`} style={{ background: p }} />
-                ))}
+              <div className="space-y-2 mt-2">
+                <div className="grid grid-cols-8 gap-2">
+                  {PALETTE.slice(0, 16).map((p) => (
+                    <button key={p} type="button" onClick={() => setColor(p)} className={`h-7 w-7 rounded-md border-2 transition ${color === p ? "border-foreground" : "border-transparent"}`} style={{ background: p }} />
+                  ))}
+                </div>
+                <div className="grid grid-cols-8 gap-2">
+                  {PALETTE.slice(16).map((p) => (
+                    <button key={p} type="button" onClick={() => setColor(p)} className={`h-7 w-7 rounded-md border-2 transition ${color === p ? "border-foreground" : "border-transparent"}`} style={{ background: p }} />
+                  ))}
+                </div>
               </div>
             </div>
           </div>
