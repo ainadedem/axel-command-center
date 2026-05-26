@@ -385,12 +385,14 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setContacts(editing.contacts ?? "");
       setAvatarUrl(editing.avatarUrl);
       setStatus(editing.status ?? "client");
+      setCategories(defaultCategoriesFor("client", editing.categories));
     } else {
       setCompanyId(companies[0]?.id ?? ""); setName(""); setCountry(""); setAcquisition(""); setReferral("");
       setAcquiredAt(new Date().toISOString().slice(0, 10));
       setWebsite(""); setEmail(""); setPhone(""); setAddress(""); setIndustry(""); setContacts("");
       setAvatarUrl(undefined);
       setStatus("client");
+      setCategories(["client"]);
     }
   }, [open, editing, companies]);
 
