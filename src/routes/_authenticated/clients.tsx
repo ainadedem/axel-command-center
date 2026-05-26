@@ -513,7 +513,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   useEffect(() => {
     if (!open) return;
     if (editing) {
-      setCompanyId(editing.companyId); setName(editing.name); setCountry(editing.country);
+      setCompanyId(editing.companyId); setCompanyIds(contactCompanyIds(editing)); setName(editing.name); setCountry(editing.country);
       setAcquisition(editing.acquisition ?? "");
       setReferral(editing.referral ?? "");
       setAcquiredAt(editing.acquiredAt ?? "");
