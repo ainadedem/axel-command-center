@@ -7,6 +7,8 @@ import {
   clientsStore, fmtCompact, toMGA, contactCompanyIds, contactBelongsTo,
   type Client, type ContactCategory,
 } from "@/lib/mock-data";
+import { upsertClient, deleteClientDb } from "@/lib/db-sync";
+
 import { newId } from "@/lib/data-store";
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
