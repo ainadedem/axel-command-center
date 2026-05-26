@@ -52,6 +52,14 @@ const sections: NavSection[] = [
   {
     label: "Operations",
     items: [
+      { to: "/expenses", label: "Expenses", icon: CreditCard },
+      { to: "/billing", label: "Billing", icon: Repeat },
+      { to: "/payroll", label: "Payroll", icon: Wallet2 },
+    ],
+  },
+  {
+    label: "Organization",
+    items: [
       { to: "/companies", label: "Companies", icon: Building2 },
       { to: "/projects", label: "Projects", icon: Briefcase },
       { to: "/team", label: "Team", icon: UserCog },
