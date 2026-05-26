@@ -378,7 +378,8 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
       setNotes(editing.notes ?? "");
       setCategories(defaultCategoriesFor("supplier", editing.categories));
     } else {
-      setName(""); setCompanyId(companies[0]?.id ?? ""); setAccount("401000"); setKind("external");
+      const fallback = companies[0]?.id ?? "";
+      setName(""); setCompanyId(fallback); setCompanyIds(fallback ? [fallback] : []); setAccount("401000"); setKind("external");
       setAvatarUrl(undefined); setContactPerson(""); setEmail(""); setPhone(""); setWebsite("");
       setAddress(""); setCountry(""); setPaymentTerms(""); setTaxId(""); setNif(""); setStat(""); setRcs("");
       setBankName(""); setBankAccount(""); setBankSwift(""); setNotes("");
