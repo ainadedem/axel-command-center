@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, FileCheck2, Plus, X, Eye } from "lucide-react";
+import { Pencil, Trash2, FileCheck2, Plus, X, Eye, Copy } from "lucide-react";
 import { DocumentPreview, type DocumentData } from "@/components/document-preview";
 import { nextNumber } from "@/lib/numbering";
 
@@ -87,6 +87,24 @@ function Body() {
     quotesStore.update(q.id, { status: "accepted" });
   };
 
+  const duplicateQuote = (q: Quote) => {
+    quotesStore.add({
+      id: newId("q"),
+      number: nextNumber("quote", q.companyId),
+      companyId: q.companyId,
+      clientId: q.clientId,
+      projectId: q.projectId,
+      issueDate: new Date().toISOString().slice(0, 10),
+      validUntil: addDays(new Date(), 30).toISOString().slice(0, 10),
+      amount: q.amount,
+      currency: q.currency,
+      status: "draft",
+      mode: q.mode ?? "rate-card",
+      lines: q.lines ? q.lines.map((l) => ({ ...l, id: newId("ql") })) : undefined,
+      notes: q.notes,
+    });
+  };
+
   return (
     <div className="p-8 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -135,6 +153,7 @@ function Body() {
                           <button onClick={() => convertToPO(q)} title="Convert to PO" className="text-[10px] uppercase tracking-wider px-2 py-1 rounded border border-success/30 text-success hover:bg-success/10 flex items-center gap-1"><FileCheck2 className="h-3 w-3" /> To PO</button>
                         )}
                         <div className="opacity-0 group-hover:opacity-100 flex gap-1">
+                          <button onClick={() => duplicateQuote(q)} title="Duplicate quote" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Copy className="h-3.5 w-3.5" /></button>
                           <button onClick={() => setPreviewing(q)} title="Preview & export PDF" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
                           <button onClick={() => { setEditing(q); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
                           <button onClick={() => confirm(`Delete quote ${q.number}?`) && quotesStore.remove(q.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
