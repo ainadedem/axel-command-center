@@ -81,8 +81,7 @@ const sections: NavSection[] = [
 ];
 
 function CompanySwitcher() {
-  const { scope, setScope, label } = useCompany();
-  const companies = useCompanies();
+  const { scope, setScope, label, accessibleCompanies: companies, isGroupAdmin } = useCompany();
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">
@@ -103,15 +102,19 @@ function CompanySwitcher() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute z-50 mt-2 w-full rounded-lg border border-border bg-popover shadow-2xl overflow-hidden">
-            <button
-              onClick={() => { setScope({ id: "group" }); setOpen(false); }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-accent text-sm"
-            >
-              <div className="h-6 w-6 rounded bg-gradient-to-br from-primary to-chart-2 grid place-items-center text-[9px] font-bold text-primary-foreground">GR</div>
-              <span className="flex-1 text-left">Group · All companies</span>
-              {scope.id === "group" && <Check className="h-4 w-4 text-primary" />}
-            </button>
-            <div className="h-px bg-border" />
+            {isGroupAdmin && (
+              <>
+                <button
+                  onClick={() => { setScope({ id: "group" }); setOpen(false); }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-accent text-sm"
+                >
+                  <div className="h-6 w-6 rounded bg-gradient-to-br from-primary to-chart-2 grid place-items-center text-[9px] font-bold text-primary-foreground">GR</div>
+                  <span className="flex-1 text-left">Group · All companies</span>
+                  {scope.id === "group" && <Check className="h-4 w-4 text-primary" />}
+                </button>
+                <div className="h-px bg-border" />
+              </>
+            )}
             {companies.map((c) => (
               <button
                 key={c.id}
