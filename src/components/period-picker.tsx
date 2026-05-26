@@ -35,6 +35,11 @@ export function defaultPeriod(): Period {
   return PRESETS[0].resolve();
 }
 
+/** Default for PCG accounting pages — shows all entries (matches original all-time view). */
+export function defaultAccountingPeriod(): Period {
+  return PRESETS.find((p) => p.key === "all")!.resolve();
+}
+
 interface Props {
   value: Period;
   onChange: (p: Period) => void;

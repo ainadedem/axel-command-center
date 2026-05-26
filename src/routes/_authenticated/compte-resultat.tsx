@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { useJournalEntries, pcgIndex, fmtMoney, usesPcg } from "@/lib/pcg";
 import { useCompanies } from "@/lib/mock-data";
 import { useCompany } from "@/lib/company-context";
-import { PeriodPicker, defaultPeriod, type Period } from "@/components/period-picker";
+import { PeriodPicker, defaultAccountingPeriod, type Period } from "@/components/period-picker";
 import { exportCsvRows } from "@/lib/export-csv";
 import { parseISO, subMonths, subQuarters, subYears, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from "date-fns";
 import { useState, useMemo } from "react";
@@ -65,7 +65,7 @@ function varPct(cur: number, prev: number) {
 }
 
 function CompteResultatPage() {
-  const [period, setPeriod] = useState<Period>(defaultPeriod);
+  const [period, setPeriod] = useState<Period>(defaultAccountingPeriod);
   const { scope } = useCompany();
   const companies = useCompanies();
   const allEntries = useJournalEntries();

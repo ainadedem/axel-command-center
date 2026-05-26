@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { useJournalEntries, pcgIndex, fmtMoney, usesPcg } from "@/lib/pcg";
 import { useCompanies } from "@/lib/mock-data";
 import { useCompany } from "@/lib/company-context";
-import { PeriodPicker, defaultPeriod, type Period } from "@/components/period-picker";
+import { PeriodPicker, defaultAccountingPeriod, type Period } from "@/components/period-picker";
 import { exportCsvRows } from "@/lib/export-csv";
 import { parseISO } from "date-fns";
 import { useState, useMemo } from "react";
@@ -54,7 +54,7 @@ function sumPrefix(soldes: Map<string, number>, prefixes: string[]) {
 }
 
 function BilanPage() {
-  const [period, setPeriod] = useState<Period>(defaultPeriod);
+  const [period, setPeriod] = useState<Period>(defaultAccountingPeriod);
   const { soldes, co } = useSoldes(period);
 
   // ACTIF

@@ -13,7 +13,7 @@ import {
 } from "@/lib/pcg";
 import { useCompanies } from "@/lib/mock-data";
 import { useCompany } from "@/lib/company-context";
-import { PeriodPicker, defaultPeriod, type Period } from "@/components/period-picker";
+import { PeriodPicker, defaultAccountingPeriod, type Period } from "@/components/period-picker";
 import { exportCsvRows } from "@/lib/export-csv";
 import { parseISO } from "date-fns";
 import { useState, useMemo } from "react";
@@ -51,7 +51,7 @@ function GrandLivrePage() {
 }
 
 function Body() {
-  const [period, setPeriod] = useState<Period>(defaultPeriod);
+  const [period, setPeriod] = useState<Period>(defaultAccountingPeriod);
   const [accountSearch, setAccountSearch] = useState("");
   const { scope } = useCompany();
   const companies = useCompanies();
