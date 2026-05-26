@@ -87,6 +87,24 @@ function Body() {
     quotesStore.update(q.id, { status: "accepted" });
   };
 
+  const duplicateQuote = (q: Quote) => {
+    quotesStore.add({
+      id: newId("q"),
+      number: nextNumber("quote", q.companyId),
+      companyId: q.companyId,
+      clientId: q.clientId,
+      projectId: q.projectId,
+      issueDate: new Date().toISOString().slice(0, 10),
+      validUntil: addDays(new Date(), 30).toISOString().slice(0, 10),
+      amount: q.amount,
+      currency: q.currency,
+      status: "draft",
+      mode: q.mode ?? "rate-card",
+      lines: q.lines ? q.lines.map((l) => ({ ...l, id: newId("ql") })) : undefined,
+      notes: q.notes,
+    });
+  };
+
   return (
     <div className="p-8 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
