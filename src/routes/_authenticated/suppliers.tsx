@@ -368,7 +368,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
   useEffect(() => {
     if (!open) return;
     if (editing) {
-      setName(editing.name); setCompanyId(editing.companyId); setAccount(editing.account); setKind(editing.kind);
+      setName(editing.name); setCompanyId(editing.companyId); setCompanyIds(contactCompanyIds(editing)); setAccount(editing.account); setKind(editing.kind);
       setAvatarUrl(editing.avatarUrl);
       setContactPerson(editing.contactPerson ?? ""); setEmail(editing.email ?? ""); setPhone(editing.phone ?? "");
       setWebsite(editing.website ?? ""); setAddress(editing.address ?? ""); setCountry(editing.country ?? "");
