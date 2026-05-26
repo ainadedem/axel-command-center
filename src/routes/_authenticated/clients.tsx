@@ -4,7 +4,8 @@ import { PageHeader } from "@/components/page-header";
 import {
   useClients, useCompanies, useProjects, useInvoices, useTransactions,
   useSalesPeople, useTeamMembers,
-  clientsStore, fmtCompact, toMGA, type Client, type ContactCategory,
+  clientsStore, fmtCompact, toMGA, contactCompanyIds, contactBelongsTo,
+  type Client, type ContactCategory,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { useEffect, useMemo, useState } from "react";
