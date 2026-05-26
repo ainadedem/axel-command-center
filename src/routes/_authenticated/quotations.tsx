@@ -21,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, FileCheck2, Plus, X, Eye } from "lucide-react";
 import { DocumentPreview, type DocumentData } from "@/components/document-preview";
+import { nextNumber } from "@/lib/numbering";
 
 export const Route = createFileRoute("/_authenticated/quotations")({ component: QuotationsPage });
 
@@ -71,7 +72,7 @@ function Body() {
   const convertToPO = (q: Quote) => {
     purchaseOrdersStore.add({
       id: newId("po"),
-      number: `PO-${Date.now().toString().slice(-6)}`,
+      number: nextNumber("po", q.companyId),
       companyId: q.companyId,
       clientId: q.clientId,
       projectId: q.projectId,
@@ -203,13 +204,20 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setLines(editing.lines ?? []);
       setNotes(editing.notes ?? "");
     } else {
-      setNumber(`Q-${Date.now().toString().slice(-6)}`); setCompanyId(companies[0]?.id ?? ""); setClientId("");
+      const cid = companies[0]?.id ?? "";
+      setNumber(cid ? nextNumber("quote", cid) : ""); setCompanyId(cid); setClientId("");
       setProjectId(""); setIssueDate(today); setValidUntil(addDays(new Date(), 30).toISOString().slice(0, 10));
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
       setMode("rate-card");
       setLines([]); setNotes("");
     }
   }, [open, editing, companies, today]);
+
+  useEffect(() => {
+    if (!open || editing || !companyId) return;
+    setNumber(nextNumber("quote", companyId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId]);
 
   const companyClients = clients.filter((c) => c.companyId === companyId);
   const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
