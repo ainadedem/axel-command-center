@@ -339,6 +339,20 @@ export interface SalesMember {
 /* ─── Stores (start empty) ──────────────────────────────────────────── */
 
 export const companiesStore = createCollection<Company>("companies", []);
+// Backfill `code` for companies persisted before the field existed.
+{
+  let migrated = false;
+  for (const c of companiesStore.items) {
+    if (!c.code) { c.code = c.shortName; migrated = true; }
+  }
+  if (migrated) companiesStore.replaceAll([...companiesStore.items]);
+}
+
+/** Compact company identifier for inline chips, tables, badges. */
+export function companyCode(c?: Pick<Company, "code" | "shortName" | "name"> | null): string {
+  if (!c) return "";
+  return c.code || c.shortName || c.name;
+}
 export const accountsStore = createCollection<Account>("accounts", []);
 export const clientsStore = createCollection<Client>("clients", []);
 export const suppliersStore = createCollection<Supplier>("suppliers", []);
