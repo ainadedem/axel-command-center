@@ -72,7 +72,7 @@ function Body() {
     (scope.id === "company"
       ? companies.find((c) => c.id === scope.companyId)
       : companies.find((c) => c.id === "log")) ??
-    companies[0] ?? { id: "_", name: "—", shortName: "—", color: "#999", baseCurrency: "MGA" as const };
+    companies[0] ?? { id: "_", name: "—", shortName: "—", code: "—", color: "#999", baseCurrency: "MGA" as const };
 
   const movements = useMemo(() => {
     const out: { date: string; piece: string; journal: string; description: string; debit: number; credit: number; partner?: string }[] = [];

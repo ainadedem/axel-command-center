@@ -246,7 +246,7 @@ function SupplierCard({
               {s.email} {s.phone && `· ${s.phone}`}
             </div>
           )}
-          <div className="mt-1 flex flex-wrap items-center gap-1"><CategoryChips value={s.categories} /><CompanyTag name={co?.name} color={co?.color} /></div>
+          <div className="mt-1 flex flex-wrap items-center gap-1"><CategoryChips value={s.categories} /><CompanyTag code={co?.code} name={co?.name} color={co?.color} /></div>
         </div>
         <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
           <button onClick={() => onEdit(s)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
@@ -297,7 +297,7 @@ function SupplierListView({
             <div className="text-[11px] text-muted-foreground truncate">{[s.country, s.email].filter(Boolean).join(" · ")}</div>
           </div>
         </div>
-        <div className="flex items-center gap-1 flex-wrap"><CategoryChips value={s.categories} size="xs" /><CompanyTag name={co?.name} color={co?.color} size="xs" /></div>
+        <div className="flex items-center gap-1 flex-wrap"><CategoryChips value={s.categories} size="xs" /><CompanyTag code={co?.code} name={co?.name} color={co?.color} size="xs" /></div>
         <div className="text-right font-tnum text-[13px] text-muted-foreground">{s.account}</div>
         <div className={`text-right font-tnum text-[13px] ${bal > 0 ? "text-amber-600" : ""}`}>{fmtAr(bal)}</div>
         <div className="flex justify-end">

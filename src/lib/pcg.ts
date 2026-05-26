@@ -195,9 +195,9 @@ export const useJournalEntries = () => useCollection(journalEntriesStore);
 /** Ensure the companies referenced by the imported Grand Livre exist. */
 function ensureSeedCompanies() {
   const seeds = [
-    { id: "log", name: "Logia Madagascar", shortName: "LOG", color: "oklch(0.78 0.14 165)", baseCurrency: "MGA" as const },
-    { id: "win", name: "Winford Next",     shortName: "WIN", color: "oklch(0.72 0.13 220)", baseCurrency: "USD" as const },
-    { id: "axi", name: "Axiom Unlimited",  shortName: "AXI", color: "oklch(0.78 0.13 75)",  baseCurrency: "MGA" as const },
+    { id: "log", name: "Logia Madagascar", shortName: "LOG", code: "LOG", color: "oklch(0.78 0.14 165)", baseCurrency: "MGA" as const },
+    { id: "win", name: "Winford Next",     shortName: "WIN", code: "WIN", color: "oklch(0.72 0.13 220)", baseCurrency: "USD" as const },
+    { id: "axi", name: "Axiom Unlimited",  shortName: "AXI", code: "AXI", color: "oklch(0.78 0.13 75)",  baseCurrency: "MGA" as const },
   ];
   for (const s of seeds) {
     if (!companiesStore.items.some((c) => c.id === s.id)) companiesStore.add(s);

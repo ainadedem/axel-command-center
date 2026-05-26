@@ -19,8 +19,12 @@ export interface Company {
   id: string;
   name: string;
   shortName: string;
+  /** Short alphanumeric identifier (e.g. "LOG", "WIN") used everywhere we
+   *  need a compact reference instead of the full trading name. */
+  code: string;
   color: string;
   baseCurrency: Currency;
+
   /** Legal / billing information used on invoice PDFs. */
   legalName?: string;
   address?: string;
@@ -335,6 +339,20 @@ export interface SalesMember {
 /* ─── Stores (start empty) ──────────────────────────────────────────── */
 
 export const companiesStore = createCollection<Company>("companies", []);
+// Backfill `code` for companies persisted before the field existed.
+{
+  let migrated = false;
+  for (const c of companiesStore.items) {
+    if (!c.code) { c.code = c.shortName; migrated = true; }
+  }
+  if (migrated) companiesStore.replaceAll([...companiesStore.items]);
+}
+
+/** Compact company identifier for inline chips, tables, badges. */
+export function companyCode(c?: Pick<Company, "code" | "shortName" | "name"> | null): string {
+  if (!c) return "";
+  return c.code || c.shortName || c.name;
+}
 export const accountsStore = createCollection<Account>("accounts", []);
 export const clientsStore = createCollection<Client>("clients", []);
 export const suppliersStore = createCollection<Supplier>("suppliers", []);

@@ -109,6 +109,7 @@ function CompaniesPage() {
 function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Company | null }) {
   const [name, setName] = useState("");
   const [shortName, setShortName] = useState("");
+  const [code, setCode] = useState("");
   const [color, setColor] = useState(PALETTE[0]);
   const [baseCurrency, setBaseCurrency] = useState<Currency>("MGA");
   const [legalName, setLegalName] = useState("");
@@ -128,14 +129,14 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   useEffect(() => {
     if (!open) return;
     if (editing) {
-      setName(editing.name); setShortName(editing.shortName); setColor(editing.color); setBaseCurrency(editing.baseCurrency);
+      setName(editing.name); setShortName(editing.shortName); setCode(editing.code ?? editing.shortName); setColor(editing.color); setBaseCurrency(editing.baseCurrency);
       setLegalName(editing.legalName ?? ""); setAddress(editing.address ?? "");
       setEmail(editing.email ?? ""); setPhone(editing.phone ?? ""); setWebsite(editing.website ?? "");
       setNif(editing.nif ?? ""); setStat(editing.stat ?? ""); setRcs(editing.rcs ?? ""); setTaxId(editing.taxId ?? "");
       setBankName(editing.bankName ?? ""); setBankAccount(editing.bankAccount ?? ""); setBankSwift(editing.bankSwift ?? "");
       setLogoUrl(editing.logoUrl);
     } else {
-      setName(""); setShortName(""); setColor(PALETTE[0]); setBaseCurrency("MGA");
+      setName(""); setShortName(""); setCode(""); setColor(PALETTE[0]); setBaseCurrency("MGA");
       setLegalName(""); setAddress(""); setEmail(""); setPhone(""); setWebsite("");
       setNif(""); setStat(""); setRcs(""); setTaxId(""); setBankName(""); setBankAccount(""); setBankSwift("");
       setLogoUrl(undefined);
@@ -144,8 +145,9 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
 
   const submit = () => {
     if (!name.trim() || !shortName.trim()) return;
+    const finalCode = (code.trim() || shortName.trim()).toUpperCase();
     const data = {
-      name, shortName, color, baseCurrency,
+      name, shortName, code: finalCode, color, baseCurrency,
       legalName: legalName || undefined, address: address || undefined,
       email: email || undefined, phone: phone || undefined, website: website || undefined,
       nif: nif || undefined, stat: stat || undefined, rcs: rcs || undefined, taxId: taxId || undefined,
@@ -168,9 +170,14 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               <div className="mt-2"><AvatarUpload value={logoUrl} onChange={setLogoUrl} name={name || "Logo"} size={72} square /></div>
               <p className="text-[10px] text-muted-foreground mt-1">Shown on invoice / PO / quote PDFs.</p>
             </div>
-            <div className="flex-1 grid grid-cols-2 gap-3">
-              <div><Label>Trading name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Logia Madagascar" /></div>
+            <div className="flex-1 grid grid-cols-3 gap-3">
+              <div className="col-span-3"><Label>Trading name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Logia Madagascar" /></div>
               <div><Label>Short name</Label><Input value={shortName} onChange={(e) => setShortName(e.target.value.toUpperCase().slice(0, 4))} placeholder="LOG" /></div>
+              <div>
+                <Label>Code</Label>
+                <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 6))} placeholder={shortName || "LOG"} />
+                <p className="text-[10px] text-muted-foreground mt-1">Used as a compact tag across the app.</p>
+              </div>
             </div>
           </div>
           <div><Label>Legal name (on invoices)</Label><Input value={legalName} onChange={(e) => setLegalName(e.target.value)} placeholder="LOGIA SARL" /></div>

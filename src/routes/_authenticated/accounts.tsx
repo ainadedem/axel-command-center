@@ -110,7 +110,7 @@ function Body() {
                             </div>
                           </td>
                           <td className="px-5 py-3.5">
-                            {co ? <span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.name}</span> : <span className="text-muted-foreground">—</span>}
+                            {co ? <span className="inline-flex items-center gap-2 font-mono" title={co.name}><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.code || co.shortName}</span> : <span className="text-muted-foreground">—</span>}
                           </td>
                           <td className="px-5 py-3.5 capitalize text-muted-foreground">{a.type}</td>
                           <td className="px-5 py-3.5 text-xs text-muted-foreground">
