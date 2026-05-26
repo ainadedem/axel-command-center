@@ -307,7 +307,7 @@ function SupplierCard({
 
 /* ── List View ── */
 function SupplierListView({
-  suppliers, companies, balances, onEdit, group, grouped,
+  suppliers, companies, balances, onEdit, group, grouped, fromClientIds,
 }: {
   suppliers: Supplier[];
   companies: ReturnType<typeof useCompanies>;
@@ -315,11 +315,13 @@ function SupplierListView({
   onEdit: (s: Supplier) => void;
   group: string;
   grouped: { key: string; label: string; items: Supplier[] }[];
+  fromClientIds: Set<string>;
 }) {
   const renderRow = (s: Supplier) => {
     const co = companies.find((c) => c.id === s.companyId);
     const bal = balances.get(s.id) ?? 0;
     const Icon = s.kind === "internal" ? User : Building2;
+    const fromClient = fromClientIds.has(s.id);
     return (
       <div key={s.id} className="grid grid-cols-[1fr_140px_100px_120px_40px] gap-3 px-4 py-2.5 items-center border-b border-border/50 last:border-b-0 hover:bg-accent/40 transition group">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -331,6 +333,7 @@ function SupplierListView({
             <div className="font-medium text-[13px] truncate flex items-center gap-1">
               <Icon className="h-3 w-3 text-muted-foreground" />
               {s.name}
+              {fromClient && <span className="ml-1 text-[8px] uppercase tracking-wider px-1 py-px rounded bg-accent/60 text-muted-foreground font-mono" title="Linked from Clients">from clients</span>}
             </div>
             <div className="text-[11px] text-muted-foreground truncate">{[s.country, s.email].filter(Boolean).join(" · ")}</div>
           </div>
@@ -339,10 +342,12 @@ function SupplierListView({
         <div className="text-right font-tnum text-[13px] text-muted-foreground">{s.account}</div>
         <div className={`text-right font-tnum text-[13px] ${bal > 0 ? "text-amber-600" : ""}`}>{fmtAr(bal)}</div>
         <div className="flex justify-end">
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button onClick={() => onEdit(s)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
-            <button onClick={() => confirm(`Delete ${s.name}?`) && suppliersStore.remove(s.id)} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
-          </div>
+          {!fromClient && (
+            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onClick={() => onEdit(s)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
+              <button onClick={() => confirm(`Delete ${s.name}?`) && suppliersStore.remove(s.id)} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+            </div>
+          )}
         </div>
       </div>
     );
