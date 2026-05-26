@@ -198,9 +198,9 @@ function Body() {
       {visibleCount === 0 ? (
         <EmptyState label="contacts" onCreate={openCreate} />
       ) : view === "grid" ? (
-        <SupplierGridView suppliers={sorted.map((s) => s.s)} companies={companies} balances={balances} onEdit={(s) => { setEditing(s); setOpen(true); }} group={group} grouped={grouped} />
+        <SupplierGridView suppliers={sorted.map((s) => s.s)} companies={companies} balances={balances} onEdit={(s) => { setEditing(s); setOpen(true); }} group={group} grouped={grouped} fromClientIds={fromClientIds} />
       ) : (
-        <SupplierListView suppliers={sorted.map((s) => s.s)} companies={companies} balances={balances} onEdit={(s) => { setEditing(s); setOpen(true); }} group={group} grouped={grouped} />
+        <SupplierListView suppliers={sorted.map((s) => s.s)} companies={companies} balances={balances} onEdit={(s) => { setEditing(s); setOpen(true); }} group={group} grouped={grouped} fromClientIds={fromClientIds} />
       )}
 
       <SupplierDialog open={open} onOpenChange={setOpen} editing={editing} />
