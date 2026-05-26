@@ -368,6 +368,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   const [contacts, setContacts] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [status, setStatus] = useState<"lead" | "client">("client");
+  const [categories, setCategories] = useState<ContactCategory[]>(["client"]);
 
   useEffect(() => {
     if (!open) return;
