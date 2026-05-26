@@ -17,7 +17,7 @@ import { EmptyState } from "@/components/crud-toolbar";
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
 import {
   Pencil, Trash2, Wallet, AlertCircle, TrendingUp, ArrowUpRight, UserCheck, Sparkles,
-  LayoutGrid, List as ListIcon, Search, ArrowUpDown, ChevronDown,
+  LayoutGrid, List as ListIcon, Search, ArrowUpDown, ChevronDown, Plus,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CategoryChips, CategoryMultiSelect, defaultCategoriesFor } from "@/components/category-chips";
