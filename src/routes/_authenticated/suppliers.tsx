@@ -37,9 +37,41 @@ function SuppliersPage() {
 
 function Body() {
   const suppliers = useSuppliers();
+  const clients = useClients();
   const companies = useCompanies();
   const entries = useJournalEntries();
-  const baseList = suppliers;
+
+  // Synthesize Supplier-shaped entries from clients tagged "supplier".
+  // These appear automatically here so users don't double-enter contacts.
+  const derived: Supplier[] = useMemo(() => {
+    return clients
+      .filter((c) => (c.categories ?? []).includes("supplier"))
+      .map((c) => ({
+        id: `client:${c.id}`,
+        companyId: c.companyId,
+        companyIds: contactCompanyIds(c),
+        name: c.name,
+        account: "401000",
+        kind: "external" as const,
+        avatarUrl: c.avatarUrl,
+        email: c.email,
+        phone: c.phone,
+        website: c.website,
+        address: c.address,
+        country: c.country,
+        taxId: c.taxId, nif: c.nif, stat: c.stat, rcs: c.rcs,
+        categories: c.categories,
+      }));
+  }, [clients]);
+
+  const fromClientIds = useMemo(() => new Set(derived.map((d) => d.id)), [derived]);
+  const baseList = useMemo(() => {
+    // Avoid duplicates if a real supplier with the same name already exists for the same primary company.
+    const realKeys = new Set(suppliers.map((s) => `${s.companyId}::${s.name.toLowerCase()}`));
+    const filteredDerived = derived.filter((d) => !realKeys.has(`${d.companyId}::${d.name.toLowerCase()}`));
+    return [...suppliers, ...filteredDerived];
+  }, [suppliers, derived]);
+
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [view, setView] = useState<"grid" | "list">("grid");
