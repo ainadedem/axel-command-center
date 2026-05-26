@@ -32,6 +32,7 @@ import { Route as AuthenticatedCompteResultatRouteImport } from './routes/_authe
 import { Route as AuthenticatedCompaniesRouteImport } from './routes/_authenticated/companies'
 import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
 import { Route as AuthenticatedBudgetsRouteImport } from './routes/_authenticated/budgets'
+import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedBilanRouteImport } from './routes/_authenticated/bilan'
 import { Route as AuthenticatedBalanceRouteImport } from './routes/_authenticated/balance'
 import { Route as AuthenticatedAxelRouteImport } from './routes/_authenticated/axel'
@@ -157,6 +158,11 @@ const AuthenticatedBudgetsRoute = AuthenticatedBudgetsRouteImport.update({
   path: '/budgets',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedBilanRoute = AuthenticatedBilanRouteImport.update({
   id: '/bilan',
   path: '/bilan',
@@ -196,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/axel': typeof AuthenticatedAxelRouteWithChildren
   '/balance': typeof AuthenticatedBalanceRoute
   '/bilan': typeof AuthenticatedBilanRoute
+  '/billing': typeof AuthenticatedBillingRoute
   '/budgets': typeof AuthenticatedBudgetsRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/companies': typeof AuthenticatedCompaniesRoute
@@ -224,6 +231,7 @@ export interface FileRoutesByTo {
   '/accounts': typeof AuthenticatedAccountsRoute
   '/balance': typeof AuthenticatedBalanceRoute
   '/bilan': typeof AuthenticatedBilanRoute
+  '/billing': typeof AuthenticatedBillingRoute
   '/budgets': typeof AuthenticatedBudgetsRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/companies': typeof AuthenticatedCompaniesRoute
@@ -256,6 +264,7 @@ export interface FileRoutesById {
   '/_authenticated/axel': typeof AuthenticatedAxelRouteWithChildren
   '/_authenticated/balance': typeof AuthenticatedBalanceRoute
   '/_authenticated/bilan': typeof AuthenticatedBilanRoute
+  '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/budgets': typeof AuthenticatedBudgetsRoute
   '/_authenticated/clients': typeof AuthenticatedClientsRoute
   '/_authenticated/companies': typeof AuthenticatedCompaniesRoute
@@ -289,6 +298,7 @@ export interface FileRouteTypes {
     | '/axel'
     | '/balance'
     | '/bilan'
+    | '/billing'
     | '/budgets'
     | '/clients'
     | '/companies'
@@ -317,6 +327,7 @@ export interface FileRouteTypes {
     | '/accounts'
     | '/balance'
     | '/bilan'
+    | '/billing'
     | '/budgets'
     | '/clients'
     | '/companies'
@@ -348,6 +359,7 @@ export interface FileRouteTypes {
     | '/_authenticated/axel'
     | '/_authenticated/balance'
     | '/_authenticated/bilan'
+    | '/_authenticated/billing'
     | '/_authenticated/budgets'
     | '/_authenticated/clients'
     | '/_authenticated/companies'
@@ -542,6 +554,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBudgetsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/billing': {
+      id: '/_authenticated/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof AuthenticatedBillingRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/bilan': {
       id: '/_authenticated/bilan'
       path: '/bilan'
@@ -605,6 +624,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAxelRoute: typeof AuthenticatedAxelRouteWithChildren
   AuthenticatedBalanceRoute: typeof AuthenticatedBalanceRoute
   AuthenticatedBilanRoute: typeof AuthenticatedBilanRoute
+  AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
   AuthenticatedBudgetsRoute: typeof AuthenticatedBudgetsRoute
   AuthenticatedClientsRoute: typeof AuthenticatedClientsRoute
   AuthenticatedCompaniesRoute: typeof AuthenticatedCompaniesRoute
@@ -632,6 +652,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAxelRoute: AuthenticatedAxelRouteWithChildren,
   AuthenticatedBalanceRoute: AuthenticatedBalanceRoute,
   AuthenticatedBilanRoute: AuthenticatedBilanRoute,
+  AuthenticatedBillingRoute: AuthenticatedBillingRoute,
   AuthenticatedBudgetsRoute: AuthenticatedBudgetsRoute,
   AuthenticatedClientsRoute: AuthenticatedClientsRoute,
   AuthenticatedCompaniesRoute: AuthenticatedCompaniesRoute,
@@ -666,3 +687,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
