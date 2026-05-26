@@ -183,7 +183,7 @@ function Sidebar() {
     <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
       <div className="px-5 py-5 flex items-center gap-2.5">
         <img src={axelIcon} alt="Axel" className="h-8 w-8 rounded-lg shadow-[var(--shadow-glow)]" />
-        <span className="font-display text-sm font-semibold text-sidebar-foreground">Axel - AXWG</span>
+        <span className="font-display text-sm font-semibold text-sidebar-foreground">Axel - Unified Business Platform</span>
       </div>
       <div className="px-3 pb-3">
         <CompanySwitcher />
