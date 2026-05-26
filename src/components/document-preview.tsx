@@ -94,7 +94,7 @@ function headingFor(k: DocKind) {
   return "INVOICE";
 }
 
-function buildHTML({ doc, company, client, project }: { doc: DocumentData; company?: Company; client?: Client; project?: Project }) {
+function buildHTML({ doc, company, client, project, showStatus }: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean }) {
   const accent = company?.color ?? "#1e293b";
   const issued = format(parseISO(doc.issueDate), "MMM d, yyyy");
   const due = doc.dueDate ? format(parseISO(doc.dueDate), "MMM d, yyyy") : null;
