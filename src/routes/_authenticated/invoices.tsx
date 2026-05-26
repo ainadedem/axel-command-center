@@ -33,7 +33,7 @@ export const Route = createFileRoute("/_authenticated/invoices")({ component: In
 
 const statusStyles: Record<string, string> = {
   draft: "border-muted text-muted-foreground bg-muted/30",
-  sent: "border-chart-2/40 text-chart-2 bg-chart-2/10",
+  sent: "border-primary/30 text-primary bg-primary/10",
   partial: "border-warning/40 text-warning bg-warning/10",
   paid: "border-success/40 text-success bg-success/10",
   overdue: "border-destructive/40 text-destructive bg-destructive/10",
@@ -241,10 +241,14 @@ function Body() {
               <div className="grid grid-cols-4 divide-x divide-border/40">
                 {(["0-30", "31-60", "61-90", "90+"] as const).map((key, i) => {
                   const b = agingBuckets[key];
-                  const tone = i === 0 ? "" : i === 1 ? "text-warning" : "text-destructive";
+                  const tone = i === 0 ? "text-primary" : i === 1 ? "text-warning" : "text-destructive";
+                  const dot = i === 0 ? "bg-primary" : i === 1 ? "bg-warning" : "bg-destructive";
                   return (
-                    <div key={key} className="p-5">
-                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{key} days</div>
+                    <div key={key} className="p-5 relative">
+                      <div className="flex items-center gap-1.5">
+                        <span className={cn("h-1.5 w-1.5 rounded-full", b.count > 0 ? dot : "bg-muted-foreground/30")} />
+                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{key} days</div>
+                      </div>
                       <div className={`font-display text-2xl font-bold font-tnum mt-2 leading-none ${b.count > 0 ? tone : "text-muted-foreground/40"}`}>
                         {b.count > 0 ? fmtAmount(b.amount, "MGA") : "—"}
                       </div>
@@ -656,8 +660,13 @@ function ProcessStrip({ hasQuote, hasPO }: { hasQuote: boolean; hasPO: boolean }
 }
 
 function Stat({ label, value, danger, good }: { label: string; value: string; danger?: boolean; good?: boolean }) {
+  const accent = danger ? "before:bg-destructive" : good ? "before:bg-success" : "before:bg-primary";
   return (
-    <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
+    <div className={cn(
+      "relative rounded-xl border border-border bg-[var(--gradient-surface)] p-5 overflow-hidden",
+      "before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:rounded-l-xl",
+      accent,
+    )}>
       <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
       <div className={cn("font-display text-2xl font-bold mt-2 font-tnum", danger && "text-destructive", good && "text-success")}>{value}</div>
     </div>
