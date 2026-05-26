@@ -324,7 +324,7 @@ function ClientCard({
           )}
           <div className="mt-1 flex flex-wrap items-center gap-1">
             {cl.categories && cl.categories.length > 0 && <CategoryChips value={cl.categories} />}
-            <CompanyTag name={co?.name} color={co?.color} />
+            <CompanyTag code={co?.code} name={co?.name} color={co?.color} />
           </div>
         </div>
         <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -410,7 +410,7 @@ function ClientListView({
             </div>
             <div className="text-[11px] text-muted-foreground truncate flex items-center gap-1.5">
               <span className="truncate">{[cl.industry, cl.country].filter(Boolean).join(" · ")}</span>
-              <CompanyTag name={co?.name} color={co?.color} size="xs" />
+              <CompanyTag code={co?.code} name={co?.name} color={co?.color} size="xs" />
             </div>
           </div>
         </div>
