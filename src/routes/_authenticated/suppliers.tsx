@@ -7,7 +7,7 @@ import {
 } from "@/lib/mock-data";
 import { useJournalEntries, fmtAr } from "@/lib/pcg";
 import { newId } from "@/lib/data-store";
-import { inScope, useCompany } from "@/lib/company-context";
+
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
