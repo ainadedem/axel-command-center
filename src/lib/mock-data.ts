@@ -60,7 +60,10 @@ export interface Account {
 
 export interface Client {
   id: string;
+  /** Primary owning company (kept for historical references). */
   companyId: string;
+  /** All companies this client is shared with. Defaults to [companyId]. */
+  companyIds?: string[];
   name: string;
   country: string;
   /**
@@ -279,7 +282,10 @@ export interface Opportunity {
 
 export interface Supplier {
   id: string;
+  /** Primary owning company. */
   companyId: string;
+  /** All companies this supplier is shared with. Defaults to [companyId]. */
+  companyIds?: string[];
   name: string;
   /** PCG account number (e.g. 401000 external, 401200 internal). */
   account: string;
@@ -356,6 +362,38 @@ export function companyCode(c?: Pick<Company, "code" | "shortName" | "name"> | n
 export const accountsStore = createCollection<Account>("accounts", []);
 export const clientsStore = createCollection<Client>("clients", []);
 export const suppliersStore = createCollection<Supplier>("suppliers", []);
+
+/** Returns every company a contact is linked to (primary + shared). */
+export function contactCompanyIds<T extends { companyId: string; companyIds?: string[] }>(c: T): string[] {
+  const set = new Set<string>();
+  if (c.companyId) set.add(c.companyId);
+  for (const id of c.companyIds ?? []) if (id) set.add(id);
+  return Array.from(set);
+}
+
+/** True when the contact (client or supplier) is linked to the given company. */
+export function contactBelongsTo<T extends { companyId: string; companyIds?: string[] }>(c: T, companyId: string): boolean {
+  if (c.companyId === companyId) return true;
+  return (c.companyIds ?? []).includes(companyId);
+}
+
+// Backfill `companyIds` for clients/suppliers persisted before multi-company support.
+{
+  let migrated = false;
+  for (const c of clientsStore.items) {
+    if (!c.companyIds || c.companyIds.length === 0) { c.companyIds = [c.companyId]; migrated = true; }
+    else if (!c.companyIds.includes(c.companyId)) { c.companyIds = [c.companyId, ...c.companyIds]; migrated = true; }
+  }
+  if (migrated) clientsStore.replaceAll([...clientsStore.items]);
+}
+{
+  let migrated = false;
+  for (const s of suppliersStore.items) {
+    if (!s.companyIds || s.companyIds.length === 0) { s.companyIds = [s.companyId]; migrated = true; }
+    else if (!s.companyIds.includes(s.companyId)) { s.companyIds = [s.companyId, ...s.companyIds]; migrated = true; }
+  }
+  if (migrated) suppliersStore.replaceAll([...suppliersStore.items]);
+}
 export const projectsStore = createCollection<Project>("projects", []);
 export const transactionsStore = createCollection<Transaction>("transactions", []);
 export const invoicesStore = createCollection<Invoice>("invoices", []);

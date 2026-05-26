@@ -52,6 +52,26 @@ export function CompanyTag({
   );
 }
 
+/** Row of CompanyTag pills, one per linked company. */
+export function CompanyTags({
+  ids, companies, size = "sm",
+}: {
+  ids: string[];
+  companies: { id: string; code?: string; shortName?: string; name?: string; color?: string }[];
+  size?: "xs" | "sm";
+}) {
+  if (!ids || ids.length === 0) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      {ids.map((id) => {
+        const c = companies.find((x) => x.id === id);
+        if (!c) return null;
+        return <CompanyTag key={id} code={c.code} name={c.name} color={c.color} size={size} />;
+      })}
+    </div>
+  );
+}
+
 /** Multi-select toggle pills, used in create/edit dialogs. */
 export function CategoryMultiSelect({
   value, onChange,

@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import {
   useProjects, useClients, useCompanies, useInvoices, useTransactions, invoicesStore, projectsStore,
   fmtCompact, toMGA, type Project, type Currency,
+  contactBelongsTo,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
@@ -226,7 +227,7 @@ function ProjectDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     }
   }, [open, editing, companies]);
 
-  const companyClients = clients.filter((c) => c.companyId === companyId);
+  const companyClients = clients.filter((c) => contactBelongsTo(c, companyId));
 
   const submit = () => {
     if (!name.trim() || !companyId || !clientId) return;

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useSuppliers, useCompanies, suppliersStore,
+  useSuppliers, useCompanies, suppliersStore, contactCompanyIds,
   type Supplier, type ContactCategory,
 } from "@/lib/mock-data";
 import { useJournalEntries, fmtAr } from "@/lib/pcg";
@@ -21,7 +21,7 @@ import {
   Search, ArrowUpDown, ChevronDown, Plus,
 } from "lucide-react";
 import {
-  CategoryChips, CategoryMultiSelect, CategoryFilterTabs, CompanyTag, defaultCategoriesFor,
+  CategoryChips, CategoryMultiSelect, CategoryFilterTabs, CompanyTag, CompanyTags, defaultCategoriesFor,
 } from "@/components/category-chips";
 
 export const Route = createFileRoute("/_authenticated/suppliers")({ component: SuppliersPage });
@@ -51,9 +51,10 @@ function Body() {
   // Compute outstanding payable per supplier from journal entries.
   const balances = new Map<string, number>();
   for (const s of baseList) {
+    const ids = new Set(contactCompanyIds(s));
     let bal = 0;
     for (const e of entries) {
-      if (e.companyId !== s.companyId) continue;
+      if (!ids.has(e.companyId)) continue;
       for (const l of e.lines) {
         if (l.account === s.account && (l.label || "").trim() === s.name) {
           bal += l.credit - l.debit;
@@ -246,7 +247,7 @@ function SupplierCard({
               {s.email} {s.phone && `· ${s.phone}`}
             </div>
           )}
-          <div className="mt-1 flex flex-wrap items-center gap-1"><CategoryChips value={s.categories} /><CompanyTag code={co?.code} name={co?.name} color={co?.color} /></div>
+          <div className="mt-1 flex flex-wrap items-center gap-1"><CategoryChips value={s.categories} /><CompanyTags ids={contactCompanyIds(s)} companies={companies} /></div>
         </div>
         <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
           <button onClick={() => onEdit(s)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
@@ -297,7 +298,7 @@ function SupplierListView({
             <div className="text-[11px] text-muted-foreground truncate">{[s.country, s.email].filter(Boolean).join(" · ")}</div>
           </div>
         </div>
-        <div className="flex items-center gap-1 flex-wrap"><CategoryChips value={s.categories} size="xs" /><CompanyTag code={co?.code} name={co?.name} color={co?.color} size="xs" /></div>
+        <div className="flex items-center gap-1 flex-wrap"><CategoryChips value={s.categories} size="xs" /><CompanyTags ids={contactCompanyIds(s)} companies={companies} size="xs" /></div>
         <div className="text-right font-tnum text-[13px] text-muted-foreground">{s.account}</div>
         <div className={`text-right font-tnum text-[13px] ${bal > 0 ? "text-amber-600" : ""}`}>{fmtAr(bal)}</div>
         <div className="flex justify-end">
@@ -343,6 +344,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
   const companies = useCompanies();
   const [name, setName] = useState("");
   const [companyId, setCompanyId] = useState("");
+  const [companyIds, setCompanyIds] = useState<string[]>([]);
   const [account, setAccount] = useState("401000");
   const [kind, setKind] = useState<Supplier["kind"]>("external");
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
@@ -366,7 +368,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
   useEffect(() => {
     if (!open) return;
     if (editing) {
-      setName(editing.name); setCompanyId(editing.companyId); setAccount(editing.account); setKind(editing.kind);
+      setName(editing.name); setCompanyId(editing.companyId); setCompanyIds(contactCompanyIds(editing)); setAccount(editing.account); setKind(editing.kind);
       setAvatarUrl(editing.avatarUrl);
       setContactPerson(editing.contactPerson ?? ""); setEmail(editing.email ?? ""); setPhone(editing.phone ?? "");
       setWebsite(editing.website ?? ""); setAddress(editing.address ?? ""); setCountry(editing.country ?? "");
@@ -376,7 +378,8 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
       setNotes(editing.notes ?? "");
       setCategories(defaultCategoriesFor("supplier", editing.categories));
     } else {
-      setName(""); setCompanyId(companies[0]?.id ?? ""); setAccount("401000"); setKind("external");
+      const fallback = companies[0]?.id ?? "";
+      setName(""); setCompanyId(fallback); setCompanyIds(fallback ? [fallback] : []); setAccount("401000"); setKind("external");
       setAvatarUrl(undefined); setContactPerson(""); setEmail(""); setPhone(""); setWebsite("");
       setAddress(""); setCountry(""); setPaymentTerms(""); setTaxId(""); setNif(""); setStat(""); setRcs("");
       setBankName(""); setBankAccount(""); setBankSwift(""); setNotes("");
@@ -386,8 +389,9 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
 
   function submit() {
     if (!name.trim() || !companyId) return;
+    const ids = Array.from(new Set([companyId, ...companyIds].filter(Boolean)));
     const data: Omit<Supplier, "id"> = {
-      name, companyId, account, kind, avatarUrl,
+      name, companyId, companyIds: ids, account, kind, avatarUrl,
       contactPerson: contactPerson || undefined, email: email || undefined, phone: phone || undefined,
       website: website || undefined, address: address || undefined, country: country || undefined,
       paymentTerms: paymentTerms ? Number(paymentTerms) : undefined,
@@ -418,13 +422,40 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
             <div className="mt-1.5"><CategoryMultiSelect value={categories} onChange={setCategories} /></div>
             <p className="text-[11px] text-muted-foreground mt-1.5">Tag this contact with one or more roles. Defaults to <span className="font-medium text-foreground">Supplier</span>.</p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Company</Label>
-              <Select value={companyId} onValueChange={setCompanyId}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-              </Select>
+          <div>
+            <Label>Linked companies</Label>
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
+              {companies.map((c) => {
+                const active = companyIds.includes(c.id);
+                const isPrimary = c.id === companyId;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => {
+                      if (active) {
+                        if (isPrimary) return;
+                        setCompanyIds(companyIds.filter((x) => x !== c.id));
+                      } else {
+                        const next = [...companyIds, c.id];
+                        setCompanyIds(next);
+                        if (!companyId) setCompanyId(c.id);
+                      }
+                    }}
+                    onDoubleClick={() => active && setCompanyId(c.id)}
+                    title={isPrimary ? "Primary company" : active ? "Double-click to make primary" : "Click to link"}
+                    className={`inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider px-2 py-1 rounded-full border transition ${active ? "border-primary bg-primary/10 text-foreground" : "border-border bg-surface text-muted-foreground hover:bg-surface-elevated"}`}
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: c.color }} />
+                    {c.code || c.shortName}
+                    {isPrimary && <span className="text-[9px] text-primary">★</span>}
+                  </button>
+                );
+              })}
             </div>
+            <p className="text-[10px] text-muted-foreground mt-1">Click to link, double-click to set primary (★).</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <div><Label>Kind</Label>
               <Select value={kind} onValueChange={(v) => setKind(v as Supplier["kind"])}>
                 <SelectTrigger><SelectValue /></SelectTrigger>

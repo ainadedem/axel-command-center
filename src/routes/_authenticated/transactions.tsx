@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import {
   useTransactions, useCompanies, useAccounts, useClients, useSuppliers, useCategories, useProjects, useInvoices,
   transactionsStore, categoriesStore, invoicesStore, fmtCompact, type Transaction, type Currency,
+  contactBelongsTo,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
@@ -369,7 +370,7 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
   }, [open, editing, companies]);
 
   const companyAccounts = accounts.filter((a) => a.companyId === companyId);
-  const companyClients = clients.filter((c) => c.companyId === companyId);
+  const companyClients = clients.filter((c) => contactBelongsTo(c, companyId));
   const companySuppliers = suppliers.filter((s) => s.companyId === companyId);
   const kind: "income" | "expense" | null =
     type === "income" ? "income" : type === "expense" ? "expense" : null;

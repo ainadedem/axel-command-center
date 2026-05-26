@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import {
   usePurchaseOrders, useQuotes, useCompanies, useClients, useProjects, purchaseOrdersStore,
   fmtCompact, type PurchaseOrder, type POStatus, type Currency,
+  contactBelongsTo,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
@@ -242,7 +243,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
   };
 
 
-  const companyClients = clients.filter((c) => c.companyId === companyId);
+  const companyClients = clients.filter((c) => contactBelongsTo(c, companyId));
   const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
   const clientQuotes = quotes.filter((q) => q.companyId === companyId && q.clientId === clientId);
 

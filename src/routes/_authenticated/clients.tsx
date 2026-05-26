@@ -4,7 +4,8 @@ import { PageHeader } from "@/components/page-header";
 import {
   useClients, useCompanies, useProjects, useInvoices, useTransactions,
   useSalesPeople, useTeamMembers,
-  clientsStore, fmtCompact, toMGA, type Client, type ContactCategory,
+  clientsStore, fmtCompact, toMGA, contactCompanyIds, contactBelongsTo,
+  type Client, type ContactCategory,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { useEffect, useMemo, useState } from "react";
@@ -20,7 +21,7 @@ import {
   LayoutGrid, List as ListIcon, Search, ArrowUpDown, ChevronDown, Plus,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { CategoryChips, CategoryMultiSelect, CompanyTag, defaultCategoriesFor } from "@/components/category-chips";
+import { CategoryChips, CategoryMultiSelect, CompanyTag, CompanyTags, defaultCategoriesFor } from "@/components/category-chips";
 
 export const Route = createFileRoute("/_authenticated/clients")({ component: ClientsPage });
 
@@ -282,6 +283,7 @@ function ClientCard({
   onEdit: (cl: Client) => void;
   onPromote: (cl: Client) => void;
 }) {
+  const linkedIds = contactCompanyIds(cl);
   const co = companies.find((c) => c.id === cl.companyId);
   const cliProjects = projects.filter((p) => p.clientId === cl.id);
   const cliInvoices = invoices.filter((i) => i.clientId === cl.id);
@@ -324,7 +326,7 @@ function ClientCard({
           )}
           <div className="mt-1 flex flex-wrap items-center gap-1">
             {cl.categories && cl.categories.length > 0 && <CategoryChips value={cl.categories} />}
-            <CompanyTag code={co?.code} name={co?.name} color={co?.color} />
+            <CompanyTags ids={linkedIds} companies={companies} />
           </div>
         </div>
         <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -408,9 +410,9 @@ function ClientListView({
               {isLead && <span className="text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-amber-500/15 text-amber-700 border border-amber-500/30 font-semibold">Lead</span>}
               {overdue && <span className="text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30 font-semibold">Overdue</span>}
             </div>
-            <div className="text-[11px] text-muted-foreground truncate flex items-center gap-1.5">
+            <div className="text-[11px] text-muted-foreground truncate flex items-center gap-1.5 flex-wrap">
               <span className="truncate">{[cl.industry, cl.country].filter(Boolean).join(" · ")}</span>
-              <CompanyTag code={co?.code} name={co?.name} color={co?.color} size="xs" />
+              <CompanyTags ids={contactCompanyIds(cl)} companies={companies} size="xs" />
             </div>
           </div>
         </div>
@@ -492,6 +494,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   const acqPeople = useSalesPeople("acquisition");
   const teamMembers = useTeamMembers();
   const [companyId, setCompanyId] = useState("");
+  const [companyIds, setCompanyIds] = useState<string[]>([]);
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
   const [acquisition, setAcquisition] = useState("");
@@ -510,7 +513,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   useEffect(() => {
     if (!open) return;
     if (editing) {
-      setCompanyId(editing.companyId); setName(editing.name); setCountry(editing.country);
+      setCompanyId(editing.companyId); setCompanyIds(contactCompanyIds(editing)); setName(editing.name); setCountry(editing.country);
       setAcquisition(editing.acquisition ?? "");
       setReferral(editing.referral ?? "");
       setAcquiredAt(editing.acquiredAt ?? "");
@@ -524,7 +527,8 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setStatus(editing.status ?? "client");
       setCategories(defaultCategoriesFor("client", editing.categories));
     } else {
-      setCompanyId(companies[0]?.id ?? ""); setName(""); setCountry(""); setAcquisition(""); setReferral("");
+      const fallback = companies[0]?.id ?? "";
+      setCompanyId(fallback); setCompanyIds(fallback ? [fallback] : []); setName(""); setCountry(""); setAcquisition(""); setReferral("");
       setAcquiredAt(new Date().toISOString().slice(0, 10));
       setWebsite(""); setEmail(""); setPhone(""); setAddress(""); setIndustry(""); setContacts("");
       setAvatarUrl(undefined);
@@ -535,8 +539,9 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
 
   const submit = () => {
     if (!name.trim() || !companyId) return;
+    const ids = Array.from(new Set([companyId, ...companyIds].filter(Boolean)));
     const data = {
-      companyId, name, country,
+      companyId, companyIds: ids, name, country,
       status,
       acquisition: acquisition.trim() || undefined,
       referral: referral.trim() || undefined,
@@ -577,11 +582,37 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
             <div className="flex-1 space-y-3">
               <div><Label>Client name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
               <div>
-                <Label>Company</Label>
-                <Select value={companyId} onValueChange={setCompanyId}>
-                  <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
-                  <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                </Select>
+                <Label>Linked companies</Label>
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {companies.map((c) => {
+                    const active = companyIds.includes(c.id);
+                    const isPrimary = c.id === companyId;
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => {
+                          if (active) {
+                            if (isPrimary) return; // can't unlink primary
+                            setCompanyIds(companyIds.filter((x) => x !== c.id));
+                          } else {
+                            const next = [...companyIds, c.id];
+                            setCompanyIds(next);
+                            if (!companyId) setCompanyId(c.id);
+                          }
+                        }}
+                        onDoubleClick={() => active && setCompanyId(c.id)}
+                        title={isPrimary ? "Primary company (double-click another to switch)" : active ? "Double-click to make primary" : "Click to link"}
+                        className={`inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider px-2 py-1 rounded-full border transition ${active ? "border-primary bg-primary/10 text-foreground" : "border-border bg-surface text-muted-foreground hover:bg-surface-elevated"}`}
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full" style={{ background: c.color }} />
+                        {c.code || c.shortName}
+                        {isPrimary && <span className="text-[9px] text-primary not-italic">★</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Click to link, double-click to set primary (★).</p>
               </div>
             </div>
           </div>
