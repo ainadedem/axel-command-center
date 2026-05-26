@@ -36,11 +36,10 @@ function SuppliersPage() {
 }
 
 function Body() {
-  const { scope } = useCompany();
   const suppliers = useSuppliers();
   const companies = useCompanies();
   const entries = useJournalEntries();
-  const baseList = inScope(suppliers, scope);
+  const baseList = suppliers;
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [view, setView] = useState<"grid" | "list">("grid");
