@@ -21,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, FileCheck2, Plus, X, Eye } from "lucide-react";
 import { DocumentPreview, type DocumentData } from "@/components/document-preview";
+import { nextNumber } from "@/lib/numbering";
 
 export const Route = createFileRoute("/_authenticated/quotations")({ component: QuotationsPage });
 
