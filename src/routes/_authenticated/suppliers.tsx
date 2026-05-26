@@ -247,7 +247,7 @@ function SupplierCard({
               {s.email} {s.phone && `· ${s.phone}`}
             </div>
           )}
-          <div className="mt-1 flex flex-wrap items-center gap-1"><CategoryChips value={s.categories} /><CompanyTag code={co?.code} name={co?.name} color={co?.color} /></div>
+          <div className="mt-1 flex flex-wrap items-center gap-1"><CategoryChips value={s.categories} /><CompanyTags ids={contactCompanyIds(s)} companies={companies} /></div>
         </div>
         <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
           <button onClick={() => onEdit(s)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
