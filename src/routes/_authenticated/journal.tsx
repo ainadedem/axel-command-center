@@ -78,7 +78,7 @@ function Body() {
                     <div className="font-medium truncate">{e.description}</div>
                     <div className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-2">
                       <span>Pièce {e.piece}</span><span>·</span><span>{fmtDateFR(e.date)}</span>
-                      {co && (<><span>·</span><span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full" style={{ background: co.color }} />{co.name}</span></>)}
+                      {co && (<><span>·</span><span className="inline-flex items-center gap-1.5 font-mono" title={co.name}><span className="h-1.5 w-1.5 rounded-full" style={{ background: co.color }} />{co.code || co.shortName}</span></>)}
                     </div>
                   </div>
                   <span className={`text-[10px] uppercase tracking-wider px-2 py-1 rounded ${equilibre ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10" : "text-red-600 bg-red-50"}`}>
