@@ -52,7 +52,7 @@ function AboutPage() {
     <div className="space-y-8 p-6 max-w-4xl mx-auto">
       <PageHeader
         title="About AXEL"
-        subtitle="Unified Business Platform — ERP, CRM & Accounting for modern organisations"
+        description="Unified Business Platform — ERP, CRM & Accounting for modern organisations"
       />
 
       <div className="rounded-2xl border border-border bg-gradient-to-br from-primary/5 to-chart-2/5 p-6">

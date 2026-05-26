@@ -4,7 +4,7 @@ import {
   Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus, Truck,
   ChevronDown, ChevronRight, Check, LogOut, Target, UserCog, Handshake,
   BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList, RefreshCw,
-  Sparkles, CreditCard, Repeat, Wallet2,
+  Sparkles, CreditCard, Repeat, Wallet2, ExternalLink,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CompanyProvider, useCompany } from "@/lib/company-context";
