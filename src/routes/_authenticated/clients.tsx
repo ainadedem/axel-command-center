@@ -20,7 +20,7 @@ import {
   LayoutGrid, List as ListIcon, Search, ArrowUpDown, ChevronDown, Plus,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { CategoryChips, CategoryMultiSelect, defaultCategoriesFor } from "@/components/category-chips";
+import { CategoryChips, CategoryMultiSelect, CompanyTag, defaultCategoriesFor } from "@/components/category-chips";
 
 export const Route = createFileRoute("/_authenticated/clients")({ component: ClientsPage });
 
@@ -322,9 +322,10 @@ function ClientCard({
               {cl.email} {cl.phone && `· ${cl.phone}`}
             </div>
           )}
-          {cl.categories && cl.categories.length > 0 && (
-            <div className="mt-1"><CategoryChips value={cl.categories} /></div>
-          )}
+          <div className="mt-1 flex flex-wrap items-center gap-1">
+            {cl.categories && cl.categories.length > 0 && <CategoryChips value={cl.categories} />}
+            <CompanyTag name={co?.name} color={co?.color} />
+          </div>
         </div>
         <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
           {isLead && (
@@ -407,8 +408,9 @@ function ClientListView({
               {isLead && <span className="text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-amber-500/15 text-amber-700 border border-amber-500/30 font-semibold">Lead</span>}
               {overdue && <span className="text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30 font-semibold">Overdue</span>}
             </div>
-            <div className="text-[11px] text-muted-foreground truncate">
-              {[cl.industry, cl.country].filter(Boolean).join(" · ")}
+            <div className="text-[11px] text-muted-foreground truncate flex items-center gap-1.5">
+              <span className="truncate">{[cl.industry, cl.country].filter(Boolean).join(" · ")}</span>
+              <CompanyTag name={co?.name} color={co?.color} size="xs" />
             </div>
           </div>
         </div>

@@ -7,7 +7,7 @@ import {
 } from "@/lib/mock-data";
 import { useJournalEntries, fmtAr } from "@/lib/pcg";
 import { newId } from "@/lib/data-store";
-import { inScope, useCompany } from "@/lib/company-context";
+
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,7 @@ import {
   Search, ArrowUpDown, ChevronDown, Plus,
 } from "lucide-react";
 import {
-  CategoryChips, CategoryMultiSelect, CategoryFilterTabs, defaultCategoriesFor,
+  CategoryChips, CategoryMultiSelect, CategoryFilterTabs, CompanyTag, defaultCategoriesFor,
 } from "@/components/category-chips";
 
 export const Route = createFileRoute("/_authenticated/suppliers")({ component: SuppliersPage });
@@ -36,11 +36,10 @@ function SuppliersPage() {
 }
 
 function Body() {
-  const { scope } = useCompany();
   const suppliers = useSuppliers();
   const companies = useCompanies();
   const entries = useJournalEntries();
-  const baseList = inScope(suppliers, scope);
+  const baseList = suppliers;
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [view, setView] = useState<"grid" | "list">("grid");
@@ -247,7 +246,7 @@ function SupplierCard({
               {s.email} {s.phone && `· ${s.phone}`}
             </div>
           )}
-          <div className="mt-1"><CategoryChips value={s.categories} /></div>
+          <div className="mt-1 flex flex-wrap items-center gap-1"><CategoryChips value={s.categories} /><CompanyTag name={co?.name} color={co?.color} /></div>
         </div>
         <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
           <button onClick={() => onEdit(s)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
@@ -298,7 +297,7 @@ function SupplierListView({
             <div className="text-[11px] text-muted-foreground truncate">{[s.country, s.email].filter(Boolean).join(" · ")}</div>
           </div>
         </div>
-        <div><CategoryChips value={s.categories} size="xs" /></div>
+        <div className="flex items-center gap-1 flex-wrap"><CategoryChips value={s.categories} size="xs" /><CompanyTag name={co?.name} color={co?.color} size="xs" /></div>
         <div className="text-right font-tnum text-[13px] text-muted-foreground">{s.account}</div>
         <div className={`text-right font-tnum text-[13px] ${bal > 0 ? "text-amber-600" : ""}`}>{fmtAr(bal)}</div>
         <div className="flex justify-end">

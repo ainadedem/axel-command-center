@@ -33,6 +33,23 @@ export function CategoryChips({ value, size = "sm" }: { value?: ContactCategory[
   );
 }
 
+/** Tiny pill showing which company a contact is linked to. */
+export function CompanyTag({
+  name, color, size = "sm",
+}: { name?: string | null; color?: string | null; size?: "xs" | "sm" }) {
+  if (!name) return null;
+  const text = size === "xs" ? "text-[9px]" : "text-[10px]";
+  return (
+    <span
+      className={`inline-flex items-center gap-1 ${text} uppercase tracking-wider px-1.5 py-0.5 rounded-full font-semibold border border-border bg-surface text-muted-foreground max-w-[120px]`}
+      title={`Linked to ${name}`}
+    >
+      <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: color ?? "var(--muted-foreground)" }} />
+      <span className="truncate">{name}</span>
+    </span>
+  );
+}
+
 /** Multi-select toggle pills, used in create/edit dialogs. */
 export function CategoryMultiSelect({
   value, onChange,
