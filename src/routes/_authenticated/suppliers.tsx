@@ -389,8 +389,9 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
 
   function submit() {
     if (!name.trim() || !companyId) return;
+    const ids = Array.from(new Set([companyId, ...companyIds].filter(Boolean)));
     const data: Omit<Supplier, "id"> = {
-      name, companyId, account, kind, avatarUrl,
+      name, companyId, companyIds: ids, account, kind, avatarUrl,
       contactPerson: contactPerson || undefined, email: email || undefined, phone: phone || undefined,
       website: website || undefined, address: address || undefined, country: country || undefined,
       paymentTerms: paymentTerms ? Number(paymentTerms) : undefined,
