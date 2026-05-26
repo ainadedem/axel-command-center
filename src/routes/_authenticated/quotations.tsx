@@ -219,7 +219,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId]);
 
-  const companyClients = clients.filter((c) => c.companyId === companyId);
+  const companyClients = clients.filter((c) => contactBelongsTo(c, companyId));
   const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
 
   const total = useMemo(() => lines.reduce((s, l) => s + (Number(l.quantity) || 0) * (Number(l.rate) || 0), 0), [lines]);

@@ -452,7 +452,7 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
   }, [companyId, clientId, clients, open]);
 
   const companyClients = useMemo(
-    () => clients.filter((c) => c.companyId === companyId).sort((a, b) => a.name.localeCompare(b.name)),
+    () => clients.filter((c) => contactBelongsTo(c, companyId)).sort((a, b) => a.name.localeCompare(b.name)),
     [clients, companyId],
   );
   const selectedClient = clientId ? clients.find((c) => c.id === clientId) : undefined;

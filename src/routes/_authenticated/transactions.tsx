@@ -369,7 +369,7 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
   }, [open, editing, companies]);
 
   const companyAccounts = accounts.filter((a) => a.companyId === companyId);
-  const companyClients = clients.filter((c) => c.companyId === companyId);
+  const companyClients = clients.filter((c) => contactBelongsTo(c, companyId));
   const companySuppliers = suppliers.filter((s) => s.companyId === companyId);
   const kind: "income" | "expense" | null =
     type === "income" ? "income" : type === "expense" ? "expense" : null;

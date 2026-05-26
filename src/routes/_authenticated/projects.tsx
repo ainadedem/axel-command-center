@@ -226,7 +226,7 @@ function ProjectDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     }
   }, [open, editing, companies]);
 
-  const companyClients = clients.filter((c) => c.companyId === companyId);
+  const companyClients = clients.filter((c) => contactBelongsTo(c, companyId));
 
   const submit = () => {
     if (!name.trim() || !companyId || !clientId) return;

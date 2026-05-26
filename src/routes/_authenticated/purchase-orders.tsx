@@ -242,7 +242,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
   };
 
 
-  const companyClients = clients.filter((c) => c.companyId === companyId);
+  const companyClients = clients.filter((c) => contactBelongsTo(c, companyId));
   const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
   const clientQuotes = quotes.filter((q) => q.companyId === companyId && q.clientId === clientId);
 
