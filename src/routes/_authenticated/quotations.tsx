@@ -204,13 +204,20 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setLines(editing.lines ?? []);
       setNotes(editing.notes ?? "");
     } else {
-      setNumber(`Q-${Date.now().toString().slice(-6)}`); setCompanyId(companies[0]?.id ?? ""); setClientId("");
+      const cid = companies[0]?.id ?? "";
+      setNumber(cid ? nextNumber("quote", cid) : ""); setCompanyId(cid); setClientId("");
       setProjectId(""); setIssueDate(today); setValidUntil(addDays(new Date(), 30).toISOString().slice(0, 10));
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
       setMode("rate-card");
       setLines([]); setNotes("");
     }
   }, [open, editing, companies, today]);
+
+  useEffect(() => {
+    if (!open || editing || !companyId) return;
+    setNumber(nextNumber("quote", companyId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId]);
 
   const companyClients = clients.filter((c) => c.companyId === companyId);
   const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
