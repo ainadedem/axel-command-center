@@ -326,7 +326,7 @@ function ClientCard({
           )}
           <div className="mt-1 flex flex-wrap items-center gap-1">
             {cl.categories && cl.categories.length > 0 && <CategoryChips value={cl.categories} />}
-            <CompanyTag code={co?.code} name={co?.name} color={co?.color} />
+            <CompanyTags ids={linkedIds} companies={companies} />
           </div>
         </div>
         <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
