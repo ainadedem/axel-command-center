@@ -542,6 +542,10 @@ export const teamMembers = teamMembersStore.items;
 export const salesMembers = salesMembersStore.items;
 export const quotes = quotesStore.items;
 export const purchaseOrders = purchaseOrdersStore.items;
+export const expenses = expensesStore.items;
+export const recurringBillings = recurringBillingsStore.items;
+export const salaryRegister = salaryRegisterStore.items;
+export const payrollRuns = payrollRunsStore.items;
 
 /* ─── Hooks ─────────────────────────────────────────────────────────── */
 
