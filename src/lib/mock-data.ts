@@ -282,7 +282,10 @@ export interface Opportunity {
 
 export interface Supplier {
   id: string;
+  /** Primary owning company. */
   companyId: string;
+  /** All companies this supplier is shared with. Defaults to [companyId]. */
+  companyIds?: string[];
   name: string;
   /** PCG account number (e.g. 401000 external, 401200 internal). */
   account: string;
