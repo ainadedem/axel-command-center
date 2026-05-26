@@ -219,6 +219,9 @@ const NEW_BUTTON_ROUTES: { match: (p: string) => boolean; to: string; label: str
   { match: (p) => p.startsWith("/team"), to: "/team", label: "New team member" },
   { match: (p) => p.startsWith("/budgets"), to: "/budgets", label: "New category" },
   { match: (p) => p.startsWith("/companies"), to: "/companies", label: "New company" },
+  { match: (p) => p.startsWith("/expenses"), to: "/expenses", label: "New expense" },
+  { match: (p) => p.startsWith("/billing"), to: "/billing", label: "New schedule" },
+  { match: (p) => p.startsWith("/payroll"), to: "/payroll", label: "New run" },
   { match: (p) => p.startsWith("/journal"), to: "/journal", label: "New entry" },
 ];
 
