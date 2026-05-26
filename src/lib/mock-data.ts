@@ -521,6 +521,10 @@ export const teamMembersStore = createCollection<TeamMember>("team-members", [])
 export const salesMembersStore = createCollection<SalesMember>("sales-members", []);
 export const quotesStore = createCollection<Quote>("quotes", []);
 export const purchaseOrdersStore = createCollection<PurchaseOrder>("purchase-orders", []);
+export const expensesStore = createCollection<Expense>("expenses", []);
+export const recurringBillingsStore = createCollection<RecurringBilling>("recurring-billings", []);
+export const salaryRegisterStore = createCollection<SalaryRegisterEntry>("salary-register", []);
+export const payrollRunsStore = createCollection<PayrollRun>("payroll-runs", []);
 
 /* ─── Live array exports (backward compatibility) ───────────────────── */
 
