@@ -24,13 +24,16 @@ import { Route as AuthenticatedPurchaseOrdersRouteImport } from './routes/_authe
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedPlanComptableRouteImport } from './routes/_authenticated/plan-comptable'
 import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated/pipeline'
+import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedGrandLivreRouteImport } from './routes/_authenticated/grand-livre'
+import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedCompteResultatRouteImport } from './routes/_authenticated/compte-resultat'
 import { Route as AuthenticatedCompaniesRouteImport } from './routes/_authenticated/companies'
 import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
 import { Route as AuthenticatedBudgetsRouteImport } from './routes/_authenticated/budgets'
+import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedBilanRouteImport } from './routes/_authenticated/bilan'
 import { Route as AuthenticatedBalanceRouteImport } from './routes/_authenticated/balance'
 import { Route as AuthenticatedAxelRouteImport } from './routes/_authenticated/axel'
@@ -115,6 +118,11 @@ const AuthenticatedPipelineRoute = AuthenticatedPipelineRouteImport.update({
   path: '/pipeline',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedPayrollRoute = AuthenticatedPayrollRouteImport.update({
+  id: '/payroll',
+  path: '/payroll',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedJournalRoute = AuthenticatedJournalRouteImport.update({
   id: '/journal',
   path: '/journal',
@@ -128,6 +136,11 @@ const AuthenticatedInvoicesRoute = AuthenticatedInvoicesRouteImport.update({
 const AuthenticatedGrandLivreRoute = AuthenticatedGrandLivreRouteImport.update({
   id: '/grand-livre',
   path: '/grand-livre',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedExpensesRoute = AuthenticatedExpensesRouteImport.update({
+  id: '/expenses',
+  path: '/expenses',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedCompteResultatRoute =
@@ -149,6 +162,11 @@ const AuthenticatedClientsRoute = AuthenticatedClientsRouteImport.update({
 const AuthenticatedBudgetsRoute = AuthenticatedBudgetsRouteImport.update({
   id: '/budgets',
   path: '/budgets',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedBilanRoute = AuthenticatedBilanRouteImport.update({
@@ -190,13 +208,16 @@ export interface FileRoutesByFullPath {
   '/axel': typeof AuthenticatedAxelRouteWithChildren
   '/balance': typeof AuthenticatedBalanceRoute
   '/bilan': typeof AuthenticatedBilanRoute
+  '/billing': typeof AuthenticatedBillingRoute
   '/budgets': typeof AuthenticatedBudgetsRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/companies': typeof AuthenticatedCompaniesRoute
   '/compte-resultat': typeof AuthenticatedCompteResultatRoute
+  '/expenses': typeof AuthenticatedExpensesRoute
   '/grand-livre': typeof AuthenticatedGrandLivreRoute
   '/invoices': typeof AuthenticatedInvoicesRoute
   '/journal': typeof AuthenticatedJournalRoute
+  '/payroll': typeof AuthenticatedPayrollRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/plan-comptable': typeof AuthenticatedPlanComptableRoute
   '/projects': typeof AuthenticatedProjectsRoute
@@ -217,13 +238,16 @@ export interface FileRoutesByTo {
   '/accounts': typeof AuthenticatedAccountsRoute
   '/balance': typeof AuthenticatedBalanceRoute
   '/bilan': typeof AuthenticatedBilanRoute
+  '/billing': typeof AuthenticatedBillingRoute
   '/budgets': typeof AuthenticatedBudgetsRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/companies': typeof AuthenticatedCompaniesRoute
   '/compte-resultat': typeof AuthenticatedCompteResultatRoute
+  '/expenses': typeof AuthenticatedExpensesRoute
   '/grand-livre': typeof AuthenticatedGrandLivreRoute
   '/invoices': typeof AuthenticatedInvoicesRoute
   '/journal': typeof AuthenticatedJournalRoute
+  '/payroll': typeof AuthenticatedPayrollRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/plan-comptable': typeof AuthenticatedPlanComptableRoute
   '/projects': typeof AuthenticatedProjectsRoute
@@ -248,13 +272,16 @@ export interface FileRoutesById {
   '/_authenticated/axel': typeof AuthenticatedAxelRouteWithChildren
   '/_authenticated/balance': typeof AuthenticatedBalanceRoute
   '/_authenticated/bilan': typeof AuthenticatedBilanRoute
+  '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/budgets': typeof AuthenticatedBudgetsRoute
   '/_authenticated/clients': typeof AuthenticatedClientsRoute
   '/_authenticated/companies': typeof AuthenticatedCompaniesRoute
   '/_authenticated/compte-resultat': typeof AuthenticatedCompteResultatRoute
+  '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
   '/_authenticated/grand-livre': typeof AuthenticatedGrandLivreRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
+  '/_authenticated/payroll': typeof AuthenticatedPayrollRoute
   '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
   '/_authenticated/plan-comptable': typeof AuthenticatedPlanComptableRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
@@ -280,13 +307,16 @@ export interface FileRouteTypes {
     | '/axel'
     | '/balance'
     | '/bilan'
+    | '/billing'
     | '/budgets'
     | '/clients'
     | '/companies'
     | '/compte-resultat'
+    | '/expenses'
     | '/grand-livre'
     | '/invoices'
     | '/journal'
+    | '/payroll'
     | '/pipeline'
     | '/plan-comptable'
     | '/projects'
@@ -307,13 +337,16 @@ export interface FileRouteTypes {
     | '/accounts'
     | '/balance'
     | '/bilan'
+    | '/billing'
     | '/budgets'
     | '/clients'
     | '/companies'
     | '/compte-resultat'
+    | '/expenses'
     | '/grand-livre'
     | '/invoices'
     | '/journal'
+    | '/payroll'
     | '/pipeline'
     | '/plan-comptable'
     | '/projects'
@@ -337,13 +370,16 @@ export interface FileRouteTypes {
     | '/_authenticated/axel'
     | '/_authenticated/balance'
     | '/_authenticated/bilan'
+    | '/_authenticated/billing'
     | '/_authenticated/budgets'
     | '/_authenticated/clients'
     | '/_authenticated/companies'
     | '/_authenticated/compte-resultat'
+    | '/_authenticated/expenses'
     | '/_authenticated/grand-livre'
     | '/_authenticated/invoices'
     | '/_authenticated/journal'
+    | '/_authenticated/payroll'
     | '/_authenticated/pipeline'
     | '/_authenticated/plan-comptable'
     | '/_authenticated/projects'
@@ -474,6 +510,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPipelineRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/payroll': {
+      id: '/_authenticated/payroll'
+      path: '/payroll'
+      fullPath: '/payroll'
+      preLoaderRoute: typeof AuthenticatedPayrollRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/journal': {
       id: '/_authenticated/journal'
       path: '/journal'
@@ -493,6 +536,13 @@ declare module '@tanstack/react-router' {
       path: '/grand-livre'
       fullPath: '/grand-livre'
       preLoaderRoute: typeof AuthenticatedGrandLivreRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/expenses': {
+      id: '/_authenticated/expenses'
+      path: '/expenses'
+      fullPath: '/expenses'
+      preLoaderRoute: typeof AuthenticatedExpensesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/compte-resultat': {
@@ -521,6 +571,13 @@ declare module '@tanstack/react-router' {
       path: '/budgets'
       fullPath: '/budgets'
       preLoaderRoute: typeof AuthenticatedBudgetsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/billing': {
+      id: '/_authenticated/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof AuthenticatedBillingRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/bilan': {
@@ -586,13 +643,16 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAxelRoute: typeof AuthenticatedAxelRouteWithChildren
   AuthenticatedBalanceRoute: typeof AuthenticatedBalanceRoute
   AuthenticatedBilanRoute: typeof AuthenticatedBilanRoute
+  AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
   AuthenticatedBudgetsRoute: typeof AuthenticatedBudgetsRoute
   AuthenticatedClientsRoute: typeof AuthenticatedClientsRoute
   AuthenticatedCompaniesRoute: typeof AuthenticatedCompaniesRoute
   AuthenticatedCompteResultatRoute: typeof AuthenticatedCompteResultatRoute
+  AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
   AuthenticatedGrandLivreRoute: typeof AuthenticatedGrandLivreRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
+  AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRoute
   AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
   AuthenticatedPlanComptableRoute: typeof AuthenticatedPlanComptableRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
@@ -612,13 +672,16 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAxelRoute: AuthenticatedAxelRouteWithChildren,
   AuthenticatedBalanceRoute: AuthenticatedBalanceRoute,
   AuthenticatedBilanRoute: AuthenticatedBilanRoute,
+  AuthenticatedBillingRoute: AuthenticatedBillingRoute,
   AuthenticatedBudgetsRoute: AuthenticatedBudgetsRoute,
   AuthenticatedClientsRoute: AuthenticatedClientsRoute,
   AuthenticatedCompaniesRoute: AuthenticatedCompaniesRoute,
   AuthenticatedCompteResultatRoute: AuthenticatedCompteResultatRoute,
+  AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
   AuthenticatedGrandLivreRoute: AuthenticatedGrandLivreRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
+  AuthenticatedPayrollRoute: AuthenticatedPayrollRoute,
   AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
   AuthenticatedPlanComptableRoute: AuthenticatedPlanComptableRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,

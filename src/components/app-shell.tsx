@@ -4,7 +4,7 @@ import {
   Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus, Truck,
   ChevronDown, ChevronRight, Check, LogOut, Target, UserCog, Handshake,
   BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList, RefreshCw,
-  Sparkles,
+  Sparkles, CreditCard, Repeat, Wallet2,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CompanyProvider, useCompany } from "@/lib/company-context";
@@ -51,6 +51,14 @@ const sections: NavSection[] = [
   },
   {
     label: "Operations",
+    items: [
+      { to: "/expenses", label: "Expenses", icon: CreditCard },
+      { to: "/billing", label: "Billing", icon: Repeat },
+      { to: "/payroll", label: "Payroll", icon: Wallet2 },
+    ],
+  },
+  {
+    label: "Organization",
     items: [
       { to: "/companies", label: "Companies", icon: Building2 },
       { to: "/projects", label: "Projects", icon: Briefcase },
@@ -211,6 +219,9 @@ const NEW_BUTTON_ROUTES: { match: (p: string) => boolean; to: string; label: str
   { match: (p) => p.startsWith("/team"), to: "/team", label: "New team member" },
   { match: (p) => p.startsWith("/budgets"), to: "/budgets", label: "New category" },
   { match: (p) => p.startsWith("/companies"), to: "/companies", label: "New company" },
+  { match: (p) => p.startsWith("/expenses"), to: "/expenses", label: "New expense" },
+  { match: (p) => p.startsWith("/billing"), to: "/billing", label: "New schedule" },
+  { match: (p) => p.startsWith("/payroll"), to: "/payroll", label: "New run" },
   { match: (p) => p.startsWith("/journal"), to: "/journal", label: "New entry" },
 ];
 
