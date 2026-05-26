@@ -7,21 +7,23 @@ import {
   clientsStore, fmtCompact, toMGA, type Client, type ContactCategory,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
+import { EmptyState } from "@/components/crud-toolbar";
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
-import { Pencil, Trash2, Wallet, AlertCircle, TrendingUp, ArrowUpRight, UserCheck, Sparkles, LayoutGrid, List as ListIcon } from "lucide-react";
+import {
+  Pencil, Trash2, Wallet, AlertCircle, TrendingUp, ArrowUpRight, UserCheck, Sparkles,
+  LayoutGrid, List as ListIcon, Search, ArrowUpDown, ChevronDown, Plus,
+} from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CategoryChips, CategoryMultiSelect, defaultCategoriesFor } from "@/components/category-chips";
 
 export const Route = createFileRoute("/_authenticated/clients")({ component: ClientsPage });
 
-/** True when a client should be treated as a real (won) client, not a lead. */
 function isWonClient(cl: Client, hasActivity: boolean): boolean {
   if (cl.status === "client") return true;
   if (cl.status === "lead") return false;
@@ -38,9 +40,10 @@ function ClientsPage() {
   const [editing, setEditing] = useState<Client | null>(null);
   const [tab, setTab] = useState<"all" | "clients" | "leads">("clients");
   const [view, setView] = useState<"grid" | "list">("grid");
-  const openCreate = () => { setEditing(null); setOpen(true); };
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<"name_asc" | "name_desc" | "revenue_desc" | "outstanding_desc" | "margin_desc">("name_asc");
+  const [group, setGroup] = useState<"none" | "company" | "status" | "acquisition">("none");
 
-  // Partition clients into "leads" vs "clients"
   const partitioned = clients.map((cl) => {
     const hasActivity =
       invoices.some((i) => i.clientId === cl.id) ||
@@ -51,7 +54,6 @@ function ClientsPage() {
   const wonClients = partitioned.filter((p) => !p.isLead).map((p) => p.cl);
   const leadClients = partitioned.filter((p) => p.isLead).map((p) => p.cl);
 
-  // Aggregate KPIs across won clients
   const totals = wonClients.reduce(
     (acc, cl) => {
       const cliInvoices = invoices.filter((i) => i.clientId === cl.id);
@@ -79,7 +81,66 @@ function ClientsPage() {
     })
     .sort((a, b) => b.r - a.r)[0];
 
-  const visible: Client[] = tab === "clients" ? wonClients : tab === "leads" ? leadClients : clients;
+  const base = tab === "clients" ? wonClients : tab === "leads" ? leadClients : clients;
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return base;
+    return base.filter((c) =>
+      c.name.toLowerCase().includes(q) ||
+      (c.country ?? "").toLowerCase().includes(q) ||
+      (c.industry ?? "").toLowerCase().includes(q) ||
+      (c.email ?? "").toLowerCase().includes(q)
+    );
+  }, [base, search]);
+
+  const sorted = useMemo(() => {
+    const arr = filtered.map((cl) => {
+      const cliInvoices = invoices.filter((i) => i.clientId === cl.id);
+      const cliProjects = projects.filter((p) => p.clientId === cl.id);
+      const cliTx = transactions.filter((t) => t.clientId === cl.id);
+      const invoicedMGA = cliInvoices.reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
+      const paidMGA = cliInvoices.reduce((s, i) => s + toMGA(i.paid, i.currency), 0);
+      const projectRevenue = cliProjects.reduce((s, p) => s + toMGA(p.revenue, p.currency), 0);
+      const incomeTxMGA = cliTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+      const expenseTxMGA = cliTx.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+      const revenue = invoicedMGA || projectRevenue || incomeTxMGA;
+      const projectCost = cliProjects.reduce((s, p) => s + toMGA(p.cost, p.currency), 0);
+      const cost = projectCost + expenseTxMGA;
+      const margin = revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0;
+      const outstanding = Math.max(0, invoicedMGA - paidMGA);
+      return { cl, revenue, outstanding, margin };
+    });
+
+    switch (sort) {
+      case "name_asc": return arr.sort((a, b) => a.cl.name.localeCompare(b.cl.name));
+      case "name_desc": return arr.sort((a, b) => b.cl.name.localeCompare(a.cl.name));
+      case "revenue_desc": return arr.sort((a, b) => b.revenue - a.revenue);
+      case "outstanding_desc": return arr.sort((a, b) => b.outstanding - a.outstanding);
+      case "margin_desc": return arr.sort((a, b) => b.margin - a.margin);
+      default: return arr;
+    }
+  }, [filtered, sort, invoices, projects, transactions]);
+
+  const grouped = useMemo(() => {
+    if (group === "none") return [{ key: "", label: "", items: sorted.map((s) => s.cl) }];
+    const map = new Map<string, Client[]>();
+    for (const s of sorted) {
+      let key = "";
+      switch (group) {
+        case "company": key = companies.find((c) => c.id === s.cl.companyId)?.name ?? "—"; break;
+        case "status": key = s.cl.status === "lead" ? "Leads" : "Clients"; break;
+        case "acquisition": key = s.cl.acquisition ?? "Unassigned"; break;
+      }
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(s.cl);
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([key, items]) => ({ key, label: key, items }));
+  }, [sorted, group, companies]);
+
+  const visibleCount = sorted.length;
 
   const promote = (cl: Client) => {
     clientsStore.update(cl.id, {
@@ -88,50 +149,76 @@ function ClientsPage() {
     });
   };
 
+  const openCreate = () => { setEditing(null); setOpen(true); };
+
   return (
     <AppShell>
       <PageHeader title="Clients" description="Leads from the pipeline and won clients — kept separate." />
-      <div className="p-8 space-y-6">
+      <div className="p-6 space-y-5">
         {/* KPI strip */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <KpiTile icon={<UserCheck className="h-4 w-4" />} label="Won clients" value={String(wonClients.length)} sub={`${leadClients.length} lead${leadClients.length === 1 ? "" : "s"}`} tint="from-primary/25 to-primary/5" ring="ring-primary/30" />
           <KpiTile icon={<Wallet className="h-4 w-4" />} label="Revenue booked" value={fmtCompact(totals.revenue, "MGA")} tint="from-emerald-500/25 to-emerald-500/5" ring="ring-emerald-500/30" />
           <KpiTile icon={<AlertCircle className="h-4 w-4" />} label="Outstanding" value={fmtCompact(totals.outstanding, "MGA")} sub={`${totals.overdue} overdue`} tint="from-amber-500/25 to-amber-500/5" ring="ring-amber-500/30" />
           <KpiTile icon={<TrendingUp className="h-4 w-4" />} label="Top client" value={topClient?.cl.name ?? "—"} sub={topClient ? fmtCompact(topClient.r, "MGA") : undefined} tint="from-sky-500/25 to-sky-500/5" ring="ring-sky-500/30" />
         </div>
 
-        <CrudToolbar count={visible.length} label={tab === "leads" ? "leads" : "clients"} onCreate={openCreate}>
-          <div className="flex items-center border rounded-md overflow-hidden">
-            <button
-              onClick={() => setView("grid")}
-              className={`h-8 w-8 grid place-items-center ${view === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-elevated"}`}
-              title="Grid view"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setView("list")}
-              className={`h-8 w-8 grid place-items-center ${view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-elevated"}`}
-              title="List view"
-            >
-              <ListIcon className="h-4 w-4" />
-            </button>
+        {/* Toolbar */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Search clients…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8 h-8 text-xs w-44"
+              />
+            </div>
+            <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
+              <SelectTrigger className="h-8 text-xs w-36 gap-1"><ArrowUpDown className="h-3 w-3" /><SelectValue placeholder="Sort" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name_asc">Name A-Z</SelectItem>
+                <SelectItem value="name_desc">Name Z-A</SelectItem>
+                <SelectItem value="revenue_desc">Revenue ↓</SelectItem>
+                <SelectItem value="outstanding_desc">Outstanding ↓</SelectItem>
+                <SelectItem value="margin_desc">Margin ↓</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={group} onValueChange={(v) => setGroup(v as typeof group)}>
+              <SelectTrigger className="h-8 text-xs w-32 gap-1"><ChevronDown className="h-3 w-3" /><SelectValue placeholder="Group" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No group</SelectItem>
+                <SelectItem value="company">By company</SelectItem>
+                <SelectItem value="status">By status</SelectItem>
+                <SelectItem value="acquisition">By acquisition</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex-1" />
+            <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+              <TabsList className="h-8">
+                <TabsTrigger value="clients" className="text-xs px-2.5"><UserCheck className="h-3 w-3 mr-1" />Clients <span className="ml-1 text-[10px] opacity-60 font-tnum">{wonClients.length}</span></TabsTrigger>
+                <TabsTrigger value="leads" className="text-xs px-2.5"><Sparkles className="h-3 w-3 mr-1" />Leads <span className="ml-1 text-[10px] opacity-60 font-tnum">{leadClients.length}</span></TabsTrigger>
+                <TabsTrigger value="all" className="text-xs px-2.5">All <span className="ml-1 text-[10px] opacity-60 font-tnum">{clients.length}</span></TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div className="flex items-center border rounded-md overflow-hidden h-8">
+              <button onClick={() => setView("grid")} className={`h-8 w-8 grid place-items-center ${view === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-elevated"}`} title="Grid view"><LayoutGrid className="h-3.5 w-3.5" /></button>
+              <button onClick={() => setView("list")} className={`h-8 w-8 grid place-items-center ${view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-elevated"}`} title="List view"><ListIcon className="h-3.5 w-3.5" /></button>
+            </div>
+            <Button size="sm" onClick={openCreate} className="h-8 gap-1 text-xs"><Plus className="h-3.5 w-3.5" /> New</Button>
           </div>
-        </CrudToolbar>
+          <div className="text-[11px] text-muted-foreground font-tnum">{visibleCount} {tab === "leads" ? "leads" : "clients"}</div>
+        </div>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-          <TabsList>
-            <TabsTrigger value="clients"><UserCheck className="h-3.5 w-3.5 mr-1.5" />Clients <span className="ml-1.5 text-[10px] opacity-70 font-tnum">{wonClients.length}</span></TabsTrigger>
-            <TabsTrigger value="leads"><Sparkles className="h-3.5 w-3.5 mr-1.5" />Leads <span className="ml-1.5 text-[10px] opacity-70 font-tnum">{leadClients.length}</span></TabsTrigger>
-            <TabsTrigger value="all">All <span className="ml-1.5 text-[10px] opacity-70 font-tnum">{clients.length}</span></TabsTrigger>
-          </TabsList>
-          <TabsContent value={tab} className="mt-4">
-            {visible.length === 0 ? (
+          <TabsContent value={tab}>
+            {visibleCount === 0 ? (
               <EmptyState label={tab === "leads" ? "leads" : "clients"} onCreate={openCreate} />
             ) : view === "list" ? (
-              <ClientListView clients={visible} companies={companies} invoices={invoices} projects={projects} transactions={transactions} onEdit={(cl) => { setEditing(cl); setOpen(true); }} onPromote={promote} />
+              <ClientListView clients={sorted.map((s) => s.cl)} companies={companies} invoices={invoices} projects={projects} transactions={transactions} onEdit={(cl) => { setEditing(cl); setOpen(true); }} onPromote={promote} group={group} grouped={grouped} />
             ) : (
-              <ClientGridView clients={visible} companies={companies} invoices={invoices} projects={projects} transactions={transactions} onEdit={(cl) => { setEditing(cl); setOpen(true); }} onPromote={promote} />
+              <ClientGridView clients={sorted.map((s) => s.cl)} companies={companies} invoices={invoices} projects={projects} transactions={transactions} onEdit={(cl) => { setEditing(cl); setOpen(true); }} onPromote={promote} group={group} grouped={grouped} />
             )}
           </TabsContent>
         </Tabs>
@@ -143,7 +230,7 @@ function ClientsPage() {
 
 /* ── Grid View ── */
 function ClientGridView({
-  clients, companies, invoices, projects, transactions, onEdit, onPromote,
+  clients, companies, invoices, projects, transactions, onEdit, onPromote, group, grouped,
 }: {
   clients: Client[];
   companies: ReturnType<typeof useCompanies>;
@@ -152,95 +239,128 @@ function ClientGridView({
   transactions: ReturnType<typeof useTransactions>;
   onEdit: (cl: Client) => void;
   onPromote: (cl: Client) => void;
+  group: string;
+  grouped: { key: string; label: string; items: Client[] }[];
 }) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-      {clients.map((cl) => {
-        const co = companies.find((c) => c.id === cl.companyId);
-        const cliProjects = projects.filter((p) => p.clientId === cl.id);
-        const cliInvoices = invoices.filter((i) => i.clientId === cl.id);
-        const cliTx = transactions.filter((t) => t.clientId === cl.id);
-        const invoicedMGA = cliInvoices.reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
-        const paidMGA = cliInvoices.reduce((s, i) => s + toMGA(i.paid, i.currency), 0);
-        const projectRevenue = cliProjects.reduce((s, p) => s + toMGA(p.revenue, p.currency), 0);
-        const incomeTxMGA = cliTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
-        const expenseTxMGA = cliTx.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
-        const revenue = invoicedMGA || projectRevenue || incomeTxMGA;
-        const projectCost = cliProjects.reduce((s, p) => s + toMGA(p.cost, p.currency), 0);
-        const cost = projectCost + expenseTxMGA;
-        const margin = revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0;
-        const outstanding = Math.max(0, invoicedMGA - paidMGA);
-        const overdue = cliInvoices.some((i) => i.status === "overdue");
-        const isLead = cl.status === "lead";
-        return (
-          <div key={cl.id} className={`relative rounded-xl border ${isLead ? "border-dashed border-amber-500/40 bg-amber-500/[0.03]" : "border-border bg-surface-elevated"} p-4 hover:border-primary/40 transition group`}>
-            <div className="flex items-start gap-3">
-              <div className="relative shrink-0">
-                <Avatar src={cl.avatarUrl} name={cl.name} size={40} />
-                {co && (
-                  <span
-                    className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background"
-                    style={{ background: co.color }}
-                    title={co.name}
-                  />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="font-display font-semibold text-sm truncate flex items-center gap-1.5">
-                  {cl.name}
-                  {isLead && <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 border border-amber-500/30 font-semibold">Lead</span>}
-                  {overdue && <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30 font-semibold">Overdue</span>}
-                </div>
-                <div className="text-xs text-muted-foreground mt-0.5 truncate">
-                  {[cl.industry, cl.country].filter(Boolean).join(" · ")}
-                </div>
-                {(cl.email || cl.phone) && (
-                  <div className="text-[11px] text-muted-foreground/70 mt-1 truncate">
-                    {cl.email} {cl.phone && `· ${cl.phone}`}
-                  </div>
-                )}
-                {cl.categories && cl.categories.length > 0 && (
-                  <div className="mt-1.5"><CategoryChips value={cl.categories} /></div>
-                )}
-              </div>
-              <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                {isLead && (
-                  <button onClick={() => onPromote(cl)} title="Promote to client" className="h-7 w-7 grid place-items-center rounded hover:bg-emerald-500/15 text-muted-foreground hover:text-emerald-700"><UserCheck className="h-3.5 w-3.5" /></button>
-                )}
-                <button onClick={() => onEdit(cl)} className="h-7 w-7 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                <button onClick={() => confirm(`Delete ${cl.name}?`) && clientsStore.remove(cl.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-              </div>
+  if (group !== "none") {
+    return (
+      <div className="space-y-5">
+        {grouped.map((g) => (
+          <div key={g.key}>
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{g.label}</h3>
+              <span className="text-[10px] text-muted-foreground/60 font-tnum">{g.items.length}</span>
             </div>
-
-            {isLead ? (
-              <div className="mt-3 text-xs text-muted-foreground/80 border-t border-border/50 pt-3">
-                Lead from the pipeline. Promote when the deal is won.
-              </div>
-            ) : (
-              <div className="mt-3 border-t border-border/50 pt-3">
-                <div className="grid grid-cols-3 gap-2">
-                  <StatMini label="Revenue" value={fmtCompact(revenue, "MGA")} />
-                  <StatMini label="Outstanding" value={fmtCompact(outstanding, "MGA")} tone={outstanding > 0 ? "warn" : "default"} />
-                  <StatMini label="Margin" value={`${margin.toFixed(0)}%`} tone={margin >= 30 ? "good" : margin >= 0 ? "default" : "bad"} />
-                </div>
-              </div>
-            )}
-
-            <div className="mt-2.5 flex gap-3 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-              <span>{cliInvoices.length} invoice{cliInvoices.length === 1 ? "" : "s"}</span>
-              <span>{cliTx.length} txn{cliTx.length === 1 ? "" : "s"}</span>
-              <span>{cliProjects.length} project{cliProjects.length === 1 ? "" : "s"}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+              {g.items.map((cl) => (
+                <ClientCard key={cl.id} cl={cl} companies={companies} invoices={invoices} projects={projects} transactions={transactions} onEdit={onEdit} onPromote={onPromote} />
+              ))}
             </div>
           </div>
-        );
-      })}
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+      {clients.map((cl) => (
+        <ClientCard key={cl.id} cl={cl} companies={companies} invoices={invoices} projects={projects} transactions={transactions} onEdit={onEdit} onPromote={onPromote} />
+      ))}
+    </div>
+  );
+}
+
+function ClientCard({
+  cl, companies, invoices, projects, transactions, onEdit, onPromote,
+}: {
+  cl: Client;
+  companies: ReturnType<typeof useCompanies>;
+  invoices: ReturnType<typeof useInvoices>;
+  projects: ReturnType<typeof useProjects>;
+  transactions: ReturnType<typeof useTransactions>;
+  onEdit: (cl: Client) => void;
+  onPromote: (cl: Client) => void;
+}) {
+  const co = companies.find((c) => c.id === cl.companyId);
+  const cliProjects = projects.filter((p) => p.clientId === cl.id);
+  const cliInvoices = invoices.filter((i) => i.clientId === cl.id);
+  const cliTx = transactions.filter((t) => t.clientId === cl.id);
+  const invoicedMGA = cliInvoices.reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
+  const paidMGA = cliInvoices.reduce((s, i) => s + toMGA(i.paid, i.currency), 0);
+  const projectRevenue = cliProjects.reduce((s, p) => s + toMGA(p.revenue, p.currency), 0);
+  const incomeTxMGA = cliTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+  const expenseTxMGA = cliTx.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+  const revenue = invoicedMGA || projectRevenue || incomeTxMGA;
+  const projectCost = cliProjects.reduce((s, p) => s + toMGA(p.cost, p.currency), 0);
+  const cost = projectCost + expenseTxMGA;
+  const margin = revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0;
+  const outstanding = Math.max(0, invoicedMGA - paidMGA);
+  const overdue = cliInvoices.some((i) => i.status === "overdue");
+  const isLead = cl.status === "lead";
+
+  return (
+    <div className={`relative rounded-lg border ${isLead ? "border-dashed border-amber-500/40 bg-amber-500/[0.03]" : "border-border bg-surface-elevated"} p-3 hover:border-primary/40 transition group`}>
+      <div className="flex items-start gap-2">
+        <div className="relative shrink-0">
+          <Avatar src={cl.avatarUrl} name={cl.name} size={32} />
+          {co && (
+            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background" style={{ background: co.color }} title={co.name} />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="font-display font-semibold text-[13px] truncate flex items-center gap-1">
+            {cl.name}
+            {isLead && <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-amber-500/15 text-amber-700 border border-amber-500/30 font-semibold">Lead</span>}
+            {overdue && <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30 font-semibold">Overdue</span>}
+          </div>
+          <div className="text-[11px] text-muted-foreground truncate">
+            {[cl.industry, cl.country].filter(Boolean).join(" · ")}
+          </div>
+          {(cl.email || cl.phone) && (
+            <div className="text-[10px] text-muted-foreground/70 mt-0.5 truncate">
+              {cl.email} {cl.phone && `· ${cl.phone}`}
+            </div>
+          )}
+          {cl.categories && cl.categories.length > 0 && (
+            <div className="mt-1"><CategoryChips value={cl.categories} /></div>
+          )}
+        </div>
+        <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+          {isLead && (
+            <button onClick={() => onPromote(cl)} title="Promote to client" className="h-6 w-6 grid place-items-center rounded hover:bg-emerald-500/15 text-muted-foreground hover:text-emerald-700"><UserCheck className="h-3 w-3" /></button>
+          )}
+          <button onClick={() => onEdit(cl)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
+          <button onClick={() => confirm(`Delete ${cl.name}?`) && clientsStore.remove(cl.id)} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+        </div>
+      </div>
+
+      {isLead ? (
+        <div className="mt-2 text-[11px] text-muted-foreground/80 border-t border-border/50 pt-2">
+          Lead from the pipeline. Promote when the deal is won.
+        </div>
+      ) : (
+        <div className="mt-2 border-t border-border/50 pt-2">
+          <div className="grid grid-cols-3 gap-1.5">
+            <StatMini label="Revenue" value={fmtCompact(revenue, "MGA")} />
+            <StatMini label="Outstanding" value={fmtCompact(outstanding, "MGA")} tone={outstanding > 0 ? "warn" : "default"} />
+            <StatMini label="Margin" value={`${margin.toFixed(0)}%`} tone={margin >= 30 ? "good" : margin >= 0 ? "default" : "bad"} />
+          </div>
+        </div>
+      )}
+
+      <div className="mt-2 flex gap-2 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+        <span>{cliInvoices.length} inv</span>
+        <span>{cliTx.length} txn</span>
+        <span>{cliProjects.length} proj</span>
+      </div>
     </div>
   );
 }
 
 /* ── List View ── */
 function ClientListView({
-  clients, companies, invoices, projects, transactions, onEdit, onPromote,
+  clients, companies, invoices, projects, transactions, onEdit, onPromote, group, grouped,
 }: {
   clients: Client[];
   companies: ReturnType<typeof useCompanies>;
@@ -249,75 +369,90 @@ function ClientListView({
   transactions: ReturnType<typeof useTransactions>;
   onEdit: (cl: Client) => void;
   onPromote: (cl: Client) => void;
+  group: string;
+  grouped: { key: string; label: string; items: Client[] }[];
 }) {
+  const renderRow = (cl: Client) => {
+    const co = companies.find((c) => c.id === cl.companyId);
+    const cliProjects = projects.filter((p) => p.clientId === cl.id);
+    const cliInvoices = invoices.filter((i) => i.clientId === cl.id);
+    const cliTx = transactions.filter((t) => t.clientId === cl.id);
+    const invoicedMGA = cliInvoices.reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
+    const paidMGA = cliInvoices.reduce((s, i) => s + toMGA(i.paid, i.currency), 0);
+    const projectRevenue = cliProjects.reduce((s, p) => s + toMGA(p.revenue, p.currency), 0);
+    const incomeTxMGA = cliTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+    const expenseTxMGA = cliTx.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+    const revenue = invoicedMGA || projectRevenue || incomeTxMGA;
+    const projectCost = cliProjects.reduce((s, p) => s + toMGA(p.cost, p.currency), 0);
+    const cost = projectCost + expenseTxMGA;
+    const margin = revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0;
+    const outstanding = Math.max(0, invoicedMGA - paidMGA);
+    const overdue = cliInvoices.some((i) => i.status === "overdue");
+    const isLead = cl.status === "lead";
+    return (
+      <div
+        key={cl.id}
+        className={`grid grid-cols-[1fr_120px_100px_100px_40px] md:grid-cols-[1fr_140px_120px_120px_40px] gap-3 px-4 py-2.5 items-center border-b border-border/50 last:border-b-0 hover:bg-accent/40 transition group ${isLead ? "bg-amber-500/[0.03]" : ""}`}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="relative shrink-0">
+            <Avatar src={cl.avatarUrl} name={cl.name} size={28} />
+            {co && (
+              <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border-2 border-background" style={{ background: co.color }} title={co.name} />
+            )}
+          </div>
+          <div className="min-w-0">
+            <div className="font-medium text-[13px] truncate flex items-center gap-1">
+              {cl.name}
+              {isLead && <span className="text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-amber-500/15 text-amber-700 border border-amber-500/30 font-semibold">Lead</span>}
+              {overdue && <span className="text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30 font-semibold">Overdue</span>}
+            </div>
+            <div className="text-[11px] text-muted-foreground truncate">
+              {[cl.industry, cl.country].filter(Boolean).join(" · ")}
+            </div>
+          </div>
+        </div>
+        <div className="text-right font-tnum text-[13px]">{isLead ? "—" : fmtCompact(revenue, "MGA")}</div>
+        <div className={`text-right font-tnum text-[13px] ${outstanding > 0 ? "text-amber-600" : ""}`}>{isLead ? "—" : fmtCompact(outstanding, "MGA")}</div>
+        <div className={`text-right font-tnum text-[13px] ${margin >= 30 ? "text-emerald-600" : margin < 0 ? "text-destructive" : ""}`}>{isLead ? "—" : `${margin.toFixed(0)}%`}</div>
+        <div className="flex justify-end">
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            {isLead && (
+              <button onClick={() => onPromote(cl)} title="Promote" className="h-6 w-6 grid place-items-center rounded hover:bg-emerald-500/15 text-muted-foreground hover:text-emerald-700"><UserCheck className="h-3 w-3" /></button>
+            )}
+            <button onClick={() => onEdit(cl)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
+            <button onClick={() => confirm(`Delete ${cl.name}?`) && clientsStore.remove(cl.id)} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  if (group !== "none") {
+    return (
+      <div className="rounded-xl border border-border bg-surface-elevated overflow-hidden space-y-0">
+        {grouped.map((g, gi) => (
+          <div key={g.key}>
+            <div className={`px-4 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border bg-background/60 ${gi > 0 ? "border-t" : ""}`}>
+              {g.label} <span className="text-muted-foreground/50 font-tnum">{g.items.length}</span>
+            </div>
+            {g.items.map((cl) => renderRow(cl))}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-xl border border-border bg-surface-elevated overflow-hidden">
-      <div className="grid grid-cols-[1fr_120px_100px_120px_40px] md:grid-cols-[1fr_140px_120px_140px_40px] gap-3 px-4 py-2.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border bg-background/50">
+      <div className="grid grid-cols-[1fr_120px_100px_100px_40px] md:grid-cols-[1fr_140px_120px_120px_40px] gap-3 px-4 py-2 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border bg-background/50">
         <div>Client</div>
         <div className="text-right">Revenue</div>
         <div className="text-right">Outstanding</div>
         <div className="text-right">Margin</div>
         <div />
       </div>
-      {clients.map((cl) => {
-        const co = companies.find((c) => c.id === cl.companyId);
-        const cliProjects = projects.filter((p) => p.clientId === cl.id);
-        const cliInvoices = invoices.filter((i) => i.clientId === cl.id);
-        const cliTx = transactions.filter((t) => t.clientId === cl.id);
-        const invoicedMGA = cliInvoices.reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
-        const paidMGA = cliInvoices.reduce((s, i) => s + toMGA(i.paid, i.currency), 0);
-        const projectRevenue = cliProjects.reduce((s, p) => s + toMGA(p.revenue, p.currency), 0);
-        const incomeTxMGA = cliTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
-        const expenseTxMGA = cliTx.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
-        const revenue = invoicedMGA || projectRevenue || incomeTxMGA;
-        const projectCost = cliProjects.reduce((s, p) => s + toMGA(p.cost, p.currency), 0);
-        const cost = projectCost + expenseTxMGA;
-        const margin = revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0;
-        const outstanding = Math.max(0, invoicedMGA - paidMGA);
-        const overdue = cliInvoices.some((i) => i.status === "overdue");
-        const isLead = cl.status === "lead";
-        return (
-          <div
-            key={cl.id}
-            className={`grid grid-cols-[1fr_120px_100px_120px_40px] md:grid-cols-[1fr_140px_120px_140px_40px] gap-3 px-4 py-3 items-center border-b border-border/50 last:border-b-0 hover:bg-accent/40 transition group ${isLead ? "bg-amber-500/[0.03]" : ""}`}
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="relative shrink-0">
-                <Avatar src={cl.avatarUrl} name={cl.name} size={32} />
-                {co && (
-                  <span
-                    className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background"
-                    style={{ background: co.color }}
-                    title={co.name}
-                  />
-                )}
-              </div>
-              <div className="min-w-0">
-                <div className="font-medium text-sm truncate flex items-center gap-1.5">
-                  {cl.name}
-                  {isLead && <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 border border-amber-500/30 font-semibold">Lead</span>}
-                  {overdue && <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30 font-semibold">Overdue</span>}
-                </div>
-                <div className="text-[11px] text-muted-foreground truncate">
-                  {[cl.industry, cl.country].filter(Boolean).join(" · ")}
-                </div>
-              </div>
-            </div>
-            <div className="text-right font-tnum text-sm">{isLead ? "—" : fmtCompact(revenue, "MGA")}</div>
-            <div className={`text-right font-tnum text-sm ${outstanding > 0 ? "text-amber-600" : ""}`}>{isLead ? "—" : fmtCompact(outstanding, "MGA")}</div>
-            <div className={`text-right font-tnum text-sm ${margin >= 30 ? "text-emerald-600" : margin < 0 ? "text-destructive" : ""}`}>{isLead ? "—" : `${margin.toFixed(0)}%`}</div>
-            <div className="flex justify-end">
-              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                {isLead && (
-                  <button onClick={() => onPromote(cl)} title="Promote" className="h-7 w-7 grid place-items-center rounded hover:bg-emerald-500/15 text-muted-foreground hover:text-emerald-700"><UserCheck className="h-3.5 w-3.5" /></button>
-                )}
-                <button onClick={() => onEdit(cl)} className="h-7 w-7 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                <button onClick={() => confirm(`Delete ${cl.name}?`) && clientsStore.remove(cl.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-              </div>
-            </div>
-          </div>
-        );
-      })}
+      {clients.map((cl) => renderRow(cl))}
     </div>
   );
 }
@@ -330,22 +465,22 @@ function StatMini({ label, value, tone = "default" }: { label: string; value: st
     tone === "bad" ? "text-destructive" : "text-foreground";
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground font-semibold">{label}</div>
-      <div className={`font-tnum font-semibold mt-0.5 text-sm ${color}`}>{value}</div>
+      <div className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground font-semibold">{label}</div>
+      <div className={`font-tnum font-semibold mt-0.5 text-xs ${color}`}>{value}</div>
     </div>
   );
 }
 
 function KpiTile({ icon, label, value, sub, tint, ring }: { icon: React.ReactNode; label: string; value: string; sub?: string; tint: string; ring: string }) {
   return (
-    <div className={`relative rounded-2xl border-2 border-border bg-gradient-to-br ${tint} p-5 ring-1 ${ring} overflow-hidden`}>
-      <div className="flex items-center justify-between mb-3">
-        <div className="h-9 w-9 rounded-xl bg-background/80 backdrop-blur grid place-items-center text-foreground border border-border">{icon}</div>
+    <div className={`relative rounded-xl border border-border bg-gradient-to-br ${tint} p-4 ring-1 ${ring} overflow-hidden`}>
+      <div className="flex items-center justify-between mb-2">
+        <div className="h-8 w-8 rounded-lg bg-background/80 backdrop-blur grid place-items-center text-foreground border border-border">{icon}</div>
         <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
       </div>
-      <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">{label}</div>
-      <div className="font-display text-2xl font-bold tracking-tight font-tnum mt-1 truncate">{value}</div>
-      {sub && <div className="text-xs text-muted-foreground font-tnum mt-1">{sub}</div>}
+      <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground font-semibold">{label}</div>
+      <div className="font-display text-xl font-bold tracking-tight font-tnum mt-0.5 truncate">{value}</div>
+      {sub && <div className="text-[11px] text-muted-foreground font-tnum mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -495,8 +630,10 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
               <Select value={acquisition || "__none__"} onValueChange={(v) => setAcquisition(v === "__none__" ? "" : v)}>
                 <SelectTrigger><SelectValue placeholder="Select acquisition person" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">— Unassigned —</SelectItem>
-                  {acqOptions.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                  <SelectItem value="__none__">- Unassigned -</SelectItem>
+                  {acqOptions.map((n) => (
+                    <SelectItem key={n} value={n}>{n}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )}
@@ -514,8 +651,10 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
               <Select value={referral || "__none__"} onValueChange={(v) => setReferral(v === "__none__" ? "" : v)}>
                 <SelectTrigger><SelectValue placeholder="Select referral" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">— None —</SelectItem>
-                  {refOptions.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                  <SelectItem value="__none__">- None -</SelectItem>
+                  {refOptions.map((n) => (
+                    <SelectItem key={n} value={n}>{n}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )}
