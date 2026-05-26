@@ -2,6 +2,7 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import axelLogo from "@/assets/axel-logo.png";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (s: Record<string, unknown>) => ({
