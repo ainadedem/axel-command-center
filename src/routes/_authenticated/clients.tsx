@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import {
   useClients, useCompanies, useProjects, useInvoices, useTransactions,
   useSalesPeople, useTeamMembers,
-  clientsStore, fmtCompact, toMGA, type Client,
+  clientsStore, fmtCompact, toMGA, type Client, type ContactCategory,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { useEffect, useState } from "react";
@@ -17,6 +17,7 @@ import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
 import { Pencil, Trash2, Wallet, AlertCircle, TrendingUp, ArrowUpRight, UserCheck, Sparkles, LayoutGrid, List as ListIcon } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { CategoryChips, CategoryMultiSelect, defaultCategoriesFor } from "@/components/category-chips";
 
 export const Route = createFileRoute("/_authenticated/clients")({ component: ClientsPage });
 
