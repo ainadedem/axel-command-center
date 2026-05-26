@@ -563,6 +563,10 @@ export const useTeamMembers = () => useCollection(teamMembersStore);
 export const useSalesMembers = () => useCollection(salesMembersStore);
 export const useQuotes = () => useCollection(quotesStore);
 export const usePurchaseOrders = () => useCollection(purchaseOrdersStore);
+export const useExpenses = () => useCollection(expensesStore);
+export const useRecurringBillings = () => useCollection(recurringBillingsStore);
+export const useSalaryRegister = () => useCollection(salaryRegisterStore);
+export const usePayrollRuns = () => useCollection(payrollRunsStore);
 
 /** Convenience: list of sales-team people (with team name) filtered by role. */
 export function useSalesPeople(role: "acquisition" | "closer"): { id: string; teamMemberId: string; name: string }[] {
