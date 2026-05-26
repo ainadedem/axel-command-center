@@ -178,6 +178,7 @@ import logiaAccountLabels from "./logia-account-labels.json";
 import logiaOpportunitiesSeed from "./logia-opportunities-seed.json";
 import clientsEnrichmentSeed from "./clients-enrichment-seed.json";
 import axiomBankSeed from "./axiom-bank-seed.json";
+import axiomCrmClientsSeed from "./axiom-clients-seed.json";
 import {
   companiesStore, accountsStore, clientsStore, suppliersStore,
   invoicesStore, transactionsStore, categoriesStore, opportunitiesStore,
@@ -739,7 +740,48 @@ if (typeof window !== "undefined") {
       seedAxiomOpportunities();
       localStorage.setItem("axiom-opps-version", AXIOM_OPPS_VERSION);
     }
+
+    seedAxiomCrmClients();
   } catch { /* ignore */ }
+}
+
+/**
+ * Import CRM clients from CSV-derived seed (Axiom client roster).
+ * Idempotent: dedupes by canonical name across ALL companies — if a client
+ * with the same name already exists, it is skipped.
+ */
+export function seedAxiomCrmClients() {
+  ensureSeedCompanies();
+  const existing = new Set(
+    clientsStore.items.map((c) => canonicalClientName(c.name).toLowerCase()),
+  );
+  type Seed = {
+    name: string; type: string; year?: number; website?: string; contacts?: string;
+    email?: string; address?: string; industry?: string; acquisition?: string;
+  };
+  let added = 0;
+  for (const s of axiomCrmClientsSeed as Seed[]) {
+    const key = canonicalClientName(s.name).toLowerCase();
+    if (!key || existing.has(key)) continue;
+    existing.add(key);
+    const client: Client = {
+      id: `cli_axi_${slug(s.name)}`,
+      companyId: "axi",
+      name: s.name,
+      country: guessCountry(s.address || s.name),
+      status: "client",
+      website: s.website || undefined,
+      email: s.email || undefined,
+      address: s.address || undefined,
+      industry: s.industry || undefined,
+      contacts: s.contacts || undefined,
+      acquisition: s.acquisition || undefined,
+      acquisitionYear: s.year,
+    };
+    clientsStore.add(client);
+    added++;
+  }
+  return added;
 }
 
 /**
