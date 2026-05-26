@@ -63,21 +63,38 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         .select("id, name, code, base_currency");
       if (cancelled || error || !data) return;
       const existing = companiesStore.items;
-      const byCode = new Map(existing.map((c) => [(c.code || c.shortName || "").toUpperCase(), c]));
-      const byId = new Map(existing.map((c) => [c.id, c]));
-      let changed = false;
-      const merged: Company[] = [...existing];
+
+      // Dedupe existing items by code, preferring stable seed ids
+      // ("log"/"win"/"axi") that the rest of the mock data references.
+      const seedIds = new Set(["log", "win", "axi"]);
+      const seen = new Map<string, Company>();
+      const noCode: Company[] = [];
+      for (const c of existing) {
+        const key = (c.code || c.shortName || "").toUpperCase();
+        if (!key) { noCode.push(c); continue; }
+        const prev = seen.get(key);
+        if (!prev) seen.set(key, c);
+        else if (seedIds.has(c.id) && !seedIds.has(prev.id)) seen.set(key, c);
+      }
+      const deduped: Company[] = [...seen.values(), ...noCode];
+
+      // Add any DB rows whose code isn't represented locally yet.
+      const byCode = new Map(deduped.map((c) => [(c.code || c.shortName || "").toUpperCase(), c]));
+      let changed = deduped.length !== existing.length;
+      const merged: Company[] = [...deduped];
       data.forEach((row, idx) => {
         const code = (row.code || "").toUpperCase();
-        if (byId.has(row.id) || byCode.has(code)) return;
-        merged.push({
+        if (!code || byCode.has(code)) return;
+        const entry: Company = {
           id: row.id,
           name: row.name,
           shortName: code || row.name.slice(0, 3).toUpperCase(),
           code: code,
-          color: FALLBACK_COLORS[(existing.length + idx) % FALLBACK_COLORS.length],
+          color: FALLBACK_COLORS[(deduped.length + idx) % FALLBACK_COLORS.length],
           baseCurrency: (row.base_currency as Company["baseCurrency"]) || "MGA",
-        });
+        };
+        merged.push(entry);
+        byCode.set(code, entry);
         changed = true;
       });
       if (changed) companiesStore.replaceAll(merged);
