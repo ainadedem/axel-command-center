@@ -12,8 +12,16 @@ import { Loader2, ShieldAlert, Search } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/users-access")({
-  component: UsersAccessPage,
+  component: UsersAccessRoute,
 });
+
+function UsersAccessRoute() {
+  return (
+    <AppShell>
+      <UsersAccessPage />
+    </AppShell>
+  );
+}
 
 type Profile = {
   user_id: string;
@@ -144,7 +152,7 @@ function UsersAccessPage() {
 
   if (!isGroupAdmin) {
     return (
-      <AppShell>
+      <>
         <PageHeader title="Users & Access" description="Manage admins and per-company permissions." />
         <div className="px-8 py-12">
           <div className="max-w-md mx-auto text-center border border-border rounded-lg p-8 bg-card">
@@ -155,12 +163,12 @@ function UsersAccessPage() {
             </p>
           </div>
         </div>
-      </AppShell>
+      </>
     );
   }
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Users & Access"
         description="Assign roles and choose which companies each user can access."
@@ -310,6 +318,6 @@ function UsersAccessPage() {
           tick the companies they can view and work in.
         </p>
       </div>
-    </AppShell>
+    </>
   );
 }
