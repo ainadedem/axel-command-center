@@ -1,7 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { useCompanies, type Company } from "./mock-data";
+import { useCompanies, companiesStore, type Company } from "./mock-data";
 import { useAuth } from "./auth-context";
 import { supabase } from "@/integrations/supabase/client";
+
+const FALLBACK_COLORS = ["#7c3aed", "#0ea5e9", "#f59e0b", "#10b981", "#ef4444", "#ec4899"];
+
 
 type Scope = { id: "group" } | { id: "company"; companyId: string };
 
