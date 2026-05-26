@@ -1,31 +1,52 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
-import { journalEntries, pcgIndex, fmtMoney, usesPcg } from "@/lib/pcg";
-import { companies } from "@/lib/mock-data";
+import { useJournalEntries, pcgIndex, fmtMoney, usesPcg } from "@/lib/pcg";
+import { useCompanies } from "@/lib/mock-data";
 import { useCompany } from "@/lib/company-context";
+import { PeriodPicker, defaultPeriod, type Period } from "@/components/period-picker";
+import { exportCsvRows } from "@/lib/export-csv";
+import { parseISO } from "date-fns";
+import { useState, useMemo } from "react";
+import { Download, CheckCircle2, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/bilan")({ component: BilanPage });
 
-// Aggregate solde (débit - crédit) per account, then map to bilan rubrics
-function useSoldes() {
+function inPeriod(date: string, p: Period) {
+  const d = parseISO(date);
+  return d >= p.from && d <= p.to;
+}
+
+function useSoldes(period: Period) {
   const { scope } = useCompany();
-  const entries = journalEntries.filter((e) => {
-    if (!usesPcg(e.companyId)) return false;
-    if (scope.id === "company" && scope.companyId !== e.companyId) return false;
-    return true;
-  });
-  const soldes = new Map<string, number>();
-  entries.forEach((e) =>
-    e.lines.forEach((l) => {
-      soldes.set(l.account, (soldes.get(l.account) ?? 0) + l.debit - l.credit);
-    }),
-  );
-  const co = scope.id === "company" ? companies.find((c) => c.id === scope.companyId)! : companies.find((c) => c.id === "log")!;
+  const companies = useCompanies();
+  const allEntries = useJournalEntries();
+
+  const entries = useMemo(() =>
+    allEntries.filter((e) => {
+      if (!usesPcg(e.companyId)) return false;
+      if (scope.id === "company" && scope.companyId !== e.companyId) return false;
+      if (!inPeriod(e.date, period)) return false;
+      return true;
+    }), [allEntries, scope, period]);
+
+  const soldes = useMemo(() => {
+    const map = new Map<string, number>();
+    entries.forEach((e) =>
+      e.lines.forEach((l) => {
+        map.set(l.account, (map.get(l.account) ?? 0) + l.debit - l.credit);
+      }),
+    );
+    return map;
+  }, [entries]);
+
+  const co = scope.id === "company"
+    ? companies.find((c) => c.id === scope.companyId) ?? companies.find((c) => c.id === "log")!
+    : companies.find((c) => c.id === "log")!;
+
   return { soldes, co };
 }
 
-// helper: sum solde for any account whose code starts with prefix(es)
 function sumPrefix(soldes: Map<string, number>, prefixes: string[]) {
   let s = 0;
   soldes.forEach((v, k) => { if (prefixes.some((p) => k.startsWith(p))) s += v; });
@@ -33,22 +54,14 @@ function sumPrefix(soldes: Map<string, number>, prefixes: string[]) {
 }
 
 function BilanPage() {
-  return (
-    <AppShell>
-      <BilanBody />
-    </AppShell>
-  );
-}
+  const [period, setPeriod] = useState<Period>(defaultPeriod);
+  const { soldes, co } = useSoldes(period);
 
-function BilanBody() {
-  const { soldes, co } = useSoldes();
-
-
-  // ACTIF (débiteur normal)
+  // ACTIF
   const immoIncorp = sumPrefix(soldes, ["20"]);
   const immoCorp = sumPrefix(soldes, ["21", "23"]);
   const immoFin = sumPrefix(soldes, ["26", "27"]);
-  const amortissements = -sumPrefix(soldes, ["28", "29"]); // créditeur
+  const amortissements = -sumPrefix(soldes, ["28", "29"]);
   const stocks = sumPrefix(soldes, ["3"]);
   const clients = sumPrefix(soldes, ["41"]);
   const tvaDed = sumPrefix(soldes, ["4456"]);
@@ -62,22 +75,20 @@ function BilanBody() {
   const totalTreso = banques + caisseEtRegies + vmp;
   const totalActif = totalActifImmo + totalActifCir + totalTreso;
 
-  // PASSIF (créditeur normal — on inverse le signe)
+  // PASSIF
   const inv = (n: number) => -n;
   const capital = inv(sumPrefix(soldes, ["10", "11"]));
-  const resultat = inv(sumPrefix(soldes, ["12"])) + (totalActif > 0 ? 0 : 0); // placeholder; computed below
   const subventions = inv(sumPrefix(soldes, ["13"]));
   const provisions = inv(sumPrefix(soldes, ["15"]));
   const emprunts = inv(sumPrefix(soldes, ["16", "17"]));
   const fournisseurs = inv(sumPrefix(soldes, ["40"]));
   const personnel = inv(sumPrefix(soldes, ["42"]));
   const orgSociaux = inv(sumPrefix(soldes, ["43"]));
-  const etat = inv(sumPrefix(soldes, ["44"])) - tvaDed; // 4456 is actif; exclude
+  const etat = inv(sumPrefix(soldes, ["44"])) - tvaDed;
   const groupe = inv(sumPrefix(soldes, ["45"]));
 
-  // Résultat de l'exercice = produits (cl. 7) - charges (cl. 6)
-  const produits = inv(sumPrefix(soldes, ["7"]));   // class 7 normal credit
-  const charges = sumPrefix(soldes, ["6"]);          // class 6 normal debit
+  const produits = inv(sumPrefix(soldes, ["7"]));
+  const charges = sumPrefix(soldes, ["6"]);
   const resultatNet = produits - charges;
 
   const totalCapitaux = capital + resultatNet + subventions;
@@ -85,12 +96,68 @@ function BilanBody() {
   const totalDettesExpl = fournisseurs + personnel + orgSociaux + etat + groupe;
   const totalPassif = totalCapitaux + totalDettesFin + totalDettesExpl;
 
-  return (
-    <>
-      <PageHeader title="Bilan" description={`État du patrimoine — PCG Madagascar 2005 · ${co.name}`} />
+  const balanced = Math.abs(totalActif - totalPassif) < 1;
 
-      <div className="p-8 grid lg:grid-cols-2 gap-5">
-        {/* ACTIF */}
+  const handleExport = () => {
+    exportCsvRows(
+      `bilan-${period.label.replace(/\s/g, "-")}.csv`,
+      ["Rubrique", "Libellé", `Montant (${co.baseCurrency})`],
+      [
+        ["ACTIF", "Immobilisations incorporelles", immoIncorp],
+        ["ACTIF", "Immobilisations corporelles", immoCorp],
+        ["ACTIF", "Immobilisations financières", immoFin],
+        ["ACTIF", "Amortissements (à déduire)", -amortissements],
+        ["ACTIF", "Stocks et en-cours", stocks],
+        ["ACTIF", "Clients", clients],
+        ["ACTIF", "TVA déductible", tvaDed],
+        ["ACTIF", "Autres créances", autresCrea],
+        ["ACTIF", "Banques", banques],
+        ["ACTIF", "Caisse / Mobile Money", caisseEtRegies],
+        ["ACTIF", "VMP", vmp],
+        ["ACTIF", "TOTAL ACTIF", totalActif],
+        ["PASSIF", "Capital et réserves", capital],
+        ["PASSIF", "Résultat de l'exercice", resultatNet],
+        ["PASSIF", "Subventions d'investissement", subventions],
+        ["PASSIF", "Provisions pour risques et charges", provisions],
+        ["PASSIF", "Emprunts et dettes financières", emprunts],
+        ["PASSIF", "Fournisseurs", fournisseurs],
+        ["PASSIF", "Personnel", personnel],
+        ["PASSIF", "Organismes sociaux (CNAPS, OSTIE)", orgSociaux],
+        ["PASSIF", "État (TVA, IRSA, IS)", etat],
+        ["PASSIF", "Comptes courants associés", groupe],
+        ["PASSIF", "TOTAL PASSIF", totalPassif],
+      ],
+    );
+  };
+
+  return (
+    <AppShell>
+      <PageHeader
+        title="Bilan"
+        description={`État du patrimoine — PCG Madagascar 2005 · ${co.name}`}
+        actions={
+          <div className="flex items-center gap-2">
+            <PeriodPicker value={period} onChange={setPeriod} />
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-surface hover:bg-surface-elevated text-sm transition"
+            >
+              <Download className="h-4 w-4" /> CSV
+            </button>
+          </div>
+        }
+      />
+
+      <div className="px-8 pb-3">
+        <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-sm ${balanced ? "border-success/30 bg-success/5 text-success" : "border-destructive/30 bg-destructive/5 text-destructive"}`}>
+          {balanced
+            ? <><CheckCircle2 className="h-4 w-4" /> Bilan équilibré — Actif ({fmtMoney(totalActif, co.baseCurrency)}) = Passif ({fmtMoney(totalPassif, co.baseCurrency)})</>
+            : <><AlertTriangle className="h-4 w-4" /> Déséquilibre : Actif {fmtMoney(totalActif, co.baseCurrency)} ≠ Passif {fmtMoney(totalPassif, co.baseCurrency)} · écart {fmtMoney(Math.abs(totalActif - totalPassif), co.baseCurrency)}</>
+          }
+        </div>
+      </div>
+
+      <div className="p-8 pt-3 grid lg:grid-cols-2 gap-5">
         <Panel title="ACTIF">
           <Group title="Actif non courant" total={totalActifImmo} co={co}>
             <Row label="Immobilisations incorporelles" value={immoIncorp} co={co} />
@@ -112,7 +179,6 @@ function BilanBody() {
           <Total label="TOTAL ACTIF" value={totalActif} co={co} />
         </Panel>
 
-        {/* PASSIF */}
         <Panel title="PASSIF">
           <Group title="Capitaux propres" total={totalCapitaux} co={co}>
             <Row label="Capital et réserves" value={capital} co={co} />
@@ -133,9 +199,8 @@ function BilanBody() {
           <Total label="TOTAL PASSIF" value={totalPassif} co={co} />
         </Panel>
       </div>
-    </>
+    </AppShell>
   );
-
 }
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
