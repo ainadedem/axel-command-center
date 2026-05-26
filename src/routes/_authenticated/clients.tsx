@@ -668,5 +668,3 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   );
 }
 
-// Need Plus import for the button in toolbar
-import { Plus } from "lucide-react";
