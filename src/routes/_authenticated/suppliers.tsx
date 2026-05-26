@@ -51,9 +51,10 @@ function Body() {
   // Compute outstanding payable per supplier from journal entries.
   const balances = new Map<string, number>();
   for (const s of baseList) {
+    const ids = new Set(contactCompanyIds(s));
     let bal = 0;
     for (const e of entries) {
-      if (e.companyId !== s.companyId) continue;
+      if (!ids.has(e.companyId)) continue;
       for (const l of e.lines) {
         if (l.account === s.account && (l.label || "").trim() === s.name) {
           bal += l.credit - l.debit;
