@@ -21,7 +21,7 @@ import {
   LayoutGrid, List as ListIcon, Search, ArrowUpDown, ChevronDown, Plus,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { CategoryChips, CategoryMultiSelect, CompanyTag, defaultCategoriesFor } from "@/components/category-chips";
+import { CategoryChips, CategoryMultiSelect, CompanyTag, CompanyTags, defaultCategoriesFor } from "@/components/category-chips";
 
 export const Route = createFileRoute("/_authenticated/clients")({ component: ClientsPage });
 
