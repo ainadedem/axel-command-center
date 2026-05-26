@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CompanyProvider, useCompany } from "@/lib/company-context";
-import { useCompanies } from "@/lib/mock-data";
+
 import { useFxRates } from "@/lib/fx";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
