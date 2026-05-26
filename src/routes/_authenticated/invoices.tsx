@@ -241,10 +241,14 @@ function Body() {
               <div className="grid grid-cols-4 divide-x divide-border/40">
                 {(["0-30", "31-60", "61-90", "90+"] as const).map((key, i) => {
                   const b = agingBuckets[key];
-                  const tone = i === 0 ? "" : i === 1 ? "text-warning" : "text-destructive";
+                  const tone = i === 0 ? "text-primary" : i === 1 ? "text-warning" : "text-destructive";
+                  const dot = i === 0 ? "bg-primary" : i === 1 ? "bg-warning" : "bg-destructive";
                   return (
-                    <div key={key} className="p-5">
-                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{key} days</div>
+                    <div key={key} className="p-5 relative">
+                      <div className="flex items-center gap-1.5">
+                        <span className={cn("h-1.5 w-1.5 rounded-full", b.count > 0 ? dot : "bg-muted-foreground/30")} />
+                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{key} days</div>
+                      </div>
                       <div className={`font-display text-2xl font-bold font-tnum mt-2 leading-none ${b.count > 0 ? tone : "text-muted-foreground/40"}`}>
                         {b.count > 0 ? fmtAmount(b.amount, "MGA") : "—"}
                       </div>
