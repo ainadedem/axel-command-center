@@ -204,14 +204,21 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
       setDocumentUploadedAt(editing.documentUploadedAt);
       setDocumentHistory(editing.documentHistory ?? []);
     } else {
-      setNumber(`PO-${Date.now().toString().slice(-6)}`); setClientReference("");
-      setCompanyId(companies[0]?.id ?? ""); setClientId(""); setProjectId(""); setQuoteId("");
+      const cid = companies[0]?.id ?? "";
+      setNumber(cid ? nextNumber("po", cid) : ""); setClientReference("");
+      setCompanyId(cid); setClientId(""); setProjectId(""); setQuoteId("");
       setIssueDate(today); setAmount("0"); setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("issued");
       setDocumentUrl(undefined); setDocumentName(undefined); setDocumentType(undefined);
       setDocumentUploadedAt(undefined); setDocumentHistory([]);
     }
     setUploadError("");
   }, [open, editing, companies, today]);
+
+  useEffect(() => {
+    if (!open || editing || !companyId) return;
+    setNumber(nextNumber("po", companyId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId]);
 
   const handleFile = (file: File) => {
     setUploadError("");
