@@ -582,11 +582,37 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
             <div className="flex-1 space-y-3">
               <div><Label>Client name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
               <div>
-                <Label>Company</Label>
-                <Select value={companyId} onValueChange={setCompanyId}>
-                  <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
-                  <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                </Select>
+                <Label>Linked companies</Label>
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {companies.map((c) => {
+                    const active = companyIds.includes(c.id);
+                    const isPrimary = c.id === companyId;
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => {
+                          if (active) {
+                            if (isPrimary) return; // can't unlink primary
+                            setCompanyIds(companyIds.filter((x) => x !== c.id));
+                          } else {
+                            const next = [...companyIds, c.id];
+                            setCompanyIds(next);
+                            if (!companyId) setCompanyId(c.id);
+                          }
+                        }}
+                        onDoubleClick={() => active && setCompanyId(c.id)}
+                        title={isPrimary ? "Primary company (double-click another to switch)" : active ? "Double-click to make primary" : "Click to link"}
+                        className={`inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider px-2 py-1 rounded-full border transition ${active ? "border-primary bg-primary/10 text-foreground" : "border-border bg-surface text-muted-foreground hover:bg-surface-elevated"}`}
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full" style={{ background: c.color }} />
+                        {c.code || c.shortName}
+                        {isPrimary && <span className="text-[9px] text-primary not-italic">★</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Click to link, double-click to set primary (★).</p>
               </div>
             </div>
           </div>
