@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import {
   useProjects, useClients, useCompanies, useInvoices, useTransactions, invoicesStore, projectsStore,
   fmtCompact, toMGA, type Project, type Currency,
-} from "@/lib/mock-data";
+, contactBelongsTo } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
 import { Fragment, useEffect, useState } from "react";

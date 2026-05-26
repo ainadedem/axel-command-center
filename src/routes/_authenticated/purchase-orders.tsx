@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import {
   usePurchaseOrders, useQuotes, useCompanies, useClients, useProjects, purchaseOrdersStore,
   fmtCompact, type PurchaseOrder, type POStatus, type Currency,
-} from "@/lib/mock-data";
+, contactBelongsTo } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO } from "date-fns";
