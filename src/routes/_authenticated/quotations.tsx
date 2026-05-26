@@ -153,6 +153,7 @@ function Body() {
                           <button onClick={() => convertToPO(q)} title="Convert to PO" className="text-[10px] uppercase tracking-wider px-2 py-1 rounded border border-success/30 text-success hover:bg-success/10 flex items-center gap-1"><FileCheck2 className="h-3 w-3" /> To PO</button>
                         )}
                         <div className="opacity-0 group-hover:opacity-100 flex gap-1">
+                          <button onClick={() => duplicateQuote(q)} title="Duplicate quote" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Copy className="h-3.5 w-3.5" /></button>
                           <button onClick={() => setPreviewing(q)} title="Preview & export PDF" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
                           <button onClick={() => { setEditing(q); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
                           <button onClick={() => confirm(`Delete quote ${q.number}?`) && quotesStore.remove(q.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
