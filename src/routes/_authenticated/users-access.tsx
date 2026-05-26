@@ -152,7 +152,7 @@ function UsersAccessPage() {
 
   if (!isGroupAdmin) {
     return (
-      <AppShell>
+      <>
         <PageHeader title="Users & Access" description="Manage admins and per-company permissions." />
         <div className="px-8 py-12">
           <div className="max-w-md mx-auto text-center border border-border rounded-lg p-8 bg-card">
@@ -163,12 +163,12 @@ function UsersAccessPage() {
             </p>
           </div>
         </div>
-      </AppShell>
+      </>
     );
   }
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Users & Access"
         description="Assign roles and choose which companies each user can access."
