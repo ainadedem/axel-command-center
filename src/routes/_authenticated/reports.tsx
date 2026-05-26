@@ -132,7 +132,7 @@ function Body() {
               <Tooltip
                 contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
                 cursor={{ fill: "color-mix(in oklab, var(--primary) 6%, transparent)" }}
-                formatter={(v: number) => `${Number(v).toFixed(1)} M MGA`}
+                formatter={(v) => `${Number(v).toFixed(1)} M MGA`}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar dataKey="Revenus" radius={[6, 6, 0, 0]} fill="oklch(0.78 0.14 165)" />
