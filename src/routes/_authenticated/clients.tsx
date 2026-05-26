@@ -561,10 +561,23 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       avatarUrl,
       categories: categories.length > 0 ? categories : undefined,
     };
-    if (editing) clientsStore.update(editing.id, data);
-    else clientsStore.add({ id: newId("cli"), ...data });
+    if (editing) {
+      clientsStore.update(editing.id, data);
+      void upsertClient({ ...editing, ...data } as Client);
+    } else {
+      const localId = newId("cli");
+      const local = { id: localId, ...data } as Client;
+      clientsStore.add(local);
+      void upsertClient(local).then((dbId) => {
+        if (dbId && dbId !== localId) {
+          // Re-id the local record to match DB so future updates align.
+          clientsStore.replaceAll(clientsStore.items.map((c) => c.id === localId ? { ...c, id: dbId } : c));
+        }
+      });
+    }
     onOpenChange(false);
   };
+
 
   const acqOptions = (() => {
     const names = acqPeople.map((p) => p.name);
