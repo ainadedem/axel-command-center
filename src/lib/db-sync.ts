@@ -237,3 +237,62 @@ export async function hydrateContacts() {
     projectsStore.replaceAll([...byId.values()]);
   }
 }
+
+/* ─────────── ONE-TIME PUSH OF LOCAL MOCK SEED ─────────── */
+
+/**
+ * Push locally-seeded clients/suppliers/projects (those with non-UUID ids
+ * whose companyId maps to a real DB company) up to Supabase, swapping their
+ * local id with the returned DB uuid. Idempotent: once an item has a UUID,
+ * it is skipped. Returns counts of records pushed.
+ */
+export async function pushLocalSeed(): Promise<{ clients: number; suppliers: number; projects: number }> {
+  let cliN = 0, supN = 0, prjN = 0;
+  const idRemap = new Map<string, string>(); // localClientId -> dbId
+
+  // CLIENTS
+  for (const c of [...clientsStore.items]) {
+    if (isUuid(c.id)) continue;
+    if (!toDbCompanyId(c.companyId)) continue;
+    const dbId = await upsertClient(c);
+    if (dbId) {
+      idRemap.set(c.id, dbId);
+      const i = clientsStore.items.findIndex((x) => x.id === c.id);
+      if (i >= 0) {
+        clientsStore.items[i] = { ...c, id: dbId };
+      }
+      cliN++;
+    }
+  }
+  if (cliN) clientsStore.replaceAll([...clientsStore.items]);
+
+  // SUPPLIERS
+  for (const s of [...suppliersStore.items]) {
+    if (isUuid(s.id)) continue;
+    if (!toDbCompanyId(s.companyId)) continue;
+    const dbId = await upsertSupplier(s);
+    if (dbId) {
+      const i = suppliersStore.items.findIndex((x) => x.id === s.id);
+      if (i >= 0) suppliersStore.items[i] = { ...s, id: dbId };
+      supN++;
+    }
+  }
+  if (supN) suppliersStore.replaceAll([...suppliersStore.items]);
+
+  // PROJECTS — rewrite clientId via idRemap so FK lines up
+  for (const p of [...projectsStore.items]) {
+    if (isUuid(p.id)) continue;
+    if (!toDbCompanyId(p.companyId)) continue;
+    const remappedClientId = idRemap.get(p.clientId) ?? p.clientId;
+    const toPush = { ...p, clientId: remappedClientId };
+    const dbId = await upsertProject(toPush);
+    if (dbId) {
+      const i = projectsStore.items.findIndex((x) => x.id === p.id);
+      if (i >= 0) projectsStore.items[i] = { ...toPush, id: dbId };
+      prjN++;
+    }
+  }
+  if (prjN) projectsStore.replaceAll([...projectsStore.items]);
+
+  return { clients: cliN, suppliers: supN, projects: prjN };
+}
