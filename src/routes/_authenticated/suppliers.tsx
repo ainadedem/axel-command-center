@@ -231,7 +231,7 @@ function SupplierGridView({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
               {g.items.map((s) => (
-                <SupplierCard key={s.id} s={s} companies={companies} balances={balances} onEdit={onEdit} />
+                <SupplierCard key={s.id} s={s} companies={companies} balances={balances} onEdit={onEdit} fromClient={fromClientIds.has(s.id)} />
               ))}
             </div>
           </div>
