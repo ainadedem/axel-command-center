@@ -39,6 +39,7 @@ import { Route as AuthenticatedBilanRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedBalanceRouteImport } from './routes/_authenticated/balance'
 import { Route as AuthenticatedAxelRouteImport } from './routes/_authenticated/axel'
 import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
+import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/about'
 import { Route as AuthenticatedAxelIndexRouteImport } from './routes/_authenticated/axel.index'
 import { Route as AuthenticatedAxelThreadIdRouteImport } from './routes/_authenticated/axel.$threadId'
 
@@ -196,6 +197,11 @@ const AuthenticatedAccountsRoute = AuthenticatedAccountsRouteImport.update({
   path: '/accounts',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAboutRoute = AuthenticatedAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAxelIndexRoute = AuthenticatedAxelIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -211,6 +217,7 @@ const AuthenticatedAxelThreadIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
+  '/about': typeof AuthenticatedAboutRoute
   '/accounts': typeof AuthenticatedAccountsRoute
   '/axel': typeof AuthenticatedAxelRouteWithChildren
   '/balance': typeof AuthenticatedBalanceRoute
@@ -243,6 +250,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
+  '/about': typeof AuthenticatedAboutRoute
   '/accounts': typeof AuthenticatedAccountsRoute
   '/balance': typeof AuthenticatedBalanceRoute
   '/bilan': typeof AuthenticatedBilanRoute
@@ -277,6 +285,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/about': typeof AuthenticatedAboutRoute
   '/_authenticated/accounts': typeof AuthenticatedAccountsRoute
   '/_authenticated/axel': typeof AuthenticatedAxelRouteWithChildren
   '/_authenticated/balance': typeof AuthenticatedBalanceRoute
@@ -313,6 +322,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/about'
     | '/accounts'
     | '/axel'
     | '/balance'
@@ -345,6 +355,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
+    | '/about'
     | '/accounts'
     | '/balance'
     | '/bilan'
@@ -378,6 +389,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/login'
+    | '/_authenticated/about'
     | '/_authenticated/accounts'
     | '/_authenticated/axel'
     | '/_authenticated/balance'
@@ -628,6 +640,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/about': {
+      id: '/_authenticated/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AuthenticatedAboutRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/axel/': {
       id: '/_authenticated/axel/'
       path: '/'
@@ -659,6 +678,7 @@ const AuthenticatedAxelRouteWithChildren =
   AuthenticatedAxelRoute._addFileChildren(AuthenticatedAxelRouteChildren)
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAboutRoute: typeof AuthenticatedAboutRoute
   AuthenticatedAccountsRoute: typeof AuthenticatedAccountsRoute
   AuthenticatedAxelRoute: typeof AuthenticatedAxelRouteWithChildren
   AuthenticatedBalanceRoute: typeof AuthenticatedBalanceRoute
@@ -689,6 +709,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAboutRoute: AuthenticatedAboutRoute,
   AuthenticatedAccountsRoute: AuthenticatedAccountsRoute,
   AuthenticatedAxelRoute: AuthenticatedAxelRouteWithChildren,
   AuthenticatedBalanceRoute: AuthenticatedBalanceRoute,

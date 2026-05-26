@@ -4,7 +4,7 @@ import {
   Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus, Truck,
   ChevronDown, ChevronRight, Check, LogOut, Target, UserCog, Handshake,
   BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList, RefreshCw,
-  Sparkles, CreditCard, Repeat, Wallet2,
+  Sparkles, CreditCard, Repeat, Wallet2, ExternalLink,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CompanyProvider, useCompany } from "@/lib/company-context";
@@ -416,6 +416,15 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="absolute inset-0 pointer-events-none [background:var(--gradient-glow)] opacity-60" />
             <div className="relative">{children}</div>
           </main>
+          <footer className="shrink-0 border-t border-border bg-background/70 backdrop-blur px-6 py-3 flex items-center justify-between text-[11px] text-muted-foreground">
+            <span>© {new Date().getFullYear()} AXEL by WeAxiom</span>
+            <div className="flex items-center gap-4">
+              <Link to="/about" className="hover:text-foreground transition">About</Link>
+              <a href="https://axel.weaxiom.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition flex items-center gap-1">
+                Help <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          </footer>
         </div>
       </div>
     </CompanyProvider>
