@@ -65,6 +65,14 @@ function varPct(cur: number, prev: number) {
 }
 
 function CompteResultatPage() {
+  return (
+    <AppShell>
+      <CompteResultatBody />
+    </AppShell>
+  );
+}
+
+function CompteResultatBody() {
   const [period, setPeriod] = useState<Period>(defaultAccountingPeriod);
   const { scope } = useCompany();
   const companies = useCompanies();
@@ -109,7 +117,7 @@ function CompteResultatPage() {
   };
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Compte de résultat"
         description={`Présentation par nature — PCG Madagascar 2005 · ${co.name}`}
@@ -147,7 +155,7 @@ function CompteResultatPage() {
           <SummaryLine label="RÉSULTAT NET DE L'EXERCICE" value={cur.resultatNet} prev={hasPrior ? prev.resultatNet : undefined} co={co} highlight />
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }
 

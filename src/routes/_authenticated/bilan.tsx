@@ -54,6 +54,14 @@ function sumPrefix(soldes: Map<string, number>, prefixes: string[]) {
 }
 
 function BilanPage() {
+  return (
+    <AppShell>
+      <BilanBody />
+    </AppShell>
+  );
+}
+
+function BilanBody() {
   const [period, setPeriod] = useState<Period>(defaultAccountingPeriod);
   const { soldes, co } = useSoldes(period);
 
@@ -131,7 +139,7 @@ function BilanPage() {
   };
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Bilan"
         description={`État du patrimoine — PCG Madagascar 2005 · ${co.name}`}
@@ -199,7 +207,7 @@ function BilanPage() {
           <Total label="TOTAL PASSIF" value={totalPassif} co={co} />
         </Panel>
       </div>
-    </AppShell>
+    </>
   );
 }
 
