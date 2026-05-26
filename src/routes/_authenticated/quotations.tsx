@@ -72,7 +72,7 @@ function Body() {
   const convertToPO = (q: Quote) => {
     purchaseOrdersStore.add({
       id: newId("po"),
-      number: `PO-${Date.now().toString().slice(-6)}`,
+      number: nextNumber("po", q.companyId),
       companyId: q.companyId,
       clientId: q.clientId,
       projectId: q.projectId,
