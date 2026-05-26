@@ -113,36 +113,42 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         };
       };
 
+      const idMap: Array<{ localId: string; dbId: string }> = [];
       data.forEach((row, idx) => {
         const code = String((row as { code?: string }).code || "").toUpperCase();
         const entry = toEntry(row as Record<string, unknown>, deduped.length + idx);
         if (!code) {
           merged.push(entry);
+          idMap.push({ localId: entry.id, dbId: row.id as string });
           changed = true;
           return;
         }
         const existingEntry = byCode.get(code);
         if (existingEntry) {
-          // Preserve the local seed id (so mock data stays linked) but refresh
-          // every other field from the DB. Keep the local id reference.
           const refreshed: Company = { ...entry, id: existingEntry.id };
           const i = merged.indexOf(existingEntry);
           if (i >= 0 && JSON.stringify(merged[i]) !== JSON.stringify(refreshed)) {
             merged[i] = refreshed;
             changed = true;
           }
+          idMap.push({ localId: existingEntry.id, dbId: row.id as string });
         } else {
           merged.push(entry);
           byCode.set(code, entry);
+          idMap.push({ localId: entry.id, dbId: row.id as string });
           changed = true;
         }
       });
       if (changed) companiesStore.replaceAll(merged);
+      setCompanyIdMap(idMap);
+      // Companies + their DB-id map are now ready; pull contacts.
+      hydrateContacts().catch((e) => console.warn("[hydrateContacts]", e));
     })();
     return () => {
       cancelled = true;
     };
   }, [user]);
+
 
 
   useEffect(() => {
