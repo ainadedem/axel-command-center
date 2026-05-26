@@ -302,6 +302,8 @@ export interface Supplier {
   bankAccount?: string;
   bankSwift?: string;
   notes?: string;
+  /** Contact categories — supports multiple (client, supplier, referral, partner). */
+  categories?: ContactCategory[];
 }
 
 /* ─── Team & Sales team ─────────────────────────────────────────────── */
