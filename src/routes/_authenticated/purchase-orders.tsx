@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, Upload, FileText, X, History, RefreshCw, Eye } from "lucide-react";
 import { DocumentPreview, type DocumentData } from "@/components/document-preview";
+import { nextNumber } from "@/lib/numbering";
 
 type DocVersion = { url: string; name?: string; type?: string; uploadedAt: string };
 
