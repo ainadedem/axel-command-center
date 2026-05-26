@@ -60,7 +60,10 @@ export interface Account {
 
 export interface Client {
   id: string;
+  /** Primary owning company (kept for historical references). */
   companyId: string;
+  /** All companies this client is shared with. Defaults to [companyId]. */
+  companyIds?: string[];
   name: string;
   country: string;
   /**
