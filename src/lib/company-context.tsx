@@ -51,8 +51,45 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const [allowedCodes, setAllowedCodes] = useState<string[] | null>(null);
   const [accessLoading, setAccessLoading] = useState(true);
 
+  // Hydrate the local companies store from the database so that users on a
+  // fresh browser (empty localStorage) still see the companies they have
+  // access to. Existing local entries are preserved (matched by code).
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("companies")
+        .select("id, name, code, base_currency");
+      if (cancelled || error || !data) return;
+      const existing = companiesStore.items;
+      const byCode = new Map(existing.map((c) => [(c.code || c.shortName || "").toUpperCase(), c]));
+      const byId = new Map(existing.map((c) => [c.id, c]));
+      let changed = false;
+      const merged: Company[] = [...existing];
+      data.forEach((row, idx) => {
+        const code = (row.code || "").toUpperCase();
+        if (byId.has(row.id) || byCode.has(code)) return;
+        merged.push({
+          id: row.id,
+          name: row.name,
+          shortName: code || row.name.slice(0, 3).toUpperCase(),
+          code: code,
+          color: FALLBACK_COLORS[(existing.length + idx) % FALLBACK_COLORS.length],
+          baseCurrency: (row.base_currency as Company["baseCurrency"]) || "MGA",
+        });
+        changed = true;
+      });
+      if (changed) companiesStore.replaceAll(merged);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
   useEffect(() => {
     let cancelled = false;
+
     async function load() {
       if (!user) {
         setAllowedCodes(null);
