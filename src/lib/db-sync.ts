@@ -340,7 +340,7 @@ const accountFromDb = (r: Record<string, unknown>): Account => ({
 export async function upsertAccount(a: Account): Promise<string | null> {
   const row = accountToDb(a);
   if (!row) return null;
-  const { data, error } = await supabase.from("accounts").upsert(row).select("id").single();
+  const { data, error } = await supabase.from("accounts").upsert(row, { onConflict: "company_id,name" }).select("id").single();
   if (error) { console.warn("[db-sync] upsertAccount", error.message); return null; }
   return data.id;
 }
