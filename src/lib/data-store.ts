@@ -28,24 +28,31 @@ function save(key: string, value: unknown) {
   }
 }
 
+export interface CollectionSync<T extends WithId> {
+  /** Insert/upsert to remote. Resolve with canonical (DB) id, or null to skip. */
+  upsert?: (item: T) => Promise<string | null>;
+  /** Delete remote row by id. */
+  remove?: (id: string) => Promise<void>;
+}
+
 export interface Collection<T extends WithId> {
-  /** Live array reference. Mutated in place on changes. */
   items: T[];
   add: (item: T) => void;
   update: (id: string, patch: Partial<T>) => void;
   remove: (id: string) => void;
   replaceAll: (next: T[]) => void;
   subscribe: (cb: () => void) => () => void;
-  /** Snapshot getter — required by useSyncExternalStore. */
   getSnapshot: () => T[];
+  /** Register sync hooks (called after each mutation, fire-and-forget). */
+  setSync: (sync: CollectionSync<T>) => void;
 }
 
 export function createCollection<T extends WithId>(key: string, initial: T[]): Collection<T> {
   const hydrated = load<T>(key, initial);
-  // Use the hydrated array as the live `items` reference.
   const items: T[] = [...hydrated];
   const listeners = new Set<() => void>();
   let snapshot: T[] = [...items];
+  let sync: CollectionSync<T> = {};
 
   const emit = () => {
     snapshot = [...items];
@@ -53,17 +60,34 @@ export function createCollection<T extends WithId>(key: string, initial: T[]): C
     listeners.forEach((l) => l());
   };
 
+  const swapId = (localId: string, dbId: string) => {
+    if (localId === dbId) return;
+    const i = items.findIndex((x) => x.id === localId);
+    if (i >= 0) {
+      items[i] = { ...items[i], id: dbId };
+      emit();
+    }
+  };
+
   return {
     items,
     add(item) {
       items.push(item);
       emit();
+      if (sync.upsert) {
+        sync.upsert(item).then((dbId) => { if (dbId) swapId(item.id, dbId); })
+          .catch((e) => console.warn(`[sync ${key}] upsert`, e));
+      }
     },
     update(id, patch) {
       const i = items.findIndex((x) => x.id === id);
       if (i >= 0) {
         items[i] = { ...items[i], ...patch };
         emit();
+        if (sync.upsert) {
+          const snap = items[i];
+          sync.upsert(snap).catch((e) => console.warn(`[sync ${key}] upsert`, e));
+        }
       }
     },
     remove(id) {
@@ -71,6 +95,7 @@ export function createCollection<T extends WithId>(key: string, initial: T[]): C
       if (i >= 0) {
         items.splice(i, 1);
         emit();
+        if (sync.remove) sync.remove(id).catch((e) => console.warn(`[sync ${key}] remove`, e));
       }
     },
     replaceAll(next) {
@@ -82,6 +107,7 @@ export function createCollection<T extends WithId>(key: string, initial: T[]): C
       return () => listeners.delete(cb);
     },
     getSnapshot: () => snapshot,
+    setSync(next) { sync = next; },
   };
 }
 
