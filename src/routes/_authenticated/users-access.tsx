@@ -4,9 +4,8 @@ import { PageHeader } from "@/components/page-header";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/lib/auth-context";
-import { useCompany } from "@/lib/company-context";
+import { useCompany, COMPANY_ROLES, type CompanyRole } from "@/lib/company-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Loader2, ShieldAlert, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -31,11 +30,26 @@ type Profile = {
 };
 
 type Row = Profile & {
-  roles: AppRole[];
-  companyIds: Set<string>;
+  /** Platform-level role (super_admin / group_admin) — empty for company-scoped users. */
+  platformRole: AppRole | null;
+  /** Per-company role assignments. */
+  companyRoles: Map<string, CompanyRole>;
 };
 
-const ROLES: AppRole[] = ["super_admin", "group_admin", "company_admin", "finance", "sales", "viewer"];
+const PLATFORM_ROLES: Array<{ value: "none" | "super_admin" | "group_admin"; label: string }> = [
+  { value: "none", label: "—" },
+  { value: "group_admin", label: "Group admin" },
+  { value: "super_admin", label: "Super admin" },
+];
+
+const ROLE_LABEL: Record<CompanyRole, string> = {
+  company_admin: "Company admin",
+  manager: "Manager",
+  project_manager: "Project manager",
+  sales: "Sales",
+  finance: "Finance",
+  viewer: "Viewer",
+};
 
 function UsersAccessPage() {
   const { isGroupAdmin, accessibleCompanies } = useCompany();
@@ -52,25 +66,26 @@ function UsersAccessPage() {
     const [{ data: profs }, { data: roleRows }, { data: accessRows }] = await Promise.all([
       supabase.from("profiles").select("user_id, display_name, email, avatar_url"),
       supabase.from("user_roles").select("user_id, role"),
-      supabase.from("user_company_access").select("user_id, company_id"),
+      supabase.from("user_company_access").select("user_id, company_id, role"),
     ]);
-    const rolesByUser = new Map<string, AppRole[]>();
+    const platformByUser = new Map<string, AppRole>();
     (roleRows ?? []).forEach((r: { user_id: string; role: AppRole }) => {
-      const list = rolesByUser.get(r.user_id) ?? [];
-      list.push(r.role);
-      rolesByUser.set(r.user_id, list);
+      // Platform roles supersede; pick the strongest if multiple exist.
+      const cur = platformByUser.get(r.user_id);
+      if (r.role === "super_admin") platformByUser.set(r.user_id, "super_admin");
+      else if (r.role === "group_admin" && cur !== "super_admin") platformByUser.set(r.user_id, "group_admin");
     });
-    const accessByUser = new Map<string, Set<string>>();
-    (accessRows ?? []).forEach((r: { user_id: string; company_id: string }) => {
-      const set = accessByUser.get(r.user_id) ?? new Set<string>();
-      set.add(r.company_id);
-      accessByUser.set(r.user_id, set);
+    const accessByUser = new Map<string, Map<string, CompanyRole>>();
+    (accessRows ?? []).forEach((r: { user_id: string; company_id: string; role: CompanyRole }) => {
+      const m = accessByUser.get(r.user_id) ?? new Map<string, CompanyRole>();
+      m.set(r.company_id, r.role);
+      accessByUser.set(r.user_id, m);
     });
     setRows(
       (profs ?? []).map((p: Profile) => ({
         ...p,
-        roles: rolesByUser.get(p.user_id) ?? [],
-        companyIds: accessByUser.get(p.user_id) ?? new Set(),
+        platformRole: platformByUser.get(p.user_id) ?? null,
+        companyRoles: accessByUser.get(p.user_id) ?? new Map(),
       })),
     );
     setLoading(false);
@@ -91,42 +106,44 @@ function UsersAccessPage() {
     );
   }, [rows, q]);
 
-  const primaryRole = (r: Row): AppRole => r.roles[0] ?? "viewer";
-
-  const setRole = async (row: Row, role: AppRole) => {
-    if (!isSuperAdmin && (role === "super_admin" || row.roles.includes("super_admin"))) {
-      toast.error("Only a super admin can manage super-admin roles.");
+  const setPlatformRole = async (row: Row, value: "none" | "super_admin" | "group_admin") => {
+    if (value === "super_admin" && !isSuperAdmin) {
+      toast.error("Only a super admin can grant super-admin.");
       return;
     }
-    setBusy(row.user_id);
+    if (row.platformRole === "super_admin" && !isSuperAdmin) {
+      toast.error("Only a super admin can change another super admin.");
+      return;
+    }
+    setBusy(row.user_id + ":platform");
     const { error: delErr } = await supabase.from("user_roles").delete().eq("user_id", row.user_id);
     if (delErr) {
       setBusy(null);
       toast.error(`Could not update role: ${delErr.message}`);
       return;
     }
-    const { error: insErr } = await supabase.from("user_roles").insert({ user_id: row.user_id, role });
-    setBusy(null);
-    if (insErr) {
-      toast.error(`Could not set role: ${insErr.message}`);
-      return;
-    }
-    toast.success("Role updated");
-    setRows((prev) => prev.map((r) => (r.user_id === row.user_id ? { ...r, roles: [role] } : r)));
-  };
-
-  const toggleCompany = async (row: Row, companyId: string, checked: boolean) => {
-    setBusy(row.user_id + ":" + companyId);
-    if (checked) {
-      const { error } = await supabase
-        .from("user_company_access")
-        .insert({ user_id: row.user_id, company_id: companyId });
-      if (error) {
+    if (value !== "none") {
+      const { error: insErr } = await supabase
+        .from("user_roles")
+        .insert({ user_id: row.user_id, role: value });
+      if (insErr) {
         setBusy(null);
-        toast.error(`Could not grant access: ${error.message}`);
+        toast.error(`Could not set role: ${insErr.message}`);
         return;
       }
-    } else {
+    }
+    setBusy(null);
+    toast.success("Platform role updated");
+    setRows((prev) =>
+      prev.map((r) =>
+        r.user_id === row.user_id ? { ...r, platformRole: value === "none" ? null : value } : r,
+      ),
+    );
+  };
+
+  const setCompanyRole = async (row: Row, companyId: string, value: CompanyRole | "none") => {
+    setBusy(row.user_id + ":" + companyId);
+    if (value === "none") {
       const { error } = await supabase
         .from("user_company_access")
         .delete()
@@ -137,15 +154,27 @@ function UsersAccessPage() {
         toast.error(`Could not revoke access: ${error.message}`);
         return;
       }
+    } else {
+      const { error } = await supabase
+        .from("user_company_access")
+        .upsert(
+          { user_id: row.user_id, company_id: companyId, role: value },
+          { onConflict: "user_id,company_id" },
+        );
+      if (error) {
+        setBusy(null);
+        toast.error(`Could not set role: ${error.message}`);
+        return;
+      }
     }
     setBusy(null);
     setRows((prev) =>
       prev.map((r) => {
         if (r.user_id !== row.user_id) return r;
-        const next = new Set(r.companyIds);
-        if (checked) next.add(companyId);
-        else next.delete(companyId);
-        return { ...r, companyIds: next };
+        const next = new Map(r.companyRoles);
+        if (value === "none") next.delete(companyId);
+        else next.set(companyId, value);
+        return { ...r, companyRoles: next };
       }),
     );
   };
@@ -171,7 +200,7 @@ function UsersAccessPage() {
     <>
       <PageHeader
         title="Users & Access"
-        description="Assign roles and choose which companies each user can access."
+        description="Assign a platform role, then a per-company role for each user."
       />
       <div className="px-8 py-6 space-y-4">
         <div className="flex items-center gap-3">
@@ -197,9 +226,9 @@ function UsersAccessPage() {
                   <th className="text-left font-medium px-4 py-3 sticky left-0 bg-muted/40 min-w-[260px]">
                     User
                   </th>
-                  <th className="text-left font-medium px-4 py-3 min-w-[180px]">Role</th>
+                  <th className="text-left font-medium px-4 py-3 min-w-[160px]">Platform</th>
                   {accessibleCompanies.map((c) => (
-                    <th key={c.id} className="text-center font-medium px-3 py-3 min-w-[110px]">
+                    <th key={c.id} className="text-center font-medium px-3 py-3 min-w-[160px]">
                       <div className="flex flex-col items-center gap-1">
                         <span
                           className="h-5 w-5 rounded grid place-items-center text-[9px] font-bold text-primary-foreground"
@@ -207,7 +236,7 @@ function UsersAccessPage() {
                         >
                           {c.shortName}
                         </span>
-                        <span className="truncate max-w-[100px]">{c.name}</span>
+                        <span className="truncate max-w-[140px]">{c.name}</span>
                       </div>
                     </th>
                   ))}
@@ -231,9 +260,9 @@ function UsersAccessPage() {
                   </tr>
                 ) : (
                   filtered.map((row) => {
-                    const role = primaryRole(row);
                     const isSelf = row.user_id === currentUser?.id;
-                    const isGroupLevel = role === "super_admin" || role === "group_admin";
+                    const isGroupLevel =
+                      row.platformRole === "super_admin" || row.platformRole === "group_admin";
                     return (
                       <tr key={row.user_id} className="border-t border-border/60 hover:bg-muted/20">
                         <td className="px-4 py-3 sticky left-0 bg-card">
@@ -266,21 +295,26 @@ function UsersAccessPage() {
                         </td>
                         <td className="px-4 py-3">
                           <Select
-                            value={role}
-                            onValueChange={(v) => setRole(row, v as AppRole)}
-                            disabled={busy === row.user_id || (isSelf && role === "super_admin")}
+                            value={row.platformRole ?? "none"}
+                            onValueChange={(v) =>
+                              setPlatformRole(row, v as "none" | "super_admin" | "group_admin")
+                            }
+                            disabled={
+                              busy === row.user_id + ":platform" ||
+                              (isSelf && row.platformRole === "super_admin")
+                            }
                           >
                             <SelectTrigger className="h-8 text-xs">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              {ROLES.map((r) => (
+                              {PLATFORM_ROLES.map((r) => (
                                 <SelectItem
-                                  key={r}
-                                  value={r}
-                                  disabled={r === "super_admin" && !isSuperAdmin}
+                                  key={r.value}
+                                  value={r.value}
+                                  disabled={r.value === "super_admin" && !isSuperAdmin}
                                 >
-                                  {r.replace("_", " ")}
+                                  {r.label}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -288,19 +322,32 @@ function UsersAccessPage() {
                         </td>
                         {accessibleCompanies.map((c) => {
                           const cellKey = row.user_id + ":" + c.id;
-                          const checked = isGroupLevel || row.companyIds.has(c.id);
+                          const current = row.companyRoles.get(c.id) ?? "none";
                           return (
-                            <td key={c.id} className="px-3 py-3 text-center">
-                              <div className="inline-flex flex-col items-center gap-0.5">
-                                <Checkbox
-                                  checked={checked}
-                                  disabled={isGroupLevel || busy === cellKey}
-                                  onCheckedChange={(v) => toggleCompany(row, c.id, v === true)}
-                                />
-                                {isGroupLevel && (
-                                  <span className="text-[9px] text-muted-foreground">all</span>
-                                )}
-                              </div>
+                            <td key={c.id} className="px-3 py-3">
+                              <Select
+                                value={isGroupLevel ? "company_admin" : current}
+                                onValueChange={(v) =>
+                                  setCompanyRole(row, c.id, v as CompanyRole | "none")
+                                }
+                                disabled={isGroupLevel || busy === cellKey}
+                              >
+                                <SelectTrigger className="h-8 text-xs">
+                                  {isGroupLevel ? (
+                                    <span className="text-muted-foreground">all access</span>
+                                  ) : (
+                                    <SelectValue placeholder="No access" />
+                                  )}
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">No access</SelectItem>
+                                  {COMPANY_ROLES.map((r) => (
+                                    <SelectItem key={r} value={r}>
+                                      {ROLE_LABEL[r]}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </td>
                           );
                         })}
@@ -313,10 +360,16 @@ function UsersAccessPage() {
           </div>
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          Super admins and group admins automatically have access to every company. For other roles,
-          tick the companies they can view and work in.
-        </p>
+        <div className="text-xs text-muted-foreground space-y-1">
+          <p>
+            <strong>Platform roles</strong> apply across all companies. Super admin and group admin
+            implicitly act as company admin everywhere.
+          </p>
+          <p>
+            <strong>Company roles</strong> control what each user can read and write in that
+            specific company. "No access" hides the company entirely.
+          </p>
+        </div>
       </div>
     </>
   );
