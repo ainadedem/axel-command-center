@@ -53,10 +53,11 @@ const ROLE_LABEL: Record<CompanyRole, string> = {
 };
 
 function UsersAccessPage() {
-  const { isGroupAdmin, accessibleCompanies } = useCompany();
+  const { isGroupAdmin } = useCompany();
   const { user: currentUser, roles: currentRoles } = useAuth();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Row[]>([]);
+  const [companies, setCompanies] = useState<DbCompany[]>([]);
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -64,11 +65,13 @@ function UsersAccessPage() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: profs }, { data: roleRows }, { data: accessRows }] = await Promise.all([
+    const [{ data: profs }, { data: roleRows }, { data: accessRows }, { data: companyRows }] = await Promise.all([
       supabase.from("profiles").select("user_id, display_name, email, avatar_url"),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("user_company_access").select("user_id, company_id, role"),
+      supabase.from("companies").select("id, name, short_name, code, color").order("name"),
     ]);
+    setCompanies((companyRows ?? []) as DbCompany[]);
     const platformByUser = new Map<string, AppRole>();
     (roleRows ?? []).forEach((r: { user_id: string; role: AppRole }) => {
       // Platform roles supersede; pick the strongest if multiple exist.
