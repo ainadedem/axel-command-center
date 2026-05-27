@@ -6,7 +6,6 @@ import "@/lib/pcg";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
-    if (import.meta.env.DEV) return;
     const { data } = await supabase.auth.getSession();
     if (!data.session) {
       throw redirect({ to: "/login", search: { redirect: location.href } });
@@ -17,7 +16,6 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthenticatedLayout() {
   const { loading, isAuthenticated } = useAuth();
-  if (import.meta.env.DEV) return <Outlet />;
   if (loading) {
     return (
       <div className="min-h-screen grid place-items-center bg-background">
