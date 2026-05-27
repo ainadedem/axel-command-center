@@ -172,7 +172,7 @@ const supplierFromDb = (r: Record<string, unknown>): Supplier => ({
 export async function upsertSupplier(s: Supplier): Promise<string | null> {
   const row = supplierToDb(s);
   if (!row) return null;
-  const { data, error } = await supabase.from("suppliers").upsert(row).select("id").single();
+  const { data, error } = await supabase.from("suppliers").upsert(row, { onConflict: "company_id,name" }).select("id").single();
   if (error) { console.warn("[db-sync] upsertSupplier", error.message); return null; }
   return data.id;
 }
