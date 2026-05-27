@@ -15,12 +15,13 @@ import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import axelIcon from "@/assets/axel-icon-purple.png";
 
-interface NavItem { to: string; label: string; icon: React.ComponentType<{ className?: string }> }
+interface NavItem { to: string; label: string; icon: React.ComponentType<{ className?: string }>; requireGroupAdmin?: boolean }
 
 interface NavSection {
   label: string;
   items: NavItem[];
 }
+
 
 const sections: NavSection[] = [
   {
