@@ -98,14 +98,15 @@ export const Route = createFileRoute("/api/axel-chat")({
           ? `${SYSTEM_PROMPT}\n\n---\nCurrent business data snapshot:\n${body.dataContext}`
           : SYSTEM_PROMPT;
 
+        const uiMessages = body.messages as unknown as UIMessage[];
         const result = streamText({
           model: openai("gpt-4o-mini"),
           system,
-          messages: await convertToModelMessages(body.messages),
+          messages: await convertToModelMessages(uiMessages),
         });
 
         return result.toUIMessageStreamResponse({
-          originalMessages: body.messages,
+          originalMessages: uiMessages,
           onFinish: async ({ messages }) => {
             if (!body.threadId) return;
             // Persist only the newly added messages (last user + new assistant)
