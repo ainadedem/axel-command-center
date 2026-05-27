@@ -102,7 +102,7 @@ const clientFromDb = (r: Record<string, unknown>): Client => ({
 export async function upsertClient(c: Client): Promise<string | null> {
   const row = clientToDb(c);
   if (!row) return null;
-  const { data, error } = await supabase.from("clients").upsert(row).select("id").single();
+  const { data, error } = await supabase.from("clients").upsert(row, { onConflict: "company_id,name" }).select("id").single();
   if (error) { console.warn("[db-sync] upsertClient", error.message); return null; }
   return data.id;
 }
