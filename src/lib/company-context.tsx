@@ -2,7 +2,13 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { useCompanies, companiesStore, type Company } from "./mock-data";
 import { useAuth } from "./auth-context";
 import { supabase } from "@/integrations/supabase/client";
-import { setCompanyIdMap, hydrateContacts, pushLocalSeed } from "./db-sync";
+import {
+  setCompanyIdMap, hydrateContacts, pushLocalSeed,
+  registerFinancialSync, hydrateFinancials, pushLocalFinancialSeed,
+} from "./db-sync";
+
+// Wire financial stores → Supabase once at module load.
+registerFinancialSync();
 
 
 const FALLBACK_COLORS = ["#7c3aed", "#0ea5e9", "#f59e0b", "#10b981", "#ef4444", "#ec4899"];
@@ -143,6 +149,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       setCompanyIdMap(idMap);
       // Push local mock seed → DB once per user, then hydrate from DB.
       const seedFlag = `axel.seedPushed.${user.id}`;
+      const finSeedFlag = `axel.finSeedPushed.${user.id}`;
       (async () => {
         try {
           if (!window.localStorage.getItem(seedFlag)) {
@@ -153,7 +160,17 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         } catch (e) {
           console.warn("[pushLocalSeed]", e);
         }
+        try {
+          if (!window.localStorage.getItem(finSeedFlag)) {
+            const res = await pushLocalFinancialSeed();
+            window.localStorage.setItem(finSeedFlag, new Date().toISOString());
+            console.info("[pushLocalFinancialSeed]", res);
+          }
+        } catch (e) {
+          console.warn("[pushLocalFinancialSeed]", e);
+        }
         hydrateContacts().catch((e) => console.warn("[hydrateContacts]", e));
+        hydrateFinancials().catch((e) => console.warn("[hydrateFinancials]", e));
       })();
     })();
     return () => {
