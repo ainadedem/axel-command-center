@@ -312,8 +312,20 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       scope.id === "group"
         ? "Group · All companies"
         : accessibleCompanies.find((c) => c.id === scope.companyId)?.name ?? "—";
-    return { scope, setScope, accessibleCompanies, scopedCompanies, label, accessLoading, isGroupAdmin };
-  }, [scope, accessibleCompanies, accessLoading, isGroupAdmin]);
+    const roleFor = (companyId: string): CompanyRole | undefined => {
+      if (isGroupAdmin) return "company_admin";
+      return roleByCompanyId.get(companyId);
+    };
+    const hasCompanyRole = (companyId: string, allowed: CompanyRole[]): boolean => {
+      if (isGroupAdmin) return true;
+      const r = roleByCompanyId.get(companyId);
+      return !!r && allowed.includes(r);
+    };
+    return {
+      scope, setScope, accessibleCompanies, scopedCompanies, label,
+      accessLoading, isGroupAdmin, roleFor, hasCompanyRole,
+    };
+  }, [scope, accessibleCompanies, accessLoading, isGroupAdmin, roleByCompanyId]);
 
   return <CompanyCtx.Provider value={value}>{children}</CompanyCtx.Provider>;
 }
