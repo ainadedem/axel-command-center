@@ -11,9 +11,17 @@ import {
   clientsStore, suppliersStore, projectsStore,
   accountsStore, categoriesStore, budgetsStore,
   transactionsStore, invoicesStore,
+  opportunitiesStore, quotesStore, purchaseOrdersStore,
+  expensesStore, recurringBillingsStore,
+  teamMembersStore, salesMembersStore,
+  salaryRegisterStore, payrollRunsStore,
   type Client, type Supplier, type Project,
   type Account, type Category, type Budget,
   type Transaction, type Invoice, type QuoteLine,
+  type Opportunity, type Quote, type PurchaseOrder,
+  type Expense, type RecurringBilling,
+  type TeamMember, type SalesMember,
+  type SalaryRegisterEntry, type PayrollRun, type PayrollEntry,
 } from "./mock-data";
 
 /** Maps local company id (e.g. "axi") → DB uuid. Populated by company-context. */
