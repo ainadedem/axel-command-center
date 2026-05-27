@@ -149,6 +149,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       setCompanyIdMap(idMap);
       // Push local mock seed → DB once per user, then hydrate from DB.
       const seedFlag = `axel.seedPushed.${user.id}`;
+      const finSeedFlag = `axel.finSeedPushed.${user.id}`;
       (async () => {
         try {
           if (!window.localStorage.getItem(seedFlag)) {
@@ -159,7 +160,17 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         } catch (e) {
           console.warn("[pushLocalSeed]", e);
         }
+        try {
+          if (!window.localStorage.getItem(finSeedFlag)) {
+            const res = await pushLocalFinancialSeed();
+            window.localStorage.setItem(finSeedFlag, new Date().toISOString());
+            console.info("[pushLocalFinancialSeed]", res);
+          }
+        } catch (e) {
+          console.warn("[pushLocalFinancialSeed]", e);
+        }
         hydrateContacts().catch((e) => console.warn("[hydrateContacts]", e));
+        hydrateFinancials().catch((e) => console.warn("[hydrateFinancials]", e));
       })();
     })();
     return () => {
