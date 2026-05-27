@@ -102,7 +102,7 @@ const clientFromDb = (r: Record<string, unknown>): Client => ({
 export async function upsertClient(c: Client): Promise<string | null> {
   const row = clientToDb(c);
   if (!row) return null;
-  const { data, error } = await supabase.from("clients").upsert(row).select("id").single();
+  const { data, error } = await supabase.from("clients").upsert(row, { onConflict: "company_id,name" }).select("id").single();
   if (error) { console.warn("[db-sync] upsertClient", error.message); return null; }
   return data.id;
 }
@@ -172,7 +172,7 @@ const supplierFromDb = (r: Record<string, unknown>): Supplier => ({
 export async function upsertSupplier(s: Supplier): Promise<string | null> {
   const row = supplierToDb(s);
   if (!row) return null;
-  const { data, error } = await supabase.from("suppliers").upsert(row).select("id").single();
+  const { data, error } = await supabase.from("suppliers").upsert(row, { onConflict: "company_id,name" }).select("id").single();
   if (error) { console.warn("[db-sync] upsertSupplier", error.message); return null; }
   return data.id;
 }
@@ -212,7 +212,7 @@ const projectFromDb = (r: Record<string, unknown>): Project => ({
 export async function upsertProject(p: Project): Promise<string | null> {
   const row = projectToDb(p);
   if (!row) return null;
-  const { data, error } = await supabase.from("projects").upsert(row).select("id").single();
+  const { data, error } = await supabase.from("projects").upsert(row, { onConflict: "company_id,name" }).select("id").single();
   if (error) { console.warn("[db-sync] upsertProject", error.message); return null; }
   return data.id;
 }
@@ -340,7 +340,7 @@ const accountFromDb = (r: Record<string, unknown>): Account => ({
 export async function upsertAccount(a: Account): Promise<string | null> {
   const row = accountToDb(a);
   if (!row) return null;
-  const { data, error } = await supabase.from("accounts").upsert(row).select("id").single();
+  const { data, error } = await supabase.from("accounts").upsert(row, { onConflict: "company_id,name" }).select("id").single();
   if (error) { console.warn("[db-sync] upsertAccount", error.message); return null; }
   return data.id;
 }
@@ -377,7 +377,7 @@ const categoryFromDb = (r: Record<string, unknown>): Category => ({
 export async function upsertCategory(c: Category): Promise<string | null> {
   const row = categoryToDb(c);
   if (!row) return null;
-  const { data, error } = await supabase.from("categories").upsert(row).select("id").single();
+  const { data, error } = await supabase.from("categories").upsert(row, { onConflict: "company_id,name" }).select("id").single();
   if (error) { console.warn("[db-sync] upsertCategory", error.message); return null; }
   return data.id;
 }
@@ -757,7 +757,7 @@ const opportunityFromDb = (r: Record<string, unknown>): Opportunity => ({
 export async function upsertOpportunity(o: Opportunity): Promise<string | null> {
   const row = opportunityToDb(o);
   if (!row) return null;
-  const { data, error } = await supabase.from("opportunities").upsert(row).select("id").single();
+  const { data, error } = await supabase.from("opportunities").upsert(row, { onConflict: "company_id,name" }).select("id").single();
   if (error) { console.warn("[db-sync] upsertOpportunity", error.message); return null; }
   return data.id;
 }
