@@ -757,7 +757,7 @@ const opportunityFromDb = (r: Record<string, unknown>): Opportunity => ({
 export async function upsertOpportunity(o: Opportunity): Promise<string | null> {
   const row = opportunityToDb(o);
   if (!row) return null;
-  const { data, error } = await supabase.from("opportunities").upsert(row).select("id").single();
+  const { data, error } = await supabase.from("opportunities").upsert(row, { onConflict: "company_id,name" }).select("id").single();
   if (error) { console.warn("[db-sync] upsertOpportunity", error.message); return null; }
   return data.id;
 }
