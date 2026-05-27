@@ -2,7 +2,13 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { useCompanies, companiesStore, type Company } from "./mock-data";
 import { useAuth } from "./auth-context";
 import { supabase } from "@/integrations/supabase/client";
-import { setCompanyIdMap, hydrateContacts, pushLocalSeed } from "./db-sync";
+import {
+  setCompanyIdMap, hydrateContacts, pushLocalSeed,
+  registerFinancialSync, hydrateFinancials, pushLocalFinancialSeed,
+} from "./db-sync";
+
+// Wire financial stores → Supabase once at module load.
+registerFinancialSync();
 
 
 const FALLBACK_COLORS = ["#7c3aed", "#0ea5e9", "#f59e0b", "#10b981", "#ef4444", "#ec4899"];
