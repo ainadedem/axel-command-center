@@ -527,7 +527,7 @@ const invoiceFromDb = (r: Record<string, unknown>, lines: QuoteLine[]): Invoice 
 export async function upsertInvoice(inv: Invoice): Promise<string | null> {
   const row = invoiceToDb(inv);
   if (!row) return null;
-  const { data, error } = await supabase.from("invoices").upsert(row).select("id").single();
+  const { data, error } = await supabase.from("invoices").upsert(row, { onConflict: "company_id,number" }).select("id").single();
   if (error) { console.warn("[db-sync] upsertInvoice", error.message); return null; }
   const invId = data.id as string;
   // Replace line items (simple strategy: delete + reinsert).
@@ -805,7 +805,7 @@ const quoteFromDb = (r: Record<string, unknown>): Quote => ({
 export async function upsertQuote(q: Quote): Promise<string | null> {
   const row = quoteToDb(q);
   if (!row) return null;
-  const { data, error } = await supabase.from("quotes").upsert(row).select("id").single();
+  const { data, error } = await supabase.from("quotes").upsert(row, { onConflict: "company_id,number" }).select("id").single();
   if (error) { console.warn("[db-sync] upsertQuote", error.message); return null; }
   return data.id;
 }
@@ -861,7 +861,7 @@ const poFromDb = (r: Record<string, unknown>): PurchaseOrder => ({
 export async function upsertPurchaseOrder(p: PurchaseOrder): Promise<string | null> {
   const row = poToDb(p);
   if (!row) return null;
-  const { data, error } = await supabase.from("purchase_orders").upsert(row).select("id").single();
+  const { data, error } = await supabase.from("purchase_orders").upsert(row, { onConflict: "company_id,number" }).select("id").single();
   if (error) { console.warn("[db-sync] upsertPurchaseOrder", error.message); return null; }
   return data.id;
 }
