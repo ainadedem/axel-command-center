@@ -231,7 +231,7 @@ function UsersAccessPage() {
                     User
                   </th>
                   <th className="text-left font-medium px-4 py-3 min-w-[160px]">Platform</th>
-                  {accessibleCompanies.map((c) => (
+                  {companies.map((c) => (
                     <th key={c.id} className="text-center font-medium px-3 py-3 min-w-[160px]">
                       <div className="flex flex-col items-center gap-1">
                         <span
@@ -249,14 +249,14 @@ function UsersAccessPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={2 + accessibleCompanies.length} className="px-4 py-10 text-center">
+                    <td colSpan={2 + companies.length} className="px-4 py-10 text-center">
                       <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={2 + accessibleCompanies.length}
+                      colSpan={2 + companies.length}
                       className="px-4 py-10 text-center text-muted-foreground"
                     >
                       No users found.
@@ -324,7 +324,7 @@ function UsersAccessPage() {
                             </SelectContent>
                           </Select>
                         </td>
-                        {accessibleCompanies.map((c) => {
+                        {companies.map((c) => {
                           const cellKey = row.user_id + ":" + c.id;
                           const current = row.companyRoles.get(c.id) ?? "none";
                           return (
