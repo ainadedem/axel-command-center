@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/lib/auth-context";
 import { useCompany, COMPANY_ROLES, type CompanyRole } from "@/lib/company-context";
+type DbCompany = { id: string; name: string; short_name: string | null; code: string | null; color: string | null };
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Loader2, ShieldAlert, Search } from "lucide-react";
@@ -52,10 +53,11 @@ const ROLE_LABEL: Record<CompanyRole, string> = {
 };
 
 function UsersAccessPage() {
-  const { isGroupAdmin, accessibleCompanies } = useCompany();
+  const { isGroupAdmin } = useCompany();
   const { user: currentUser, roles: currentRoles } = useAuth();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Row[]>([]);
+  const [companies, setCompanies] = useState<DbCompany[]>([]);
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -63,11 +65,13 @@ function UsersAccessPage() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: profs }, { data: roleRows }, { data: accessRows }] = await Promise.all([
+    const [{ data: profs }, { data: roleRows }, { data: accessRows }, { data: companyRows }] = await Promise.all([
       supabase.from("profiles").select("user_id, display_name, email, avatar_url"),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("user_company_access").select("user_id, company_id, role"),
+      supabase.from("companies").select("id, name, short_name, code, color").order("name"),
     ]);
+    setCompanies((companyRows ?? []) as DbCompany[]);
     const platformByUser = new Map<string, AppRole>();
     (roleRows ?? []).forEach((r: { user_id: string; role: AppRole }) => {
       // Platform roles supersede; pick the strongest if multiple exist.
@@ -227,14 +231,14 @@ function UsersAccessPage() {
                     User
                   </th>
                   <th className="text-left font-medium px-4 py-3 min-w-[160px]">Platform</th>
-                  {accessibleCompanies.map((c) => (
+                  {companies.map((c) => (
                     <th key={c.id} className="text-center font-medium px-3 py-3 min-w-[160px]">
                       <div className="flex flex-col items-center gap-1">
                         <span
                           className="h-5 w-5 rounded grid place-items-center text-[9px] font-bold text-primary-foreground"
-                          style={{ background: c.color }}
+                          style={{ background: c.color ?? "#7c3aed" }}
                         >
-                          {c.shortName}
+                          {(c.short_name ?? c.code ?? c.name.slice(0, 3)).toUpperCase()}
                         </span>
                         <span className="truncate max-w-[140px]">{c.name}</span>
                       </div>
@@ -245,14 +249,14 @@ function UsersAccessPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={2 + accessibleCompanies.length} className="px-4 py-10 text-center">
+                    <td colSpan={2 + companies.length} className="px-4 py-10 text-center">
                       <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={2 + accessibleCompanies.length}
+                      colSpan={2 + companies.length}
                       className="px-4 py-10 text-center text-muted-foreground"
                     >
                       No users found.
@@ -320,7 +324,7 @@ function UsersAccessPage() {
                             </SelectContent>
                           </Select>
                         </td>
-                        {accessibleCompanies.map((c) => {
+                        {companies.map((c) => {
                           const cellKey = row.user_id + ":" + c.id;
                           const current = row.companyRoles.get(c.id) ?? "none";
                           return (
