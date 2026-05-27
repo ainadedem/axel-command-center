@@ -73,11 +73,25 @@ export const Route = createFileRoute("/api/axel-chat")({
         if (userErr || !userData.user) return new Response("Unauthorized", { status: 401 });
         const userId = userData.user.id;
 
-        const body = (await request.json()) as {
-          messages: UIMessage[];
-          threadId?: string;
-          dataContext?: string;
-        };
+        let body: z.infer<typeof bodySchema>;
+        try {
+          body = bodySchema.parse(await request.json());
+        } catch {
+          return new Response("Invalid request", { status: 400 });
+        }
+
+        // Verify thread ownership if provided
+        if (body.threadId) {
+          const { data: thread, error: threadErr } = await supabase
+            .from("axel_chat_threads")
+            .select("id")
+            .eq("id", body.threadId)
+            .eq("user_id", userId)
+            .maybeSingle();
+          if (threadErr || !thread) {
+            return new Response("Thread not found", { status: 404 });
+          }
+        }
 
         const openai = createOpenAI({ apiKey });
         const system = body.dataContext
