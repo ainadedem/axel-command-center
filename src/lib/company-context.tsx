@@ -23,6 +23,23 @@ const FALLBACK_COLORS = ["#7c3aed", "#0ea5e9", "#f59e0b", "#10b981", "#ef4444", 
 
 type Scope = { id: "group" } | { id: "company"; companyId: string };
 
+export type CompanyRole =
+  | "company_admin"
+  | "manager"
+  | "project_manager"
+  | "sales"
+  | "finance"
+  | "viewer";
+
+export const COMPANY_ROLES: CompanyRole[] = [
+  "company_admin",
+  "manager",
+  "project_manager",
+  "sales",
+  "finance",
+  "viewer",
+];
+
 interface Ctx {
   scope: Scope;
   setScope: (s: Scope) => void;
@@ -35,6 +52,10 @@ interface Ctx {
   accessLoading: boolean;
   /** True if user has group-wide access (super_admin / group_admin). */
   isGroupAdmin: boolean;
+  /** Role the user holds in a given company (undefined = no access). Group admins implicitly act as company_admin everywhere. */
+  roleFor: (companyId: string) => CompanyRole | undefined;
+  /** True if the user can act with one of the given roles in that company. */
+  hasCompanyRole: (companyId: string, allowed: CompanyRole[]) => boolean;
 }
 
 const CompanyCtx = createContext<Ctx | null>(null);
