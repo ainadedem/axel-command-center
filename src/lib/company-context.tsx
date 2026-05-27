@@ -85,6 +85,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const isGroupAdmin = roles.includes("group_admin") || roles.includes("super_admin");
 
   const [allowedCodes, setAllowedCodes] = useState<string[] | null>(null);
+  const [roleByCompanyId, setRoleByCompanyId] = useState<Map<string, CompanyRole>>(new Map());
   const [accessLoading, setAccessLoading] = useState(true);
 
   // Hydrate the local companies store from the database so that users on a
