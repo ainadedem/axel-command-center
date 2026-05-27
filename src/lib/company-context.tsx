@@ -6,6 +6,11 @@ import {
   setCompanyIdMap, hydrateContacts, pushLocalSeed,
   registerFinancialSync, hydrateFinancials, pushLocalFinancialSeed,
 } from "./db-sync";
+// Side-effect import: pcg.ts auto-seeds Logia + Axiom derived data
+// (accounts, categories, invoices, transactions, opportunities) into the
+// local stores at module load. Importing it here guarantees the stores are
+// populated BEFORE pushLocalFinancialSeed() runs below.
+import "./pcg";
 
 // Wire financial stores → Supabase once at module load.
 registerFinancialSync();
