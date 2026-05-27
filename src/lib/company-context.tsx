@@ -23,6 +23,23 @@ const FALLBACK_COLORS = ["#7c3aed", "#0ea5e9", "#f59e0b", "#10b981", "#ef4444", 
 
 type Scope = { id: "group" } | { id: "company"; companyId: string };
 
+export type CompanyRole =
+  | "company_admin"
+  | "manager"
+  | "project_manager"
+  | "sales"
+  | "finance"
+  | "viewer";
+
+export const COMPANY_ROLES: CompanyRole[] = [
+  "company_admin",
+  "manager",
+  "project_manager",
+  "sales",
+  "finance",
+  "viewer",
+];
+
 interface Ctx {
   scope: Scope;
   setScope: (s: Scope) => void;
@@ -35,6 +52,10 @@ interface Ctx {
   accessLoading: boolean;
   /** True if user has group-wide access (super_admin / group_admin). */
   isGroupAdmin: boolean;
+  /** Role the user holds in a given company (undefined = no access). Group admins implicitly act as company_admin everywhere. */
+  roleFor: (companyId: string) => CompanyRole | undefined;
+  /** True if the user can act with one of the given roles in that company. */
+  hasCompanyRole: (companyId: string, allowed: CompanyRole[]) => boolean;
 }
 
 const CompanyCtx = createContext<Ctx | null>(null);
@@ -64,6 +85,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const isGroupAdmin = roles.includes("group_admin") || roles.includes("super_admin");
 
   const [allowedCodes, setAllowedCodes] = useState<string[] | null>(null);
+  const [roleByCompanyId, setRoleByCompanyId] = useState<Map<string, CompanyRole>>(new Map());
   const [accessLoading, setAccessLoading] = useState(true);
 
   // Hydrate the local companies store from the database so that users on a
@@ -216,24 +238,29 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     async function load() {
       if (!user) {
         setAllowedCodes(null);
-        setAccessLoading(false);
-        return;
-      }
-      if (isGroupAdmin) {
-        setAllowedCodes(null); // null = all
+        setRoleByCompanyId(new Map());
         setAccessLoading(false);
         return;
       }
       setAccessLoading(true);
       const { data } = await supabase
         .from("user_company_access")
-        .select("companies ( code )")
+        .select("company_id, role, companies ( code )")
         .eq("user_id", user.id);
       if (cancelled) return;
-      const codes = ((data ?? []) as Array<{ companies: { code: string } | null }>)
-        .map((r) => r.companies?.code)
-        .filter((c): c is string => !!c);
-      setAllowedCodes(codes);
+      const rows = (data ?? []) as Array<{
+        company_id: string;
+        role: CompanyRole;
+        companies: { code: string } | null;
+      }>;
+      const nextRoles = new Map<string, CompanyRole>();
+      for (const r of rows) nextRoles.set(r.company_id, r.role);
+      setRoleByCompanyId(nextRoles);
+      if (isGroupAdmin) {
+        setAllowedCodes(null); // null = all
+      } else {
+        setAllowedCodes(rows.map((r) => r.companies?.code).filter((c): c is string => !!c));
+      }
       setAccessLoading(false);
     }
     load();
@@ -285,8 +312,20 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       scope.id === "group"
         ? "Group · All companies"
         : accessibleCompanies.find((c) => c.id === scope.companyId)?.name ?? "—";
-    return { scope, setScope, accessibleCompanies, scopedCompanies, label, accessLoading, isGroupAdmin };
-  }, [scope, accessibleCompanies, accessLoading, isGroupAdmin]);
+    const roleFor = (companyId: string): CompanyRole | undefined => {
+      if (isGroupAdmin) return "company_admin";
+      return roleByCompanyId.get(companyId);
+    };
+    const hasCompanyRole = (companyId: string, allowed: CompanyRole[]): boolean => {
+      if (isGroupAdmin) return true;
+      const r = roleByCompanyId.get(companyId);
+      return !!r && allowed.includes(r);
+    };
+    return {
+      scope, setScope, accessibleCompanies, scopedCompanies, label,
+      accessLoading, isGroupAdmin, roleFor, hasCompanyRole,
+    };
+  }, [scope, accessibleCompanies, accessLoading, isGroupAdmin, roleByCompanyId]);
 
   return <CompanyCtx.Provider value={value}>{children}</CompanyCtx.Provider>;
 }
