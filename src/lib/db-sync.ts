@@ -9,7 +9,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import {
   clientsStore, suppliersStore, projectsStore,
+  accountsStore, categoriesStore, budgetsStore,
+  transactionsStore, invoicesStore,
   type Client, type Supplier, type Project,
+  type Account, type Category, type Budget,
+  type Transaction, type Invoice, type QuoteLine,
 } from "./mock-data";
 
 /** Maps local company id (e.g. "axi") → DB uuid. Populated by company-context. */
