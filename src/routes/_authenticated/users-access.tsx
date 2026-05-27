@@ -76,9 +76,9 @@ function UsersAccessPage() {
       else if (r.role === "group_admin" && cur !== "super_admin") platformByUser.set(r.user_id, "group_admin");
     });
     const accessByUser = new Map<string, Map<string, CompanyRole>>();
-    (accessRows ?? []).forEach((r: { user_id: string; company_id: string; role: CompanyRole }) => {
+    ((accessRows ?? []) as Array<{ user_id: string; company_id: string; role: string }>).forEach((r) => {
       const m = accessByUser.get(r.user_id) ?? new Map<string, CompanyRole>();
-      m.set(r.company_id, r.role);
+      m.set(r.company_id, r.role as CompanyRole);
       accessByUser.set(r.user_id, m);
     });
     setRows(
