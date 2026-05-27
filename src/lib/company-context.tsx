@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   setCompanyIdMap, hydrateContacts, pushLocalSeed,
   registerFinancialSync, hydrateFinancials, pushLocalFinancialSeed,
+  registerExtraSync, hydrateExtras, pushLocalExtrasSeed,
 } from "./db-sync";
 // Side-effect import: pcg.ts auto-seeds Logia + Axiom derived data
 // (accounts, categories, invoices, transactions, opportunities) into the
@@ -14,6 +15,7 @@ import "./pcg";
 
 // Wire financial stores → Supabase once at module load.
 registerFinancialSync();
+registerExtraSync();
 
 
 const FALLBACK_COLORS = ["#7c3aed", "#0ea5e9", "#f59e0b", "#10b981", "#ef4444", "#ec4899"];
@@ -183,8 +185,21 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         } catch (e) {
           console.warn("[pushLocalFinancialSeed]", e);
         }
+        try {
+          const extrasFlag = `axel.extrasSeedPushed.${user.id}.v1`;
+          const { count: opCount } = await supabase
+            .from("opportunities").select("id", { count: "exact", head: true });
+          if (!window.localStorage.getItem(extrasFlag) || (opCount ?? 0) === 0) {
+            const res = await pushLocalExtrasSeed();
+            window.localStorage.setItem(extrasFlag, new Date().toISOString());
+            console.info("[pushLocalExtrasSeed]", res);
+          }
+        } catch (e) {
+          console.warn("[pushLocalExtrasSeed]", e);
+        }
         hydrateContacts().catch((e) => console.warn("[hydrateContacts]", e));
         hydrateFinancials().catch((e) => console.warn("[hydrateFinancials]", e));
+        hydrateExtras().catch((e) => console.warn("[hydrateExtras]", e));
       })();
 
     })();

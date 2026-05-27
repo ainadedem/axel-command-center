@@ -367,6 +367,75 @@ export type Database = {
         }
         Relationships: []
       }
+      expenses: {
+        Row: {
+          account: string | null
+          amount: number
+          attachment_name: string | null
+          attachment_url: string | null
+          category: string | null
+          company_id: string
+          created_at: string
+          currency: string
+          description: string | null
+          due_date: string | null
+          id: string
+          issue_date: string
+          kind: string
+          number: string | null
+          paid: number
+          payee: string | null
+          project_id: string | null
+          status: string
+          supplier_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          account?: string | null
+          amount?: number
+          attachment_name?: string | null
+          attachment_url?: string | null
+          category?: string | null
+          company_id: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          issue_date: string
+          kind?: string
+          number?: string | null
+          paid?: number
+          payee?: string | null
+          project_id?: string | null
+          status?: string
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account?: string | null
+          amount?: number
+          attachment_name?: string | null
+          attachment_url?: string | null
+          category?: string | null
+          company_id?: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          issue_date?: string
+          kind?: string
+          number?: string | null
+          paid?: number
+          payee?: string | null
+          project_id?: string | null
+          status?: string
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoice_lines: {
         Row: {
           capability: string | null
@@ -499,6 +568,93 @@ export type Database = {
           },
         ]
       }
+      opportunities: {
+        Row: {
+          client: string
+          client_id: string | null
+          closer: string | null
+          company_id: string
+          created_at: string
+          currency: string
+          expected_close: string | null
+          id: string
+          name: string
+          probability: number | null
+          stage: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          client: string
+          client_id?: string | null
+          closer?: string | null
+          company_id: string
+          created_at?: string
+          currency?: string
+          expected_close?: string | null
+          id?: string
+          name: string
+          probability?: number | null
+          stage?: string
+          updated_at?: string
+          value?: number
+        }
+        Update: {
+          client?: string
+          client_id?: string | null
+          closer?: string | null
+          company_id?: string
+          created_at?: string
+          currency?: string
+          expected_close?: string | null
+          id?: string
+          name?: string
+          probability?: number | null
+          stage?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: []
+      }
+      payroll_runs: {
+        Row: {
+          company_id: string
+          created_at: string
+          currency: string
+          entries: Json
+          id: string
+          month: string
+          posted_transaction_ids: Json | null
+          status: string
+          updated_at: string
+          validated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          currency?: string
+          entries?: Json
+          id?: string
+          month: string
+          posted_transaction_ids?: Json | null
+          status?: string
+          updated_at?: string
+          validated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          currency?: string
+          entries?: Json
+          id?: string
+          month?: string
+          posted_transaction_ids?: Json | null
+          status?: string
+          updated_at?: string
+          validated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -579,6 +735,255 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      purchase_orders: {
+        Row: {
+          amount: number
+          client_id: string | null
+          client_reference: string | null
+          company_id: string
+          created_at: string
+          currency: string
+          document_history: Json | null
+          document_name: string | null
+          document_type: string | null
+          document_uploaded_at: string | null
+          document_url: string | null
+          id: string
+          issue_date: string
+          lines: Json | null
+          number: string
+          project_id: string | null
+          quote_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          client_id?: string | null
+          client_reference?: string | null
+          company_id: string
+          created_at?: string
+          currency?: string
+          document_history?: Json | null
+          document_name?: string | null
+          document_type?: string | null
+          document_uploaded_at?: string | null
+          document_url?: string | null
+          id?: string
+          issue_date: string
+          lines?: Json | null
+          number: string
+          project_id?: string | null
+          quote_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string | null
+          client_reference?: string | null
+          company_id?: string
+          created_at?: string
+          currency?: string
+          document_history?: Json | null
+          document_name?: string | null
+          document_type?: string | null
+          document_uploaded_at?: string | null
+          document_url?: string | null
+          id?: string
+          issue_date?: string
+          lines?: Json | null
+          number?: string
+          project_id?: string | null
+          quote_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      quotes: {
+        Row: {
+          amount: number
+          client_id: string | null
+          company_id: string
+          created_at: string
+          currency: string
+          id: string
+          issue_date: string
+          lines: Json | null
+          mode: string | null
+          notes: string | null
+          number: string
+          project_id: string | null
+          status: string
+          updated_at: string
+          valid_until: string
+        }
+        Insert: {
+          amount?: number
+          client_id?: string | null
+          company_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          issue_date: string
+          lines?: Json | null
+          mode?: string | null
+          notes?: string | null
+          number: string
+          project_id?: string | null
+          status?: string
+          updated_at?: string
+          valid_until: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string | null
+          company_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          issue_date?: string
+          lines?: Json | null
+          mode?: string | null
+          notes?: string | null
+          number?: string
+          project_id?: string | null
+          status?: string
+          updated_at?: string
+          valid_until?: string
+        }
+        Relationships: []
+      }
+      recurring_billings: {
+        Row: {
+          active: boolean
+          amount: number
+          client_id: string | null
+          company_id: string
+          created_at: string
+          currency: string
+          end_date: string | null
+          frequency: string
+          id: string
+          last_generated_at: string | null
+          name: string
+          next_run_date: string
+          notes: string | null
+          payment_terms_days: number | null
+          project_id: string | null
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          amount?: number
+          client_id?: string | null
+          company_id: string
+          created_at?: string
+          currency?: string
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          last_generated_at?: string | null
+          name: string
+          next_run_date: string
+          notes?: string | null
+          payment_terms_days?: number | null
+          project_id?: string | null
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          amount?: number
+          client_id?: string | null
+          company_id?: string
+          created_at?: string
+          currency?: string
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          last_generated_at?: string | null
+          name?: string
+          next_run_date?: string
+          notes?: string | null
+          payment_terms_days?: number | null
+          project_id?: string | null
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      salary_register: {
+        Row: {
+          active: boolean
+          cnaps_rate: number
+          company_id: string
+          created_at: string
+          currency: string
+          gross: number
+          id: string
+          irsa_rate: number
+          ostie_rate: number
+          start_date: string
+          team_member_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          cnaps_rate?: number
+          company_id: string
+          created_at?: string
+          currency?: string
+          gross?: number
+          id?: string
+          irsa_rate?: number
+          ostie_rate?: number
+          start_date: string
+          team_member_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          cnaps_rate?: number
+          company_id?: string
+          created_at?: string
+          currency?: string
+          gross?: number
+          id?: string
+          irsa_rate?: number
+          ostie_rate?: number
+          start_date?: string
+          team_member_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sales_members: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          team_member_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          team_member_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          team_member_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       suppliers: {
         Row: {
@@ -668,6 +1073,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      team_members: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          department: string | null
+          email: string | null
+          first_name: string | null
+          id: string
+          job_title: string | null
+          last_name: string | null
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          job_title?: string | null
+          last_name?: string | null
+          name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          job_title?: string | null
+          last_name?: string | null
+          name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       transactions: {
         Row: {
