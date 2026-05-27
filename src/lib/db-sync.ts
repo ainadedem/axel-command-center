@@ -377,7 +377,7 @@ const categoryFromDb = (r: Record<string, unknown>): Category => ({
 export async function upsertCategory(c: Category): Promise<string | null> {
   const row = categoryToDb(c);
   if (!row) return null;
-  const { data, error } = await supabase.from("categories").upsert(row).select("id").single();
+  const { data, error } = await supabase.from("categories").upsert(row, { onConflict: "company_id,name" }).select("id").single();
   if (error) { console.warn("[db-sync] upsertCategory", error.message); return null; }
   return data.id;
 }
