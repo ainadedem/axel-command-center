@@ -153,8 +153,11 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       if (changed) companiesStore.replaceAll(merged);
       setCompanyIdMap(idMap);
       // Push local mock seed → DB once per user, then hydrate from DB.
-      const seedFlag = `axel.seedPushed.${user.id}`;
-      const finSeedFlag = `axel.finSeedPushed.${user.id}`;
+      // Bump the suffix below to force a re-push for all users (e.g. when
+      // new mock data is added or a previous push ran before the stores
+      // were fully seeded).
+      const seedFlag = `axel.seedPushed.${user.id}.v2`;
+      const finSeedFlag = `axel.finSeedPushed.${user.id}.v2`;
       (async () => {
         try {
           if (!window.localStorage.getItem(seedFlag)) {
