@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/lib/auth-context";
 import { useCompany, COMPANY_ROLES, type CompanyRole } from "@/lib/company-context";
+type DbCompany = { id: string; name: string; short_name: string | null; code: string | null; color: string | null };
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Loader2, ShieldAlert, Search } from "lucide-react";
