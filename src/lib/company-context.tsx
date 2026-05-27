@@ -185,8 +185,21 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         } catch (e) {
           console.warn("[pushLocalFinancialSeed]", e);
         }
+        try {
+          const extrasFlag = `axel.extrasSeedPushed.${user.id}.v1`;
+          const { count: opCount } = await supabase
+            .from("opportunities").select("id", { count: "exact", head: true });
+          if (!window.localStorage.getItem(extrasFlag) || (opCount ?? 0) === 0) {
+            const res = await pushLocalExtrasSeed();
+            window.localStorage.setItem(extrasFlag, new Date().toISOString());
+            console.info("[pushLocalExtrasSeed]", res);
+          }
+        } catch (e) {
+          console.warn("[pushLocalExtrasSeed]", e);
+        }
         hydrateContacts().catch((e) => console.warn("[hydrateContacts]", e));
         hydrateFinancials().catch((e) => console.warn("[hydrateFinancials]", e));
+        hydrateExtras().catch((e) => console.warn("[hydrateExtras]", e));
       })();
 
     })();
