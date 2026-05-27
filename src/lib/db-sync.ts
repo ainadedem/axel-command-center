@@ -784,7 +784,7 @@ const quoteToDb = (q: Quote) => {
     status: q.status,
     notes: q.notes ?? null,
     mode: q.mode ?? null,
-    lines: q.lines ?? null,
+    lines: (q.lines ?? null) as unknown as never,
   };
 };
 const quoteFromDb = (r: Record<string, unknown>): Quote => ({
@@ -835,8 +835,8 @@ const poToDb = (p: PurchaseOrder) => {
     document_name: p.documentName ?? null,
     document_type: p.documentType ?? null,
     document_uploaded_at: p.documentUploadedAt ?? null,
-    document_history: p.documentHistory ?? null,
-    lines: p.lines ?? null,
+    document_history: (p.documentHistory ?? null) as unknown as never,
+    lines: (p.lines ?? null) as unknown as never,
   };
 };
 const poFromDb = (r: Record<string, unknown>): PurchaseOrder => ({
@@ -1091,9 +1091,9 @@ const prToDb = (p: PayrollRun) => {
     month: p.month,
     status: p.status,
     currency: p.currency,
-    entries: p.entries,
+    entries: p.entries as unknown as never,
     validated_at: p.validatedAt ?? null,
-    posted_transaction_ids: p.postedTransactionIds ?? null,
+    posted_transaction_ids: (p.postedTransactionIds ?? null) as unknown as never,
   };
 };
 const prFromDb = (r: Record<string, unknown>): PayrollRun => ({
