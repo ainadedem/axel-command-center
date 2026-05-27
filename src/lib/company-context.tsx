@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   setCompanyIdMap, hydrateContacts, pushLocalSeed,
   registerFinancialSync, hydrateFinancials, pushLocalFinancialSeed,
+  registerExtraSync, hydrateExtras, pushLocalExtrasSeed,
 } from "./db-sync";
 // Side-effect import: pcg.ts auto-seeds Logia + Axiom derived data
 // (accounts, categories, invoices, transactions, opportunities) into the
