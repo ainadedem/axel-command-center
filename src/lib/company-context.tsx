@@ -156,11 +156,14 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       // Bump the suffix below to force a re-push for all users (e.g. when
       // new mock data is added or a previous push ran before the stores
       // were fully seeded).
-      const seedFlag = `axel.seedPushed.${user.id}.v2`;
-      const finSeedFlag = `axel.finSeedPushed.${user.id}.v2`;
+      const seedFlag = `axel.seedPushed.${user.id}.v3`;
+      const finSeedFlag = `axel.finSeedPushed.${user.id}.v3`;
       (async () => {
         try {
-          if (!window.localStorage.getItem(seedFlag)) {
+          // Always push if DB has no clients yet for this user.
+          const { count: clientCount } = await supabase
+            .from("clients").select("id", { count: "exact", head: true });
+          if (!window.localStorage.getItem(seedFlag) || (clientCount ?? 0) === 0) {
             const res = await pushLocalSeed();
             window.localStorage.setItem(seedFlag, new Date().toISOString());
             console.info("[pushLocalSeed]", res);
@@ -169,7 +172,10 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
           console.warn("[pushLocalSeed]", e);
         }
         try {
-          if (!window.localStorage.getItem(finSeedFlag)) {
+          // Always push if DB has no accounts yet (financial tables empty).
+          const { count: accCount } = await supabase
+            .from("accounts").select("id", { count: "exact", head: true });
+          if (!window.localStorage.getItem(finSeedFlag) || (accCount ?? 0) === 0) {
             const res = await pushLocalFinancialSeed();
             window.localStorage.setItem(finSeedFlag, new Date().toISOString());
             console.info("[pushLocalFinancialSeed]", res);
@@ -180,6 +186,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         hydrateContacts().catch((e) => console.warn("[hydrateContacts]", e));
         hydrateFinancials().catch((e) => console.warn("[hydrateFinancials]", e));
       })();
+
     })();
     return () => {
       cancelled = true;
