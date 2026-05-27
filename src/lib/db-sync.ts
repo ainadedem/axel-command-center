@@ -633,6 +633,16 @@ export async function pushLocalFinancialSeed(): Promise<{
   const accMap = new Map<string, string>();
   const catMap = new Map<string, string>();
   const invMap = new Map<string, string>();
+  console.info("[pushLocalFinancialSeed] starting; local items:", {
+    accounts: accountsStore.items.length,
+    categories: categoriesStore.items.length,
+    budgets: budgetsStore.items.length,
+    invoices: invoicesStore.items.length,
+    transactions: transactionsStore.items.length,
+    companyMapSize: companyDbIdByLocal.size,
+  });
+
+
 
   for (const a of [...accountsStore.items]) {
     if (isUuid(a.id) || !toDbCompanyId(a.companyId)) continue;
