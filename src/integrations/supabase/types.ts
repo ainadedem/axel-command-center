@@ -1224,18 +1224,21 @@ export type Database = {
           company_id: string
           created_at: string
           id: string
+          role: string
           user_id: string
         }
         Insert: {
           company_id: string
           created_at?: string
           id?: string
+          role?: string
           user_id: string
         }
         Update: {
           company_id?: string
           created_at?: string
           id?: string
+          role?: string
           user_id?: string
         }
         Relationships: [
