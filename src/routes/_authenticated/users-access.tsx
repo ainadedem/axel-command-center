@@ -236,9 +236,9 @@ function UsersAccessPage() {
                       <div className="flex flex-col items-center gap-1">
                         <span
                           className="h-5 w-5 rounded grid place-items-center text-[9px] font-bold text-primary-foreground"
-                          style={{ background: c.color }}
+                          style={{ background: c.color ?? "#7c3aed" }}
                         >
-                          {c.shortName}
+                          {(c.short_name ?? c.code ?? c.name.slice(0, 3)).toUpperCase()}
                         </span>
                         <span className="truncate max-w-[140px]">{c.name}</span>
                       </div>
