@@ -2,6 +2,40 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createOpenAI } from "@ai-sdk/openai";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
+
+const MAX_MESSAGES = 50;
+const MAX_MESSAGE_CHARS = 8000;
+const MAX_DATA_CONTEXT_CHARS = 20000;
+
+const partSchema = z
+  .object({
+    type: z.string().max(64),
+    text: z.string().max(MAX_MESSAGE_CHARS).optional(),
+  })
+  .passthrough();
+
+const messageSchema = z
+  .object({
+    id: z.string().max(128).optional(),
+    role: z.enum(["user", "assistant", "system"]),
+    parts: z.array(partSchema).max(32),
+  })
+  .passthrough()
+  .refine(
+    (m) =>
+      m.parts.reduce(
+        (sum, p) => sum + (typeof p.text === "string" ? p.text.length : 0),
+        0,
+      ) <= MAX_MESSAGE_CHARS,
+    { message: "Message text exceeds limit" },
+  );
+
+const bodySchema = z.object({
+  messages: z.array(messageSchema).min(1).max(MAX_MESSAGES),
+  threadId: z.string().uuid().optional(),
+  dataContext: z.string().max(MAX_DATA_CONTEXT_CHARS).optional(),
+});
 
 const SYSTEM_PROMPT = `You are Axel AI — a senior CFO and financial analyst embedded inside the Axel command center.
 You help the user (a business owner / executive) understand and manage their companies' finances.
