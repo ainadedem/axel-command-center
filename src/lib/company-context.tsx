@@ -238,24 +238,29 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     async function load() {
       if (!user) {
         setAllowedCodes(null);
-        setAccessLoading(false);
-        return;
-      }
-      if (isGroupAdmin) {
-        setAllowedCodes(null); // null = all
+        setRoleByCompanyId(new Map());
         setAccessLoading(false);
         return;
       }
       setAccessLoading(true);
       const { data } = await supabase
         .from("user_company_access")
-        .select("companies ( code )")
+        .select("company_id, role, companies ( code )")
         .eq("user_id", user.id);
       if (cancelled) return;
-      const codes = ((data ?? []) as Array<{ companies: { code: string } | null }>)
-        .map((r) => r.companies?.code)
-        .filter((c): c is string => !!c);
-      setAllowedCodes(codes);
+      const rows = (data ?? []) as Array<{
+        company_id: string;
+        role: CompanyRole;
+        companies: { code: string } | null;
+      }>;
+      const nextRoles = new Map<string, CompanyRole>();
+      for (const r of rows) nextRoles.set(r.company_id, r.role);
+      setRoleByCompanyId(nextRoles);
+      if (isGroupAdmin) {
+        setAllowedCodes(null); // null = all
+      } else {
+        setAllowedCodes(rows.map((r) => r.companies?.code).filter((c): c is string => !!c));
+      }
       setAccessLoading(false);
     }
     load();
