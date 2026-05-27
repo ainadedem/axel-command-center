@@ -720,3 +720,526 @@ export async function pushLocalFinancialSeed(): Promise<{
 
   return counts;
 }
+
+/* ═════════════════════ EXTRA COLLECTIONS ═════════════════════ */
+
+/* ───────── OPPORTUNITIES ───────── */
+const opportunityToDb = (o: Opportunity) => {
+  const dbCompany = toDbCompanyId(o.companyId);
+  if (!dbCompany) return null;
+  return {
+    id: isUuid(o.id) ? o.id : undefined,
+    company_id: dbCompany,
+    name: o.name,
+    client: o.client,
+    client_id: o.clientId && isUuid(o.clientId) ? o.clientId : null,
+    closer: o.closer ?? null,
+    stage: o.stage,
+    value: o.value,
+    currency: o.currency,
+    expected_close: o.expectedClose || null,
+    probability: o.probability ?? null,
+  };
+};
+const opportunityFromDb = (r: Record<string, unknown>): Opportunity => ({
+  id: r.id as string,
+  companyId: toLocalCompanyId(r.company_id as string),
+  name: r.name as string,
+  client: r.client as string,
+  clientId: (r.client_id as string) ?? undefined,
+  closer: (r.closer as string) ?? undefined,
+  stage: (r.stage as Opportunity["stage"]) ?? "Lead",
+  value: Number(r.value) || 0,
+  currency: (r.currency as Opportunity["currency"]) ?? "MGA",
+  expectedClose: (r.expected_close as string) ?? "",
+  probability: (r.probability as number) ?? undefined,
+});
+export async function upsertOpportunity(o: Opportunity): Promise<string | null> {
+  const row = opportunityToDb(o);
+  if (!row) return null;
+  const { data, error } = await supabase.from("opportunities").upsert(row).select("id").single();
+  if (error) { console.warn("[db-sync] upsertOpportunity", error.message); return null; }
+  return data.id;
+}
+export async function deleteOpportunityDb(id: string) {
+  if (!isUuid(id)) return;
+  const { error } = await supabase.from("opportunities").delete().eq("id", id);
+  if (error) console.warn("[db-sync] deleteOpportunity", error.message);
+}
+
+/* ───────── QUOTES ───────── */
+const quoteToDb = (q: Quote) => {
+  const dbCompany = toDbCompanyId(q.companyId);
+  if (!dbCompany) return null;
+  return {
+    id: isUuid(q.id) ? q.id : undefined,
+    company_id: dbCompany,
+    client_id: q.clientId && isUuid(q.clientId) ? q.clientId : null,
+    project_id: q.projectId && isUuid(q.projectId) ? q.projectId : null,
+    number: q.number,
+    issue_date: q.issueDate,
+    valid_until: q.validUntil,
+    amount: q.amount,
+    currency: q.currency,
+    status: q.status,
+    notes: q.notes ?? null,
+    mode: q.mode ?? null,
+    lines: q.lines ?? null,
+  };
+};
+const quoteFromDb = (r: Record<string, unknown>): Quote => ({
+  id: r.id as string,
+  number: (r.number as string) ?? "",
+  companyId: toLocalCompanyId(r.company_id as string),
+  clientId: (r.client_id as string) ?? "",
+  projectId: (r.project_id as string) ?? undefined,
+  issueDate: (r.issue_date as string) ?? "",
+  validUntil: (r.valid_until as string) ?? "",
+  amount: Number(r.amount) || 0,
+  currency: (r.currency as Quote["currency"]) ?? "MGA",
+  status: (r.status as Quote["status"]) ?? "draft",
+  notes: (r.notes as string) ?? undefined,
+  mode: (r.mode as Quote["mode"]) ?? undefined,
+  lines: (r.lines as QuoteLine[]) ?? undefined,
+});
+export async function upsertQuote(q: Quote): Promise<string | null> {
+  const row = quoteToDb(q);
+  if (!row) return null;
+  const { data, error } = await supabase.from("quotes").upsert(row).select("id").single();
+  if (error) { console.warn("[db-sync] upsertQuote", error.message); return null; }
+  return data.id;
+}
+export async function deleteQuoteDb(id: string) {
+  if (!isUuid(id)) return;
+  const { error } = await supabase.from("quotes").delete().eq("id", id);
+  if (error) console.warn("[db-sync] deleteQuote", error.message);
+}
+
+/* ───────── PURCHASE ORDERS ───────── */
+const poToDb = (p: PurchaseOrder) => {
+  const dbCompany = toDbCompanyId(p.companyId);
+  if (!dbCompany) return null;
+  return {
+    id: isUuid(p.id) ? p.id : undefined,
+    company_id: dbCompany,
+    client_id: p.clientId && isUuid(p.clientId) ? p.clientId : null,
+    project_id: p.projectId && isUuid(p.projectId) ? p.projectId : null,
+    quote_id: p.quoteId && isUuid(p.quoteId) ? p.quoteId : null,
+    number: p.number,
+    client_reference: p.clientReference ?? null,
+    issue_date: p.issueDate,
+    amount: p.amount,
+    currency: p.currency,
+    status: p.status,
+    document_url: p.documentUrl ?? null,
+    document_name: p.documentName ?? null,
+    document_type: p.documentType ?? null,
+    document_uploaded_at: p.documentUploadedAt ?? null,
+    document_history: p.documentHistory ?? null,
+    lines: p.lines ?? null,
+  };
+};
+const poFromDb = (r: Record<string, unknown>): PurchaseOrder => ({
+  id: r.id as string,
+  number: (r.number as string) ?? "",
+  companyId: toLocalCompanyId(r.company_id as string),
+  clientId: (r.client_id as string) ?? "",
+  projectId: (r.project_id as string) ?? undefined,
+  quoteId: (r.quote_id as string) ?? undefined,
+  clientReference: (r.client_reference as string) ?? undefined,
+  issueDate: (r.issue_date as string) ?? "",
+  amount: Number(r.amount) || 0,
+  currency: (r.currency as PurchaseOrder["currency"]) ?? "MGA",
+  status: (r.status as PurchaseOrder["status"]) ?? "draft",
+  documentUrl: (r.document_url as string) ?? undefined,
+  documentName: (r.document_name as string) ?? undefined,
+  documentType: (r.document_type as string) ?? undefined,
+  documentUploadedAt: (r.document_uploaded_at as string) ?? undefined,
+  documentHistory: (r.document_history as PurchaseOrder["documentHistory"]) ?? undefined,
+  lines: (r.lines as QuoteLine[]) ?? undefined,
+});
+export async function upsertPurchaseOrder(p: PurchaseOrder): Promise<string | null> {
+  const row = poToDb(p);
+  if (!row) return null;
+  const { data, error } = await supabase.from("purchase_orders").upsert(row).select("id").single();
+  if (error) { console.warn("[db-sync] upsertPurchaseOrder", error.message); return null; }
+  return data.id;
+}
+export async function deletePurchaseOrderDb(id: string) {
+  if (!isUuid(id)) return;
+  const { error } = await supabase.from("purchase_orders").delete().eq("id", id);
+  if (error) console.warn("[db-sync] deletePurchaseOrder", error.message);
+}
+
+/* ───────── EXPENSES ───────── */
+const expenseToDb = (e: Expense) => {
+  const dbCompany = toDbCompanyId(e.companyId);
+  if (!dbCompany) return null;
+  return {
+    id: isUuid(e.id) ? e.id : undefined,
+    company_id: dbCompany,
+    kind: e.kind,
+    supplier_id: e.supplierId && isUuid(e.supplierId) ? e.supplierId : null,
+    payee: e.payee ?? null,
+    number: e.number ?? null,
+    issue_date: e.issueDate,
+    due_date: e.dueDate ?? null,
+    amount: e.amount,
+    paid: e.paid,
+    currency: e.currency,
+    status: e.status,
+    account: e.account ?? null,
+    category: e.category ?? null,
+    description: e.description ?? null,
+    project_id: e.projectId && isUuid(e.projectId) ? e.projectId : null,
+    attachment_url: e.attachmentUrl ?? null,
+    attachment_name: e.attachmentName ?? null,
+  };
+};
+const expenseFromDb = (r: Record<string, unknown>): Expense => ({
+  id: r.id as string,
+  companyId: toLocalCompanyId(r.company_id as string),
+  kind: (r.kind as Expense["kind"]) ?? "bill",
+  supplierId: (r.supplier_id as string) ?? undefined,
+  payee: (r.payee as string) ?? undefined,
+  number: (r.number as string) ?? undefined,
+  issueDate: (r.issue_date as string) ?? "",
+  dueDate: (r.due_date as string) ?? undefined,
+  amount: Number(r.amount) || 0,
+  paid: Number(r.paid) || 0,
+  currency: (r.currency as Expense["currency"]) ?? "MGA",
+  status: (r.status as Expense["status"]) ?? "draft",
+  account: (r.account as string) ?? undefined,
+  category: (r.category as string) ?? undefined,
+  description: (r.description as string) ?? undefined,
+  projectId: (r.project_id as string) ?? undefined,
+  attachmentUrl: (r.attachment_url as string) ?? undefined,
+  attachmentName: (r.attachment_name as string) ?? undefined,
+});
+export async function upsertExpense(e: Expense): Promise<string | null> {
+  const row = expenseToDb(e);
+  if (!row) return null;
+  const { data, error } = await supabase.from("expenses").upsert(row).select("id").single();
+  if (error) { console.warn("[db-sync] upsertExpense", error.message); return null; }
+  return data.id;
+}
+export async function deleteExpenseDb(id: string) {
+  if (!isUuid(id)) return;
+  const { error } = await supabase.from("expenses").delete().eq("id", id);
+  if (error) console.warn("[db-sync] deleteExpense", error.message);
+}
+
+/* ───────── RECURRING BILLINGS ───────── */
+const rbToDb = (b: RecurringBilling) => {
+  const dbCompany = toDbCompanyId(b.companyId);
+  if (!dbCompany) return null;
+  return {
+    id: isUuid(b.id) ? b.id : undefined,
+    company_id: dbCompany,
+    client_id: b.clientId && isUuid(b.clientId) ? b.clientId : null,
+    project_id: b.projectId && isUuid(b.projectId) ? b.projectId : null,
+    name: b.name,
+    amount: b.amount,
+    currency: b.currency,
+    frequency: b.frequency,
+    start_date: b.startDate,
+    next_run_date: b.nextRunDate,
+    end_date: b.endDate ?? null,
+    payment_terms_days: b.paymentTermsDays ?? null,
+    active: b.active,
+    last_generated_at: b.lastGeneratedAt ?? null,
+    notes: b.notes ?? null,
+  };
+};
+const rbFromDb = (r: Record<string, unknown>): RecurringBilling => ({
+  id: r.id as string,
+  companyId: toLocalCompanyId(r.company_id as string),
+  clientId: (r.client_id as string) ?? "",
+  projectId: (r.project_id as string) ?? undefined,
+  name: r.name as string,
+  amount: Number(r.amount) || 0,
+  currency: (r.currency as RecurringBilling["currency"]) ?? "MGA",
+  frequency: (r.frequency as RecurringBilling["frequency"]) ?? "monthly",
+  startDate: (r.start_date as string) ?? "",
+  nextRunDate: (r.next_run_date as string) ?? "",
+  endDate: (r.end_date as string) ?? undefined,
+  paymentTermsDays: (r.payment_terms_days as number) ?? undefined,
+  active: !!r.active,
+  lastGeneratedAt: (r.last_generated_at as string) ?? undefined,
+  notes: (r.notes as string) ?? undefined,
+});
+export async function upsertRecurringBilling(b: RecurringBilling): Promise<string | null> {
+  const row = rbToDb(b);
+  if (!row) return null;
+  const { data, error } = await supabase.from("recurring_billings").upsert(row).select("id").single();
+  if (error) { console.warn("[db-sync] upsertRecurringBilling", error.message); return null; }
+  return data.id;
+}
+export async function deleteRecurringBillingDb(id: string) {
+  if (!isUuid(id)) return;
+  const { error } = await supabase.from("recurring_billings").delete().eq("id", id);
+  if (error) console.warn("[db-sync] deleteRecurringBilling", error.message);
+}
+
+/* ───────── TEAM MEMBERS ───────── */
+const tmToDb = (t: TeamMember) => ({
+  id: isUuid(t.id) ? t.id : undefined,
+  name: t.name,
+  first_name: t.firstName ?? null,
+  last_name: t.lastName ?? null,
+  email: t.email ?? null,
+  phone: t.phone ?? null,
+  job_title: t.jobTitle ?? null,
+  department: t.department ?? null,
+  avatar_url: t.avatarUrl ?? null,
+});
+const tmFromDb = (r: Record<string, unknown>): TeamMember => ({
+  id: r.id as string,
+  name: r.name as string,
+  firstName: (r.first_name as string) ?? undefined,
+  lastName: (r.last_name as string) ?? undefined,
+  email: (r.email as string) ?? undefined,
+  phone: (r.phone as string) ?? undefined,
+  jobTitle: (r.job_title as string) ?? undefined,
+  department: (r.department as string) ?? undefined,
+  avatarUrl: (r.avatar_url as string) ?? undefined,
+});
+export async function upsertTeamMember(t: TeamMember): Promise<string | null> {
+  const { data, error } = await supabase.from("team_members").upsert(tmToDb(t)).select("id").single();
+  if (error) { console.warn("[db-sync] upsertTeamMember", error.message); return null; }
+  return data.id;
+}
+export async function deleteTeamMemberDb(id: string) {
+  if (!isUuid(id)) return;
+  const { error } = await supabase.from("team_members").delete().eq("id", id);
+  if (error) console.warn("[db-sync] deleteTeamMember", error.message);
+}
+
+/* ───────── SALES MEMBERS ───────── */
+const smToDb = (s: SalesMember) => ({
+  id: isUuid(s.id) ? s.id : undefined,
+  team_member_id: isUuid(s.teamMemberId) ? s.teamMemberId : s.teamMemberId,
+  role: s.role,
+});
+const smFromDb = (r: Record<string, unknown>): SalesMember => ({
+  id: r.id as string,
+  teamMemberId: r.team_member_id as string,
+  role: (r.role as SalesMember["role"]) ?? "closer",
+});
+export async function upsertSalesMember(s: SalesMember): Promise<string | null> {
+  if (!isUuid(s.teamMemberId)) return null; // requires UUID FK
+  const { data, error } = await supabase.from("sales_members").upsert(smToDb(s)).select("id").single();
+  if (error) { console.warn("[db-sync] upsertSalesMember", error.message); return null; }
+  return data.id;
+}
+export async function deleteSalesMemberDb(id: string) {
+  if (!isUuid(id)) return;
+  const { error } = await supabase.from("sales_members").delete().eq("id", id);
+  if (error) console.warn("[db-sync] deleteSalesMember", error.message);
+}
+
+/* ───────── SALARY REGISTER ───────── */
+const srToDb = (s: SalaryRegisterEntry) => {
+  const dbCompany = toDbCompanyId(s.companyId);
+  if (!dbCompany) return null;
+  if (!isUuid(s.teamMemberId)) return null;
+  return {
+    id: isUuid(s.id) ? s.id : undefined,
+    team_member_id: s.teamMemberId,
+    company_id: dbCompany,
+    gross: s.gross,
+    currency: s.currency,
+    cnaps_rate: s.cnapsRate,
+    ostie_rate: s.ostieRate,
+    irsa_rate: s.irsaRate,
+    start_date: s.startDate,
+    active: s.active,
+  };
+};
+const srFromDb = (r: Record<string, unknown>): SalaryRegisterEntry => ({
+  id: r.id as string,
+  teamMemberId: r.team_member_id as string,
+  companyId: toLocalCompanyId(r.company_id as string),
+  gross: Number(r.gross) || 0,
+  currency: (r.currency as SalaryRegisterEntry["currency"]) ?? "MGA",
+  cnapsRate: Number(r.cnaps_rate) || 0,
+  ostieRate: Number(r.ostie_rate) || 0,
+  irsaRate: Number(r.irsa_rate) || 0,
+  startDate: (r.start_date as string) ?? "",
+  active: !!r.active,
+});
+export async function upsertSalaryRegister(s: SalaryRegisterEntry): Promise<string | null> {
+  const row = srToDb(s);
+  if (!row) return null;
+  const { data, error } = await supabase.from("salary_register").upsert(row).select("id").single();
+  if (error) { console.warn("[db-sync] upsertSalaryRegister", error.message); return null; }
+  return data.id;
+}
+export async function deleteSalaryRegisterDb(id: string) {
+  if (!isUuid(id)) return;
+  const { error } = await supabase.from("salary_register").delete().eq("id", id);
+  if (error) console.warn("[db-sync] deleteSalaryRegister", error.message);
+}
+
+/* ───────── PAYROLL RUNS ───────── */
+const prToDb = (p: PayrollRun) => {
+  const dbCompany = toDbCompanyId(p.companyId);
+  if (!dbCompany) return null;
+  return {
+    id: isUuid(p.id) ? p.id : undefined,
+    company_id: dbCompany,
+    month: p.month,
+    status: p.status,
+    currency: p.currency,
+    entries: p.entries,
+    validated_at: p.validatedAt ?? null,
+    posted_transaction_ids: p.postedTransactionIds ?? null,
+  };
+};
+const prFromDb = (r: Record<string, unknown>): PayrollRun => ({
+  id: r.id as string,
+  companyId: toLocalCompanyId(r.company_id as string),
+  month: (r.month as string) ?? "",
+  status: (r.status as PayrollRun["status"]) ?? "draft",
+  currency: (r.currency as PayrollRun["currency"]) ?? "MGA",
+  entries: (r.entries as PayrollEntry[]) ?? [],
+  validatedAt: (r.validated_at as string) ?? undefined,
+  postedTransactionIds: (r.posted_transaction_ids as string[]) ?? undefined,
+});
+export async function upsertPayrollRun(p: PayrollRun): Promise<string | null> {
+  const row = prToDb(p);
+  if (!row) return null;
+  const { data, error } = await supabase.from("payroll_runs").upsert(row).select("id").single();
+  if (error) { console.warn("[db-sync] upsertPayrollRun", error.message); return null; }
+  return data.id;
+}
+export async function deletePayrollRunDb(id: string) {
+  if (!isUuid(id)) return;
+  const { error } = await supabase.from("payroll_runs").delete().eq("id", id);
+  if (error) console.warn("[db-sync] deletePayrollRun", error.message);
+}
+
+/* ───────── REGISTER + HYDRATE + SEED for extras ───────── */
+export function registerExtraSync() {
+  opportunitiesStore.setSync({ upsert: upsertOpportunity, remove: deleteOpportunityDb });
+  quotesStore.setSync({ upsert: upsertQuote, remove: deleteQuoteDb });
+  purchaseOrdersStore.setSync({ upsert: upsertPurchaseOrder, remove: deletePurchaseOrderDb });
+  expensesStore.setSync({ upsert: upsertExpense, remove: deleteExpenseDb });
+  recurringBillingsStore.setSync({ upsert: upsertRecurringBilling, remove: deleteRecurringBillingDb });
+  teamMembersStore.setSync({ upsert: upsertTeamMember, remove: deleteTeamMemberDb });
+  salesMembersStore.setSync({ upsert: upsertSalesMember, remove: deleteSalesMemberDb });
+  salaryRegisterStore.setSync({ upsert: upsertSalaryRegister, remove: deleteSalaryRegisterDb });
+  payrollRunsStore.setSync({ upsert: upsertPayrollRun, remove: deletePayrollRunDb });
+}
+
+export async function hydrateExtras() {
+  const [
+    { data: ops }, { data: qts }, { data: pos }, { data: exps },
+    { data: rbs }, { data: tms }, { data: sms }, { data: srs }, { data: prs },
+  ] = await Promise.all([
+    supabase.from("opportunities").select("*"),
+    supabase.from("quotes").select("*"),
+    supabase.from("purchase_orders").select("*"),
+    supabase.from("expenses").select("*"),
+    supabase.from("recurring_billings").select("*"),
+    supabase.from("team_members").select("*"),
+    supabase.from("sales_members").select("*"),
+    supabase.from("salary_register").select("*"),
+    supabase.from("payroll_runs").select("*"),
+  ]);
+  const merge = <T extends { id: string }>(
+    store: { items: T[]; replaceAll: (n: T[]) => void },
+    rows: Array<Record<string, unknown>> | null,
+    map: (r: Record<string, unknown>) => T,
+  ) => {
+    if (!rows) return;
+    const byId = new Map(store.items.map((x) => [x.id, x]));
+    rows.forEach((r) => byId.set(r.id as string, map(r)));
+    store.replaceAll([...byId.values()]);
+  };
+  merge(opportunitiesStore, ops, opportunityFromDb);
+  merge(quotesStore, qts, quoteFromDb);
+  merge(purchaseOrdersStore, pos, poFromDb);
+  merge(expensesStore, exps, expenseFromDb);
+  merge(recurringBillingsStore, rbs, rbFromDb);
+  merge(teamMembersStore, tms, tmFromDb);
+  merge(salesMembersStore, sms, smFromDb);
+  merge(salaryRegisterStore, srs, srFromDb);
+  merge(payrollRunsStore, prs, prFromDb);
+}
+
+export async function pushLocalExtrasSeed(): Promise<Record<string, number>> {
+  const counts = {
+    opportunities: 0, quotes: 0, purchase_orders: 0, expenses: 0,
+    recurring_billings: 0, team_members: 0, sales_members: 0,
+    salary_register: 0, payroll_runs: 0,
+  };
+
+  // team members first (sales/salary reference them)
+  const tmIdMap = new Map<string, string>();
+  for (const t of [...teamMembersStore.items]) {
+    if (isUuid(t.id)) continue;
+    const dbId = await upsertTeamMember(t);
+    if (dbId) {
+      tmIdMap.set(t.id, dbId);
+      const i = teamMembersStore.items.findIndex((x) => x.id === t.id);
+      if (i >= 0) teamMembersStore.items[i] = { ...t, id: dbId };
+      counts.team_members++;
+    }
+  }
+  if (counts.team_members) teamMembersStore.replaceAll([...teamMembersStore.items]);
+
+  for (const s of [...salesMembersStore.items]) {
+    if (isUuid(s.id)) continue;
+    const remapped = { ...s, teamMemberId: tmIdMap.get(s.teamMemberId) ?? s.teamMemberId };
+    if (!isUuid(remapped.teamMemberId)) continue;
+    const dbId = await upsertSalesMember(remapped);
+    if (dbId) {
+      const i = salesMembersStore.items.findIndex((x) => x.id === s.id);
+      if (i >= 0) salesMembersStore.items[i] = { ...remapped, id: dbId };
+      counts.sales_members++;
+    }
+  }
+  if (counts.sales_members) salesMembersStore.replaceAll([...salesMembersStore.items]);
+
+  for (const s of [...salaryRegisterStore.items]) {
+    if (isUuid(s.id)) continue;
+    const remapped = { ...s, teamMemberId: tmIdMap.get(s.teamMemberId) ?? s.teamMemberId };
+    if (!toDbCompanyId(remapped.companyId)) continue;
+    if (!isUuid(remapped.teamMemberId)) continue;
+    const dbId = await upsertSalaryRegister(remapped);
+    if (dbId) {
+      const i = salaryRegisterStore.items.findIndex((x) => x.id === s.id);
+      if (i >= 0) salaryRegisterStore.items[i] = { ...remapped, id: dbId };
+      counts.salary_register++;
+    }
+  }
+  if (counts.salary_register) salaryRegisterStore.replaceAll([...salaryRegisterStore.items]);
+
+  const pushSimple = async <T extends { id: string; companyId: string }>(
+    store: { items: T[]; replaceAll: (n: T[]) => void },
+    upsert: (i: T) => Promise<string | null>,
+    key: keyof typeof counts,
+  ) => {
+    for (const it of [...store.items]) {
+      if (isUuid(it.id)) continue;
+      if (!toDbCompanyId(it.companyId)) continue;
+      const dbId = await upsert(it);
+      if (dbId) {
+        const idx = store.items.findIndex((x) => x.id === it.id);
+        if (idx >= 0) store.items[idx] = { ...it, id: dbId };
+        counts[key]++;
+      }
+    }
+    if (counts[key]) store.replaceAll([...store.items]);
+  };
+
+  await pushSimple(opportunitiesStore, upsertOpportunity, "opportunities");
+  await pushSimple(quotesStore, upsertQuote, "quotes");
+  await pushSimple(purchaseOrdersStore, upsertPurchaseOrder, "purchase_orders");
+  await pushSimple(expensesStore, upsertExpense, "expenses");
+  await pushSimple(recurringBillingsStore, upsertRecurringBilling, "recurring_billings");
+  await pushSimple(payrollRunsStore, upsertPayrollRun, "payroll_runs");
+
+  return counts;
+}
