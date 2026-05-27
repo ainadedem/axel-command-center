@@ -15,6 +15,7 @@ import "./pcg";
 
 // Wire financial stores → Supabase once at module load.
 registerFinancialSync();
+registerExtraSync();
 
 
 const FALLBACK_COLORS = ["#7c3aed", "#0ea5e9", "#f59e0b", "#10b981", "#ef4444", "#ec4899"];
