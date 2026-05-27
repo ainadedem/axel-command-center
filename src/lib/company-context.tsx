@@ -1,5 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { useCompanies, companiesStore, type Company } from "./mock-data";
+import {
+  useCompanies, companiesStore, accountsStore, categoriesStore, budgetsStore,
+  transactionsStore, invoicesStore, opportunitiesStore, quotesStore, purchaseOrdersStore,
+  expensesStore, recurringBillingsStore, salaryRegisterStore, payrollRunsStore,
+  clientsStore, suppliersStore, projectsStore, teamMembersStore, salesMembersStore,
+  contactCompanyIds, type Company,
+} from "./mock-data";
 import { useAuth } from "./auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -19,6 +25,48 @@ registerExtraSync();
 
 
 const FALLBACK_COLORS = ["#7c3aed", "#0ea5e9", "#f59e0b", "#10b981", "#ef4444", "#ec4899"];
+
+function keepCompanyScoped<T extends { companyId: string }>(
+  store: { items: T[]; replaceAll: (next: T[]) => void },
+  allowedCompanyIds: Set<string>,
+) {
+  const next = store.items.filter((item) => allowedCompanyIds.has(item.companyId));
+  if (next.length !== store.items.length) store.replaceAll(next);
+}
+
+function keepContactScoped<T extends { companyId: string; companyIds?: string[] }>(
+  store: { items: T[]; replaceAll: (next: T[]) => void },
+  allowedCompanyIds: Set<string>,
+) {
+  const next = store.items.filter((item) => contactCompanyIds(item).some((id) => allowedCompanyIds.has(id)));
+  if (next.length !== store.items.length) store.replaceAll(next);
+}
+
+function restrictLocalStores(allowedCompanies: Company[]) {
+  const allowedCompanyIds = new Set(allowedCompanies.map((c) => c.id));
+  const allowedCodes = new Set(allowedCompanies.map((c) => (c.code || c.shortName || "").toUpperCase()));
+
+  const visibleCompanies = companiesStore.items.filter((c) => allowedCodes.has((c.code || c.shortName || "").toUpperCase()));
+  if (visibleCompanies.length !== companiesStore.items.length) companiesStore.replaceAll(visibleCompanies);
+
+  keepContactScoped(clientsStore, allowedCompanyIds);
+  keepContactScoped(suppliersStore, allowedCompanyIds);
+  keepCompanyScoped(projectsStore, allowedCompanyIds);
+  keepCompanyScoped(accountsStore, allowedCompanyIds);
+  keepCompanyScoped(categoriesStore, allowedCompanyIds);
+  keepCompanyScoped(budgetsStore, allowedCompanyIds);
+  keepCompanyScoped(transactionsStore, allowedCompanyIds);
+  keepCompanyScoped(invoicesStore, allowedCompanyIds);
+  keepCompanyScoped(opportunitiesStore, allowedCompanyIds);
+  keepCompanyScoped(quotesStore, allowedCompanyIds);
+  keepCompanyScoped(purchaseOrdersStore, allowedCompanyIds);
+  keepCompanyScoped(expensesStore, allowedCompanyIds);
+  keepCompanyScoped(recurringBillingsStore, allowedCompanyIds);
+  keepCompanyScoped(salaryRegisterStore, allowedCompanyIds);
+  keepCompanyScoped(payrollRunsStore, allowedCompanyIds);
+  if (teamMembersStore.items.length) teamMembersStore.replaceAll([]);
+  if (salesMembersStore.items.length) salesMembersStore.replaceAll([]);
+}
 
 
 type Scope = { id: "group" } | { id: "company"; companyId: string };
@@ -274,6 +322,11 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     const set = new Set(allowedCodes.map((c) => c.toUpperCase()));
     return allCompanies.filter((c) => set.has((c.code || c.shortName || "").toUpperCase()));
   }, [allCompanies, allowedCodes]);
+
+  useEffect(() => {
+    if (accessLoading || isGroupAdmin || allowedCodes === null) return;
+    restrictLocalStores(accessibleCompanies);
+  }, [accessLoading, isGroupAdmin, allowedCodes, accessibleCompanies]);
 
   const setScope = (s: Scope) => {
     setScopeState(s);
