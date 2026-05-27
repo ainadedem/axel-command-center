@@ -95,7 +95,11 @@ function headingFor(k: DocKind) {
 }
 
 function buildHTML({ doc, company, client, project, showStatus }: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean }) {
-  const accent = company?.color ?? "#1e293b";
+  const rawColor = company?.color ?? "#1e293b";
+  // Validate against a strict CSS color allowlist to prevent CSS/script injection
+  // via the company.color field (it is embedded verbatim in a <style> block below).
+  const SAFE_COLOR = /^(#[0-9a-fA-F]{3,8}|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)|rgba\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*(0|1|0?\.\d+)\s*\)|oklch\(\s*[\d.%\s]+\)|[a-zA-Z]{3,30})$/;
+  const accent = SAFE_COLOR.test(rawColor.trim()) ? rawColor.trim() : "#1e293b";
   const issued = format(parseISO(doc.issueDate), "MMM d, yyyy");
   const due = doc.dueDate ? format(parseISO(doc.dueDate), "MMM d, yyyy") : null;
   const paidOn = doc.paidDate ? format(parseISO(doc.paidDate), "MMM d, yyyy") : null;
