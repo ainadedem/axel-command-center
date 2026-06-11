@@ -1,4 +1,4 @@
-// AXEL rate card — derived from the Publicis ERP rate-card template.
+// AXEL rate card — internal rate card configuration.
 // Defines annual salaries by Capability × Level (MGA), then computes
 // fully-loaded hourly / day rates using the standard chain:
 //   staff_cost = salary * (1 + benefits)
