@@ -384,7 +384,24 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
 
   const submit = () => {
     if (!number.trim() || !companyId || !clientId) return;
-    const data = { number, companyId, clientId, projectId: projectId || undefined, issueDate, validUntil, amount: Math.round(total), currency, status, mode, lines, notes: notes || undefined };
+    const amountInt = Math.round(subtotal);
+    const taxRateNum = Number(taxRate) || 0;
+    const computed = computeTotals(amountInt, taxRateNum);
+    // FX snapshot is captured/refreshed only while the quote is still a draft and has never been sent.
+    const isDraft = status === "draft" && !editing?.sentAt;
+    const fxFields = isDraft
+      ? { fxRate: FX[currency], fxBaseCurrency: "MGA" as Currency }
+      : {};
+    const data = {
+      number, companyId, clientId, projectId: projectId || undefined,
+      issueDate, validUntil,
+      amount: amountInt,
+      taxRate: taxRateNum,
+      taxAmount: computed.taxAmount,
+      totalAmount: computed.totalAmount,
+      currency, status, mode, lines, notes: notes || undefined,
+      ...fxFields,
+    };
     if (editing) quotesStore.update(editing.id, data);
     else quotesStore.add({ id: newId("q"), ...data });
     onOpenChange(false);
