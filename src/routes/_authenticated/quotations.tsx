@@ -37,10 +37,8 @@ const statusStyles: Record<QuoteStatus, string> = {
   expired: "border-warning/40 text-warning bg-warning/10",
 };
 
-/** FX snapshot helpers — store the FX rate vs MGA at the time of last draft edit. */
-function snapshotFx(currency: Currency) {
-  return { fxRate: FX[currency], fxBaseCurrency: "MGA" as Currency };
-}
+/** FX snapshot is captured inline in the dialog submit, only while still in draft. */
+
 
 function computeTotals(subtotal: number, taxRate: number) {
   const tax = Math.round((subtotal * (taxRate || 0)) / 100);
