@@ -570,8 +570,33 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                   </tbody>
                   <tfoot>
                     <tr className="border-t border-border bg-surface-elevated/30">
-                      <td colSpan={mode === "rate-card" ? 6 : 4} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Total</td>
-                      <td className="px-2 py-2 text-right font-tnum font-semibold">{fmt(total, currency)}</td>
+                      <td colSpan={mode === "rate-card" ? 6 : 4} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Subtotal</td>
+                      <td className="px-2 py-2 text-right font-tnum">{fmt(subtotal, currency)}</td>
+                      <td />
+                    </tr>
+                    <tr className="bg-surface-elevated/30">
+                      <td colSpan={mode === "rate-card" ? 6 : 4} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
+                        <div className="inline-flex items-center gap-2 justify-end">
+                          <span>Tax</span>
+                          <div className="relative">
+                            <Input
+                              type="number"
+                              min={0}
+                              step={0.01}
+                              className="h-7 w-20 text-xs text-right pr-6"
+                              value={taxRate}
+                              onChange={(e) => setTaxRate(Number(e.target.value))}
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">%</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-2 py-2 text-right font-tnum">{fmt(taxAmount, currency)}</td>
+                      <td />
+                    </tr>
+                    <tr className="border-t border-border bg-surface-elevated/40">
+                      <td colSpan={mode === "rate-card" ? 6 : 4} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-foreground font-semibold">Total</td>
+                      <td className="px-2 py-2 text-right font-tnum font-semibold">{fmt(totalAmount, currency)}</td>
                       <td />
                     </tr>
                   </tfoot>
