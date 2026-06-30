@@ -3,7 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
   useQuotes, useCompanies, useClients, useProjects, quotesStore, purchaseOrdersStore,
-  fmt, fmtCompact, type Quote, type QuoteLine, type QuoteStatus, type QuoteMode, type Currency,
+  fmt, fmtCompact, FX, type Quote, type QuoteLine, type QuoteStatus, type QuoteMode, type Currency,
   contactBelongsTo,
 } from "@/lib/mock-data";
 import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
@@ -20,9 +20,12 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, FileCheck2, Plus, X, Eye, Copy } from "lucide-react";
-import { DocumentPreview, type DocumentData } from "@/components/document-preview";
+import { Pencil, Trash2, FileCheck2, Plus, X, Eye, Copy, Send, Loader2, CheckCircle2 } from "lucide-react";
+import { DocumentPreview, buildPrintableDocument, type DocumentData } from "@/components/document-preview";
 import { nextNumber } from "@/lib/numbering";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import html2pdf from "html2pdf.js";
 
 export const Route = createFileRoute("/_authenticated/quotations")({ component: QuotationsPage });
 
@@ -33,6 +36,16 @@ const statusStyles: Record<QuoteStatus, string> = {
   rejected: "border-destructive/40 text-destructive bg-destructive/10",
   expired: "border-warning/40 text-warning bg-warning/10",
 };
+
+/** FX snapshot helpers — store the FX rate vs MGA at the time of last draft edit. */
+function snapshotFx(currency: Currency) {
+  return { fxRate: FX[currency], fxBaseCurrency: "MGA" as Currency };
+}
+
+function computeTotals(subtotal: number, taxRate: number) {
+  const tax = Math.round((subtotal * (taxRate || 0)) / 100);
+  return { taxAmount: tax, totalAmount: subtotal + tax };
+}
 
 function QuotationsPage() {
   return (
