@@ -90,10 +90,10 @@ Deno.serve(async (req) => {
   const pdfUrl = pub?.publicUrl ?? null;
 
   // Send via Resend
-  const emailSubject = subject ?? `Quote ${quote.quote_number}`;
+  const emailSubject = subject ?? `Quote ${quote.number}`;
   const emailHtml =
     message ??
-    `<p>Hello,</p><p>Please find attached quote <strong>${quote.quote_number}</strong>.</p>`;
+    `<p>Hello,</p><p>Please find attached quote <strong>${quote.number}</strong>.</p>`;
 
   let resendRes: Response;
   try {
@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
         html: emailHtml,
         attachments: [
           {
-            filename: `${quote.quote_number}.pdf`,
+            filename: `${quote.number}.pdf`,
             content: pdf_base64.includes(",") ? pdf_base64.split(",")[1] : pdf_base64,
           },
         ],
