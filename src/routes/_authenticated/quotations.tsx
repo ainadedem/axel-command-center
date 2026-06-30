@@ -206,10 +206,30 @@ function Body() {
                     <td className="px-5 py-3.5">{co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}</td>
                     <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">{format(parseISO(q.issueDate), "MMM d, yyyy")}</td>
                     <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">{format(parseISO(q.validUntil), "MMM d, yyyy")}</td>
-                    <td className="px-5 py-3.5"><span className={cn("text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[q.status])}>{q.status}</span></td>
-                    <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(q.amount, q.currency)}</td>
+                    <td className="px-5 py-3.5">
+                      {q.sentAt ? (
+                        <span className={cn("inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles.sent)} title={`Sent ${format(parseISO(q.sentAt), "MMM d, yyyy HH:mm")}${q.sentTo ? ` to ${q.sentTo}` : ""}`}>
+                          <CheckCircle2 className="h-3 w-3" />
+                          Sent · {format(parseISO(q.sentAt), "MMM d")}
+                        </span>
+                      ) : (
+                        <span className={cn("text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[q.status])}>{q.status}</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(q.totalAmount ?? q.amount, q.currency)}</td>
                     <td className="px-5 py-3.5 text-right">
                       <div className="flex gap-1 justify-end items-center">
+                        {!q.sentAt && (
+                          <button
+                            onClick={() => sendToClient(q)}
+                            disabled={!cl?.email || sendingId === q.id}
+                            title={cl?.email ? `Send to ${cl.email}` : "Client has no email on file"}
+                            className="text-[10px] uppercase tracking-wider px-2 py-1 rounded border border-chart-2/40 text-chart-2 hover:bg-chart-2/10 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+                          >
+                            {sendingId === q.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                            Send
+                          </button>
+                        )}
                         {q.status !== "accepted" && q.status !== "rejected" && (
                           <button onClick={() => convertToPO(q)} title="Convert to PO" className="text-[10px] uppercase tracking-wider px-2 py-1 rounded border border-success/30 text-success hover:bg-success/10 flex items-center gap-1"><FileCheck2 className="h-3 w-3" /> To PO</button>
                         )}
