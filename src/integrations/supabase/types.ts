@@ -1301,10 +1301,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      has_company_access: {
-        Args: { _company_id: string; _user_id: string }
-        Returns: boolean
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1312,8 +1308,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_group_admin: { Args: { _user_id: string }; Returns: boolean }
-      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
