@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
   // Look up quote
   const { data: quote, error: qErr } = await admin
     .from("quotes")
-    .select("id, quote_number, company_id")
+    .select("id, number, company_id")
     .eq("id", quote_id)
     .maybeSingle();
 
@@ -73,7 +73,8 @@ Deno.serve(async (req) => {
   if (!quote) return json({ error: "quote_not_found" }, 404);
 
   const pdfBytes = base64ToBytes(pdf_base64);
-  const objectPath = `${quote.company_id}/${quote.quote_number}.pdf`;
+  const safeNumber = String(quote.number).replace(/[^A-Za-z0-9_.-]/g, "_");
+  const objectPath = `${quote.company_id}/${safeNumber}.pdf`;
 
   // Upload PDF
   const { error: upErr } = await admin.storage
@@ -89,10 +90,10 @@ Deno.serve(async (req) => {
   const pdfUrl = pub?.publicUrl ?? null;
 
   // Send via Resend
-  const emailSubject = subject ?? `Quote ${quote.quote_number}`;
+  const emailSubject = subject ?? `Quote ${quote.number}`;
   const emailHtml =
     message ??
-    `<p>Hello,</p><p>Please find attached quote <strong>${quote.quote_number}</strong>.</p>`;
+    `<p>Hello,</p><p>Please find attached quote <strong>${quote.number}</strong>.</p>`;
 
   let resendRes: Response;
   try {
@@ -109,7 +110,7 @@ Deno.serve(async (req) => {
         html: emailHtml,
         attachments: [
           {
-            filename: `${quote.quote_number}.pdf`,
+            filename: `${quote.number}.pdf`,
             content: pdf_base64.includes(",") ? pdf_base64.split(",")[1] : pdf_base64,
           },
         ],

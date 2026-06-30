@@ -3,7 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
   useQuotes, useCompanies, useClients, useProjects, quotesStore, purchaseOrdersStore,
-  fmt, fmtCompact, type Quote, type QuoteLine, type QuoteStatus, type QuoteMode, type Currency,
+  fmt, fmtCompact, FX, type Quote, type QuoteLine, type QuoteStatus, type QuoteMode, type Currency,
   contactBelongsTo,
 } from "@/lib/mock-data";
 import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
@@ -20,9 +20,12 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, FileCheck2, Plus, X, Eye, Copy } from "lucide-react";
-import { DocumentPreview, type DocumentData } from "@/components/document-preview";
+import { Pencil, Trash2, FileCheck2, Plus, X, Eye, Copy, Send, Loader2, CheckCircle2 } from "lucide-react";
+import { DocumentPreview, buildPrintableDocument, type DocumentData } from "@/components/document-preview";
 import { nextNumber } from "@/lib/numbering";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import html2pdf from "html2pdf.js";
 
 export const Route = createFileRoute("/_authenticated/quotations")({ component: QuotationsPage });
 
@@ -33,6 +36,14 @@ const statusStyles: Record<QuoteStatus, string> = {
   rejected: "border-destructive/40 text-destructive bg-destructive/10",
   expired: "border-warning/40 text-warning bg-warning/10",
 };
+
+/** FX snapshot is captured inline in the dialog submit, only while still in draft. */
+
+
+function computeTotals(subtotal: number, taxRate: number) {
+  const tax = Math.round((subtotal * (taxRate || 0)) / 100);
+  return { taxAmount: tax, totalAmount: subtotal + tax };
+}
 
 function QuotationsPage() {
   return (
@@ -53,7 +64,55 @@ function Body() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Quote | null>(null);
   const [previewing, setPreviewing] = useState<Quote | null>(null);
+  const [sendingId, setSendingId] = useState<string | null>(null);
   const openCreate = () => { setEditing(null); setOpen(true); };
+
+  const sendToClient = async (q: Quote) => {
+    const cl = clients.find((c) => c.id === q.clientId);
+    const co = companies.find((c) => c.id === q.companyId);
+    const proj = q.projectId ? projects.find((p) => p.id === q.projectId) : undefined;
+    if (!cl?.email) { toast.error("This client has no email on file."); return; }
+    setSendingId(q.id);
+    try {
+      const html = buildPrintableDocument({ doc: quoteToDoc(q), company: co, client: cl, project: proj, showStatus: true });
+      const container = document.createElement("div");
+      container.style.cssText = "position:fixed;left:-10000px;top:0;width:210mm;background:white;";
+      container.innerHTML = html;
+      document.body.appendChild(container);
+      let pdfBase64: string;
+      try {
+        const blob: Blob = await (html2pdf as unknown as (...a: unknown[]) => { set: (o: unknown) => { from: (el: HTMLElement) => { outputPdf: (t: string) => Promise<Blob> } } })()
+          .set({ margin: 10, filename: `${q.number}.pdf`, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: "mm", format: "a4", orientation: "portrait" } })
+          .from(container)
+          .outputPdf("blob");
+        const buf = await blob.arrayBuffer();
+        let bin = "";
+        const bytes = new Uint8Array(buf);
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        pdfBase64 = btoa(bin);
+      } finally {
+        container.remove();
+      }
+      const { data, error } = await supabase.functions.invoke("send-quote-email", {
+        body: { quote_id: q.id, recipient_email: cl.email, pdf_base64: pdfBase64 },
+      });
+      if (error) throw error;
+      const res = data as { ok?: boolean; error?: string; pdf_url?: string; sent_at?: string };
+      if (!res?.ok) throw new Error(res?.error ?? "send_failed");
+      quotesStore.update(q.id, {
+        status: "sent",
+        sentAt: res.sent_at ?? new Date().toISOString(),
+        sentTo: cl.email,
+        pdfUrl: res.pdf_url ?? undefined,
+      });
+      toast.success(`Quote ${q.number} sent to ${cl.email}`);
+    } catch (e) {
+      toast.error(`Failed to send quote: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setSendingId(null);
+    }
+  };
+
 
   const fields: FieldDef<Quote>[] = [
     { key: "number", label: "Number", type: "string", accessor: (q) => q.number, noGroup: true },
@@ -145,10 +204,30 @@ function Body() {
                     <td className="px-5 py-3.5">{co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}</td>
                     <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">{format(parseISO(q.issueDate), "MMM d, yyyy")}</td>
                     <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">{format(parseISO(q.validUntil), "MMM d, yyyy")}</td>
-                    <td className="px-5 py-3.5"><span className={cn("text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[q.status])}>{q.status}</span></td>
-                    <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(q.amount, q.currency)}</td>
+                    <td className="px-5 py-3.5">
+                      {q.sentAt ? (
+                        <span className={cn("inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles.sent)} title={`Sent ${format(parseISO(q.sentAt), "MMM d, yyyy HH:mm")}${q.sentTo ? ` to ${q.sentTo}` : ""}`}>
+                          <CheckCircle2 className="h-3 w-3" />
+                          Sent · {format(parseISO(q.sentAt), "MMM d")}
+                        </span>
+                      ) : (
+                        <span className={cn("text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[q.status])}>{q.status}</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(q.totalAmount ?? q.amount, q.currency)}</td>
                     <td className="px-5 py-3.5 text-right">
                       <div className="flex gap-1 justify-end items-center">
+                        {!q.sentAt && (
+                          <button
+                            onClick={() => sendToClient(q)}
+                            disabled={!cl?.email || sendingId === q.id}
+                            title={cl?.email ? `Send to ${cl.email}` : "Client has no email on file"}
+                            className="text-[10px] uppercase tracking-wider px-2 py-1 rounded border border-chart-2/40 text-chart-2 hover:bg-chart-2/10 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+                          >
+                            {sendingId === q.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                            Send
+                          </button>
+                        )}
                         {q.status !== "accepted" && q.status !== "rejected" && (
                           <button onClick={() => convertToPO(q)} title="Convert to PO" className="text-[10px] uppercase tracking-wider px-2 py-1 rounded border border-success/30 text-success hover:bg-success/10 flex items-center gap-1"><FileCheck2 className="h-3 w-3" /> To PO</button>
                         )}
@@ -183,18 +262,25 @@ function Body() {
 }
 
 function quoteToDoc(q: Quote): DocumentData {
+  const subtotal = q.amount;
+  const taxRate = q.taxRate ?? 0;
+  const { taxAmount, totalAmount } = computeTotals(subtotal, taxRate);
   return {
     kind: "quote",
     number: q.number,
     status: q.status,
     issueDate: q.issueDate,
     dueDate: q.validUntil,
-    amount: q.amount,
+    amount: subtotal,
     currency: q.currency,
     lines: q.lines,
     notes: q.notes,
+    taxRate,
+    taxAmount: q.taxAmount ?? taxAmount,
+    totalAmount: q.totalAmount ?? totalAmount,
   };
 }
+
 
 function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Quote | null }) {
   const companies = useCompanies();
@@ -212,6 +298,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const [mode, setMode] = useState<QuoteMode>("rate-card");
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [notes, setNotes] = useState("");
+  const [taxRate, setTaxRate] = useState<number>(0);
 
   useEffect(() => {
     if (!open) return;
@@ -223,13 +310,14 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setMode(editing.mode ?? "rate-card");
       setLines(editing.lines ?? []);
       setNotes(editing.notes ?? "");
+      setTaxRate(editing.taxRate ?? 0);
     } else {
       const cid = companies[0]?.id ?? "";
       setNumber(cid ? nextNumber("quote", cid) : ""); setCompanyId(cid); setClientId("");
       setProjectId(""); setIssueDate(today); setValidUntil(addDays(new Date(), 30).toISOString().slice(0, 10));
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
       setMode("rate-card");
-      setLines([]); setNotes("");
+      setLines([]); setNotes(""); setTaxRate(0);
     }
   }, [open, editing, companies, today]);
 
@@ -242,7 +330,8 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const companyClients = clients.filter((c) => contactBelongsTo(c, companyId));
   const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
 
-  const total = useMemo(() => lines.reduce((s, l) => s + (Number(l.quantity) || 0) * (Number(l.rate) || 0), 0), [lines]);
+  const subtotal = useMemo(() => lines.reduce((s, l) => s + (Number(l.quantity) || 0) * (Number(l.rate) || 0), 0), [lines]);
+  const { taxAmount, totalAmount } = useMemo(() => computeTotals(Math.round(subtotal), Number(taxRate) || 0), [subtotal, taxRate]);
 
   const addLine = () => {
     if (mode === "standard") {
@@ -293,7 +382,24 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
 
   const submit = () => {
     if (!number.trim() || !companyId || !clientId) return;
-    const data = { number, companyId, clientId, projectId: projectId || undefined, issueDate, validUntil, amount: Math.round(total), currency, status, mode, lines, notes: notes || undefined };
+    const amountInt = Math.round(subtotal);
+    const taxRateNum = Number(taxRate) || 0;
+    const computed = computeTotals(amountInt, taxRateNum);
+    // FX snapshot is captured/refreshed only while the quote is still a draft and has never been sent.
+    const isDraft = status === "draft" && !editing?.sentAt;
+    const fxFields = isDraft
+      ? { fxRate: FX[currency], fxBaseCurrency: "MGA" as Currency }
+      : {};
+    const data = {
+      number, companyId, clientId, projectId: projectId || undefined,
+      issueDate, validUntil,
+      amount: amountInt,
+      taxRate: taxRateNum,
+      taxAmount: computed.taxAmount,
+      totalAmount: computed.totalAmount,
+      currency, status, mode, lines, notes: notes || undefined,
+      ...fxFields,
+    };
     if (editing) quotesStore.update(editing.id, data);
     else quotesStore.add({ id: newId("q"), ...data });
     onOpenChange(false);
@@ -462,8 +568,33 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                   </tbody>
                   <tfoot>
                     <tr className="border-t border-border bg-surface-elevated/30">
-                      <td colSpan={mode === "rate-card" ? 6 : 4} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Total</td>
-                      <td className="px-2 py-2 text-right font-tnum font-semibold">{fmt(total, currency)}</td>
+                      <td colSpan={mode === "rate-card" ? 6 : 4} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Subtotal</td>
+                      <td className="px-2 py-2 text-right font-tnum">{fmt(subtotal, currency)}</td>
+                      <td />
+                    </tr>
+                    <tr className="bg-surface-elevated/30">
+                      <td colSpan={mode === "rate-card" ? 6 : 4} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
+                        <div className="inline-flex items-center gap-2 justify-end">
+                          <span>Tax</span>
+                          <div className="relative">
+                            <Input
+                              type="number"
+                              min={0}
+                              step={0.01}
+                              className="h-7 w-20 text-xs text-right pr-6"
+                              value={taxRate}
+                              onChange={(e) => setTaxRate(Number(e.target.value))}
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">%</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-2 py-2 text-right font-tnum">{fmt(taxAmount, currency)}</td>
+                      <td />
+                    </tr>
+                    <tr className="border-t border-border bg-surface-elevated/40">
+                      <td colSpan={mode === "rate-card" ? 6 : 4} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-foreground font-semibold">Total</td>
+                      <td className="px-2 py-2 text-right font-tnum font-semibold">{fmt(totalAmount, currency)}</td>
                       <td />
                     </tr>
                   </tfoot>

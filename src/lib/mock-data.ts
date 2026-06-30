@@ -215,6 +215,21 @@ export interface Quote {
   mode?: QuoteMode;
   /** Line items — priced from rate card or free-form depending on mode. */
   lines?: QuoteLine[];
+  /** Tax rate as a percentage (e.g. 20 = 20%). */
+  taxRate?: number;
+  /** Computed tax amount in `currency`. */
+  taxAmount?: number;
+  /** Subtotal + tax. */
+  totalAmount?: number;
+  /** FX snapshot — value of one unit of `currency` in `fxBaseCurrency` at the time the quote was last edited in draft. */
+  fxRate?: number;
+  fxBaseCurrency?: Currency;
+  /** Public URL of the most recently sent PDF. */
+  pdfUrl?: string;
+  /** ISO timestamp when the quote was emailed to the client. */
+  sentAt?: string;
+  /** Recipient address used for the last send. */
+  sentTo?: string;
 }
 
 export type POStatus = "draft" | "issued" | "fulfilled" | "cancelled";

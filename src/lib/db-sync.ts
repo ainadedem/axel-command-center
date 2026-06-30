@@ -785,6 +785,14 @@ const quoteToDb = (q: Quote) => {
     notes: q.notes ?? null,
     mode: q.mode ?? null,
     lines: (q.lines ?? null) as unknown as never,
+    tax_rate: q.taxRate ?? 0,
+    tax_amount: q.taxAmount ?? 0,
+    total_amount: q.totalAmount ?? q.amount,
+    fx_rate: q.fxRate ?? null,
+    fx_base_currency: q.fxBaseCurrency ?? null,
+    pdf_url: q.pdfUrl ?? null,
+    sent_at: q.sentAt ?? null,
+    sent_to: q.sentTo ?? null,
   };
 };
 const quoteFromDb = (r: Record<string, unknown>): Quote => ({
@@ -801,6 +809,14 @@ const quoteFromDb = (r: Record<string, unknown>): Quote => ({
   notes: (r.notes as string) ?? undefined,
   mode: (r.mode as Quote["mode"]) ?? undefined,
   lines: (r.lines as QuoteLine[]) ?? undefined,
+  taxRate: r.tax_rate != null ? Number(r.tax_rate) : undefined,
+  taxAmount: r.tax_amount != null ? Number(r.tax_amount) : undefined,
+  totalAmount: r.total_amount != null ? Number(r.total_amount) : undefined,
+  fxRate: r.fx_rate != null ? Number(r.fx_rate) : undefined,
+  fxBaseCurrency: (r.fx_base_currency as Quote["fxBaseCurrency"]) ?? undefined,
+  pdfUrl: (r.pdf_url as string) ?? undefined,
+  sentAt: (r.sent_at as string) ?? undefined,
+  sentTo: (r.sent_to as string) ?? undefined,
 });
 export async function upsertQuote(q: Quote): Promise<string | null> {
   const row = quoteToDb(q);

@@ -27,6 +27,10 @@ export interface DocumentData {
   clientReference?: string;
   /** Cross-references printed on the doc (e.g. quote # on a PO, PO # on an invoice). */
   references?: Array<{ label: string; value: string }>;
+  /** Tax breakdown (used on quotes). */
+  taxRate?: number;
+  taxAmount?: number;
+  totalAmount?: number;
 }
 
 interface Props {
@@ -249,7 +253,8 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
           <div class="line"><span>Paid to date</span><span>${fmt(doc.paid ?? 0, doc.currency)}</span></div>
           <div class="line grand"><span>Balance due</span><span class="due">${fmt(balance, doc.currency)}</span></div>
         ` : `
-          <div class="line grand"><span>Total</span><span>${fmt(doc.amount, doc.currency)}</span></div>
+          <div class="line"><span>Tax (${Number(doc.taxRate ?? 0).toFixed(2)}%)</span><span>${fmt(doc.taxAmount ?? 0, doc.currency)}</span></div>
+          <div class="line grand"><span>Total</span><span>${fmt(doc.totalAmount ?? doc.amount, doc.currency)}</span></div>
         `}
       </div>
 
@@ -267,10 +272,14 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
   `;
 }
 
-function buildPrintableDocument(args: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean }) {
+export function buildPrintableDocument(args: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean }) {
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(args.doc.number)}</title>
     <style>@page { size: A4; margin: 22mm; } body { margin: 0; }</style>
     </head><body>${buildHTML(args)}</body></html>`;
+}
+
+export function buildDocumentHTML(args: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean }) {
+  return buildHTML(args);
 }
 
 function esc(s: unknown): string {
