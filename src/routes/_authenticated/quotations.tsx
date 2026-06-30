@@ -332,7 +332,8 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const companyClients = clients.filter((c) => contactBelongsTo(c, companyId));
   const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
 
-  const total = useMemo(() => lines.reduce((s, l) => s + (Number(l.quantity) || 0) * (Number(l.rate) || 0), 0), [lines]);
+  const subtotal = useMemo(() => lines.reduce((s, l) => s + (Number(l.quantity) || 0) * (Number(l.rate) || 0), 0), [lines]);
+  const { taxAmount, totalAmount } = useMemo(() => computeTotals(Math.round(subtotal), Number(taxRate) || 0), [subtotal, taxRate]);
 
   const addLine = () => {
     if (mode === "standard") {
