@@ -264,18 +264,25 @@ function Body() {
 }
 
 function quoteToDoc(q: Quote): DocumentData {
+  const subtotal = q.amount;
+  const taxRate = q.taxRate ?? 0;
+  const { taxAmount, totalAmount } = computeTotals(subtotal, taxRate);
   return {
     kind: "quote",
     number: q.number,
     status: q.status,
     issueDate: q.issueDate,
     dueDate: q.validUntil,
-    amount: q.amount,
+    amount: subtotal,
     currency: q.currency,
     lines: q.lines,
     notes: q.notes,
+    taxRate,
+    taxAmount: q.taxAmount ?? taxAmount,
+    totalAmount: q.totalAmount ?? totalAmount,
   };
 }
+
 
 function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Quote | null }) {
   const companies = useCompanies();
