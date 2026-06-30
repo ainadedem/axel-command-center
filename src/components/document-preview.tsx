@@ -253,7 +253,8 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
           <div class="line"><span>Paid to date</span><span>${fmt(doc.paid ?? 0, doc.currency)}</span></div>
           <div class="line grand"><span>Balance due</span><span class="due">${fmt(balance, doc.currency)}</span></div>
         ` : `
-          <div class="line grand"><span>Total</span><span>${fmt(doc.amount, doc.currency)}</span></div>
+          <div class="line"><span>Tax (${Number(doc.taxRate ?? 0).toFixed(2)}%)</span><span>${fmt(doc.taxAmount ?? 0, doc.currency)}</span></div>
+          <div class="line grand"><span>Total</span><span>${fmt(doc.totalAmount ?? doc.amount, doc.currency)}</span></div>
         `}
       </div>
 
