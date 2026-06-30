@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
   // Look up quote
   const { data: quote, error: qErr } = await admin
     .from("quotes")
-    .select("id, quote_number, company_id")
+    .select("id, number, company_id")
     .eq("id", quote_id)
     .maybeSingle();
 
@@ -73,7 +73,8 @@ Deno.serve(async (req) => {
   if (!quote) return json({ error: "quote_not_found" }, 404);
 
   const pdfBytes = base64ToBytes(pdf_base64);
-  const objectPath = `${quote.company_id}/${quote.quote_number}.pdf`;
+  const safeNumber = String(quote.number).replace(/[^A-Za-z0-9_.-]/g, "_");
+  const objectPath = `${quote.company_id}/${safeNumber}.pdf`;
 
   // Upload PDF
   const { error: upErr } = await admin.storage
