@@ -300,6 +300,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const [mode, setMode] = useState<QuoteMode>("rate-card");
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [notes, setNotes] = useState("");
+  const [taxRate, setTaxRate] = useState<number>(0);
 
   useEffect(() => {
     if (!open) return;
