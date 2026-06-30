@@ -137,7 +137,7 @@
   --muted-foreground: oklch(0.68 0.015 250);
 }
 
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+/* Fonts loaded via <link> in src/routes/__root.tsx */
 
 @layer base {
   * {
