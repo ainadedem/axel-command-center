@@ -27,6 +27,10 @@ export interface DocumentData {
   clientReference?: string;
   /** Cross-references printed on the doc (e.g. quote # on a PO, PO # on an invoice). */
   references?: Array<{ label: string; value: string }>;
+  /** Tax breakdown (used on quotes). */
+  taxRate?: number;
+  taxAmount?: number;
+  totalAmount?: number;
 }
 
 interface Props {
