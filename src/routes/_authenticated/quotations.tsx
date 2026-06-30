@@ -312,13 +312,14 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setMode(editing.mode ?? "rate-card");
       setLines(editing.lines ?? []);
       setNotes(editing.notes ?? "");
+      setTaxRate(editing.taxRate ?? 0);
     } else {
       const cid = companies[0]?.id ?? "";
       setNumber(cid ? nextNumber("quote", cid) : ""); setCompanyId(cid); setClientId("");
       setProjectId(""); setIssueDate(today); setValidUntil(addDays(new Date(), 30).toISOString().slice(0, 10));
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
       setMode("rate-card");
-      setLines([]); setNotes("");
+      setLines([]); setNotes(""); setTaxRate(0);
     }
   }, [open, editing, companies, today]);
 
