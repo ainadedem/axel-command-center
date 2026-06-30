@@ -66,7 +66,55 @@ function Body() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Quote | null>(null);
   const [previewing, setPreviewing] = useState<Quote | null>(null);
+  const [sendingId, setSendingId] = useState<string | null>(null);
   const openCreate = () => { setEditing(null); setOpen(true); };
+
+  const sendToClient = async (q: Quote) => {
+    const cl = clients.find((c) => c.id === q.clientId);
+    const co = companies.find((c) => c.id === q.companyId);
+    const proj = q.projectId ? projects.find((p) => p.id === q.projectId) : undefined;
+    if (!cl?.email) { toast.error("This client has no email on file."); return; }
+    setSendingId(q.id);
+    try {
+      const html = buildPrintableDocument({ doc: quoteToDoc(q), company: co, client: cl, project: proj, showStatus: true });
+      const container = document.createElement("div");
+      container.style.cssText = "position:fixed;left:-10000px;top:0;width:210mm;background:white;";
+      container.innerHTML = html;
+      document.body.appendChild(container);
+      let pdfBase64: string;
+      try {
+        const blob: Blob = await (html2pdf as unknown as (...a: unknown[]) => { set: (o: unknown) => { from: (el: HTMLElement) => { outputPdf: (t: string) => Promise<Blob> } } })()
+          .set({ margin: 10, filename: `${q.number}.pdf`, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: "mm", format: "a4", orientation: "portrait" } })
+          .from(container)
+          .outputPdf("blob");
+        const buf = await blob.arrayBuffer();
+        let bin = "";
+        const bytes = new Uint8Array(buf);
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        pdfBase64 = btoa(bin);
+      } finally {
+        container.remove();
+      }
+      const { data, error } = await supabase.functions.invoke("send-quote-email", {
+        body: { quote_id: q.id, recipient_email: cl.email, pdf_base64: pdfBase64 },
+      });
+      if (error) throw error;
+      const res = data as { ok?: boolean; error?: string; pdf_url?: string; sent_at?: string };
+      if (!res?.ok) throw new Error(res?.error ?? "send_failed");
+      quotesStore.update(q.id, {
+        status: "sent",
+        sentAt: res.sent_at ?? new Date().toISOString(),
+        sentTo: cl.email,
+        pdfUrl: res.pdf_url ?? undefined,
+      });
+      toast.success(`Quote ${q.number} sent to ${cl.email}`);
+    } catch (e) {
+      toast.error(`Failed to send quote: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setSendingId(null);
+    }
+  };
+
 
   const fields: FieldDef<Quote>[] = [
     { key: "number", label: "Number", type: "string", accessor: (q) => q.number, noGroup: true },
