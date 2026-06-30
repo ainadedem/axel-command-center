@@ -809,14 +809,22 @@ export type Database = {
           company_id: string
           created_at: string
           currency: string
+          fx_base_currency: string | null
+          fx_rate: number | null
           id: string
           issue_date: string
           lines: Json | null
           mode: string | null
           notes: string | null
           number: string
+          pdf_url: string | null
           project_id: string | null
+          sent_at: string | null
+          sent_to: string | null
           status: string
+          tax_amount: number
+          tax_rate: number
+          total_amount: number
           updated_at: string
           valid_until: string
         }
@@ -826,14 +834,22 @@ export type Database = {
           company_id: string
           created_at?: string
           currency?: string
+          fx_base_currency?: string | null
+          fx_rate?: number | null
           id?: string
           issue_date: string
           lines?: Json | null
           mode?: string | null
           notes?: string | null
           number: string
+          pdf_url?: string | null
           project_id?: string | null
+          sent_at?: string | null
+          sent_to?: string | null
           status?: string
+          tax_amount?: number
+          tax_rate?: number
+          total_amount?: number
           updated_at?: string
           valid_until: string
         }
@@ -843,14 +859,22 @@ export type Database = {
           company_id?: string
           created_at?: string
           currency?: string
+          fx_base_currency?: string | null
+          fx_rate?: number | null
           id?: string
           issue_date?: string
           lines?: Json | null
           mode?: string | null
           notes?: string | null
           number?: string
+          pdf_url?: string | null
           project_id?: string | null
+          sent_at?: string | null
+          sent_to?: string | null
           status?: string
+          tax_amount?: number
+          tax_rate?: number
+          total_amount?: number
           updated_at?: string
           valid_until?: string
         }
