@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 // Side-effect import: triggers idempotent data seeds (Logia + Axiom).
@@ -16,7 +16,16 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (state) => state.location.href });
   const { loading, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      navigate({ to: "/login", search: { redirect: pathname } });
+    }
+  }, [loading, isAuthenticated, navigate, pathname]);
+
   if (loading) {
     return (
       <div className="min-h-screen grid place-items-center bg-background">
