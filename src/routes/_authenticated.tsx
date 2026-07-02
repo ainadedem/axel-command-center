@@ -5,9 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import "@/lib/pcg";
 
 export const Route = createFileRoute("/_authenticated")({
+  ssr: false,
   beforeLoad: async ({ location }) => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) {
       throw redirect({ to: "/login", search: { redirect: location.href } });
     }
   },
