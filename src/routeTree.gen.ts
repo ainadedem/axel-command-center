@@ -42,6 +42,7 @@ import { Route as AuthenticatedAxelRouteImport } from './routes/_authenticated/a
 import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
 import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/about'
 import { Route as AuthenticatedAxelIndexRouteImport } from './routes/_authenticated/axel.index'
+import { Route as ApiHealthSupabaseRouteImport } from './routes/api/health/supabase'
 import { Route as AuthenticatedAxelThreadIdRouteImport } from './routes/_authenticated/axel.$threadId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -213,6 +214,11 @@ const AuthenticatedAxelIndexRoute = AuthenticatedAxelIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAxelRoute,
 } as any)
+const ApiHealthSupabaseRoute = ApiHealthSupabaseRouteImport.update({
+  id: '/api/health/supabase',
+  path: '/api/health/supabase',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAxelThreadIdRoute =
   AuthenticatedAxelThreadIdRouteImport.update({
     id: '/$threadId',
@@ -253,6 +259,7 @@ export interface FileRoutesByFullPath {
   '/users-access': typeof AuthenticatedUsersAccessRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
   '/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
+  '/api/health/supabase': typeof ApiHealthSupabaseRoute
   '/axel/': typeof AuthenticatedAxelIndexRoute
 }
 export interface FileRoutesByTo {
@@ -287,6 +294,7 @@ export interface FileRoutesByTo {
   '/api/axel-chat': typeof ApiAxelChatRoute
   '/': typeof AuthenticatedIndexRoute
   '/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
+  '/api/health/supabase': typeof ApiHealthSupabaseRoute
   '/axel': typeof AuthenticatedAxelIndexRoute
 }
 export interface FileRoutesById {
@@ -324,6 +332,7 @@ export interface FileRoutesById {
   '/api/axel-chat': typeof ApiAxelChatRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
+  '/api/health/supabase': typeof ApiHealthSupabaseRoute
   '/_authenticated/axel/': typeof AuthenticatedAxelIndexRoute
 }
 export interface FileRouteTypes {
@@ -361,6 +370,7 @@ export interface FileRouteTypes {
     | '/users-access'
     | '/api/axel-chat'
     | '/axel/$threadId'
+    | '/api/health/supabase'
     | '/axel/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -395,6 +405,7 @@ export interface FileRouteTypes {
     | '/api/axel-chat'
     | '/'
     | '/axel/$threadId'
+    | '/api/health/supabase'
     | '/axel'
   id:
     | '__root__'
@@ -431,6 +442,7 @@ export interface FileRouteTypes {
     | '/api/axel-chat'
     | '/_authenticated/'
     | '/_authenticated/axel/$threadId'
+    | '/api/health/supabase'
     | '/_authenticated/axel/'
   fileRoutesById: FileRoutesById
 }
@@ -439,6 +451,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiAxelChatRoute: typeof ApiAxelChatRoute
+  ApiHealthSupabaseRoute: typeof ApiHealthSupabaseRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -674,6 +687,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAxelIndexRouteImport
       parentRoute: typeof AuthenticatedAxelRoute
     }
+    '/api/health/supabase': {
+      id: '/api/health/supabase'
+      path: '/api/health/supabase'
+      fullPath: '/api/health/supabase'
+      preLoaderRoute: typeof ApiHealthSupabaseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/axel/$threadId': {
       id: '/_authenticated/axel/$threadId'
       path: '/$threadId'
@@ -768,6 +788,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiAxelChatRoute: ApiAxelChatRoute,
+  ApiHealthSupabaseRoute: ApiHealthSupabaseRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

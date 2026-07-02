@@ -16,6 +16,7 @@ import { format, subDays, subMonths, startOfMonth, endOfMonth, startOfYear, pars
 import { useState, useMemo } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, AlertOctagon, ShieldCheck, Rocket } from "lucide-react";
+import { SupabaseHealthCard } from "@/components/supabase-health-card";
 import { FX, type Currency } from "@/lib/mock-data";
 
 const pct = (cur: number, prev: number) => {
@@ -34,6 +35,9 @@ function Dashboard() {
         title="Financial Command"
         description="Live group view across all companies, currencies and accounts."
       />
+      <div className="mb-4">
+        <SupabaseHealthCard />
+      </div>
       <DashboardBody />
     </AppShell>
   );
