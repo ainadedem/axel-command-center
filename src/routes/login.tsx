@@ -4,11 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import axelLogo from "@/assets/axel-logo.png";
 
 export const Route = createFileRoute("/login")({
-  ssr: false,
   validateSearch: (s: Record<string, unknown>) => ({
     redirect: (s.redirect as string) || "/",
   }),
   beforeLoad: async ({ search }) => {
+    if (typeof window === "undefined") return;
     const { data } = await supabase.auth.getUser();
     if (data.user) throw redirect({ to: search.redirect });
   },
