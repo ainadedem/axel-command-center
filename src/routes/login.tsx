@@ -11,6 +11,17 @@ export const Route = createFileRoute("/login")({
     const { data } = await supabase.auth.getSession();
     if (data.session) throw redirect({ to: search.redirect });
   },
+  head: () => ({
+    meta: [
+      { title: "Sign in — AXEL" },
+      { name: "description", content: "Sign in to AXEL, the premium multi-company, multi-currency ERP, CRM and accounting command center." },
+      { property: "og:title", content: "Sign in — AXEL" },
+      { property: "og:description", content: "Sign in to AXEL, the premium multi-company, multi-currency ERP, CRM and accounting command center." },
+      { property: "og:url", content: "https://axel-command-center.lovable.app/login" },
+      { name: "robots", content: "noindex,follow" },
+    ],
+    links: [{ rel: "canonical", href: "https://axel-command-center.lovable.app/login" }],
+  }),
   component: LoginPage,
 });
 
