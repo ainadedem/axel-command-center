@@ -62,7 +62,7 @@ function LoginPage() {
           <div className="flex justify-center mb-10">
             <img
               src={axelLogo}
-              alt="Axel"
+              alt="AXEL Business Platform logo"
               className="h-16 w-auto"
             />
           </div>
