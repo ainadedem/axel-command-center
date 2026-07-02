@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /login
+
+Sitemap: https://axel-command-center.lovable.app/sitemap.xml

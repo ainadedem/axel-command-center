@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
@@ -43,6 +44,11 @@ import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAxelIndexRouteImport } from './routes/_authenticated/axel.index'
 import { Route as AuthenticatedAxelThreadIdRouteImport } from './routes/_authenticated/axel.$threadId'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -217,6 +223,7 @@ const AuthenticatedAxelThreadIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/about': typeof AuthenticatedAboutRoute
   '/accounts': typeof AuthenticatedAccountsRoute
   '/axel': typeof AuthenticatedAxelRouteWithChildren
@@ -250,6 +257,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/about': typeof AuthenticatedAboutRoute
   '/accounts': typeof AuthenticatedAccountsRoute
   '/balance': typeof AuthenticatedBalanceRoute
@@ -285,6 +293,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/about': typeof AuthenticatedAboutRoute
   '/_authenticated/accounts': typeof AuthenticatedAccountsRoute
   '/_authenticated/axel': typeof AuthenticatedAxelRouteWithChildren
@@ -322,6 +331,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/sitemap.xml'
     | '/about'
     | '/accounts'
     | '/axel'
@@ -355,6 +365,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
+    | '/sitemap.xml'
     | '/about'
     | '/accounts'
     | '/balance'
@@ -389,6 +400,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/login'
+    | '/sitemap.xml'
     | '/_authenticated/about'
     | '/_authenticated/accounts'
     | '/_authenticated/axel'
@@ -425,11 +437,19 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiAxelChatRoute: typeof ApiAxelChatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -746,18 +766,9 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiAxelChatRoute: ApiAxelChatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
