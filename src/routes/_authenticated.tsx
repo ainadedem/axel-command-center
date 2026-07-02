@@ -10,14 +10,15 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthenticatedLayout() {
   const navigate = useNavigate();
-  const pathname = useRouterState({ select: (state) => state.location.href });
+  const location = useRouterState({ select: (state) => state.location });
   const { loading, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      navigate({ to: "/login", search: { redirect: pathname } });
+    if (!loading && !isAuthenticated && location.pathname !== "/login") {
+      const redirectTo = location.pathname.startsWith("/") ? location.href : "/";
+      navigate({ to: "/login", search: { redirect: redirectTo } });
     }
-  }, [loading, isAuthenticated, navigate, pathname]);
+  }, [loading, isAuthenticated, location.href, location.pathname, navigate]);
 
   if (loading) {
     return (
