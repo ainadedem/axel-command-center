@@ -1,0 +1,13 @@
+# AXEL
+
+> AXEL is a premium multi-company, multi-currency ERP, CRM and French-compliant accounting platform for modern organisations.
+
+AXEL unifies finance, customer relationships, operations, and full French accounting (Plan Comptable, Journal, Grand-Livre, Balance, Bilan, Compte de Résultat) in one workspace. It supports multi-entity groups, role-based access, live FX tracking, and an embedded AI assistant.
+
+## Pages
+
+- [Home](https://axel-command-center.lovable.app/): AXEL command center — sign in required.
+
+## Optional
+
+- [Product site](https://axel.weaxiom.com): Marketing, documentation, and release notes for AXEL.
