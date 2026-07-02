@@ -62,6 +62,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:title", content: "AXEL — ERP" },
       { property: "og:description", content: "Premium multi-company, multi-currency finance command center." },
       { name: "twitter:description", content: "Premium multi-company, multi-currency finance command center." },
+      { property: "og:site_name", content: "AXEL" },
+      { property: "og:url", content: "https://axel-command-center.lovable.app/" },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/cea62933-31f5-4d43-8fcc-dd1c845d357d/id-preview-d680f478--6d852ac6-4d80-4857-bc8c-05e21302d63c.lovable.app-1779703926078.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/cea62933-31f5-4d43-8fcc-dd1c845d357d/id-preview-d680f478--6d852ac6-4d80-4857-bc8c-05e21302d63c.lovable.app-1779703926078.png" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -73,6 +75,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "AXEL",
+          url: "https://axel-command-center.lovable.app/",
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "AXEL",
+          url: "https://axel.weaxiom.com",
+          email: "support@weaxiom.com",
+        }),
+      },
     ],
   }),
   shellComponent: RootShell,
