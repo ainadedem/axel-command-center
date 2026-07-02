@@ -8,8 +8,9 @@ export const Route = createFileRoute("/login")({
     redirect: (s.redirect as string) || "/",
   }),
   beforeLoad: async ({ search }) => {
-    const { data } = await supabase.auth.getSession();
-    if (data.session) throw redirect({ to: search.redirect });
+    if (typeof window === "undefined") return;
+    const { data } = await supabase.auth.getUser();
+    if (data.user) throw redirect({ to: search.redirect });
   },
   head: () => ({
     meta: [

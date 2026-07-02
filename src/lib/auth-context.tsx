@@ -53,11 +53,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
-      if (s?.user) loadUserData(s.user.id).finally(() => setLoading(false));
-      else setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data: { session: s } }) => {
+        setSession(s);
+        if (s?.user) return loadUserData(s.user.id);
+      })
+      .catch(() => {
+        setSession(null);
+        setProfile(null);
+        setRoles([]);
+      })
+      .finally(() => setLoading(false));
 
     return () => subscription.unsubscribe();
   }, []);
