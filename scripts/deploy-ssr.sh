@@ -138,7 +138,7 @@ fi
 
 cd "$RELEASE_DIR"
 npm ci
-npm run build
+NITRO_PRESET=node_server npm run build
 
 if [ ! -f ".output/server/index.mjs" ]; then
   echo "Missing .output/server/index.mjs after build"
