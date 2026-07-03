@@ -1,0 +1,45 @@
+name: Reusable SSR Deploy
+
+on:
+  workflow_call:
+    inputs:
+      branch:
+        required: true
+        type: string
+      app_path:
+        required: true
+        type: string
+      public_url:
+        required: false
+        type: string
+        default: ""
+      environment_name:
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment_name }}
+
+    steps:
+      - name: Deploy SSR app on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          command_timeout: 20m
+          script: |
+            set -e
+            cd "${{ inputs.app_path }}"
+            git fetch origin "${{ inputs.branch }}"
+            mkdir -p ./scripts
+            git show "origin/${{ inputs.branch }}:scripts/deploy-ssr.sh" > ./scripts/deploy-ssr.sh
+            git show "origin/${{ inputs.branch }}:scripts/health-check-services.sh" > ./scripts/health-check-services.sh
+            git show "origin/${{ inputs.branch }}:scripts/restart-ssr.sh" > ./scripts/restart-ssr.sh
+            git show "origin/${{ inputs.branch }}:ecosystem.config.cjs" > ./ecosystem.config.cjs
+            chmod +x ./scripts/deploy-ssr.sh ./scripts/health-check-services.sh ./scripts/restart-ssr.sh
+            APP_PATH="${{ inputs.app_path }}" DEPLOY_BRANCH="${{ inputs.branch }}" PUBLIC_BASE_URL="${{ inputs.public_url }}" ./scripts/deploy-ssr.sh
