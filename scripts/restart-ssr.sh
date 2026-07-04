@@ -66,10 +66,28 @@ fi
 cd "$APP_PATH"
 mkdir -p logs
 
+export NODE_ENV="${NODE_ENV:-production}"
+export PORT="${PORT:-3009}"
+export SUPABASE_URL="${SUPABASE_URL:-}"
+export SUPABASE_PUBLISHABLE_KEY="${SUPABASE_PUBLISHABLE_KEY:-}"
+export VITE_SUPABASE_URL="${VITE_SUPABASE_URL:-$SUPABASE_URL}"
+export VITE_SUPABASE_PUBLISHABLE_KEY="${VITE_SUPABASE_PUBLISHABLE_KEY:-$SUPABASE_PUBLISHABLE_KEY}"
+export SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-}"
+export OPENAI_API_KEY="${OPENAI_API_KEY:-}"
+
 if [ "$(whoami)" = "$RUNTIME_USER" ]; then
-  pm2 startOrReload ecosystem.config.cjs --only axel-command-center-ssr
+  pm2 startOrReload ecosystem.config.cjs --only axel-command-center-ssr --update-env
   pm2 save
 else
-  sudo -H -u "$RUNTIME_USER" pm2 startOrReload ecosystem.config.cjs --only axel-command-center-ssr
+  sudo -H -u "$RUNTIME_USER" env \
+    NODE_ENV="$NODE_ENV" \
+    PORT="$PORT" \
+    SUPABASE_URL="$SUPABASE_URL" \
+    SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
+    VITE_SUPABASE_URL="$VITE_SUPABASE_URL" \
+    VITE_SUPABASE_PUBLISHABLE_KEY="$VITE_SUPABASE_PUBLISHABLE_KEY" \
+    SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY" \
+    OPENAI_API_KEY="$OPENAI_API_KEY" \
+    pm2 startOrReload ecosystem.config.cjs --only axel-command-center-ssr --update-env
   sudo -H -u "$RUNTIME_USER" pm2 save
 fi
