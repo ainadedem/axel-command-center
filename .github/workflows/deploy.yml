@@ -1,0 +1,15 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy-ssr-reusable.yml
+    with:
+      branch: ${{ github.ref_name }}
+      app_path: /var/www/axel-command-center
+      environment_name: production
+    secrets: inherit
