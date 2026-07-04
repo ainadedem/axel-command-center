@@ -52,7 +52,6 @@ jobs:
         run: |
           mkdir -p .release/scripts
           cp ecosystem.config.cjs .release/ecosystem.config.cjs
-          cp scripts/health-check-services.sh .release/scripts/health-check-services.sh
           cp scripts/restart-ssr.sh .release/scripts/restart-ssr.sh
           cp package.json .release/package.json
           tar -czf axel-command-center-release.tar.gz \
@@ -85,7 +84,7 @@ jobs:
             rm -rf .release
             rm -f /tmp/axel-command-center-release.tar.gz
             mkdir -p logs scripts
-            chmod +x ./scripts/health-check-services.sh ./scripts/restart-ssr.sh
+            chmod +x ./scripts/restart-ssr.sh
             PM2_RUN_AS="${{ secrets.VPS_USERNAME }}" \
             SUPABASE_URL="${{ vars.SUPABASE_URL }}" \
             SUPABASE_PUBLISHABLE_KEY="${{ vars.SUPABASE_PUBLISHABLE_KEY }}" \
@@ -94,6 +93,5 @@ jobs:
             SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
             ./scripts/restart-ssr.sh
-            PUBLIC_BASE_URL="${{ inputs.public_url }}" ./scripts/health-check-services.sh
             sudo nginx -t
             sudo systemctl reload nginx
