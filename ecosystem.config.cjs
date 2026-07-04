@@ -6,7 +6,7 @@ module.exports = {
     exec_mode: "fork",
     env: {
       NODE_ENV: "production",
-      PORT: 3007,
+      PORT: 3009,
     },
     error_file: "./logs/ssr-error.log",
     out_file: "./logs/ssr-out.log",
