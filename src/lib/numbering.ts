@@ -24,9 +24,39 @@ function pool(kind: DocKind, companyId: string): string[] {
     .map((x) => x.number);
 }
 
+/** True when another document of the same kind already uses this number. */
+export function isNumberTaken(
+  kind: DocKind,
+  companyId: string,
+  number: string,
+  excludeId?: string,
+): boolean {
+  const arr =
+    kind === "invoice" ? invoices : kind === "quote" ? quotes : purchaseOrders;
+  const target = number.trim().toLowerCase();
+  if (!target) return false;
+  return arr.some(
+    (x) =>
+      x.companyId === companyId &&
+      x.id !== excludeId &&
+      String(x.number ?? "").trim().toLowerCase() === target,
+  );
+}
+
+/** Increment the trailing digit group of a document number. */
+function bump(n: string): string {
+  const m = n.match(/(\d+)(?!.*\d)/);
+  if (!m) return `${n}-0001`;
+  const width = m[1].length;
+  const next = String(parseInt(m[1], 10) + 1).padStart(width, "0");
+  const idx = m.index!;
+  return n.slice(0, idx) + next + n.slice(idx + m[1].length);
+}
+
 /**
  * Returns the next number for the given kind, modelled on the latest existing
- * document of the same kind for that company.
+ * document of the same kind for that company. Guaranteed not to collide with
+ * an existing number.
  */
 export function nextNumber(kind: DocKind, companyId: string): string {
   const existing = pool(kind, companyId);
@@ -38,24 +68,21 @@ export function nextNumber(kind: DocKind, companyId: string): string {
   // Pick the template = the document whose trailing numeric group is largest.
   let best = existing[0];
   let bestN = -1;
-  let bestMatch: RegExpMatchArray | null = null;
   for (const n of existing) {
-    // Last run of digits anywhere in the string.
     const m = n.match(/(\d+)(?!.*\d)/);
     if (!m) continue;
     const v = parseInt(m[1], 10);
     if (v > bestN) {
       bestN = v;
       best = n;
-      bestMatch = m;
     }
   }
-  if (!bestMatch) {
-    // No digits at all — append -0001.
-    return `${best}-0001`;
+
+  let candidate = bump(best);
+  let guard = 0;
+  while (isNumberTaken(kind, companyId, candidate) && guard++ < 1000) {
+    candidate = bump(candidate);
   }
-  const width = bestMatch[1].length;
-  const next = String(bestN + 1).padStart(width, "0");
-  const idx = bestMatch.index!;
-  return best.slice(0, idx) + next + best.slice(idx + bestMatch[1].length);
+  return candidate;
 }
+
