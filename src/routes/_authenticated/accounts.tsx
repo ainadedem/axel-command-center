@@ -89,6 +89,17 @@ function Body() {
         <DataToolbar view={view} items={baseList} />
       </div>
 
+      <div className="flex items-start gap-2 rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+        <Info className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+        <span>
+          Hover a row to reveal its actions. The{" "}
+          <Upload className="inline h-3 w-3 text-primary align-[-2px]" /> <span className="text-foreground font-medium">upload</span> icon opens the
+          guided <span className="text-foreground font-medium">Reconcile bank statement</span> wizard (CSV or Excel), and the{" "}
+          <History className="inline h-3 w-3 text-primary align-[-2px] " /> <span className="text-foreground font-medium">history</span> icon lists past
+          reconciliations with CSV/PDF export.
+        </span>
+      </div>
+
       {list.length === 0 ? (
         <EmptyState label="accounts" onCreate={openCreate} />
       ) : (
