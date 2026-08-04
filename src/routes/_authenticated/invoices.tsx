@@ -332,6 +332,15 @@ function Body() {
                       </td>
                       <td className="px-5 py-3.5">
                         <span className={cn("text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[inv.status])} title={inv.status === "cancelled" && inv.cancellationReason ? `Cancelled: ${inv.cancellationReason}` : undefined}>{inv.status}</span>
+                        {!inv.poId && inv.status !== "cancelled" && (
+                          <span
+                            className="ml-1.5 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10"
+                            title={inv.poWaived ? `PO bypassed${inv.poWaiverReason ? `: ${inv.poWaiverReason}` : ""}` : "No client PO linked"}
+                          >
+                            <AlertTriangle className="h-2.5 w-2.5" /> PO missing
+                          </span>
+                        )}
+
                         {inv.status === "cancelled" && inv.cancellationReason && (
                           <div className="text-[10px] text-muted-foreground mt-1 max-w-[180px] truncate italic" title={inv.cancellationReason}>“{inv.cancellationReason}”</div>
                         )}
@@ -580,7 +589,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
         <DialogHeader><DialogTitle>{editing ? "Edit invoice" : "New invoice"}</DialogTitle></DialogHeader>
 
         {/* Process strip */}
-        <ProcessStrip hasQuote={Boolean(linkedQuote)} hasPO={Boolean(selectedPO)} />
+        <ProcessStrip hasQuote={Boolean(linkedQuote)} hasPO={Boolean(selectedPO) || poWaived} />
 
         <div className="space-y-4 py-2">
           <FormErrorBanner show={showErrors} />
