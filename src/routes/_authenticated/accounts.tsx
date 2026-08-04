@@ -217,7 +217,7 @@ function AccountDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     if (!open) return;
     if (editing) {
       setCompanyId(editing.companyId); setName(editing.name); setType(editing.type); setCurrency(editing.currency);
-      setBalance(String(editing.openingBalance ?? editing.balance ?? 0));
+      setBalance(String(openingOf(editing)));
       setOpeningDate(editing.openingBalanceDate ?? "");
     } else {
       setCompanyId(companies[0]?.id ?? ""); setName(""); setType("bank"); setCurrency("MGA"); setBalance("0");
