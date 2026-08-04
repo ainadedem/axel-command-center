@@ -726,10 +726,34 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
             <div><Label>Website</Label><Input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://…" /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+            <div>
+              <Label><RequiredLabel>Billing email</RequiredLabel></Label>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="billing@client.com" className={invalidFieldClassName(showErrors && missing.email)} aria-invalid={showErrors && missing.email} />
+              {showErrors && missing.email && <p className="text-[11px] text-destructive mt-1">Enter a valid billing email address.</p>}
+            </div>
             <div><Label>Phone</Label><Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
           </div>
-          <div><Label>HQ address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} /></div>
+          <div>
+            <Label><RequiredLabel>Registered business address</RequiredLabel></Label>
+            <Textarea rows={3} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, city, postal code, country" className={invalidFieldClassName(showErrors && missing.address)} aria-invalid={showErrors && missing.address} />
+          </div>
+          <div className="rounded-lg border border-border bg-surface p-3 space-y-3">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">Tax & legal identifiers</div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label><RequiredLabel>NIF</RequiredLabel></Label>
+                <Input value={nif} onChange={(e) => setNif(e.target.value)} placeholder="Numéro d'Identification Fiscale" className={invalidFieldClassName(showErrors && missing.nif)} aria-invalid={showErrors && missing.nif} />
+              </div>
+              <div>
+                <Label><RequiredLabel>STAT</RequiredLabel></Label>
+                <Input value={stat} onChange={(e) => setStat(e.target.value)} placeholder="Numéro Statistique" className={invalidFieldClassName(showErrors && missing.stat)} aria-invalid={showErrors && missing.stat} />
+              </div>
+              <div>
+                <Label>RCS</Label>
+                <Input value={rcs} onChange={(e) => setRcs(e.target.value)} placeholder="Registre du Commerce (optional)" />
+              </div>
+            </div>
+          </div>
           <div><Label>Key contacts</Label><Input value={contacts} onChange={(e) => setContacts(e.target.value)} placeholder="Name, role; Name, role…" /></div>
           <div>
             <Label>Acquisition</Label>
