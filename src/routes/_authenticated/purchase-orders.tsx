@@ -154,31 +154,10 @@ function Body() {
         </div>
       )}
       <PODialog open={open} onOpenChange={setOpen} editing={editing} />
-      <DocumentPreview
-        open={!!previewing}
-        onOpenChange={(v) => { if (!v) setPreviewing(null); }}
-        doc={previewing ? poToDoc(previewing, quotes.find((q) => q.id === previewing.quoteId)?.number) : null}
-        company={previewing ? companies.find((c) => c.id === previewing.companyId) : undefined}
-        client={previewing ? clients.find((c) => c.id === previewing.clientId) : undefined}
-        project={previewing?.projectId ? projects.find((p) => p.id === previewing.projectId) : undefined}
-      />
     </div>
   );
 }
 
-function poToDoc(po: PurchaseOrder, quoteNumber?: string): DocumentData {
-  return {
-    kind: "po",
-    number: po.number,
-    status: po.status,
-    issueDate: po.issueDate,
-    amount: po.amount,
-    currency: po.currency,
-    lines: po.lines,
-    clientReference: po.clientReference,
-    references: quoteNumber ? [{ label: "Quote", value: quoteNumber }] : undefined,
-  };
-}
 
 function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: PurchaseOrder | null }) {
   const companies = useCompanies();
