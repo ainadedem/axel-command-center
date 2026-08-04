@@ -131,10 +131,7 @@ function LoginPage() {
         <div className="h-1 w-full bg-gradient-to-r from-transparent via-primary to-transparent opacity-60" />
         <div className="px-6 py-6 text-center">
           <p className="text-[11px] text-muted-foreground/60 tracking-wide">
-            Axel — Multi-company command center
-          </p>
-          <p className="text-[10px] text-muted-foreground/40 mt-1 tracking-wide">
-            The Axiom Winford Group
+            Axel Business Platform ® by The Axiom Winford Group
           </p>
         </div>
       </div>
