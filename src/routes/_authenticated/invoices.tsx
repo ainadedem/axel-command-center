@@ -515,7 +515,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   }, [companyId, issueDate]);
 
   const companyClients = useMemo(
-    () => clients.filter((c) => contactBelongsTo(c, companyId)).sort((a, b) => a.name.localeCompare(b.name)),
+    () => clients.filter((c: Client) => contactBelongsTo(c, companyId)).sort((a, b) => a.name.localeCompare(b.name)),
     [clients, companyId],
   );
   const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
