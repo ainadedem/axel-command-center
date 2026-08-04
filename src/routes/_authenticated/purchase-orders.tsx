@@ -404,7 +404,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
                           <li key={i} className="flex items-center gap-2 py-1 border-t border-border/40 first:border-0">
                             <span className="text-[10px] text-muted-foreground font-tnum w-8 shrink-0">v{versionNumber}</span>
                             <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                            <a href={v.url} download={v.name} target="_blank" rel="noreferrer" className="flex-1 truncate text-primary hover:underline">{v.name ?? "PO file"}</a>
+                            <button type="button" onClick={() => openStoredFile(v.url)} className="flex-1 truncate text-left text-primary hover:underline">{v.name ?? "PO file"}</button>
                             <span className="text-[10px] text-muted-foreground font-tnum">{format(parseISO(v.uploadedAt), "MMM d, yyyy · HH:mm")}</span>
                             <button type="button" onClick={() => setDocumentHistory((h) => h.filter((_, idx) => idx !== i))} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive" title="Delete this version"><X className="h-3 w-3" /></button>
                           </li>
