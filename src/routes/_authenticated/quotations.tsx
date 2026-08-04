@@ -20,6 +20,7 @@ import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { RICH_TEXT_HINT } from "@/lib/rich-text";
 
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -662,6 +663,9 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
               <p className="text-[11px] text-muted-foreground">Rates auto-fill from the rate card (benefits 35%, OH 70%, margin 15%, 1760h / 218d per year). Override by editing the Rate cell — that detaches the line from the card.</p>
             ) : (
               <p className="text-[11px] text-muted-foreground">Standard quotation — enter description, quantity and unit price freely. Nothing is auto-priced.</p>
+            )}
+            {lines.length > 0 && (
+              <p className="text-[11px] text-muted-foreground">{RICH_TEXT_HINT}</p>
             )}
           </div>
 
