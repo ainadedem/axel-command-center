@@ -1325,3 +1325,71 @@ export async function pushLocalExtrasSeed(): Promise<Record<string, number>> {
 
   return counts;
 }
+
+/* ───────────────────────── BANK RECONCILIATIONS ───────────────────────── */
+
+export interface BankReconciliation {
+  id: string;
+  accountId: string;
+  periodStart?: string;
+  periodEnd?: string;
+  statementClosingBalance: number;
+  computedClosingBalance: number;
+  difference: number;
+  rowCount: number;
+  statementName?: string;
+  createdAt: string;
+}
+
+const reconFromDb = (r: Record<string, unknown>): BankReconciliation => ({
+  id: r.id as string,
+  accountId: r.account_id as string,
+  periodStart: (r.period_start as string) ?? undefined,
+  periodEnd: (r.period_end as string) ?? undefined,
+  statementClosingBalance: Number(r.statement_closing_balance) || 0,
+  computedClosingBalance: Number(r.computed_closing_balance) || 0,
+  difference: Number(r.difference) || 0,
+  rowCount: Number(r.row_count) || 0,
+  statementName: (r.statement_name as string) ?? undefined,
+  createdAt: (r.created_at as string) ?? new Date().toISOString(),
+});
+
+export async function fetchReconciliations(accountId: string): Promise<BankReconciliation[]> {
+  if (!isUuid(accountId)) return [];
+  const { data, error } = await supabase
+    .from("bank_reconciliations")
+    .select("*")
+    .eq("account_id", accountId)
+    .order("created_at", { ascending: false });
+  if (error) { console.warn("[db-sync] fetchReconciliations", error.message); return []; }
+  return (data ?? []).map((r) => reconFromDb(r as Record<string, unknown>));
+}
+
+export async function saveReconciliation(input: {
+  companyId: string;
+  accountId: string;
+  periodStart?: string;
+  periodEnd?: string;
+  statementClosingBalance: number;
+  computedClosingBalance: number;
+  difference: number;
+  rowCount: number;
+  statementName?: string;
+}): Promise<void> {
+  const dbCompany = toDbCompanyId(input.companyId);
+  if (!dbCompany || !isUuid(input.accountId)) return;
+  const { data: auth } = await supabase.auth.getUser();
+  const { error } = await supabase.from("bank_reconciliations").insert({
+    company_id: dbCompany,
+    account_id: input.accountId,
+    period_start: input.periodStart || null,
+    period_end: input.periodEnd || null,
+    statement_closing_balance: input.statementClosingBalance,
+    computed_closing_balance: input.computedClosingBalance,
+    difference: input.difference,
+    row_count: input.rowCount,
+    statement_name: input.statementName ?? null,
+    created_by: auth.user?.id ?? null,
+  });
+  if (error) console.warn("[db-sync] saveReconciliation", error.message);
+}
