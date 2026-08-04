@@ -214,7 +214,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
       setDocumentHistory(editing.documentHistory ?? []);
     } else {
       const cid = companies[0]?.id ?? "";
-      setNumber(cid ? nextNumber("po", cid) : ""); setClientReference("");
+      setNumber(""); setClientReference("");
       setCompanyId(cid); setClientId(""); setProjectId(""); setQuoteId("");
       setIssueDate(today); setAmount("0"); setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("issued");
       setDocumentUrl(undefined); setDocumentName(undefined); setDocumentType(undefined);
@@ -224,11 +224,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     setShowErrors(false);
   }, [open, editing, companies, today]);
 
-  useEffect(() => {
-    if (!open || editing || !companyId) return;
-    setNumber(nextNumber("po", companyId));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyId]);
+
 
   const handleFile = (file: File) => {
     setUploadError("");
