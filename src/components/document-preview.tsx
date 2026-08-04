@@ -119,13 +119,6 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
     company?.nif && `NIF ${company.nif}`,
     company?.stat && `STAT ${company.stat}`,
   ].filter(Boolean) as string[];
-  const clientLines = [
-    client?.name, client?.address, client?.email, client?.phone,
-  ].filter(Boolean) as string[];
-  const clientLegal = [
-    client?.nif && `NIF ${client.nif}`,
-    client?.stat && `STAT ${client.stat}`,
-  ].filter(Boolean) as string[];
   const poRef = (doc.references ?? []).find((r) => r.label.toUpperCase() === "PO")?.value;
   const taxMeta = [
     client?.nif && `NIF: ${client.nif}`,
