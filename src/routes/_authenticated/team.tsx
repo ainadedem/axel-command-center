@@ -51,8 +51,8 @@ function TeamPage() {
     return companyById.get(id)?.shortName || companyById.get(id)?.name || "-";
   };
 
-
   const fields = useMemo<FieldDef<TeamMember>[]>(() => [
+
     { key: "firstName", label: "First name", type: "string", accessor: (m) => m.firstName || m.name },
     { key: "lastName", label: "Last name", type: "string", accessor: (m) => m.lastName ?? "" },
     { key: "email", label: "Email", type: "string", accessor: (m) => m.email ?? "", noGroup: true },
