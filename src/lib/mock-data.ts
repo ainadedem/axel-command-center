@@ -41,6 +41,23 @@ export interface Company {
   bankAccount?: string;
   /** SWIFT / BIC for international wires. */
   bankSwift?: string;
+  /** Payment details — domestic RIB (Madagascar). */
+  bankHolder?: string;
+  bankCode?: string;
+  branchCode?: string;
+  accountNumber?: string;
+  ribKey?: string;
+  /** International transfers. */
+  iban?: string;
+  intlEnabled?: boolean;
+  /** Mobile money. */
+  mobileEnabled?: boolean;
+  mobileProvider?: string;
+  mobileNumber?: string;
+  mobileName?: string;
+  /** Print the payment details block on documents. */
+  showPaymentDetails?: boolean;
+
   /** Logo data URL or remote URL printed in the header. */
   logoUrl?: string;
 }
