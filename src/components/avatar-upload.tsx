@@ -110,6 +110,7 @@ export function AvatarUpload({ value, onChange, name, size = 64, square, folder 
 
 /** Read-only avatar for lists. Falls back to initials. */
 export function Avatar({ src, name, size = 32, square, className }: { src?: string; name?: string; size?: number; square?: boolean; className?: string }) {
+  const url = useFileUrl(src);
   return (
     <div
       className={cn(
@@ -119,8 +120,8 @@ export function Avatar({ src, name, size = 32, square, className }: { src?: stri
       )}
       style={{ width: size, height: size, fontSize: Math.max(9, size / 3) }}
     >
-      {src ? (
-        <img src={src} alt={name ?? ""} className="w-full h-full object-cover" />
+      {url ? (
+        <img src={url} alt={name ?? ""} className="w-full h-full object-cover" />
       ) : (
         <span className="text-foreground/80">{initialsOf(name)}</span>
       )}
