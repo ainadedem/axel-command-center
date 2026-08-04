@@ -266,62 +266,155 @@ function AccountDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   );
 }
 
+type ReconStatus = "all" | "balanced" | "difference" | "adjusted";
+
+function statusOf(r: BankReconciliation): Exclude<ReconStatus, "all"> {
+  if (Math.abs(r.difference) < 1) return r.adjustmentAmount ? "adjusted" : "balanced";
+  return r.adjustmentAmount ? "adjusted" : "difference";
+}
+
 function ReconciliationHistoryDialog({ open, onOpenChange, account }: { open: boolean; onOpenChange: (v: boolean) => void; account: Account | null }) {
+  const companies = useCompanies();
   const [rows, setRows] = useState<BankReconciliation[]>([]);
   const [loading, setLoading] = useState(false);
+  const [q, setQ] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [status, setStatus] = useState<ReconStatus>("all");
 
   useEffect(() => {
     if (!open || !account) return;
+    setQ(""); setFrom(""); setTo(""); setStatus("all");
     setLoading(true);
     fetchReconciliations(account.id).then((r) => { setRows(r); setLoading(false); });
   }, [open, account]);
 
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return rows
+      .filter((r) => {
+        if (needle && !(r.statementName ?? "").toLowerCase().includes(needle)) return false;
+        const day = r.createdAt.slice(0, 10);
+        const start = r.periodStart ?? day;
+        const end = r.periodEnd ?? day;
+        if (from && end < from && day < from) return false;
+        if (to && start > to && day > to) return false;
+        if (status !== "all" && statusOf(r) !== status) return false;
+        return true;
+      })
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }, [rows, q, from, to, status]);
+
+  const summaryOf = (r: BankReconciliation): ReconciliationSummary => ({
+    companyName: account ? companies.find((c) => c.id === account.companyId)?.name : undefined,
+    accountName: account?.name ?? "",
+    currency: account?.currency ?? "MGA",
+    statementName: r.statementName,
+    createdAt: r.createdAt,
+    periodStart: r.periodStart,
+    periodEnd: r.periodEnd,
+    openingBalance: r.openingBalance,
+    openingBalanceDate: account?.openingBalanceDate,
+    expectedClosing: r.computedClosingBalance,
+    statementClosing: r.statementClosingBalance,
+    difference: r.difference,
+    adjustmentAmount: r.adjustmentAmount,
+    rowCount: r.rowCount,
+  });
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl">
         <DialogHeader><DialogTitle>Reconciliation history {account ? `· ${account.name}` : ""}</DialogTitle></DialogHeader>
-        <div className="py-2">
+
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="relative flex-1 min-w-[180px]">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search file name…" className="h-8 pl-8 text-xs" />
+          </div>
+          <div>
+            <Label className="text-[10px] text-muted-foreground">From</Label>
+            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-8 text-xs" />
+          </div>
+          <div>
+            <Label className="text-[10px] text-muted-foreground">To</Label>
+            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-8 text-xs" />
+          </div>
+          <Select value={status} onValueChange={(v) => setStatus(v as ReconStatus)}>
+            <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="balanced">Balanced</SelectItem>
+              <SelectItem value="difference">Difference</SelectItem>
+              <SelectItem value="adjusted">Adjusted</SelectItem>
+            </SelectContent>
+          </Select>
+          {(q || from || to || status !== "all") && (
+            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setQ(""); setFrom(""); setTo(""); setStatus("all"); }}>Clear</Button>
+          )}
+        </div>
+
+        <div className="py-1">
           {loading ? (
             <div className="text-sm text-muted-foreground py-6 text-center">Loading…</div>
           ) : rows.length === 0 ? (
             <div className="text-sm text-muted-foreground py-6 text-center">
               This account has never been reconciled. Upload a bank statement to prove the balance is accurate.
             </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-sm text-muted-foreground py-6 text-center">No reconciliation matches these filters.</div>
           ) : (
-            <div className="rounded-lg border border-border overflow-hidden">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
-                    <th className="text-left font-medium px-3 py-2">Period</th>
-                    <th className="text-left font-medium px-3 py-2">Statement</th>
-                    <th className="text-right font-medium px-3 py-2">Rows</th>
-                    <th className="text-right font-medium px-3 py-2">Bank closing</th>
-                    <th className="text-right font-medium px-3 py-2">Difference</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r) => {
-                    const ok = Math.abs(r.difference) < 1;
-                    return (
-                      <tr key={r.id} className="border-b border-border/40 last:border-0">
-                        <td className="px-3 py-2 font-tnum text-muted-foreground">
-                          {r.periodStart ? format(parseISO(r.periodStart), "MMM d") : "—"} → {r.periodEnd ? format(parseISO(r.periodEnd), "MMM d, yyyy") : "—"}
-                        </td>
-                        <td className="px-3 py-2 truncate max-w-[200px]">{r.statementName ?? "—"}</td>
-                        <td className="px-3 py-2 text-right font-tnum">{r.rowCount}</td>
-                        <td className="px-3 py-2 text-right font-tnum">{account ? fmtCompact(r.statementClosingBalance, account.currency) : r.statementClosingBalance}</td>
-                        <td className={cn("px-3 py-2 text-right font-tnum", ok ? "text-success" : "text-destructive")}>
-                          <span className="inline-flex items-center gap-1 justify-end">
-                            {ok ? <CheckCircle2 className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
-                            {ok ? "Balanced" : (account ? fmtCompact(r.difference, account.currency) : r.difference)}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <>
+              <div className="text-[11px] text-muted-foreground mb-2">{filtered.length} of {rows.length} reconciliations</div>
+              <div className="rounded-lg border border-border overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                      <th className="text-left font-medium px-3 py-2">Period</th>
+                      <th className="text-left font-medium px-3 py-2">Statement</th>
+                      <th className="text-right font-medium px-3 py-2">Rows</th>
+                      <th className="text-right font-medium px-3 py-2">Bank closing</th>
+                      <th className="text-right font-medium px-3 py-2">Difference</th>
+                      <th className="px-3 py-2 w-20" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((r) => {
+                      const ok = Math.abs(r.difference) < 1;
+                      return (
+                        <tr key={r.id} className="border-b border-border/40 last:border-0 group">
+                          <td className="px-3 py-2 font-tnum text-muted-foreground">
+                            {r.periodStart ? format(parseISO(r.periodStart), "MMM d") : "—"} → {r.periodEnd ? format(parseISO(r.periodEnd), "MMM d, yyyy") : "—"}
+                          </td>
+                          <td className="px-3 py-2 truncate max-w-[200px]">
+                            {r.statementName ?? "—"}
+                            {r.adjustmentAmount ? <span className="ml-2 text-[10px] uppercase tracking-wider text-warning">adjusted</span> : null}
+                          </td>
+                          <td className="px-3 py-2 text-right font-tnum">{r.rowCount}</td>
+                          <td className="px-3 py-2 text-right font-tnum">{account ? fmtCompact(r.statementClosingBalance, account.currency) : r.statementClosingBalance}</td>
+                          <td className={cn("px-3 py-2 text-right font-tnum", ok ? "text-success" : "text-destructive")}>
+                            <span className="inline-flex items-center gap-1 justify-end">
+                              {ok ? <CheckCircle2 className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
+                              {ok ? "Balanced" : (account ? fmtCompact(r.difference, account.currency) : r.difference)}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2">
+                            <div className="flex gap-1 justify-end opacity-0 group-hover:opacity-100">
+                              <TooltipHint label="Export summary as CSV">
+                                <button onClick={() => exportReconciliationCsv(summaryOf(r))} className="h-6 w-6 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Download className="h-3.5 w-3.5" /></button>
+                              </TooltipHint>
+                              <TooltipHint label="Export summary as PDF">
+                                <button onClick={() => exportReconciliationPdf(summaryOf(r))} className="h-6 w-6 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><FileDown className="h-3.5 w-3.5" /></button>
+                              </TooltipHint>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
         <DialogFooter><Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button></DialogFooter>
