@@ -8,6 +8,7 @@ import {
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { DOCUMENTS_BUCKET, uploadFile, openStoredFile } from "@/lib/storage";
+import { dbCompanyId } from "@/lib/db-sync";
 import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -213,7 +214,9 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     if (file.size > 10 * 1024 * 1024) { setUploadError("Max 10 MB"); return; }
     setUploading(true);
     try {
-      const ref = await uploadFile(DOCUMENTS_BUCKET, "purchase-orders", file);
+      const scope = dbCompanyId(companyId);
+      if (!scope) throw new Error("Company is not synced yet — try again in a moment");
+      const ref = await uploadFile(DOCUMENTS_BUCKET, `${scope}/purchase-orders`, file);
       // If replacing an existing doc, push the old one onto history.
       if (documentUrl) {
         setDocumentHistory((h) => [

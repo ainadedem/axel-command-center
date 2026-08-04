@@ -6,7 +6,7 @@
 //   Axiom invoices:  INV-26-0001  → INV-26-0002
 //   Logia invoices:  FAC-LOG/01-26/003 → FAC-LOG/01-26/004
 //   Bare prefix:     Q-12345 → Q-12346
-import { invoices, quotes, purchaseOrders } from "./mock-data";
+import { invoices, quotes, purchaseOrders, companies, companyCode } from "./mock-data";
 
 export type DocKind = "invoice" | "quote" | "po";
 
@@ -53,13 +53,62 @@ function bump(n: string): string {
   return n.slice(0, idx) + next + n.slice(idx + m[1].length);
 }
 
+/** Highest trailing numeric group across a pool of numbers (0 when empty). */
+function highestSequence(existing: string[]): number {
+  let best = 0;
+  for (const n of existing) {
+    const m = n.match(/(\d+)(?!.*\d)/);
+    if (m) best = Math.max(best, parseInt(m[1], 10));
+  }
+  return best;
+}
+
+/**
+ * Fixed house formats that win over inference.
+ * Logia: INV/LOG/MM-YY/NNN (invoices) and DEV/LOG/MM-YY/NNN (quotes),
+ * with a continuous 3-digit sequence that never resets.
+ */
+function formatOverride(
+  kind: DocKind,
+  companyId: string,
+): ((issueDate: string | undefined, seq: number) => string) | null {
+  const company = companies.find((c) => c.id === companyId);
+  if (!company) return null;
+  if (companyCode(company).toLowerCase() !== "log") return null;
+  const prefix = kind === "invoice" ? "INV" : kind === "quote" ? "DEV" : null;
+  if (!prefix) return null;
+  return (issueDate, seq) => {
+    const d = issueDate ? new Date(`${issueDate}T00:00:00`) : new Date();
+    const date = isNaN(d.getTime()) ? new Date() : d;
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yy = String(date.getFullYear()).slice(-2);
+    return `${prefix}/LOG/${mm}-${yy}/${String(seq).padStart(3, "0")}`;
+  };
+}
+
 /**
  * Returns the next number for the given kind, modelled on the latest existing
  * document of the same kind for that company. Guaranteed not to collide with
  * an existing number.
  */
-export function nextNumber(kind: DocKind, companyId: string): string {
+export function nextNumber(
+  kind: DocKind,
+  companyId: string,
+  issueDate?: string,
+): string {
   const existing = pool(kind, companyId);
+
+  const override = formatOverride(kind, companyId);
+  if (override) {
+    const seq = highestSequence(existing) + 1;
+    let candidate = override(issueDate, seq);
+    let guard = 0;
+    while (isNumberTaken(kind, companyId, candidate) && guard++ < 1000) {
+      candidate = bump(candidate);
+    }
+    return candidate;
+  }
+
   if (existing.length === 0) {
     const yy = String(new Date().getFullYear()).slice(-2);
     return `${FALLBACK_PREFIX[kind]}-${yy}-0001`;

@@ -43,6 +43,10 @@ export function setCompanyIdMap(entries: Array<{ localId: string; dbId: string }
 }
 
 const toDbCompanyId = (localId: string) => companyDbIdByLocal.get(localId);
+
+/** Public lookup: local company id (or uuid) → DB uuid, when known. */
+export const dbCompanyId = (localId: string): string | undefined =>
+  companyDbIdByLocal.get(localId) ?? (companyLocalIdByDb.has(localId) ? localId : undefined);
 const toLocalCompanyId = (dbId: string) => companyLocalIdByDb.get(dbId) ?? dbId;
 
 const isUuid = (v: string) =>
