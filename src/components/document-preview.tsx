@@ -246,10 +246,10 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
         <thead>
           <tr>
             <th>Description</th>
-            <th class="num" style="width: 60px;">Qty</th>
+            <th class="num" style="width: 70px;">Quantity</th>
             <th class="num" style="width: 60px;">Unit</th>
-            <th class="num" style="width: 110px;">Rate</th>
-            <th class="num" style="width: 120px;">Amount</th>
+            <th class="num" style="width: 120px;">Unit Price HT</th>
+            <th class="num" style="width: 130px;">Total HT</th>
           </tr>
         </thead>
         <tbody>${linesHtml}</tbody>
