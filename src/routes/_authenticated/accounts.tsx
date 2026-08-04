@@ -203,11 +203,11 @@ function AccountDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       companyId, name, type, currency,
       openingBalance: opening,
       openingBalanceDate: openingDate || undefined,
-      ...(editing ? {} : { balance: opening }),
     };
     if (editing) accountsStore.update(editing.id, data);
-    else accountsStore.add({ id: newId("acc"), ...data });
+    else accountsStore.add({ id: newId("acc"), balance: opening, ...data });
     onOpenChange(false);
+    return;
   };
 
   return (
