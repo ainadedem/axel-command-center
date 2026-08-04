@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { BankAccountSelect } from "@/components/bank-account-select";
+import { defaultBankAccount } from "@/lib/payment-details";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -467,6 +469,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [poWaived, setPoWaived] = useState(false);
   const [poWaiverReason, setPoWaiverReason] = useState("");
   const [subject, setSubject] = useState("");
+  const [bankAccountId, setBankAccountId] = useState("");
 
   const [issueDate, setIssueDate] = useState(today);
   const [dueDate, setDueDate] = useState(today);
@@ -483,6 +486,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setProjectId(editing.projectId ?? ""); setPoId(editing.poId ?? "");
       setPoWaived(Boolean(editing.poWaived)); setPoWaiverReason(editing.poWaiverReason ?? "");
       setSubject(editing.subject ?? "");
+      setBankAccountId(editing.bankAccountId ?? "");
 
       setIssueDate(editing.issueDate); setDueDate(editing.dueDate);
       setAmount(String(editing.amount)); setPaid(String(editing.paid));
@@ -490,7 +494,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     } else {
       const cid = companies[0]?.id ?? "";
       setNumber(cid ? nextNumber("invoice", cid, today) : ""); setCompanyId(cid); setClientId("");
-      setProjectId(""); setPoId(""); setPoWaived(false); setPoWaiverReason(""); setSubject("");
+      setProjectId(""); setPoId(""); setPoWaived(false); setPoWaiverReason(""); setSubject(""); setBankAccountId("");
 
       setIssueDate(today); setDueDate(today); setAmount("0"); setPaid("0");
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
@@ -584,6 +588,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       quoteId: linkedQuote?.id,
       issueDate, dueDate, amount: a, paid: p, currency, status: finalStatus,
       subject: subject.trim() || undefined,
+      bankAccountId: bankAccountId || defaultBankAccount(companies.find((c) => c.id === companyId))?.id,
       lines: inheritedLines ? inheritedLines.map((l) => ({ ...l })) : (editing?.lines ?? undefined),
     };
     if (editing) invoicesStore.update(editing.id, data);
@@ -691,6 +696,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
             <Label>Object</Label>
             <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Brand campaign production — Q3 2026" />
           </div>
+          <BankAccountSelect company={companies.find((c) => c.id === companyId)} value={bankAccountId} onChange={setBankAccountId} />
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Issue date</Label><Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
             <div><Label>Due date</Label><Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
