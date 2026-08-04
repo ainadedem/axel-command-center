@@ -29569,24 +29569,14 @@
 "journal": "ACH",
 "date": "2026-06-30",
 "piece": "056/108",
-"description": "Affiliation marketing mensuel mois de Juin de Logia par Axiom",
+"description": "Affiliation marketing mensuel mois de Juin de Logia par Axiom / Affiliation marketing mensuel mois de Juin de Logia par Axiom",
 "lines": [
 {
 "account": "604000",
 "label": "ACHATS DE PRESTATIONS DE SERVICES",
 "debit": 1500000.0,
 "credit": 0.0
-}
-]
 },
-{
-"id": "je_1263",
-"companyId": "log",
-"journal": "ACH",
-"date": "2026-06-30",
-"piece": "0.52",
-"description": "Affiliation marketing mensuel mois de Juin de Logia par Axiom",
-"lines": [
 {
 "account": "467500",
 "label": "AXIOM",
