@@ -126,6 +126,13 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
     client?.nif && `NIF ${client.nif}`,
     client?.stat && `STAT ${client.stat}`,
   ].filter(Boolean) as string[];
+  const poRef = (doc.references ?? []).find((r) => r.label.toUpperCase() === "PO")?.value;
+  const taxMeta = [
+    client?.nif && `NIF: ${client.nif}`,
+    client?.stat && `STAT: ${client.stat}`,
+    client?.rcs && `RCS: ${client.rcs}`,
+    poRef && `PO Ref: ${poRef}`,
+  ].filter(Boolean) as string[];
   const bank = [
     company?.bankName && `Bank: ${company.bankName}`,
     company?.bankAccount && `Account / IBAN: ${company.bankAccount}`,
