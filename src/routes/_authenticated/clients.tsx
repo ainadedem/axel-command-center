@@ -525,6 +525,9 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   const [address, setAddress] = useState("");
   const [industry, setIndustry] = useState("");
   const [contacts, setContacts] = useState("");
+  const [nif, setNif] = useState("");
+  const [stat, setStat] = useState("");
+  const [rcs, setRcs] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [status, setStatus] = useState<"lead" | "client">("client");
   const [categories, setCategories] = useState<ContactCategory[]>(["client"]);
