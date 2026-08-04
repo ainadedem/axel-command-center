@@ -451,6 +451,9 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [clientId, setClientId] = useState("");
   const [projectId, setProjectId] = useState<string>("");
   const [poId, setPoId] = useState<string>("");
+  const [poWaived, setPoWaived] = useState(false);
+  const [poWaiverReason, setPoWaiverReason] = useState("");
+
   const [issueDate, setIssueDate] = useState(today);
   const [dueDate, setDueDate] = useState(today);
   const [amount, setAmount] = useState("0");
