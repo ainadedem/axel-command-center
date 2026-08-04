@@ -248,6 +248,7 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
               <SelectTrigger><SelectValue placeholder="Select a company" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All companies</SelectItem>
+                <SelectItem value="none">No company</SelectItem>
                 {accessibleCompanies.map((c) => (
                   <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                 ))}
