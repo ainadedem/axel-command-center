@@ -1,6 +1,8 @@
-import { useRef } from "react";
-import { Camera, X } from "lucide-react";
+import { useRef, useState } from "react";
+import { Camera, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AVATARS_BUCKET, uploadFile } from "@/lib/storage";
+import { useFileUrl } from "@/hooks/use-file-url";
 
 interface AvatarUploadProps {
   value?: string;
