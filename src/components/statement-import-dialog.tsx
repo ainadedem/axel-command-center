@@ -236,9 +236,13 @@ async function fileToCsv(file: File): Promise<string> {
 
 /* ─── Component ─────────────────────────────────────────────────────── */
 
+const STEPS = ["Upload", "Opening balance", "Review rows", "Closing balance"] as const;
+
 export function StatementImportDialog({
   open, onOpenChange, account,
 }: { open: boolean; onOpenChange: (v: boolean) => void; account: Account | null }) {
+  const companies = useCompanies();
+  const [step, setStep] = useState(0);
   const [fileName, setFileName] = useState("");
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [error, setError] = useState("");
@@ -246,10 +250,21 @@ export function StatementImportDialog({
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
   const [postAdjustment, setPostAdjustment] = useState(false);
+  const [openingInput, setOpeningInput] = useState("");
+  const [openingDateInput, setOpeningDateInput] = useState("");
+  const [done, setDone] = useState<ReconciliationSummary | null>(null);
+
+  useEffect(() => {
+    if (!open || !account) return;
+    setOpeningInput(String(openingOf(account)));
+    setOpeningDateInput(account.openingBalanceDate ?? "");
+  }, [open, account]);
 
   const reset = () => {
+    setStep(0);
     setFileName(""); setRows([]); setError("");
     setClosingInput(""); setPeriodStart(""); setPeriodEnd(""); setPostAdjustment(false);
+    setDone(null);
   };
 
   const onFile = async (file: File) => {
@@ -264,6 +279,7 @@ export function StatementImportDialog({
       const dates = parsed.map((r) => r.date).sort();
       setPeriodStart(dates[0]);
       setPeriodEnd(dates[dates.length - 1]);
+      setStep(1);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to read the file.");
     }
@@ -281,10 +297,24 @@ export function StatementImportDialog({
   const difference = hasClosing ? bankClosing - expectedClosing : 0;
   const balanced = hasClosing && Math.abs(difference) < 1;
 
+  const openingMismatch = !!(periodStart && openingDateInput && periodStart < openingDateInput);
+
   const toggleRow = (key: number) =>
     setRows((prev) => prev.map((r) => (r.key === key ? { ...r, include: !r.include } : r)));
 
   const money = (n: number) => account ? fmtCompact(n, account.currency) : String(n);
+
+  const saveOpening = () => {
+    if (!account) return;
+    const v = Number(openingInput);
+    if (isNaN(v)) return;
+    if (v !== openingOf(account) || (openingDateInput || undefined) !== account.openingBalanceDate) {
+      accountsStore.update(account.id, {
+        openingBalance: v,
+        openingBalanceDate: openingDateInput || undefined,
+      });
+    }
+  };
 
   const doImport = async () => {
     if (!account || !included.length) return;
@@ -369,9 +399,12 @@ export function StatementImportDialog({
     }
 
     // Optional balancing adjustment so the ledger matches the bank exactly
-    if (postAdjustment && hasClosing && Math.abs(difference) >= 1) {
+    const willAdjust = postAdjustment && hasClosing && Math.abs(difference) >= 1;
+    let adjustmentId: string | undefined;
+    if (willAdjust) {
+      adjustmentId = newId("tx");
       transactionsStore.add({
-        id: newId("tx"),
+        id: adjustmentId,
         companyId: account.companyId,
         accountId: account.id,
         date: periodEnd || new Date().toISOString().slice(0, 10),
@@ -384,7 +417,7 @@ export function StatementImportDialog({
       });
     }
 
-    const finalComputed = postAdjustment && hasClosing ? expectedClosing + difference : expectedClosing;
+    const finalComputed = willAdjust ? expectedClosing + difference : expectedClosing;
 
     accountsStore.update(account.id, {
       balance: finalComputed,
@@ -402,11 +435,47 @@ export function StatementImportDialog({
       difference: hasClosing ? bankClosing - finalComputed : 0,
       rowCount: included.length,
       statementName: fileName,
+      openingBalance: openingOf(account),
+      adjustmentAmount: willAdjust ? Math.abs(difference) : undefined,
+      adjustmentTransactionId: adjustmentId,
     });
 
-    reset();
-    onOpenChange(false);
+    setDone({
+      companyName: companies.find((c) => c.id === account.companyId)?.name,
+      accountName: account.name,
+      currency: account.currency,
+      statementName: fileName,
+      createdAt: now,
+      periodStart: periodStart || undefined,
+      periodEnd: periodEnd || undefined,
+      openingBalance: openingOf(account),
+      openingBalanceDate: account.openingBalanceDate,
+      ledgerBefore,
+      movements,
+      expectedClosing,
+      statementClosing: hasClosing ? bankClosing : expectedClosing,
+      difference: hasClosing ? bankClosing - finalComputed : 0,
+      adjustmentAmount: willAdjust ? Math.abs(difference) : undefined,
+      rowCount: included.length,
+      lines: rows.map((r) => ({
+        date: r.date,
+        description: r.description,
+        amount: r.amount,
+        type: r.type,
+        matched: r.matchedInvoiceId ? invoicesArr.find((i) => i.id === r.matchedInvoiceId)?.number : undefined,
+        included: r.include,
+        duplicate: r.duplicate,
+      })),
+    });
   };
+
+  const canNext =
+    step === 0 ? rows.length > 0
+    : step === 1 ? openingInput.trim() !== "" && !isNaN(Number(openingInput))
+    : step === 2 ? included.length > 0
+    : true;
+
+  const close = () => { reset(); onOpenChange(false); };
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
@@ -415,8 +484,57 @@ export function StatementImportDialog({
           <DialogTitle>Reconcile bank statement {account ? `· ${account.name}` : ""}</DialogTitle>
         </DialogHeader>
 
+        {done ? (
+          <div className="py-4 space-y-4">
+            <div className={cn("rounded-lg border p-4 flex items-start gap-3",
+              Math.abs(done.difference) < 1 ? "border-success/40 bg-success/10" : "border-warning/40 bg-warning/10")}>
+              {Math.abs(done.difference) < 1
+                ? <CheckCircle2 className="h-5 w-5 text-success mt-0.5" />
+                : <AlertCircle className="h-5 w-5 text-warning mt-0.5" />}
+              <div className="text-sm">
+                <div className="font-medium">
+                  {done.rowCount} transactions imported
+                  {done.adjustmentAmount ? " · balancing adjustment posted" : ""}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {Math.abs(done.difference) < 1
+                    ? "The ledger now matches the bank statement."
+                    : `Remaining difference of ${money(Math.abs(done.difference))} vs the bank.`}
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => exportReconciliationCsv(done)}>
+                <Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => exportReconciliationPdf(done)}>
+                <FileDown className="h-3.5 w-3.5 mr-1.5" /> Export PDF
+              </Button>
+            </div>
+            <DialogFooter><Button onClick={close}>Done</Button></DialogFooter>
+          </div>
+        ) : (
+        <>
+        {/* Stepper */}
+        <div className="flex items-center gap-2 text-[11px]">
+          {STEPS.map((s, i) => (
+            <div key={s} className="flex items-center gap-2">
+              <span className={cn(
+                "flex items-center gap-1.5 rounded-full border px-2.5 py-1",
+                i === step ? "border-primary/50 bg-primary/10 text-primary font-medium"
+                : i < step ? "border-success/40 bg-success/10 text-success"
+                : "border-border text-muted-foreground",
+              )}>
+                <span className="font-tnum">{i + 1}</span> {s}
+              </span>
+              {i < STEPS.length - 1 && <span className="h-px w-4 bg-border" />}
+            </div>
+          ))}
+        </div>
+
         <div className="space-y-4 py-2">
-          {!rows.length ? (
+          {/* STEP 1 — upload */}
+          {step === 0 && (
             <label className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border bg-surface/40 p-10 cursor-pointer hover:bg-surface-elevated/40 transition">
               <Upload className="h-7 w-7 text-muted-foreground" />
               <div className="text-sm">
@@ -424,7 +542,8 @@ export function StatementImportDialog({
               </div>
               <p className="text-[11px] text-muted-foreground text-center max-w-md">
                 Expected columns: <code>date, description, amount</code> — or <code>date, description, debit, credit</code>.
-                Rows already in the ledger are detected and skipped, and invoices are auto-matched when their number appears in the description.
+                The statement period is detected automatically. Rows already in the ledger are skipped, and invoices are
+                auto-matched when their number appears in the description.
               </p>
               <input
                 type="file"
@@ -433,125 +552,160 @@ export function StatementImportDialog({
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }}
               />
             </label>
-          ) : (
-            <>
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{fileName}</span>
-                  <span className="text-muted-foreground">· {rows.length} rows</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-success/40 text-success bg-success/10">
-                    {matched} matched
+          )}
+
+          {/* File chip on every later step */}
+          {step > 0 && (
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{fileName}</span>
+                <span className="text-muted-foreground">· {rows.length} rows</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-success/40 text-success bg-success/10">
+                  {matched} matched
+                </span>
+                {duplicates > 0 && (
+                  <span className="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10">
+                    {duplicates} duplicate
                   </span>
-                  {duplicates > 0 && (
-                    <span className="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10">
-                      {duplicates} duplicate
-                    </span>
-                  )}
-                  <Button variant="outline" size="sm" onClick={reset}>Clear</Button>
+                )}
+                <Button variant="outline" size="sm" onClick={reset}>Start over</Button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2 — opening balance */}
+          {step === 1 && (
+            <div className="rounded-lg border border-border bg-surface/40 p-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-[11px] text-muted-foreground">Detected period start</Label>
+                  <Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} className="h-8" />
+                </div>
+                <div>
+                  <Label className="text-[11px] text-muted-foreground">Detected period end</Label>
+                  <Input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} className="h-8" />
                 </div>
               </div>
-
-              {/* Reconciliation summary */}
-              <div className="rounded-lg border border-border bg-surface/40 p-4 space-y-3">
-                <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-[11px] text-muted-foreground">Opening balance</Label>
+                  <Input type="number" value={openingInput} onChange={(e) => setOpeningInput(e.target.value)} className="h-8 font-tnum" />
+                </div>
+                <div>
+                  <Label className="text-[11px] text-muted-foreground">Opening balance date</Label>
+                  <Input type="date" value={openingDateInput} onChange={(e) => setOpeningDateInput(e.target.value)} className="h-8" />
+                </div>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Ledger balance before this import: <span className="font-tnum text-foreground">{money(ledgerBefore)}</span>
+              </div>
+              {openingMismatch && (
+                <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-3 text-xs text-warning">
+                  <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
                   <div>
-                    <Label className="text-[11px] text-muted-foreground">Period start</Label>
-                    <Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} className="h-8" />
-                  </div>
-                  <div>
-                    <Label className="text-[11px] text-muted-foreground">Period end</Label>
-                    <Input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} className="h-8" />
-                  </div>
-                  <div>
-                    <Label className="text-[11px] text-muted-foreground">Bank closing balance</Label>
-                    <Input type="number" value={closingInput} onChange={(e) => setClosingInput(e.target.value)} placeholder="From the statement" className="h-8 font-tnum" />
+                    The statement starts on {periodStart}, before the opening balance date ({openingDateInput}).
+                    Rows before the opening date will not count towards the computed balance — set the opening date to
+                    {" "}{periodStart} or earlier if this statement covers the start of the account.
                   </div>
                 </div>
+              )}
+            </div>
+          )}
 
-                <div className="text-xs space-y-1">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Opening balance ({account?.openingBalanceDate ?? "start"})</span><span className="font-tnum">{money(account ? openingOf(account) : 0)}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Ledger balance before import</span><span className="font-tnum">{money(ledgerBefore)}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Statement movements ({included.length} rows)</span><span className="font-tnum">{movements >= 0 ? "+" : "−"}{money(Math.abs(movements))}</span></div>
-                  <div className="flex justify-between font-medium border-t border-border/60 pt-1"><span>Expected closing balance</span><span className="font-tnum">{money(expectedClosing)}</span></div>
-                  {hasClosing && (
-                    <div className={cn("flex justify-between font-medium", balanced ? "text-success" : "text-destructive")}>
-                      <span>{balanced ? "Reconciled — matches the bank" : "Difference vs bank"}</span>
-                      <span className="font-tnum">{balanced ? money(0) : `${difference > 0 ? "+" : "−"}${money(Math.abs(difference))}`}</span>
-                    </div>
-                  )}
-                </div>
+          {/* STEP 3 — review rows */}
+          {step === 2 && (
+            <div className="max-h-[380px] overflow-y-auto rounded-lg border border-border">
+              <table className="w-full text-xs">
+                <thead className="sticky top-0 bg-surface">
+                  <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                    <th className="text-left font-medium px-3 py-2 w-8" />
+                    <th className="text-left font-medium px-3 py-2">Date</th>
+                    <th className="text-left font-medium px-3 py-2">Description</th>
+                    <th className="text-left font-medium px-3 py-2">Match</th>
+                    <th className="text-right font-medium px-3 py-2">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => {
+                    const inv = r.matchedInvoiceId ? invoicesArr.find((x) => x.id === r.matchedInvoiceId) : null;
+                    return (
+                      <tr key={r.key} className={cn("border-b border-border/40 last:border-0", !r.include && "opacity-45")}>
+                        <td className="px-3 py-2">
+                          <input type="checkbox" checked={r.include} onChange={() => toggleRow(r.key)} />
+                        </td>
+                        <td className="px-3 py-2 font-tnum text-muted-foreground">{format(parseISO(r.date), "MMM d, yyyy")}</td>
+                        <td className="px-3 py-2 truncate max-w-[240px]">
+                          {r.description}
+                          {r.duplicate && <span className="ml-2 text-[10px] uppercase tracking-wider text-warning">already in ledger</span>}
+                        </td>
+                        <td className="px-3 py-2">
+                          {inv ? (
+                            <div className="flex flex-col">
+                              <span className="inline-flex items-center gap-1 text-success">
+                                <CheckCircle2 className="h-3 w-3" /> {inv.number}
+                              </span>
+                              {account && inv.currency !== account.currency && (() => {
+                                const remainingInv = Math.max(0, inv.amount - inv.paid);
+                                const settledInAcct = toMGA(Math.min(toMGA(r.amount, account.currency) / FX[inv.currency], remainingInv), inv.currency) / FX[account.currency];
+                                const fx = r.amount - settledInAcct;
+                                if (Math.abs(fx) < 1) return null;
+                                return (
+                                  <span className={cn("text-[10px] font-tnum", fx > 0 ? "text-success" : "text-destructive")}>
+                                    FX {fx > 0 ? "gain" : "loss"} {Math.abs(fx).toLocaleString(undefined, { maximumFractionDigits: 0 })} {account.currency}
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground/60">—</span>
+                          )}
+                        </td>
+                        <td className={cn("px-3 py-2 text-right font-tnum",
+                          r.type === "income" ? "text-success" : "text-destructive")}>
+                          {r.type === "income" ? "+" : "−"}{r.amount.toLocaleString()}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-                {hasClosing && !balanced && (
-                  <label className="flex items-start gap-2 text-xs cursor-pointer">
-                    <input type="checkbox" checked={postAdjustment} onChange={(e) => setPostAdjustment(e.target.checked)} className="mt-0.5" />
-                    <span>
-                      Post a balancing adjustment of <span className="font-tnum font-medium">{money(Math.abs(difference))}</span> (“Écart de rapprochement”)
-                      so the ledger matches the bank from {periodEnd || "today"} on. Otherwise, correct the opening balance on the account.
-                    </span>
-                  </label>
+          {/* STEP 4 — closing balance */}
+          {step === 3 && (
+            <div className="rounded-lg border border-border bg-surface/40 p-4 space-y-3">
+              <div>
+                <Label className="text-[11px] text-muted-foreground">Bank closing balance (from the statement)</Label>
+                <Input type="number" value={closingInput} onChange={(e) => setClosingInput(e.target.value)} placeholder="e.g. 12500000" className="h-9 font-tnum" />
+              </div>
+
+              <div className="text-xs space-y-1">
+                <div className="flex justify-between"><span className="text-muted-foreground">Opening balance ({account?.openingBalanceDate ?? "start"})</span><span className="font-tnum">{money(account ? openingOf(account) : 0)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Ledger balance before import</span><span className="font-tnum">{money(ledgerBefore)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Statement movements ({included.length} rows)</span><span className="font-tnum">{movements >= 0 ? "+" : "−"}{money(Math.abs(movements))}</span></div>
+                <div className="flex justify-between font-medium border-t border-border/60 pt-1"><span>Expected closing balance</span><span className="font-tnum">{money(expectedClosing)}</span></div>
+                {hasClosing && (
+                  <div className={cn("flex justify-between font-medium", balanced ? "text-success" : "text-destructive")}>
+                    <span>{balanced ? "Reconciled — matches the bank" : "Difference vs bank"}</span>
+                    <span className="font-tnum">{balanced ? money(0) : `${difference > 0 ? "+" : "−"}${money(Math.abs(difference))}`}</span>
+                  </div>
                 )}
               </div>
 
-              <div className="max-h-[320px] overflow-y-auto rounded-lg border border-border">
-                <table className="w-full text-xs">
-                  <thead className="sticky top-0 bg-surface">
-                    <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
-                      <th className="text-left font-medium px-3 py-2 w-8" />
-                      <th className="text-left font-medium px-3 py-2">Date</th>
-                      <th className="text-left font-medium px-3 py-2">Description</th>
-                      <th className="text-left font-medium px-3 py-2">Match</th>
-                      <th className="text-right font-medium px-3 py-2">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((r) => {
-                      const inv = r.matchedInvoiceId ? invoicesArr.find((x) => x.id === r.matchedInvoiceId) : null;
-                      return (
-                        <tr key={r.key} className={cn("border-b border-border/40 last:border-0", !r.include && "opacity-45")}>
-                          <td className="px-3 py-2">
-                            <input type="checkbox" checked={r.include} onChange={() => toggleRow(r.key)} />
-                          </td>
-                          <td className="px-3 py-2 font-tnum text-muted-foreground">{format(parseISO(r.date), "MMM d, yyyy")}</td>
-                          <td className="px-3 py-2 truncate max-w-[240px]">
-                            {r.description}
-                            {r.duplicate && <span className="ml-2 text-[10px] uppercase tracking-wider text-warning">already in ledger</span>}
-                          </td>
-                          <td className="px-3 py-2">
-                            {inv ? (
-                              <div className="flex flex-col">
-                                <span className="inline-flex items-center gap-1 text-success">
-                                  <CheckCircle2 className="h-3 w-3" /> {inv.number}
-                                </span>
-                                {account && inv.currency !== account.currency && (() => {
-                                  const remainingInv = Math.max(0, inv.amount - inv.paid);
-                                  const settledInAcct = toMGA(Math.min(toMGA(r.amount, account.currency) / FX[inv.currency], remainingInv), inv.currency) / FX[account.currency];
-                                  const fx = r.amount - settledInAcct;
-                                  if (Math.abs(fx) < 1) return null;
-                                  return (
-                                    <span className={cn("text-[10px] font-tnum", fx > 0 ? "text-success" : "text-destructive")}>
-                                      FX {fx > 0 ? "gain" : "loss"} {Math.abs(fx).toLocaleString(undefined, { maximumFractionDigits: 0 })} {account.currency}
-                                    </span>
-                                  );
-                                })()}
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground/60">—</span>
-                            )}
-                          </td>
-                          <td className={cn("px-3 py-2 text-right font-tnum",
-                            r.type === "income" ? "text-success" : "text-destructive")}>
-                            {r.type === "income" ? "+" : "−"}{r.amount.toLocaleString()}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </>
+              {hasClosing && !balanced && (
+                <label className="flex items-start gap-2 text-xs cursor-pointer">
+                  <input type="checkbox" checked={postAdjustment} onChange={(e) => setPostAdjustment(e.target.checked)} className="mt-0.5" />
+                  <span>
+                    Post a balancing adjustment of <span className="font-tnum font-medium">{money(Math.abs(difference))}</span> (“Écart de rapprochement”)
+                    so the ledger matches the bank from {periodEnd || "today"} on. Otherwise, go back and correct the opening balance.
+                  </span>
+                </label>
+              )}
+            </div>
           )}
 
           {error && (
@@ -562,12 +716,28 @@ export function StatementImportDialog({
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={doImport} disabled={!included.length}>
-            Import {included.length || ""} {included.length ? "transactions" : ""}
-          </Button>
+        <DialogFooter className="gap-2 sm:justify-between">
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <div className="flex gap-2">
+            {step > 0 && (
+              <Button variant="outline" onClick={() => setStep((s) => s - 1)}>Back</Button>
+            )}
+            {step < 3 ? (
+              <Button
+                disabled={!canNext}
+                onClick={() => { if (step === 1) saveOpening(); setStep((s) => s + 1); }}
+              >
+                Next
+              </Button>
+            ) : (
+              <Button onClick={doImport} disabled={!included.length}>
+                Finish · import {included.length} transactions
+              </Button>
+            )}
+          </div>
         </DialogFooter>
+        </>
+        )}
       </DialogContent>
     </Dialog>
   );
