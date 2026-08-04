@@ -107,7 +107,13 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
   const issued = format(parseISO(doc.issueDate), "MMM d, yyyy");
   const due = doc.dueDate ? format(parseISO(doc.dueDate), "MMM d, yyyy") : null;
   const paidOn = doc.paidDate ? format(parseISO(doc.paidDate), "MMM d, yyyy") : null;
-  const balance = (doc.amount ?? 0) - (doc.paid ?? 0);
+  const subtotalHT = doc.amount ?? 0;
+  const vatRate = doc.kind === "invoice" ? (doc.taxRate ?? 20) : (doc.taxRate ?? 0);
+  const vatAmount = doc.kind === "invoice"
+    ? (doc.taxAmount ?? subtotalHT * (vatRate / 100))
+    : (doc.taxAmount ?? 0);
+  const totalTTC = doc.totalAmount ?? subtotalHT + vatAmount;
+  const balance = (doc.kind === "invoice" ? totalTTC : subtotalHT) - (doc.paid ?? 0);
 
   const companyLines = [
     company?.legalName ?? company?.name,
