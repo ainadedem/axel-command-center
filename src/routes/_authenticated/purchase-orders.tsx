@@ -20,8 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, Upload, FileText, X, History, RefreshCw, Eye, AlertTriangle } from "lucide-react";
-import { DocumentPreview, type DocumentData } from "@/components/document-preview";
-import { nextNumber } from "@/lib/numbering";
+
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 
