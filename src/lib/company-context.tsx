@@ -228,42 +228,73 @@ function getHydrationScope(
   return { mode: "scoped", companyIds: dbId ? [dbId] : [] };
 }
 
-async function maybePushSeeds(userId: string) {
-  const seedFlag = `axel.seedPushed.${userId}.v3`;
-  const finSeedFlag = `axel.finSeedPushed.${userId}.v3`;
-  const extrasFlag = `axel.extrasSeedPushed.${userId}.v1`;
+type SeedTable = "clients" | "accounts" | "transactions" | "invoices" | "opportunities";
+
+/** Local company ids that have local rows but zero rows in the backend for `table`. */
+async function companiesMissingRows(
+  table: SeedTable,
+  targets: Array<{ localId: string; dbId: string }>,
+): Promise<string[]> {
+  const missing: string[] = [];
+  for (const target of targets) {
+    const { count, error } = await supabase
+      .from(table)
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", target.dbId);
+    if (error) continue;
+    if ((count ?? 0) === 0) missing.push(target.localId);
+  }
+  return missing;
+}
+
+async function maybePushSeeds(userId: string, idMap: Array<{ localId: string; dbId: string }>) {
+  // v4 flags: the previous versions gated on a global row count, so a company
+  // whose rows were cleared server-side never got re-pushed.
+  const seedFlag = `axel.seedPushed.${userId}.v4`;
+  const finSeedFlag = `axel.finSeedPushed.${userId}.v4`;
+  const extrasFlag = `axel.extrasSeedPushed.${userId}.v2`;
+
+  const targetsFor = (localCompanyIds: string[]) => {
+    const wanted = new Set(localCompanyIds);
+    return idMap.filter((entry) => wanted.has(entry.localId));
+  };
 
   try {
-    const { count: clientCount } = await supabase
-      .from("clients").select("id", { count: "exact", head: true });
-    if (!window.localStorage.getItem(seedFlag) || (clientCount ?? 0) === 0) {
-      const res = await pushLocalSeed();
+    const targets = targetsFor(clientsStore.items.map((c) => c.companyId));
+    const missing = await companiesMissingRows("clients", targets);
+    if (!window.localStorage.getItem(seedFlag) || missing.length > 0) {
+      const res = await pushLocalSeed(missing);
       window.localStorage.setItem(seedFlag, new Date().toISOString());
-      console.info("[pushLocalSeed]", res);
+      console.info("[pushLocalSeed]", res, { repaired: missing });
     }
   } catch (e) {
     console.warn("[pushLocalSeed]", e);
   }
 
   try {
-    const { count: accCount } = await supabase
-      .from("accounts").select("id", { count: "exact", head: true });
-    if (!window.localStorage.getItem(finSeedFlag) || (accCount ?? 0) === 0) {
-      const res = await pushLocalFinancialSeed();
+    // Only flag a company for a table it actually has local rows for, so a
+    // company that legitimately has no invoices isn't re-pushed on every load.
+    const missing = Array.from(new Set([
+      ...(await companiesMissingRows("accounts", targetsFor(accountsStore.items.map((a) => a.companyId)))),
+      ...(await companiesMissingRows("transactions", targetsFor(transactionsStore.items.map((t) => t.companyId)))),
+      ...(await companiesMissingRows("invoices", targetsFor(invoicesStore.items.map((i) => i.companyId)))),
+    ]));
+    if (!window.localStorage.getItem(finSeedFlag) || missing.length > 0) {
+      const res = await pushLocalFinancialSeed(missing);
       window.localStorage.setItem(finSeedFlag, new Date().toISOString());
-      console.info("[pushLocalFinancialSeed]", res);
+      console.info("[pushLocalFinancialSeed]", res, { repaired: missing });
     }
   } catch (e) {
     console.warn("[pushLocalFinancialSeed]", e);
   }
 
   try {
-    const { count: opCount } = await supabase
-      .from("opportunities").select("id", { count: "exact", head: true });
-    if (!window.localStorage.getItem(extrasFlag) || (opCount ?? 0) === 0) {
+    const targets = targetsFor(opportunitiesStore.items.map((o) => o.companyId));
+    const missing = await companiesMissingRows("opportunities", targets);
+    if (!window.localStorage.getItem(extrasFlag) || missing.length > 0) {
       const res = await pushLocalExtrasSeed();
       window.localStorage.setItem(extrasFlag, new Date().toISOString());
-      console.info("[pushLocalExtrasSeed]", res);
+      console.info("[pushLocalExtrasSeed]", res, { repaired: missing });
     }
   } catch (e) {
     console.warn("[pushLocalExtrasSeed]", e);
@@ -356,7 +387,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
       if (!isGroupAdmin) restrictLocalStores(merged);
 
-      await maybePushSeeds(user.id);
+      await maybePushSeeds(user.id, idMap);
       if (cancelled) return;
 
       const currentScope = currentScopeRef.current;

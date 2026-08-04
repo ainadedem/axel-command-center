@@ -704,7 +704,13 @@ if (typeof window !== "undefined") {
     const force = current !== DERIVED_VERSION;
     // A version bump means a new Grand Livre snapshot: replace Logia's entries.
     seedLogiaGrandLivre(force);
-    seedLogiaDerivedData(force);
+    // Self-heal: the Grand Livre is the source of truth. If its derived
+    // transactions/invoices went missing (e.g. wiped by a hydration from an
+    // emptied backend), re-derive them instead of leaving Logia blank.
+    const derivedLost =
+      journalEntriesStore.items.some((e) => e.companyId === "log") &&
+      !transactionsStore.items.some((t) => t.companyId === "log");
+    seedLogiaDerivedData(force || derivedLost);
     const hasLogiaOpps = opportunitiesStore.items.some((o) => o.companyId === "log");
     if (force || !hasLogiaOpps) {
       seedLogiaOpportunities();

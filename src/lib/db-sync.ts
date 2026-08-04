@@ -326,14 +326,16 @@ export async function hydrateContacts(scope: HydrationScope = { mode: "all" }) {
  * local id with the returned DB uuid. Idempotent: once an item has a UUID,
  * it is skipped. Returns counts of records pushed.
  */
-export async function pushLocalSeed(): Promise<{ clients: number; suppliers: number; projects: number }> {
+export async function pushLocalSeed(forceCompanyIds: string[] = []): Promise<{ clients: number; suppliers: number; projects: number }> {
   let cliN = 0, supN = 0, prjN = 0;
   const idRemap = new Map<string, string>(); // localClientId -> dbId
+  const forced = new Set(forceCompanyIds);
+  const skip = (item: { id: string; companyId: string }) =>
+    (isUuid(item.id) && !forced.has(item.companyId)) || !toDbCompanyId(item.companyId);
 
   // CLIENTS
   for (const c of [...clientsStore.items]) {
-    if (isUuid(c.id)) continue;
-    if (!toDbCompanyId(c.companyId)) continue;
+    if (skip(c)) continue;
     const dbId = await upsertClient(c);
     if (dbId) {
       idRemap.set(c.id, dbId);
@@ -348,8 +350,7 @@ export async function pushLocalSeed(): Promise<{ clients: number; suppliers: num
 
   // SUPPLIERS
   for (const s of [...suppliersStore.items]) {
-    if (isUuid(s.id)) continue;
-    if (!toDbCompanyId(s.companyId)) continue;
+    if (skip(s)) continue;
     const dbId = await upsertSupplier(s);
     if (dbId) {
       const i = suppliersStore.items.findIndex((x) => x.id === s.id);
@@ -698,10 +699,15 @@ export async function hydrateFinancials(scope: HydrationScope = { mode: "all" })
 /* ─────────── PUSH LOCAL FINANCIAL SEED ─────────── */
 
 /** Push locally-seeded accounts/categories/budgets/transactions/invoices to DB.
- *  Idempotent: items already with a UUID id are skipped. */
-export async function pushLocalFinancialSeed(): Promise<{
+ *  Idempotent: items already with a UUID id are skipped, unless their company is
+ *  listed in `forceCompanyIds` (used to repair a company whose rows were cleared
+ *  server-side — the upsert then re-creates the rows with their existing ids). */
+export async function pushLocalFinancialSeed(forceCompanyIds: string[] = []): Promise<{
   accounts: number; categories: number; budgets: number; transactions: number; invoices: number;
 }> {
+  const forced = new Set(forceCompanyIds);
+  const skip = (item: { id: string; companyId: string }) =>
+    (isUuid(item.id) && !forced.has(item.companyId)) || !toDbCompanyId(item.companyId);
   const counts = { accounts: 0, categories: 0, budgets: 0, transactions: 0, invoices: 0 };
   const accMap = new Map<string, string>();
   const catMap = new Map<string, string>();
@@ -713,12 +719,13 @@ export async function pushLocalFinancialSeed(): Promise<{
     invoices: invoicesStore.items.length,
     transactions: transactionsStore.items.length,
     companyMapSize: companyDbIdByLocal.size,
+    forceCompanyIds,
   });
 
 
 
   for (const a of [...accountsStore.items]) {
-    if (isUuid(a.id) || !toDbCompanyId(a.companyId)) continue;
+    if (skip(a)) continue;
     const dbId = await upsertAccount(a);
     if (dbId) {
       accMap.set(a.id, dbId);
@@ -730,7 +737,7 @@ export async function pushLocalFinancialSeed(): Promise<{
   if (counts.accounts) accountsStore.replaceAll([...accountsStore.items]);
 
   for (const c of [...categoriesStore.items]) {
-    if (isUuid(c.id) || !toDbCompanyId(c.companyId)) continue;
+    if (skip(c)) continue;
     const dbId = await upsertCategory(c);
     if (dbId) {
       catMap.set(c.id, dbId);
@@ -742,7 +749,7 @@ export async function pushLocalFinancialSeed(): Promise<{
   if (counts.categories) categoriesStore.replaceAll([...categoriesStore.items]);
 
   for (const b of [...budgetsStore.items]) {
-    if (isUuid(b.id) || !toDbCompanyId(b.companyId)) continue;
+    if (skip(b)) continue;
     const remapped = { ...b, categoryId: catMap.get(b.categoryId) ?? b.categoryId };
     const dbId = await upsertBudget(remapped);
     if (dbId) {
@@ -755,7 +762,7 @@ export async function pushLocalFinancialSeed(): Promise<{
 
   // Invoices first (transactions may reference them).
   for (const inv of [...invoicesStore.items]) {
-    if (isUuid(inv.id) || !toDbCompanyId(inv.companyId)) continue;
+    if (skip(inv)) continue;
     const dbId = await upsertInvoice(inv);
     if (dbId) {
       invMap.set(inv.id, dbId);
@@ -767,7 +774,7 @@ export async function pushLocalFinancialSeed(): Promise<{
   if (counts.invoices) invoicesStore.replaceAll([...invoicesStore.items]);
 
   for (const t of [...transactionsStore.items]) {
-    if (isUuid(t.id) || !toDbCompanyId(t.companyId)) continue;
+    if (skip(t)) continue;
     const remapped: Transaction = {
       ...t,
       accountId: accMap.get(t.accountId) ?? t.accountId,
