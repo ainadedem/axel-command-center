@@ -8,6 +8,7 @@ import {
 } from "@/lib/mock-data";
 import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
 import { newId } from "@/lib/data-store";
+import { defaultTaxRate } from "@/lib/vat";
 import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
