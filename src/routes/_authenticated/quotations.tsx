@@ -573,8 +573,9 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                     {lines.map((l) => (
                       <tr key={l.id} className="border-t border-border/40">
                         <td className="px-2 py-1.5">
-                          <Input className="h-8 text-xs" value={l.description} onChange={(e) => updateLine(l.id, { description: e.target.value })} />
-                          <Input className="h-7 text-[11px] mt-1" placeholder="Details (optional)" value={l.details ?? ""} onChange={(e) => updateLine(l.id, { details: e.target.value })} />
+                          <Textarea rows={2} className="text-xs min-h-[52px]" value={l.description} onChange={(e) => updateLine(l.id, { description: e.target.value })} />
+                          <Textarea rows={2} className="text-[11px] mt-1 min-h-[44px]" placeholder="Details (optional)" value={l.details ?? ""} onChange={(e) => updateLine(l.id, { details: e.target.value })} />
+
                         </td>
                         {mode === "rate-card" && (
                           <td className="px-2 py-1.5">
