@@ -7,6 +7,7 @@ import {
   contactBelongsTo,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
+import { DOCUMENTS_BUCKET, uploadFile, openStoredFile } from "@/lib/storage";
 import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
