@@ -25,6 +25,8 @@ import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, Ban, BadgeCheck, ToggleLeft, ToggleRight } from "lucide-react";
 import { InvoicePreview } from "@/components/invoice-preview";
 import { RecordPaymentDialog } from "@/components/statement-import-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+
 import { Textarea } from "@/components/ui/textarea";
 import { Wallet } from "lucide-react";
 import { nextNumber } from "@/lib/numbering";
@@ -85,6 +87,8 @@ function Body() {
     { key: "project", label: "Project", type: "enum", accessor: (i) => projects.find((p) => p.id === i.projectId)?.name ?? "" },
     { key: "company", label: "Company", type: "enum", accessor: (i) => companies.find((c) => c.id === i.companyId)?.shortName ?? "" },
     { key: "status", label: "Status", type: "enum", accessor: (i) => i.status },
+    { key: "poMissing", label: "PO missing", type: "boolean", accessor: (i) => !i.poId },
+
     { key: "currency", label: "Currency", type: "enum", accessor: (i) => i.currency },
     { key: "issueDate", label: "Issued", type: "date", accessor: (i) => i.issueDate, noGroup: true },
     { key: "dueDate", label: "Due", type: "date", accessor: (i) => i.dueDate, noGroup: true },
@@ -330,6 +334,15 @@ function Body() {
                       </td>
                       <td className="px-5 py-3.5">
                         <span className={cn("text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[inv.status])} title={inv.status === "cancelled" && inv.cancellationReason ? `Cancelled: ${inv.cancellationReason}` : undefined}>{inv.status}</span>
+                        {!inv.poId && inv.status !== "cancelled" && (
+                          <span
+                            className="ml-1.5 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10"
+                            title={inv.poWaived ? `PO bypassed${inv.poWaiverReason ? `: ${inv.poWaiverReason}` : ""}` : "No client PO linked"}
+                          >
+                            <AlertTriangle className="h-2.5 w-2.5" /> PO missing
+                          </span>
+                        )}
+
                         {inv.status === "cancelled" && inv.cancellationReason && (
                           <div className="text-[10px] text-muted-foreground mt-1 max-w-[180px] truncate italic" title={inv.cancellationReason}>“{inv.cancellationReason}”</div>
                         )}
@@ -451,6 +464,9 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [clientId, setClientId] = useState("");
   const [projectId, setProjectId] = useState<string>("");
   const [poId, setPoId] = useState<string>("");
+  const [poWaived, setPoWaived] = useState(false);
+  const [poWaiverReason, setPoWaiverReason] = useState("");
+
   const [issueDate, setIssueDate] = useState(today);
   const [dueDate, setDueDate] = useState(today);
   const [amount, setAmount] = useState("0");
@@ -464,13 +480,16 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     if (editing) {
       setNumber(editing.number); setCompanyId(editing.companyId); setClientId(editing.clientId);
       setProjectId(editing.projectId ?? ""); setPoId(editing.poId ?? "");
+      setPoWaived(Boolean(editing.poWaived)); setPoWaiverReason(editing.poWaiverReason ?? "");
+
       setIssueDate(editing.issueDate); setDueDate(editing.dueDate);
       setAmount(String(editing.amount)); setPaid(String(editing.paid));
       setCurrency(editing.currency); setStatus(editing.status);
     } else {
       const cid = companies[0]?.id ?? "";
       setNumber(cid ? nextNumber("invoice", cid) : ""); setCompanyId(cid); setClientId("");
-      setProjectId(""); setPoId("");
+      setProjectId(""); setPoId(""); setPoWaived(false); setPoWaiverReason("");
+
       setIssueDate(today); setDueDate(today); setAmount("0"); setPaid("0");
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
     }
@@ -535,8 +554,9 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     }
   }, [poId, pos]);
 
-  const processOk = Boolean(poId);
+  const processOk = Boolean(poId) || poWaived;
   const blocked = !processOk && status !== "draft";
+
 
   const submit = () => {
     const invalid = !number.trim() || !companyId || !clientId || blocked;
@@ -553,6 +573,9 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       number, companyId, clientId,
       projectId: projectId || undefined,
       poId: poId || undefined,
+      poWaived: !poId && poWaived,
+      poWaiverReason: !poId && poWaived ? (poWaiverReason.trim() || undefined) : undefined,
+
       quoteId: linkedQuote?.id,
       issueDate, dueDate, amount: a, paid: p, currency, status: finalStatus,
       lines: inheritedLines ? inheritedLines.map((l) => ({ ...l })) : (editing?.lines ?? undefined),
@@ -568,7 +591,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
         <DialogHeader><DialogTitle>{editing ? "Edit invoice" : "New invoice"}</DialogTitle></DialogHeader>
 
         {/* Process strip */}
-        <ProcessStrip hasQuote={Boolean(linkedQuote)} hasPO={Boolean(selectedPO)} />
+        <ProcessStrip hasQuote={Boolean(linkedQuote)} hasPO={Boolean(selectedPO) || poWaived} />
 
         <div className="space-y-4 py-2">
           <FormErrorBanner show={showErrors} />
@@ -607,7 +630,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
 
           <div>
             <Label><RequiredLabel>Purchase order</RequiredLabel></Label>
-            <Select value={poId || "__none__"} onValueChange={(v) => setPoId(v === "__none__" ? "" : v)} disabled={!clientId}>
+            <Select value={poId || "__none__"} onValueChange={(v) => { const next = v === "__none__" ? "" : v; setPoId(next); if (next) setPoWaived(false); }} disabled={!clientId}>
               <SelectTrigger className={cn(!processOk && status !== "draft" && "border-destructive")}>
                 <SelectValue placeholder={clientId ? (clientPOs.length ? "Select PO" : "No PO for this client") : "Select client first"} />
               </SelectTrigger>
@@ -616,13 +639,33 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                 {clientPOs.map((p) => <SelectItem key={p.id} value={p.id}>{p.number} · {fmtAmount(p.amount, p.currency)} · {p.status}</SelectItem>)}
               </SelectContent>
             </Select>
-            {blocked && (
-              <p className="text-[11px] text-destructive mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Process: link an accepted PO before sending the invoice.</p>
+
+            {!poId && (
+              <div className="mt-2 rounded-md border border-warning/40 bg-warning/5 px-3 py-2 space-y-2">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <Checkbox checked={poWaived} onCheckedChange={(v) => setPoWaived(Boolean(v))} className="mt-0.5" />
+                  <span className="text-xs">
+                    <span className="font-medium">Invoice without PO (bypass)</span>
+                    <span className="block text-[11px] text-muted-foreground">The invoice will be flagged <strong>PO missing</strong> everywhere in the system.</span>
+                  </span>
+                </label>
+                {poWaived && (
+                  <Input value={poWaiverReason} onChange={(e) => setPoWaiverReason(e.target.value)} placeholder="Reason (e.g. client confirmed by email)" className="h-8 text-xs" />
+                )}
+              </div>
             )}
-            {!blocked && processOk && (
+
+            {blocked && (
+              <p className="text-[11px] text-destructive mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Link a client PO — or tick the bypass above — before sending the invoice.</p>
+            )}
+            {!blocked && poId && (
               <p className="text-[11px] text-success mt-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Quote → PO → Invoice process complete.</p>
             )}
+            {!poId && poWaived && (
+              <p className="text-[11px] text-warning mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> PO missing — bypass recorded.</p>
+            )}
           </div>
+
 
           <div>
             <Label>Project</Label>

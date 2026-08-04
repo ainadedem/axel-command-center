@@ -508,6 +508,9 @@ const invoiceToDb = (inv: Invoice) => {
     client_id: inv.clientId && isUuid(inv.clientId) ? inv.clientId : null,
     project_id: inv.projectId && isUuid(inv.projectId) ? inv.projectId : null,
     po_id: inv.poId && isUuid(inv.poId) ? inv.poId : null,
+    po_waived: inv.poWaived ?? false,
+    po_waiver_reason: inv.poWaiverReason ?? null,
+
     quote_id: inv.quoteId && isUuid(inv.quoteId) ? inv.quoteId : null,
     number: inv.number,
     issue_date: inv.issueDate,
@@ -529,6 +532,9 @@ const invoiceFromDb = (r: Record<string, unknown>, lines: QuoteLine[]): Invoice 
   clientId: (r.client_id as string) ?? "",
   projectId: (r.project_id as string) ?? undefined,
   poId: (r.po_id as string) ?? undefined,
+  poWaived: Boolean(r.po_waived),
+  poWaiverReason: (r.po_waiver_reason as string) ?? undefined,
+
   quoteId: (r.quote_id as string) ?? undefined,
   issueDate: (r.issue_date as string) ?? "",
   dueDate: (r.due_date as string) ?? "",

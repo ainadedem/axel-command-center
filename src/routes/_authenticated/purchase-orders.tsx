@@ -19,9 +19,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, Upload, FileText, X, History, RefreshCw, Eye } from "lucide-react";
-import { DocumentPreview, type DocumentData } from "@/components/document-preview";
-import { nextNumber } from "@/lib/numbering";
+import { Pencil, Trash2, Upload, FileText, X, History, RefreshCw, Eye, AlertTriangle } from "lucide-react";
+
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 
@@ -39,7 +38,7 @@ const statusStyles: Record<POStatus, string> = {
 function POPage() {
   return (
     <AppShell>
-      <PageHeader title="Purchase Orders" description="Step 2 — client-issued PO required before invoicing." />
+      <PageHeader title="Purchase Orders" description="Step 2 — record the PO your client issued and upload their document." />
       <Body />
     </AppShell>
   );
@@ -55,7 +54,6 @@ function Body() {
   const baseList = inScope(pos, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<PurchaseOrder | null>(null);
-  const [previewing, setPreviewing] = useState<PurchaseOrder | null>(null);
   const openCreate = () => { setEditing(null); setOpen(true); };
 
   const fields: FieldDef<PurchaseOrder>[] = [
@@ -125,13 +123,21 @@ function Body() {
                         <a href={po.documentUrl} download={po.documentName} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-primary hover:underline max-w-[180px] truncate">
                           <FileText className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{po.documentName ?? "PO file"}</span>
                         </a>
-                      ) : <span className="text-muted-foreground/50">—</span>}
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10" title="No client PO document uploaded">
+                          <AlertTriangle className="h-2.5 w-2.5" /> File missing
+                        </span>
+                      )}
                     </td>
+
                     <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(po.amount, po.currency)}</td>
 
                     <td className="px-5 py-3.5 text-right">
                       <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
-                        <button onClick={() => setPreviewing(po)} title="Preview & export PDF" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
+                        {po.documentUrl && (
+                          <a href={po.documentUrl} download={po.documentName} target="_blank" rel="noreferrer" title="Open client PO document" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></a>
+                        )}
+
                         <button onClick={() => { setEditing(po); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
                         <button onClick={() => confirm(`Delete PO ${po.number}?`) && purchaseOrdersStore.remove(po.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
                       </div>
@@ -146,31 +152,10 @@ function Body() {
         </div>
       )}
       <PODialog open={open} onOpenChange={setOpen} editing={editing} />
-      <DocumentPreview
-        open={!!previewing}
-        onOpenChange={(v) => { if (!v) setPreviewing(null); }}
-        doc={previewing ? poToDoc(previewing, quotes.find((q) => q.id === previewing.quoteId)?.number) : null}
-        company={previewing ? companies.find((c) => c.id === previewing.companyId) : undefined}
-        client={previewing ? clients.find((c) => c.id === previewing.clientId) : undefined}
-        project={previewing?.projectId ? projects.find((p) => p.id === previewing.projectId) : undefined}
-      />
     </div>
   );
 }
 
-function poToDoc(po: PurchaseOrder, quoteNumber?: string): DocumentData {
-  return {
-    kind: "po",
-    number: po.number,
-    status: po.status,
-    issueDate: po.issueDate,
-    amount: po.amount,
-    currency: po.currency,
-    lines: po.lines,
-    clientReference: po.clientReference,
-    references: quoteNumber ? [{ label: "Quote", value: quoteNumber }] : undefined,
-  };
-}
 
 function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: PurchaseOrder | null }) {
   const companies = useCompanies();
@@ -209,7 +194,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
       setDocumentHistory(editing.documentHistory ?? []);
     } else {
       const cid = companies[0]?.id ?? "";
-      setNumber(cid ? nextNumber("po", cid) : ""); setClientReference("");
+      setNumber(""); setClientReference("");
       setCompanyId(cid); setClientId(""); setProjectId(""); setQuoteId("");
       setIssueDate(today); setAmount("0"); setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("issued");
       setDocumentUrl(undefined); setDocumentName(undefined); setDocumentType(undefined);
@@ -219,11 +204,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     setShowErrors(false);
   }, [open, editing, companies, today]);
 
-  useEffect(() => {
-    if (!open || editing || !companyId) return;
-    setNumber(nextNumber("po", companyId));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyId]);
+
 
   const handleFile = (file: File) => {
     setUploadError("");
@@ -312,16 +293,18 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader><DialogTitle>{editing ? "Edit PO" : "New purchase order"}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{editing ? "Edit client PO" : "Record client PO"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
           <FormErrorBanner show={showErrors} />
+          <p className="text-[11px] text-muted-foreground -mt-1">Enter the purchase order details exactly as issued by your client, then attach their document.</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label><RequiredLabel>PO number</RequiredLabel></Label>
-              <Input value={number} onChange={(e) => setNumber(e.target.value)} className={invalidFieldClassName(showErrors && !number.trim())} aria-invalid={showErrors && !number.trim()} />
+              <Label><RequiredLabel>Client PO number</RequiredLabel></Label>
+              <Input value={number} onChange={(e) => setNumber(e.target.value)} placeholder="As written on the client PO" className={invalidFieldClassName(showErrors && !number.trim())} aria-invalid={showErrors && !number.trim()} />
             </div>
-            <div><Label>Client reference</Label><Input value={clientReference} onChange={(e) => setClientReference(e.target.value)} placeholder="Their internal #" /></div>
+            <div><Label>Client internal reference</Label><Input value={clientReference} onChange={(e) => setClientReference(e.target.value)} placeholder="Their internal #" /></div>
           </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label><RequiredLabel>Company</RequiredLabel></Label>
@@ -360,7 +343,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
             </Select>
           </div>
           <div className="grid grid-cols-3 gap-3">
-            <div><Label>Issue date</Label><Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
+            <div><Label>PO date (client)</Label><Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
             <div><Label>Amount</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
             <div>
               <Label>Currency</Label>
@@ -387,7 +370,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
             </Select>
           </div>
           <div>
-            <Label>Client PO document</Label>
+            <Label><RequiredLabel>Client PO document</RequiredLabel></Label>
             {documentUrl ? (
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2 rounded-md border border-border bg-surface-elevated/40 px-3 py-2 text-sm">
@@ -427,13 +410,17 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
                 )}
               </div>
             ) : (
-              <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border bg-surface-elevated/30 hover:bg-surface-elevated/60 px-3 py-2.5 text-sm text-muted-foreground transition-colors">
-                <Upload className="h-4 w-4" />
-                <span>Upload PDF or image (max 5 MB)</span>
-                <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
-              </label>
+              <>
+                <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-warning/50 bg-warning/5 hover:bg-warning/10 px-3 py-2.5 text-sm text-muted-foreground transition-colors">
+                  <Upload className="h-4 w-4" />
+                  <span>Upload the client's PO — PDF or image (max 5 MB)</span>
+                  <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
+                </label>
+                <p className="text-[11px] text-warning mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Without a file this PO stays flagged “File missing”.</p>
+              </>
             )}
             {uploadError && <p className="text-[11px] text-destructive mt-1">{uploadError}</p>}
+
           </div>
         </div>
 
