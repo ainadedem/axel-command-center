@@ -148,6 +148,7 @@ function mapCompanyRow(row: Record<string, unknown>, fallbackColorIdx: number): 
     mobileNumber: (row.mobile_number as string) || undefined,
     mobileName: (row.mobile_name as string) || undefined,
     showPaymentDetails: row.show_payment_details === false ? false : true,
+    bankAccounts: Array.isArray(row.bank_accounts) ? (row.bank_accounts as Company["bankAccounts"]) : [],
 
     logoUrl: (row.logo_url as string) || undefined,
   };
