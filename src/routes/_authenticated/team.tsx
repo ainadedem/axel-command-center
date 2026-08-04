@@ -254,10 +254,11 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
                 ))}
               </SelectContent>
             </Select>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                "All companies" shows the person in every company view. "No company" keeps them unassigned and only visible in the group view. A specific company limits them to that company.
-              </p>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              "All companies" shows the person in every company view. "No company" keeps them unassigned and only visible in the group view. A specific company limits them to that company.
+            </p>
           </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Job title</Label><Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} /></div>
             <div><Label>Department</Label><Input value={department} onChange={(e) => setDepartment(e.target.value)} /></div>
