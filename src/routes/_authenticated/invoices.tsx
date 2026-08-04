@@ -29,7 +29,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 import { Textarea } from "@/components/ui/textarea";
 import { Wallet } from "lucide-react";
-import { nextNumber } from "@/lib/numbering";
+import { nextNumber, isNumberTaken } from "@/lib/numbering";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 
@@ -558,8 +558,11 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const blocked = !processOk && status !== "draft";
 
 
+  const duplicateNumber = Boolean(number.trim()) && Boolean(companyId)
+    && isNumberTaken("invoice", companyId, number, editing?.id);
+
   const submit = () => {
-    const invalid = !number.trim() || !companyId || !clientId || blocked;
+    const invalid = !number.trim() || !companyId || !clientId || blocked || duplicateNumber;
     if (invalid) {
       setShowErrors(true);
       return;
@@ -596,7 +599,11 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
         <div className="space-y-4 py-2">
           <FormErrorBanner show={showErrors} />
           <div className="grid grid-cols-2 gap-3">
-            <div><Label><RequiredLabel>Number</RequiredLabel></Label><Input value={number} onChange={(e) => setNumber(e.target.value)} className={invalidFieldClassName(showErrors && !number.trim())} aria-invalid={showErrors && !number.trim()} /></div>
+            <div>
+              <Label><RequiredLabel>Number</RequiredLabel></Label>
+              <Input value={number} onChange={(e) => setNumber(e.target.value)} className={invalidFieldClassName((showErrors && !number.trim()) || duplicateNumber)} aria-invalid={(showErrors && !number.trim()) || duplicateNumber} />
+              {duplicateNumber && <p className="text-[11px] text-destructive mt-1">This number is already used by another invoice.</p>}
+            </div>
             <div>
               <Label>Status</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as Invoice["status"])}>

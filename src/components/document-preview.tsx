@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Download, Printer, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { formatRib } from "@/lib/payment-details";
 import {
   fmt, type Company, type Client, type Project, type Currency, type QuoteLine,
 } from "@/lib/mock-data";
@@ -44,17 +45,19 @@ interface Props {
 
 export function DocumentPreview({ open, onOpenChange, doc, company, client, project }: Props) {
   const [showStatus, setShowStatus] = useState(true);
+  const [showPayment, setShowPayment] = useState(company?.showPaymentDetails !== false);
+  useEffect(() => { setShowPayment(company?.showPaymentDetails !== false); }, [company?.id, company?.showPaymentDetails]);
 
   const html = useMemo(() => {
     if (!doc) return "";
-    return buildHTML({ doc, company, client, project, showStatus });
-  }, [doc, company, client, project, showStatus]);
+    return buildHTML({ doc, company, client, project, showStatus, showPayment });
+  }, [doc, company, client, project, showStatus, showPayment]);
 
   const printPdf = () => {
     if (!doc) return;
     const w = window.open("", "_blank", "width=900,height=1100");
     if (!w) return;
-    w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus }));
+    w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment }));
     w.document.close();
     setTimeout(() => { w.focus(); w.print(); }, 250);
   };
@@ -68,6 +71,10 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
               <Checkbox checked={showStatus} onCheckedChange={(v) => setShowStatus(!!v)} />
               Show status
+            </label>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+              <Checkbox checked={showPayment} onCheckedChange={(v) => setShowPayment(!!v)} />
+              Show payment details
             </label>
             <Button size="sm" variant="outline" onClick={printPdf}><Printer className="h-3.5 w-3.5 mr-1.5" />Print</Button>
             <Button size="sm" onClick={printPdf}><Download className="h-3.5 w-3.5 mr-1.5" />Export PDF</Button>
@@ -98,7 +105,7 @@ function headingFor(k: DocKind) {
   return "INVOICE";
 }
 
-function buildHTML({ doc, company, client, project, showStatus }: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean }) {
+function buildHTML({ doc, company, client, project, showStatus, showPayment }: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean; showPayment?: boolean }) {
   const rawColor = company?.color ?? "#1e293b";
   // Validate against a strict CSS color allowlist to prevent CSS/script injection
   // via the company.color field (it is embedded verbatim in a <style> block below).
@@ -132,11 +139,38 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
     client?.rcs && `RCS: ${client.rcs}`,
     poRef && `PO Ref: ${poRef}`,
   ].filter(Boolean) as string[];
-  const bank = [
+  const rib = formatRib(company?.bankCode, company?.branchCode, company?.accountNumber, company?.ribKey);
+  const wireLines = [
     company?.bankName && `Bank: ${company.bankName}`,
-    company?.bankAccount && `Account / IBAN: ${company.bankAccount}`,
-    company?.bankSwift && `SWIFT / BIC: ${company.bankSwift}`,
+    (company?.bankHolder || company?.legalName || company?.name) && `Account Name: ${company?.bankHolder || company?.legalName || company?.name}`,
+    rib ? `RIB: ${rib}` : company?.bankAccount && `Account: ${company.bankAccount}`,
+    company?.intlEnabled && company?.bankSwift && `SWIFT/BIC: ${company.bankSwift}`,
+    company?.intlEnabled && company?.iban && `IBAN: ${company.iban}`,
   ].filter(Boolean) as string[];
+  const mobileLines = company?.mobileEnabled
+    ? ([
+        company?.mobileNumber && `Number: ${company.mobileNumber}`,
+        company?.mobileName && `Name: ${company.mobileName}`,
+      ].filter(Boolean) as string[])
+    : [];
+  const paymentVisible = (showPayment ?? company?.showPaymentDetails !== false)
+    && (wireLines.length > 0 || mobileLines.length > 0);
+  const paymentHtml = paymentVisible
+    ? `<div class="paycard">
+        <h2 style="margin-bottom:10px;">Payment Terms &amp; Bank Details</h2>
+        <div class="paygrid">
+          ${wireLines.length ? `<div class="paycol">
+            <div class="paytitle">Bank wire</div>
+            ${wireLines.map((l) => `<div>${esc(l)}</div>`).join("")}
+          </div>` : ""}
+          ${mobileLines.length ? `<div class="paycol">
+            <div class="paytitle"><span class="paybadge">${esc(company?.mobileProvider ?? "Mobile money")}</span></div>
+            ${mobileLines.map((l) => `<div>${esc(l)}</div>`).join("")}
+          </div>` : ""}
+        </div>
+        <div class="payref">Please mention Invoice #${esc(doc.number)} as the transfer reference.</div>
+      </div>`
+    : "";
 
   const statusColors: Record<string, string> = {
     draft: "#71717a", sent: "#0891b2", partial: "#ca8a04", paid: "#16a34a",
@@ -208,6 +242,12 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
       .doc .totals .grand { border-top: 2px solid ${accent}; margin-top: 6px; padding-top: 10px; font-size: 14px; font-weight: 700; }
       .doc .totals .due { color: ${balance > 0 ? "#dc2626" : "#16a34a"}; font-weight: 700; }
       .doc .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #64748b; }
+      .doc .paycard { margin-top: 28px; padding: 14px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid ${accent}; font-size: 11px; }
+      .doc .paygrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+      .doc .paycol div { margin-bottom: 2px; font-variant-numeric: tabular-nums; }
+      .doc .paytitle { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; font-weight: 700; margin-bottom: 4px; }
+      .doc .paybadge { display: inline-block; padding: 2px 8px; border-radius: 999px; background: ${accent}; color: #fff; font-size: 9px; letter-spacing: 0.06em; }
+      .doc .payref { margin-top: 10px; padding-top: 8px; border-top: 1px dashed #cbd5e1; color: #475569; font-size: 10px; }
       .doc .bank { margin-top: 16px; padding: 12px 16px; background: #f8fafc; border-left: 3px solid ${accent}; font-size: 11px; }
       .doc .notes { margin-top: 16px; padding: 12px 16px; background: #fffaf0; border-left: 3px solid #ca8a04; font-size: 11px; color: #475569; }
     </style>
@@ -266,7 +306,7 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
       </div>
 
       ${doc.notes ? `<div class="notes"><strong>Notes</strong><div style="margin-top: 4px;">${esc(doc.notes)}</div></div>` : ""}
-      ${doc.kind === "invoice" && bank.length ? `<div class="bank"><strong>Payment instructions</strong>${bank.map((l) => `<div>${esc(l)}</div>`).join("")}</div>` : ""}
+      ${paymentHtml}
 
       <div class="footer">
         ${doc.kind === "invoice"
@@ -279,13 +319,13 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
   `;
 }
 
-export function buildPrintableDocument(args: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean }) {
+export function buildPrintableDocument(args: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean; showPayment?: boolean }) {
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(args.doc.number)}</title>
     <style>@page { size: A4; margin: 22mm; } body { margin: 0; }</style>
     </head><body>${buildHTML(args)}</body></html>`;
 }
 
-export function buildDocumentHTML(args: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean }) {
+export function buildDocumentHTML(args: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean; showPayment?: boolean }) {
   return buildHTML(args);
 }
 

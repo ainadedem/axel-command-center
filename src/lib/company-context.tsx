@@ -136,6 +136,19 @@ function mapCompanyRow(row: Record<string, unknown>, fallbackColorIdx: number): 
     bankName: (row.bank_name as string) || undefined,
     bankAccount: (row.bank_account as string) || undefined,
     bankSwift: (row.bank_swift as string) || undefined,
+    bankHolder: (row.bank_holder as string) || undefined,
+    bankCode: (row.bank_code as string) || undefined,
+    branchCode: (row.branch_code as string) || undefined,
+    accountNumber: (row.account_number as string) || undefined,
+    ribKey: (row.rib_key as string) || undefined,
+    iban: (row.iban as string) || undefined,
+    intlEnabled: Boolean(row.intl_enabled),
+    mobileEnabled: Boolean(row.mobile_enabled),
+    mobileProvider: (row.mobile_provider as string) || undefined,
+    mobileNumber: (row.mobile_number as string) || undefined,
+    mobileName: (row.mobile_name as string) || undefined,
+    showPaymentDetails: row.show_payment_details === false ? false : true,
+
     logoUrl: (row.logo_url as string) || undefined,
   };
 }
