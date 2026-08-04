@@ -22,6 +22,8 @@ export type Database = {
           currency: string
           id: string
           name: string
+          opening_balance: number
+          opening_balance_date: string | null
           statement_name: string | null
           statement_uploaded_at: string | null
           type: string
@@ -34,6 +36,8 @@ export type Database = {
           currency?: string
           id?: string
           name: string
+          opening_balance?: number
+          opening_balance_date?: string | null
           statement_name?: string | null
           statement_uploaded_at?: string | null
           type?: string
@@ -46,6 +50,8 @@ export type Database = {
           currency?: string
           id?: string
           name?: string
+          opening_balance?: number
+          opening_balance_date?: string | null
           statement_name?: string | null
           statement_uploaded_at?: string | null
           type?: string
@@ -119,6 +125,69 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      bank_reconciliations: {
+        Row: {
+          account_id: string
+          company_id: string
+          computed_closing_balance: number
+          created_at: string
+          created_by: string | null
+          difference: number
+          id: string
+          period_end: string | null
+          period_start: string | null
+          row_count: number
+          statement_closing_balance: number
+          statement_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          company_id: string
+          computed_closing_balance?: number
+          created_at?: string
+          created_by?: string | null
+          difference?: number
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          row_count?: number
+          statement_closing_balance?: number
+          statement_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          company_id?: string
+          computed_closing_balance?: number
+          created_at?: string
+          created_by?: string | null
+          difference?: number
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          row_count?: number
+          statement_closing_balance?: number
+          statement_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_reconciliations_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_reconciliations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       budgets: {
         Row: {
