@@ -28,7 +28,8 @@ function TeamPage() {
   const { scope, accessibleCompanies } = useCompany();
   const team = scope.id === "group"
     ? allTeam
-    : allTeam.filter((m) => !m.companyId || m.companyId === scope.companyId);
+    : allTeam.filter((m) => m.companyId === undefined || m.companyId === scope.companyId);
+
   const companyById = new Map(accessibleCompanies.map((c) => [c.id, c]));
   const sales = useSalesMembers();
   const [open, setOpen] = useState(false);
@@ -44,10 +45,14 @@ function TeamPage() {
     teamMembersStore.remove(m.id);
   };
 
-  const companyLabel = (id?: string) =>
-    id ? companyById.get(id)?.shortName || companyById.get(id)?.name || "-" : "All companies";
+  const companyLabel = (id?: string | null) => {
+    if (id === null) return "No company";
+    if (id === undefined) return "All companies";
+    return companyById.get(id)?.shortName || companyById.get(id)?.name || "-";
+  };
 
   const fields = useMemo<FieldDef<TeamMember>[]>(() => [
+
     { key: "firstName", label: "First name", type: "string", accessor: (m) => m.firstName || m.name },
     { key: "lastName", label: "Last name", type: "string", accessor: (m) => m.lastName ?? "" },
     { key: "email", label: "Email", type: "string", accessor: (m) => m.email ?? "", noGroup: true },
@@ -77,14 +82,17 @@ function TeamPage() {
         <div className="col-span-2 text-xs text-muted-foreground truncate font-tnum">{m.phone || "-"}</div>
         <div className="col-span-1 text-xs text-muted-foreground truncate">{m.jobTitle || "-"}</div>
         <div className="col-span-1 text-xs truncate">
-          {m.companyId ? (
+          {m.companyId === undefined ? (
+            <span className="text-[10px] text-muted-foreground">All</span>
+          ) : m.companyId === null ? (
+            <span className="text-[10px] text-muted-foreground">None</span>
+          ) : (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/10 text-accent-foreground border border-border">
               {companyLabel(m.companyId)}
             </span>
-          ) : (
-            <span className="text-[10px] text-muted-foreground">All</span>
           )}
         </div>
+
         <div className="col-span-1">
           {s ? (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 inline-flex items-center gap-1">
@@ -179,7 +187,8 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
       setJobTitle(editing.jobTitle ?? "");
       setDepartment(editing.department ?? "");
       setAvatarUrl(editing.avatarUrl);
-      setCompanyId(editing.companyId ?? "all");
+      setCompanyId(editing.companyId === undefined ? "all" : editing.companyId === null ? "none" : editing.companyId);
+
     } else {
       setFirstName("");
       setLastName("");
@@ -208,8 +217,9 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
       jobTitle: jobTitle.trim() || undefined,
       department: department.trim() || undefined,
       avatarUrl,
-      companyId: companyId === "all" ? undefined : companyId,
+      companyId: companyId === "all" ? undefined : companyId === "none" ? null : companyId,
     };
+
     if (editing) teamMembersStore.update(editing.id, data);
     else teamMembersStore.add({ id: newId("tm"), ...data });
     onOpenChange(false);
@@ -238,13 +248,17 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
               <SelectTrigger><SelectValue placeholder="Select a company" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All companies</SelectItem>
+                <SelectItem value="none">No company</SelectItem>
                 {accessibleCompanies.map((c) => (
                   <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-[11px] text-muted-foreground mt-1">The person only appears in the Team page of the selected company.</p>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              "All companies" shows the person in every company view. "No company" keeps them unassigned and only visible in the group view. A specific company limits them to that company.
+            </p>
           </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Job title</Label><Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} /></div>
             <div><Label>Department</Label><Input value={department} onChange={(e) => setDepartment(e.target.value)} /></div>

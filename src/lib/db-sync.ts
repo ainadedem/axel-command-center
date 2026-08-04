@@ -1006,7 +1006,8 @@ export async function deleteRecurringBillingDb(id: string) {
 const tmToDb = (t: TeamMember) => ({
   id: isUuid(t.id) ? t.id : undefined,
   name: t.name,
-  company_id: t.companyId ? (toDbCompanyId(t.companyId) ?? null) : null,
+  company_id: t.companyId && typeof t.companyId === "string" ? (toDbCompanyId(t.companyId) ?? null) : null,
+  is_global: t.companyId === undefined,
   first_name: t.firstName ?? null,
   last_name: t.lastName ?? null,
   email: t.email ?? null,
@@ -1018,7 +1019,7 @@ const tmToDb = (t: TeamMember) => ({
 const tmFromDb = (r: Record<string, unknown>): TeamMember => ({
   id: r.id as string,
   name: r.name as string,
-  companyId: r.company_id ? toLocalCompanyId(r.company_id as string) : undefined,
+  companyId: r.is_global ? undefined : r.company_id ? toLocalCompanyId(r.company_id as string) : null,
   firstName: (r.first_name as string) ?? undefined,
   lastName: (r.last_name as string) ?? undefined,
   email: (r.email as string) ?? undefined,
@@ -1027,6 +1028,7 @@ const tmFromDb = (r: Record<string, unknown>): TeamMember => ({
   department: (r.department as string) ?? undefined,
   avatarUrl: (r.avatar_url as string) ?? undefined,
 });
+
 export async function upsertTeamMember(t: TeamMember): Promise<string | null> {
   const { data, error } = await supabase.from("team_members").upsert(tmToDb(t)).select("id").single();
   if (error) { console.warn("[db-sync] upsertTeamMember", error.message); return null; }
