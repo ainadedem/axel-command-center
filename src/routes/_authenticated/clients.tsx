@@ -546,6 +546,9 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setAddress(editing.address ?? "");
       setIndustry(editing.industry ?? "");
       setContacts(editing.contacts ?? "");
+      setNif(editing.nif ?? "");
+      setStat(editing.stat ?? "");
+      setRcs(editing.rcs ?? "");
       setAvatarUrl(editing.avatarUrl);
       setStatus(editing.status ?? "client");
       setCategories(defaultCategoriesFor("client", editing.categories));
