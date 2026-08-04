@@ -1101,6 +1101,7 @@ export type Database = {
       team_members: {
         Row: {
           avatar_url: string | null
+          company_id: string | null
           created_at: string
           department: string | null
           email: string | null
@@ -1114,6 +1115,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          company_id?: string | null
           created_at?: string
           department?: string | null
           email?: string | null
@@ -1127,6 +1129,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          company_id?: string | null
           created_at?: string
           department?: string | null
           email?: string | null
@@ -1138,7 +1141,15 @@ export type Database = {
           phone?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "team_members_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transactions: {
         Row: {
