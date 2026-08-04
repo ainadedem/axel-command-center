@@ -700,9 +700,10 @@ const AXIOM_OPPS_VERSION = "2";
 if (typeof window !== "undefined") {
   try {
     ensureSeedCompanies();
-    seedLogiaGrandLivre(false);
     const current = localStorage.getItem("logia-derived-version");
     const force = current !== DERIVED_VERSION;
+    // A version bump means a new Grand Livre snapshot: replace Logia's entries.
+    seedLogiaGrandLivre(force);
     seedLogiaDerivedData(force);
     const hasLogiaOpps = opportunitiesStore.items.some((o) => o.companyId === "log");
     if (force || !hasLogiaOpps) {
