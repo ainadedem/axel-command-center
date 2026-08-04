@@ -565,6 +565,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setAcquiredAt(new Date().toISOString().slice(0, 10));
       setWebsite(""); setEmail(""); setPhone(""); setAddress(""); setIndustry(""); setContacts("");
       setNif(""); setStat(""); setRcs("");
+      setPay(emptyPayment);
       setAvatarUrl(undefined);
       setStatus("client");
       setCategories(["client"]);
