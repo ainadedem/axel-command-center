@@ -136,7 +136,10 @@ function Body() {
 
                     <td className="px-5 py-3.5 text-right">
                       <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
-                        <button onClick={() => setPreviewing(po)} title="Preview & export PDF" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
+                        {po.documentUrl && (
+                          <a href={po.documentUrl} download={po.documentName} target="_blank" rel="noreferrer" title="Open client PO document" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></a>
+                        )}
+
                         <button onClick={() => { setEditing(po); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
                         <button onClick={() => confirm(`Delete PO ${po.number}?`) && purchaseOrdersStore.remove(po.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
                       </div>
@@ -363,7 +366,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
             </Select>
           </div>
           <div className="grid grid-cols-3 gap-3">
-            <div><Label>Issue date</Label><Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
+            <div><Label>PO date (client)</Label><Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
             <div><Label>Amount</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
             <div>
               <Label>Currency</Label>
