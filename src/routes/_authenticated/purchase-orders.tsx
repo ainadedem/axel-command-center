@@ -39,7 +39,7 @@ const statusStyles: Record<POStatus, string> = {
 function POPage() {
   return (
     <AppShell>
-      <PageHeader title="Purchase Orders" description="Step 2 — client-issued PO required before invoicing." />
+      <PageHeader title="Purchase Orders" description="Step 2 — record the PO your client issued and upload their document." />
       <Body />
     </AppShell>
   );
