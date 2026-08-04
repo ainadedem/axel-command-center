@@ -206,12 +206,12 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
 
 
 
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     setUploadError("");
-    if (file.size > 5 * 1024 * 1024) { setUploadError("Max 5 MB"); return; }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const url = reader.result as string;
+    if (file.size > 10 * 1024 * 1024) { setUploadError("Max 10 MB"); return; }
+    setUploading(true);
+    try {
+      const ref = await uploadFile(DOCUMENTS_BUCKET, "purchase-orders", file);
       // If replacing an existing doc, push the old one onto history.
       if (documentUrl) {
         setDocumentHistory((h) => [
@@ -219,12 +219,15 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
           ...h,
         ]);
       }
-      setDocumentUrl(url);
+      setDocumentUrl(ref);
       setDocumentName(file.name);
       setDocumentType(file.type);
       setDocumentUploadedAt(new Date().toISOString());
-    };
-    reader.readAsDataURL(file);
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
   };
 
 
