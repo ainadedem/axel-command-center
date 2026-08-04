@@ -569,9 +569,18 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
     setShowErrors(false);
   }, [open, editing, companies, scope]);
 
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const missing = {
+    name: !name.trim(),
+    company: !companyId,
+    address: !address.trim(),
+    email: !email.trim() || !emailValid,
+    nif: !nif.trim(),
+    stat: !stat.trim(),
+  };
+
   const submit = async () => {
-    const invalid = !name.trim() || !companyId;
-    if (invalid) {
+    if (Object.values(missing).some(Boolean)) {
       setShowErrors(true);
       return;
     }
@@ -588,6 +597,9 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       address: address.trim() || undefined,
       industry: industry.trim() || undefined,
       contacts: contacts.trim() || undefined,
+      nif: nif.trim() || undefined,
+      stat: stat.trim() || undefined,
+      rcs: rcs.trim() || undefined,
       avatarUrl,
       categories: categories.length > 0 ? categories : undefined,
     };
