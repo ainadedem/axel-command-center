@@ -191,13 +191,16 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment }: {
         const qty = Number(l.quantity) || 0;
         const rate = Number(l.rate) || 0;
         const total = qty * rate;
-        const detail = (l.details ?? "").trim();
-        const sub = detail || [l.capability, l.level].filter(Boolean).join(" · ");
+        const descHtml = renderRichText(l.description) || esc("—");
+        const detailHtml = renderRichText(l.details);
+        const meta = [l.capability, l.level].filter(Boolean).join(" · ");
         return `
           <tr>
             <td>
-              <div style="font-weight: 600;">${esc(l.description || "—")}</div>
-              ${sub ? `<div style="color: #64748b; font-size: 10px; margin-top: 2px;">${esc(sub)}</div>` : ""}
+              <div class="rt" style="font-weight: 600;">${descHtml}</div>
+              ${detailHtml
+                ? `<div class="rt sub">${detailHtml}</div>`
+                : meta ? `<div class="sub">${esc(meta)}</div>` : ""}
             </td>
             <td class="num">${qty.toLocaleString()}</td>
             <td class="num">${esc(l.unit)}</td>
@@ -206,6 +209,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment }: {
           </tr>
         `;
       }).join("")
+
     : `
       <tr>
         <td>
