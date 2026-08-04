@@ -17,6 +17,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/crud-toolbar";
+import { PaymentDetailsFields, paymentFrom, paymentValues, emptyPayment, type PaymentFormState } from "@/components/payment-details-fields";
+
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
 import {
   Pencil, Trash2, Building2, User, LayoutGrid, List as ListIcon,
