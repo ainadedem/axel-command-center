@@ -47,6 +47,7 @@ function Body() {
   const { scope } = useCompany();
   const transactions = useTransactions();
   const companies = useCompanies();
+  const accounts = useAccounts();
   const clients = useClients();
   const suppliers = useSuppliers();
   const projects = useProjects();
@@ -73,6 +74,7 @@ function Body() {
     { key: "company", label: "Company", type: "enum", accessor: (t) => companies.find((c) => c.id === t.companyId)?.shortName ?? "" },
     { key: "counterparty", label: "Counterparty", type: "string", accessor: (t) => clients.find((c) => c.id === t.clientId)?.name ?? suppliers.find((s) => s.id === t.supplierId)?.name ?? "" },
     { key: "project", label: "Project", type: "enum", accessor: (t) => projects.find((p) => p.id === t.projectId)?.name ?? "" },
+    { key: "account", label: "Account", type: "enum", accessor: (t) => accounts.find((a) => a.id === t.accountId)?.name ?? "" },
     { key: "category", label: "Category", type: "enum", accessor: (t) => t.category },
     { key: "type", label: "Type", type: "enum", accessor: (t) => t.type },
     { key: "amount", label: "Amount", type: "number", accessor: (t) => t.amount, noGroup: true },
@@ -243,6 +245,7 @@ function Body() {
       { key: "company", label: "Company", align: "left" as const, w: 130 },
       { key: "counterparty", label: "Counterparty", align: "left" as const, w: 180 },
       { key: "project", label: "Project", align: "left" as const, w: 160 },
+      { key: "account", label: "Account", align: "left" as const, w: 160 },
       { key: "category", label: "Category", align: "left" as const, w: 160 },
       { key: "type", label: "Type", align: "left" as const, w: 120 },
       { key: "amount", label: "Amount", align: "right" as const, w: 160 },
@@ -300,6 +303,14 @@ function Body() {
                         const proj = t.projectId ? projects.find((p) => p.id === t.projectId) : null;
                         return proj
                           ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 truncate max-w-full">{proj.name}</span>
+                          : <span className="text-muted-foreground/50">—</span>;
+                      })()}
+                    </td>
+                    <td className="px-5 py-3.5 text-xs truncate">
+                      {(() => {
+                        const acc = accounts.find((a) => a.id === t.accountId);
+                        return acc
+                          ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 truncate max-w-full">{acc.name}</span>
                           : <span className="text-muted-foreground/50">—</span>;
                       })()}
                     </td>

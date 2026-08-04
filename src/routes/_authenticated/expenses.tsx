@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useExpenses, useCompanies, useSuppliers,
+  useExpenses, useCompanies, useSuppliers, useAccounts,
   expensesStore, companyCode,
   fmtAmount, type Expense, type ExpenseKind, type ExpenseStatus, type Currency,
 } from "@/lib/mock-data";
@@ -55,6 +55,7 @@ function Body() {
   const allExpenses = useExpenses();
   const companies = useCompanies();
   const suppliers = useSuppliers();
+  const accounts = useAccounts();
   const list = inScope(allExpenses, scope);
 
   const [tab, setTab] = useState<"all" | ExpenseKind>("all");
@@ -140,7 +141,8 @@ function Body() {
             <div className="col-span-1">Company</div>
             <div className="col-span-1">Issued</div>
             <div className="col-span-1">Due</div>
-            <div className="col-span-2">Description</div>
+            <div className="col-span-1">Description</div>
+            <div className="col-span-1">Account</div>
             <div className="col-span-1 text-right">Amount</div>
             <div className="col-span-1">Status</div>
             <div className="col-span-1 text-right">·</div>
@@ -167,7 +169,15 @@ function Body() {
                     </span>
                   ) : "—"}
                 </div>
-                <div className="col-span-2 text-xs text-muted-foreground truncate">{e.description || e.category || "—"}</div>
+                <div className="col-span-1 text-xs text-muted-foreground truncate">{e.description || e.category || "—"}</div>
+                <div className="col-span-1 text-xs truncate">
+                  {(() => {
+                    const acc = e.accountId ? accounts.find((a) => a.id === e.accountId) : null;
+                    return acc
+                      ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 truncate max-w-full">{acc.name}</span>
+                      : <span className="text-muted-foreground/50">—</span>;
+                  })()}
+                </div>
                 <div className="col-span-1 text-right text-sm font-tnum font-medium">{fmtAmount(e.amount, e.currency)}</div>
                 <div className="col-span-1">
                   <span className={cn("text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider border inline-flex items-center gap-1", statusStyles[st])}>
@@ -210,6 +220,7 @@ function ExpenseDialog({
   const { scope } = useCompany();
   const companies = useCompanies();
   const suppliers = useSuppliers();
+  const accounts = useAccounts();
 
   const [kind, setKind] = useState<ExpenseKind>("bill");
   const [companyId, setCompanyId] = useState<string>("");
@@ -222,6 +233,7 @@ function ExpenseDialog({
   const [paid, setPaid] = useState("0");
   const [currency, setCurrency] = useState<Currency>(defaultCurrency);
   const [account, setAccount] = useState("");
+  const [accountId, setAccountId] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [showErrors, setShowErrors] = useState(false);
@@ -240,6 +252,7 @@ function ExpenseDialog({
       setPaid(String(editing.paid));
       setCurrency(editing.currency);
       setAccount(editing.account ?? "");
+      setAccountId(editing.accountId ?? "");
       setCategory(editing.category ?? "");
       setDescription(editing.description ?? "");
     } else {
@@ -249,7 +262,7 @@ function ExpenseDialog({
       setIssueDate(format(new Date(), "yyyy-MM-dd"));
       setDueDate(defaultKind === "bill" ? format(new Date(Date.now() + 30 * 86400000), "yyyy-MM-dd") : "");
       setAmount(""); setPaid("0"); setCurrency(defaultCurrency);
-      setAccount(""); setCategory(""); setDescription("");
+      setAccount(""); setAccountId(""); setCategory(""); setDescription("");
     }
     setShowErrors(false);
   }, [open, editing, defaultKind, defaultCurrency, scope, companies]);
@@ -274,6 +287,7 @@ function ExpenseDialog({
       currency,
       status: pd >= amt ? "paid" : pd > 0 ? "partial" : "unpaid",
       account: account.trim() || undefined,
+      accountId: accountId || undefined,
       category: category.trim() || undefined,
       description: description.trim() || undefined,
     };
@@ -281,6 +295,8 @@ function ExpenseDialog({
     else expensesStore.add({ id: newId("exp"), ...data });
     onOpenChange(false);
   };
+
+  const companyAccounts = accounts.filter((a) => !companyId || a.companyId === companyId);
 
   const scopedSuppliers = suppliers.filter((s) => !companyId || s.companyId === companyId || (s.companyIds ?? []).includes(companyId));
 
@@ -381,6 +397,19 @@ function ExpenseDialog({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div>
+            <Label>Paid from account</Label>
+            <Select value={accountId || "none"} onValueChange={(v) => setAccountId(v === "none" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">— None —</SelectItem>
+                {companyAccounts.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>{a.name} · {a.currency}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

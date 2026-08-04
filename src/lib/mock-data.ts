@@ -406,6 +406,8 @@ export interface Expense {
   status: ExpenseStatus;
   /** PCG account this expense posts to (e.g. 622600). */
   account?: string;
+  /** Bank / mobile money / cash account the expense is paid from. */
+  accountId?: string;
   /** Free-text category for grouping/reporting. */
   category?: string;
   description?: string;

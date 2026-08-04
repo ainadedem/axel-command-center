@@ -448,6 +448,7 @@ export type Database = {
       expenses: {
         Row: {
           account: string | null
+          account_id: string | null
           amount: number
           attachment_name: string | null
           attachment_url: string | null
@@ -470,6 +471,7 @@ export type Database = {
         }
         Insert: {
           account?: string | null
+          account_id?: string | null
           amount?: number
           attachment_name?: string | null
           attachment_url?: string | null
@@ -492,6 +494,7 @@ export type Database = {
         }
         Update: {
           account?: string | null
+          account_id?: string | null
           amount?: number
           attachment_name?: string | null
           attachment_url?: string | null
@@ -512,7 +515,15 @@ export type Database = {
           supplier_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "expenses_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoice_lines: {
         Row: {
