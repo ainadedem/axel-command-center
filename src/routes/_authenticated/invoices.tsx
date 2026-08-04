@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import {
   useInvoices, useCompanies, useClients, useProjects, usePurchaseOrders, useQuotes, useAccounts,
   invoicesStore, transactionsStore, projectsStore, purchaseOrdersStore, quotesStore,
-  fmtAmount, toMGA, FX, type Invoice, type Project, type Currency,
+  fmtAmount, toMGA, FX, type Invoice, type Project, type Currency, type QuoteLine,
   getNumberFormat, setNumberFormat, type NumberFormatMode,
   contactBelongsTo,
 } from "@/lib/mock-data";
@@ -24,12 +24,13 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, Ban, BadgeCheck, ToggleLeft, ToggleRight } from "lucide-react";
+import { Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, Ban, BadgeCheck, ToggleLeft, ToggleRight, Plus, X } from "lucide-react";
 import { InvoicePreview } from "@/components/invoice-preview";
 import { RecordPaymentDialog } from "@/components/statement-import-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 
 import { Textarea } from "@/components/ui/textarea";
+import { RICH_TEXT_HINT } from "@/lib/rich-text";
 import { Wallet } from "lucide-react";
 import { nextNumber, isNumberTaken } from "@/lib/numbering";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
@@ -477,6 +478,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [paid, setPaid] = useState("0");
   const [currency, setCurrency] = useState<Currency>("EUR");
   const [status, setStatus] = useState<Invoice["status"]>("draft");
+  const [lines, setLines] = useState<QuoteLine[]>([]);
   const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
@@ -491,6 +493,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setIssueDate(editing.issueDate); setDueDate(editing.dueDate);
       setAmount(String(editing.amount)); setPaid(String(editing.paid));
       setCurrency(editing.currency); setStatus(editing.status);
+      setLines((editing.lines ?? []).map((l) => ({ ...l })));
     } else {
       const cid = companies[0]?.id ?? "";
       setNumber(cid ? nextNumber("invoice", cid, today) : ""); setCompanyId(cid); setClientId("");
@@ -498,6 +501,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
 
       setIssueDate(today); setDueDate(today); setAmount("0"); setPaid("0");
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
+      setLines([]);
     }
     setShowErrors(false);
   }, [open, editing, companies, today]);
@@ -560,6 +564,21 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     }
   }, [poId, pos]);
 
+  // Prefill the editable line table from the PO (preferred) or the linked quote,
+  // but never overwrite lines the user already has in the dialog.
+  useEffect(() => {
+    if (!open) return;
+    if (lines.length > 0) return;
+    const inherited = selectedPO?.lines ?? linkedQuote?.lines;
+    if (inherited?.length) setLines(inherited.map((l) => ({ ...l })));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, poId, selectedPO?.id, linkedQuote?.id]);
+
+  const addLine = () => setLines((prev) => [...prev, { id: newId("ql"), description: "", details: "", unit: "fixed", quantity: 1, rate: 0 }]);
+  const updateLine = (id: string, patch: Partial<QuoteLine>) => setLines((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+  const removeLine = (id: string) => setLines((prev) => prev.filter((l) => l.id !== id));
+  const linesTotal = lines.reduce((s, l) => s + (Number(l.quantity) || 0) * (Number(l.rate) || 0), 0);
+
   const processOk = Boolean(poId) || poWaived;
   const blocked = !processOk && status !== "draft";
 
@@ -576,8 +595,6 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     const a = Number(amount) || 0;
     const p = Number(paid) || 0;
     const finalStatus = status === "draft" ? "draft" : deriveStatus(a, p, dueDate);
-    // Inherit lines from PO (preferred) or directly from the linked quote.
-    const inheritedLines = selectedPO?.lines ?? linkedQuote?.lines;
     const data = {
       number, companyId, clientId,
       projectId: projectId || undefined,
@@ -589,7 +606,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       issueDate, dueDate, amount: a, paid: p, currency, status: finalStatus,
       subject: subject.trim() || undefined,
       bankAccountId: bankAccountId || defaultBankAccount(companies.find((c) => c.id === companyId))?.id,
-      lines: inheritedLines ? inheritedLines.map((l) => ({ ...l })) : (editing?.lines ?? undefined),
+      lines: lines.length ? lines.map((l) => ({ ...l })) : undefined,
     };
     if (editing) invoicesStore.update(editing.id, data);
     else invoicesStore.add({ id: newId("inv"), ...data });
@@ -696,6 +713,76 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
             <Label>Object</Label>
             <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Brand campaign production — Q3 2026" />
           </div>
+
+          {/* Line items */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Line items</Label>
+              <Button type="button" size="sm" variant="outline" onClick={addLine}><Plus className="h-3.5 w-3.5" /> Add line</Button>
+            </div>
+            {lines.length === 0 ? (
+              <p className="text-xs text-muted-foreground border border-dashed border-border rounded-md py-5 text-center">
+                No lines — add one, or pick a PO / quote to inherit its lines.
+              </p>
+            ) : (
+              <div className="rounded-md border border-border overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead className="bg-surface-elevated/40 text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <tr>
+                      <th className="text-left font-medium px-2 py-2">Description</th>
+                      <th className="text-left font-medium px-2 py-2 w-20">Unit</th>
+                      <th className="text-right font-medium px-2 py-2 w-16">Qty</th>
+                      <th className="text-right font-medium px-2 py-2 w-24">Price</th>
+                      <th className="text-right font-medium px-2 py-2 w-24">Amount</th>
+                      <th className="w-8" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lines.map((l) => (
+                      <tr key={l.id} className="border-t border-border/40 align-top">
+                        <td className="px-2 py-1.5">
+                          <Textarea rows={2} className="text-xs min-h-[52px]" value={l.description} onChange={(e) => updateLine(l.id, { description: e.target.value })} />
+                          <Textarea rows={2} className="text-[11px] mt-1 min-h-[44px]" placeholder="Details (optional)" value={l.details ?? ""} onChange={(e) => updateLine(l.id, { details: e.target.value })} />
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <Select value={l.unit} onValueChange={(v) => updateLine(l.id, { unit: v as QuoteLine["unit"] })}>
+                            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="hour">Hour</SelectItem>
+                              <SelectItem value="day">Day</SelectItem>
+                              <SelectItem value="fixed">Fixed</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </td>
+                        <td className="px-2 py-1.5"><Input type="number" className="h-8 text-xs text-right" value={l.quantity} onChange={(e) => updateLine(l.id, { quantity: Number(e.target.value) })} /></td>
+                        <td className="px-2 py-1.5"><Input type="number" className="h-8 text-xs text-right" value={l.rate} onChange={(e) => updateLine(l.id, { rate: Number(e.target.value) })} /></td>
+                        <td className="px-2 py-1.5 text-right font-tnum">{fmtAmount((Number(l.quantity) || 0) * (Number(l.rate) || 0), currency)}</td>
+                        <td className="px-2 py-1.5">
+                          <button type="button" onClick={() => removeLine(l.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><X className="h-3.5 w-3.5" /></button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t border-border bg-surface-elevated/30">
+                      <td colSpan={4} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Lines total</td>
+                      <td className="px-2 py-2 text-right font-tnum">{fmtAmount(linesTotal, currency)}</td>
+                      <td />
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[11px] text-muted-foreground">{RICH_TEXT_HINT}</p>
+              {lines.length > 0 && Math.round(linesTotal) !== Math.round(Number(amount) || 0) && (
+                <Button type="button" size="sm" variant="ghost" className="text-[11px]" onClick={() => setAmount(String(linesTotal))}>
+                  Use lines total ({fmtAmount(linesTotal, currency)})
+                </Button>
+              )}
+            </div>
+          </div>
+
           <BankAccountSelect company={companies.find((c) => c.id === companyId)} value={bankAccountId} onChange={setBankAccountId} />
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Issue date</Label><Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>

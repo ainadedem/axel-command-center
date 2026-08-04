@@ -5,6 +5,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Download, Printer, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { formatRib, resolveBankAccount } from "@/lib/payment-details";
+import { renderRichText } from "@/lib/rich-text";
+
 import {
   fmt, type Company, type Client, type Project, type Currency, type QuoteLine,
 } from "@/lib/mock-data";
@@ -191,13 +193,16 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment }: {
         const qty = Number(l.quantity) || 0;
         const rate = Number(l.rate) || 0;
         const total = qty * rate;
-        const detail = (l.details ?? "").trim();
-        const sub = detail || [l.capability, l.level].filter(Boolean).join(" · ");
+        const descHtml = renderRichText(l.description) || esc("—");
+        const detailHtml = renderRichText(l.details);
+        const meta = [l.capability, l.level].filter(Boolean).join(" · ");
         return `
           <tr>
             <td>
-              <div style="font-weight: 600;">${esc(l.description || "—")}</div>
-              ${sub ? `<div style="color: #64748b; font-size: 10px; margin-top: 2px;">${esc(sub)}</div>` : ""}
+              <div class="rt" style="font-weight: 600;">${descHtml}</div>
+              ${detailHtml
+                ? `<div class="rt sub">${detailHtml}</div>`
+                : meta ? `<div class="sub">${esc(meta)}</div>` : ""}
             </td>
             <td class="num">${qty.toLocaleString()}</td>
             <td class="num">${esc(l.unit)}</td>
@@ -206,6 +211,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment }: {
           </tr>
         `;
       }).join("")
+
     : `
       <tr>
         <td>
@@ -242,6 +248,11 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment }: {
       .doc th { text-align: left; padding: 10px 8px; background: #f8fafc; border-bottom: 2px solid ${accent}; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; }
       .doc td { padding: 12px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
       .doc .num { text-align: right; font-variant-numeric: tabular-nums; }
+      .doc .sub { color: #64748b; font-size: 10px; margin-top: 3px; }
+      .doc .rt ul, .doc .rt ol { margin: 3px 0 0; padding-left: 16px; }
+      .doc .rt li { margin: 1px 0; }
+      .doc .rt div + div { margin-top: 3px; }
+
       .doc .totals { margin-top: 20px; margin-left: auto; width: 280px; font-size: 11px; }
       .doc .totals .line { display: flex; justify-content: space-between; padding: 6px 0; }
       .doc .totals .grand { border-top: 2px solid ${accent}; margin-top: 6px; padding-top: 10px; font-size: 14px; font-weight: 700; }
