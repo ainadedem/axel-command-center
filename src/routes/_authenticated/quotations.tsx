@@ -19,8 +19,8 @@ import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { RICH_TEXT_HINT } from "@/lib/rich-text";
+import { RichTextField } from "@/components/rich-text-field";
 
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -576,8 +576,8 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                     {lines.map((l) => (
                       <tr key={l.id} className="border-t border-border/40">
                         <td className="px-2 py-1.5">
-                          <Textarea rows={2} className="text-xs min-h-[52px]" value={l.description} onChange={(e) => updateLine(l.id, { description: e.target.value })} />
-                          <Textarea rows={2} className="text-[11px] mt-1 min-h-[44px]" placeholder="Details (optional)" value={l.details ?? ""} onChange={(e) => updateLine(l.id, { details: e.target.value })} />
+                          <RichTextField value={l.description} onChange={(v) => updateLine(l.id, { description: v })} placeholder="Description" />
+                          <RichTextField compact className="mt-1" value={l.details ?? ""} onChange={(v) => updateLine(l.id, { details: v })} placeholder="Details (optional)" rows={2} />
 
                         </td>
                         {mode === "rate-card" && (

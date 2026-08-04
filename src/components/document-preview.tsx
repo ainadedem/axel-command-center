@@ -244,14 +244,22 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment }: {
       .doc .party div { margin-bottom: 2px; }
       .doc .legal { margin-top: 6px; color: #64748b; font-size: 10px; }
       .doc .taxmeta { margin-top: 8px; padding: 8px 10px; background: #f8fafc; border-left: 3px solid ${accent}; font-size: 10px; color: #475569; font-variant-numeric: tabular-nums; }
-      .doc table { width: 100%; border-collapse: collapse; margin-top: 32px; font-size: 11px; }
+      .doc table { width: 100%; border-collapse: collapse; margin-top: 32px; font-size: 11px; table-layout: fixed; }
       .doc th { text-align: left; padding: 10px 8px; background: #f8fafc; border-bottom: 2px solid ${accent}; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; }
-      .doc td { padding: 12px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
-      .doc .num { text-align: right; font-variant-numeric: tabular-nums; }
+      .doc td { padding: 12px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; overflow-wrap: anywhere; word-break: break-word; }
+      .doc .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
       .doc .sub { color: #64748b; font-size: 10px; margin-top: 3px; }
+      .doc .rt { overflow-wrap: anywhere; }
       .doc .rt ul, .doc .rt ol { margin: 3px 0 0; padding-left: 16px; }
-      .doc .rt li { margin: 1px 0; }
+      .doc .rt li { margin: 1px 0; break-inside: avoid; page-break-inside: avoid; }
       .doc .rt div + div { margin-top: 3px; }
+      @media print {
+        .doc thead { display: table-header-group; }
+        .doc tfoot { display: table-footer-group; }
+        .doc tr { break-inside: avoid; page-break-inside: avoid; }
+        .doc td, .doc th { break-inside: avoid; page-break-inside: avoid; }
+        .doc .totals, .doc .paycard, .doc .notes, .doc .footer { break-inside: avoid; page-break-inside: avoid; }
+      }
 
       .doc .totals { margin-top: 20px; margin-left: auto; width: 280px; font-size: 11px; }
       .doc .totals .line { display: flex; justify-content: space-between; padding: 6px 0; }
