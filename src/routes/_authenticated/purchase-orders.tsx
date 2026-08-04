@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, Upload, FileText, X, History, RefreshCw, Eye } from "lucide-react";
+import { Pencil, Trash2, Upload, FileText, X, History, RefreshCw, Eye, AlertTriangle } from "lucide-react";
 import { DocumentPreview, type DocumentData } from "@/components/document-preview";
 import { nextNumber } from "@/lib/numbering";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
@@ -125,8 +125,13 @@ function Body() {
                         <a href={po.documentUrl} download={po.documentName} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-primary hover:underline max-w-[180px] truncate">
                           <FileText className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{po.documentName ?? "PO file"}</span>
                         </a>
-                      ) : <span className="text-muted-foreground/50">—</span>}
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10" title="No client PO document uploaded">
+                          <AlertTriangle className="h-2.5 w-2.5" /> File missing
+                        </span>
+                      )}
                     </td>
+
                     <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(po.amount, po.currency)}</td>
 
                     <td className="px-5 py-3.5 text-right">
