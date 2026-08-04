@@ -189,8 +189,9 @@ fi
 
 if [ -f "scripts/health-check-services.sh" ]; then
   chmod +x scripts/health-check-services.sh
-  PUBLIC_BASE_URL="$PUBLIC_BASE_URL" ./scripts/health-check-services.sh
+  PUBLIC_BASE_URL="$PUBLIC_BASE_URL" SSR_PORT="$SSR_PORT" ./scripts/health-check-services.sh
 fi
+
 
 sudo nginx -t
 sudo systemctl reload nginx
