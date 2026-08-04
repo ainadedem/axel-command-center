@@ -261,6 +261,8 @@ export interface Quote {
   notes?: string;
   /** Short object / title printed on the document. */
   subject?: string;
+  /** Which company bank account prints in the payment details block. */
+  bankAccountId?: string;
   /** Pricing mode — rate-card (capability/level driven) or standard (free-form). */
   mode?: QuoteMode;
   /** Line items — priced from rate card or free-form depending on mode. */
