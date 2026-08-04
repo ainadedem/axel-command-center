@@ -370,7 +370,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
             </Select>
           </div>
           <div>
-            <Label>Client PO document</Label>
+            <Label><RequiredLabel>Client PO document</RequiredLabel></Label>
             {documentUrl ? (
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2 rounded-md border border-border bg-surface-elevated/40 px-3 py-2 text-sm">
@@ -410,13 +410,17 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
                 )}
               </div>
             ) : (
-              <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border bg-surface-elevated/30 hover:bg-surface-elevated/60 px-3 py-2.5 text-sm text-muted-foreground transition-colors">
-                <Upload className="h-4 w-4" />
-                <span>Upload PDF or image (max 5 MB)</span>
-                <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
-              </label>
+              <>
+                <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-warning/50 bg-warning/5 hover:bg-warning/10 px-3 py-2.5 text-sm text-muted-foreground transition-colors">
+                  <Upload className="h-4 w-4" />
+                  <span>Upload the client's PO — PDF or image (max 5 MB)</span>
+                  <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
+                </label>
+                <p className="text-[11px] text-warning mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Without a file this PO stays flagged “File missing”.</p>
+              </>
             )}
             {uploadError && <p className="text-[11px] text-destructive mt-1">{uploadError}</p>}
+
           </div>
         </div>
 
