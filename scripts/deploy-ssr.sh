@@ -167,8 +167,21 @@ fi
 
 mkdir -p logs
 
-run_as_runtime_user "$RUNTIME_USER" env NVM_DIR="$RUNTIME_HOME/.nvm" PATH="$PATH" pm2 startOrReload ecosystem.config.cjs --only axel-command-center-ssr
+# Preflight: make sure nginx forwards traffic to the port PM2 is about to bind.
+# Runs BEFORE the reload so a mismatch never takes the live site down with 502s.
+SSR_PORT="${SSR_PORT:-3009}"
+if [ -d /etc/nginx ]; then
+  PROXY_PORTS="$(sudo grep -rhoE 'proxy_pass[[:space:]]+https?://(127\.0\.0\.1|localhost):[0-9]+' /etc/nginx 2>/dev/null | grep -oE '[0-9]+$' | sort -u || true)"
+  if [ -n "$PROXY_PORTS" ] && ! echo "$PROXY_PORTS" | grep -qx "$SSR_PORT"; then
+    echo "Aborting deploy: nginx proxies to port(s) [$(echo "$PROXY_PORTS" | tr '\n' ' ')] but the SSR app is configured for port ${SSR_PORT}."
+    echo "Update the nginx upstream to 127.0.0.1:${SSR_PORT} (or export SSR_PORT=<nginx port>) and re-run. The current site stays up."
+    exit 1
+  fi
+fi
+
+run_as_runtime_user "$RUNTIME_USER" env NVM_DIR="$RUNTIME_HOME/.nvm" PATH="$PATH" SSR_PORT="$SSR_PORT" pm2 startOrReload ecosystem.config.cjs --only axel-command-center-ssr
 run_as_runtime_user "$RUNTIME_USER" env NVM_DIR="$RUNTIME_HOME/.nvm" PATH="$PATH" pm2 save
+
 
 if [ -f "scripts/restart-ssr.sh" ]; then
   chmod +x scripts/restart-ssr.sh
@@ -176,8 +189,9 @@ fi
 
 if [ -f "scripts/health-check-services.sh" ]; then
   chmod +x scripts/health-check-services.sh
-  PUBLIC_BASE_URL="$PUBLIC_BASE_URL" ./scripts/health-check-services.sh
+  PUBLIC_BASE_URL="$PUBLIC_BASE_URL" SSR_PORT="$SSR_PORT" ./scripts/health-check-services.sh
 fi
+
 
 sudo nginx -t
 sudo systemctl reload nginx
