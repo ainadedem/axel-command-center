@@ -69,7 +69,7 @@ function Body() {
     const dueDate = format(new Date(parseISO(issueDate).getTime() + terms * 86400000), "yyyy-MM-dd");
     const inv: Invoice = {
       id: newId("inv"),
-      number: nextNumber("invoice", b.companyId),
+      number: nextNumber("invoice", b.companyId, issueDate),
       companyId: b.companyId,
       clientId: b.clientId,
       projectId: b.projectId,

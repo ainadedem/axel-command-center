@@ -487,7 +487,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setCurrency(editing.currency); setStatus(editing.status);
     } else {
       const cid = companies[0]?.id ?? "";
-      setNumber(cid ? nextNumber("invoice", cid) : ""); setCompanyId(cid); setClientId("");
+      setNumber(cid ? nextNumber("invoice", cid, today) : ""); setCompanyId(cid); setClientId("");
       setProjectId(""); setPoId(""); setPoWaived(false); setPoWaiverReason("");
 
       setIssueDate(today); setDueDate(today); setAmount("0"); setPaid("0");
@@ -499,9 +499,9 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   // Re-derive the number when the user switches company on a NEW invoice.
   useEffect(() => {
     if (!open || editing || !companyId) return;
-    setNumber(nextNumber("invoice", companyId));
+    setNumber(nextNumber("invoice", companyId, issueDate));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyId]);
+  }, [companyId, issueDate]);
 
   const companyClients = clients.filter((c) => contactBelongsTo(c, companyId));
   const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
