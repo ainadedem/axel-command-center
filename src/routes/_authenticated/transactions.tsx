@@ -47,6 +47,7 @@ function Body() {
   const { scope } = useCompany();
   const transactions = useTransactions();
   const companies = useCompanies();
+  const accounts = useAccounts();
   const clients = useClients();
   const suppliers = useSuppliers();
   const projects = useProjects();
