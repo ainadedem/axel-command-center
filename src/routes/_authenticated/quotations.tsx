@@ -19,7 +19,6 @@ import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { RICH_TEXT_HINT } from "@/lib/rich-text";
 import { RichTextField } from "@/components/rich-text-field";
 
