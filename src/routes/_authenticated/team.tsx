@@ -217,8 +217,9 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
       jobTitle: jobTitle.trim() || undefined,
       department: department.trim() || undefined,
       avatarUrl,
-      companyId: companyId === "all" ? undefined : companyId,
+      companyId: companyId === "all" ? undefined : companyId === "none" ? null : companyId,
     };
+
     if (editing) teamMembersStore.update(editing.id, data);
     else teamMembersStore.add({ id: newId("tm"), ...data });
     onOpenChange(false);
