@@ -30,8 +30,6 @@ function initialsOf(name?: string): string {
     .toUpperCase();
 }
 
-/** Click-to-upload avatar editor. Stores the image as a data URL. */
-export function AvatarUpload({ value, onChange, name, size = 64, square, className }: AvatarUploadProps) {
 /** Click-to-upload avatar editor. Uploads to the private `avatars` bucket. */
 export function AvatarUpload({ value, onChange, name, size = 64, square, folder = "misc", className }: AvatarUploadProps) {
   const ref = useRef<HTMLInputElement>(null);
