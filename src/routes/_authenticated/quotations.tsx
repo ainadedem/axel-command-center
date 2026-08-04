@@ -276,6 +276,7 @@ function quoteToDoc(q: Quote): DocumentData {
     amount: subtotal,
     currency: q.currency,
     lines: q.lines,
+    subject: q.subject,
     notes: q.notes,
     taxRate,
     taxAmount: q.taxAmount ?? taxAmount,
@@ -300,6 +301,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const [mode, setMode] = useState<QuoteMode>("rate-card");
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [notes, setNotes] = useState("");
+  const [subject, setSubject] = useState("");
   const [taxRate, setTaxRate] = useState<number>(0);
 
   useEffect(() => {
@@ -312,6 +314,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setMode(editing.mode ?? "rate-card");
       setLines(editing.lines ?? []);
       setNotes(editing.notes ?? "");
+      setSubject(editing.subject ?? "");
       setTaxRate(editing.taxRate ?? 0);
     } else {
       const cid = companies[0]?.id ?? "";
@@ -319,7 +322,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setProjectId(""); setIssueDate(today); setValidUntil(addDays(new Date(), 30).toISOString().slice(0, 10));
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
       setMode("rate-card");
-      setLines([]); setNotes(""); setTaxRate(defaultTaxRate(companies[0], today));
+      setLines([]); setNotes(""); setSubject(""); setTaxRate(defaultTaxRate(companies[0], today));
     }
   }, [open, editing, companies, today]);
 
@@ -435,7 +438,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       taxRate: taxRateNum,
       taxAmount: computed.taxAmount,
       totalAmount: computed.totalAmount,
-      currency, status, mode, lines, notes: notes || undefined,
+      currency, status, mode, lines, notes: notes || undefined, subject: subject.trim() || undefined,
       ...fxFields,
     };
     if (editing) quotesStore.update(editing.id, data);
@@ -563,7 +566,10 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                   <tbody>
                     {lines.map((l) => (
                       <tr key={l.id} className="border-t border-border/40">
-                        <td className="px-2 py-1.5"><Input className="h-8 text-xs" value={l.description} onChange={(e) => updateLine(l.id, { description: e.target.value })} /></td>
+                        <td className="px-2 py-1.5">
+                          <Input className="h-8 text-xs" value={l.description} onChange={(e) => updateLine(l.id, { description: e.target.value })} />
+                          <Input className="h-7 text-[11px] mt-1" placeholder="Details (optional)" value={l.details ?? ""} onChange={(e) => updateLine(l.id, { details: e.target.value })} />
+                        </td>
                         {mode === "rate-card" && (
                           <td className="px-2 py-1.5">
                             <Select value={l.capability ?? "CREATIVE"} onValueChange={(v) => updateLine(l.id, { capability: v })}>
@@ -648,6 +654,11 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
             ) : (
               <p className="text-[11px] text-muted-foreground">Standard quotation — enter description, quantity and unit price freely. Nothing is auto-priced.</p>
             )}
+          </div>
+
+          <div>
+            <Label>Object</Label>
+            <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Brand campaign production — Q3 2026" />
           </div>
 
           <div>
