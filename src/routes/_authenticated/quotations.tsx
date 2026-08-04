@@ -348,7 +348,10 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId, issueDate]);
 
-  const companyClients = clients.filter((c) => contactBelongsTo(c, companyId));
+  const companyClients = useMemo(
+    () => clients.filter((c) => contactBelongsTo(c, companyId)).sort((a, b) => a.name.localeCompare(b.name)),
+    [clients, companyId],
+  );
   const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
 
   useReconciledSelection({
