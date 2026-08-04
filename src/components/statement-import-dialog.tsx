@@ -4,9 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
   accountsStore, transactionsStore, invoicesStore, invoices as invoicesArr,
-  toMGA, FX,
+  transactions as transactionsArr,
+  toMGA, FX, fmtCompact,
   type Account, type Transaction, type Invoice,
 } from "@/lib/mock-data";
+import { computeAccountBalance, openingOf } from "@/lib/account-balance";
+import { saveReconciliation } from "@/lib/db-sync";
+import * as XLSX from "xlsx";
+import { Input } from "@/components/ui/input";
 import { newId } from "@/lib/data-store";
 import { Upload, CheckCircle2, AlertCircle, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -86,11 +91,16 @@ function parseDate(s: string): string | null {
 }
 
 interface ParsedRow {
+  key: number;
   date: string;
   description: string;
   amount: number;
   type: "income" | "expense";
   matchedInvoiceId?: string;
+  /** Already present in the ledger for this account. */
+  duplicate: boolean;
+  /** Whether the row will be imported. */
+  include: boolean;
 }
 
 function parseStatement(text: string, account: Account, allInvoices: Invoice[]): ParsedRow[] {
@@ -154,7 +164,8 @@ function parseStatement(text: string, account: Account, allInvoices: Invoice[]):
     }
     const desc = (descStr || "").trim();
     const matchedInvoiceId = autoMatchInvoice(desc, amount, account, companyInvoices, type);
-    out.push({ date, description: desc, amount, type, matchedInvoiceId });
+    const duplicate = isDuplicate(account, date, amount, type, desc);
+    out.push({ key: out.length, date, description: desc, amount, type, matchedInvoiceId, duplicate, include: !duplicate });
   }
   return out;
 }
@@ -191,6 +202,38 @@ function autoMatchInvoice(
   return best.ratio <= 0.15 ? best.i.id : scored[0].i.id;
 }
 
+
+/** A statement row already recorded on this account: same amount + direction,
+ *  within ±1 day, and a matching description prefix. */
+function isDuplicate(
+  account: Account, date: string, amount: number,
+  type: "income" | "expense", description: string,
+): boolean {
+  const target = new Date(date + "T00:00:00").getTime();
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 18);
+  const descKey = norm(description);
+  return transactionsArr.some((t) => {
+    if (t.accountId !== account.id) return false;
+    if (t.type !== type) return false;
+    if (Math.abs(t.amount - amount) > 0.5) return false;
+    const d = new Date(t.date + "T00:00:00").getTime();
+    if (Math.abs(d - target) > 36 * 3600 * 1000) return false;
+    if (!descKey) return true;
+    const other = norm(t.description ?? "");
+    return other.startsWith(descKey.slice(0, 8)) || descKey.startsWith(other.slice(0, 8));
+  });
+}
+
+/** Read a CSV or XLSX file into CSV text. */
+async function fileToCsv(file: File): Promise<string> {
+  const isExcel = /\.(xlsx|xls|xlsm)$/i.test(file.name);
+  if (!isExcel) return file.text();
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: "array", cellDates: false });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  return XLSX.utils.sheet_to_csv(sheet, { FS: "," });
+}
+
 /* ─── Component ─────────────────────────────────────────────────────── */
 
 export function StatementImportDialog({
@@ -199,31 +242,56 @@ export function StatementImportDialog({
   const [fileName, setFileName] = useState("");
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [error, setError] = useState("");
+  const [closingInput, setClosingInput] = useState("");
+  const [periodStart, setPeriodStart] = useState("");
+  const [periodEnd, setPeriodEnd] = useState("");
+  const [postAdjustment, setPostAdjustment] = useState(false);
 
-  const reset = () => { setFileName(""); setRows([]); setError(""); };
+  const reset = () => {
+    setFileName(""); setRows([]); setError("");
+    setClosingInput(""); setPeriodStart(""); setPeriodEnd(""); setPostAdjustment(false);
+  };
 
   const onFile = async (file: File) => {
     setError("");
     setFileName(file.name);
     try {
-      const text = await file.text();
       if (!account) return;
+      const text = await fileToCsv(file);
       const parsed = parseStatement(text, account, invoicesArr);
-      if (!parsed.length) { setError("No transactions detected. Check the CSV headers (date, description, amount or debit/credit)."); setRows([]); return; }
+      if (!parsed.length) { setError("No transactions detected. Check the columns (date, description, amount — or debit/credit)."); setRows([]); return; }
       setRows(parsed);
+      const dates = parsed.map((r) => r.date).sort();
+      setPeriodStart(dates[0]);
+      setPeriodEnd(dates[dates.length - 1]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to parse CSV.");
+      setError(e instanceof Error ? e.message : "Failed to read the file.");
     }
   };
 
-  const matched = useMemo(() => rows.filter((r) => r.matchedInvoiceId).length, [rows]);
+  const included = useMemo(() => rows.filter((r) => r.include), [rows]);
+  const matched = useMemo(() => included.filter((r) => r.matchedInvoiceId).length, [included]);
+  const duplicates = useMemo(() => rows.filter((r) => r.duplicate).length, [rows]);
 
-  const doImport = () => {
-    if (!account || !rows.length) return;
+  const ledgerBefore = account ? computeAccountBalance(account, transactionsArr).computed : 0;
+  const movements = included.reduce((s, r) => s + (r.type === "income" ? r.amount : -r.amount), 0);
+  const expectedClosing = ledgerBefore + movements;
+  const hasClosing = closingInput.trim() !== "" && !isNaN(Number(closingInput));
+  const bankClosing = Number(closingInput) || 0;
+  const difference = hasClosing ? bankClosing - expectedClosing : 0;
+  const balanced = hasClosing && Math.abs(difference) < 1;
+
+  const toggleRow = (key: number) =>
+    setRows((prev) => prev.map((r) => (r.key === key ? { ...r, include: !r.include } : r)));
+
+  const money = (n: number) => account ? fmtCompact(n, account.currency) : String(n);
+
+  const doImport = async () => {
+    if (!account || !included.length) return;
     const now = new Date().toISOString();
     // Build invoice payment aggregates
     const payments = new Map<string, { total: number; latestDate: string }>();
-    for (const r of rows) {
+    for (const r of included) {
       if (!r.matchedInvoiceId) continue;
       const cur = payments.get(r.matchedInvoiceId) ?? { total: 0, latestDate: r.date };
       cur.total += r.amount;
@@ -232,7 +300,7 @@ export function StatementImportDialog({
     }
 
     // Insert transactions
-    for (const r of rows) {
+    for (const r of included) {
       const inv = r.matchedInvoiceId ? invoicesArr.find((i) => i.id === r.matchedInvoiceId) : undefined;
       const tx: Transaction = {
         id: newId("tx"),
@@ -262,14 +330,11 @@ export function StatementImportDialog({
       if (sameCcy) {
         invoicePaidDelta = total;
       } else {
-        // Convert received amount (account ccy) into invoice ccy via FX table
         const receivedInInvCcy = toMGA(total, account.currency) / FX[inv.currency];
         const remainingInInvCcy = Math.max(0, inv.amount - inv.paid);
-        // Settle up to remaining; everything else is FX variance.
         invoicePaidDelta = Math.min(receivedInInvCcy, remainingInInvCcy);
-        // Convert what was actually applied back to account ccy to compute FX diff
         const settledInAcctCcy = toMGA(invoicePaidDelta, inv.currency) / FX[account.currency];
-        fxDelta = total - settledInAcctCcy; // positive = gain, negative = loss
+        fxDelta = total - settledInAcctCcy;
       }
       const newPaid = inv.paid + invoicePaidDelta;
       const newStatus: Invoice["status"] =
@@ -283,7 +348,6 @@ export function StatementImportDialog({
         status: newStatus,
       });
 
-      // Record FX gain/loss as its own ledger entry so the books reconcile
       if (Math.abs(fxDelta) >= 1) {
         const isGain = fxDelta > 0;
         transactionsStore.add({
@@ -304,11 +368,39 @@ export function StatementImportDialog({
       }
     }
 
-    // Update account: balance + upload metadata
-    const delta = rows.reduce((s, r) => s + (r.type === "income" ? r.amount : -r.amount), 0);
+    // Optional balancing adjustment so the ledger matches the bank exactly
+    if (postAdjustment && hasClosing && Math.abs(difference) >= 1) {
+      transactionsStore.add({
+        id: newId("tx"),
+        companyId: account.companyId,
+        accountId: account.id,
+        date: periodEnd || new Date().toISOString().slice(0, 10),
+        type: difference > 0 ? "income" : "expense",
+        category: "Écart de rapprochement",
+        description: `Écart de rapprochement · ${fileName}`,
+        amount: Math.abs(difference),
+        currency: account.currency,
+        source: "statement",
+      });
+    }
+
+    const finalComputed = postAdjustment && hasClosing ? expectedClosing + difference : expectedClosing;
+
     accountsStore.update(account.id, {
-      balance: account.balance + delta,
+      balance: finalComputed,
       statementUploadedAt: now,
+      statementName: fileName,
+    });
+
+    await saveReconciliation({
+      companyId: account.companyId,
+      accountId: account.id,
+      periodStart: periodStart || undefined,
+      periodEnd: periodEnd || undefined,
+      statementClosingBalance: hasClosing ? bankClosing : expectedClosing,
+      computedClosingBalance: finalComputed,
+      difference: hasClosing ? bankClosing - finalComputed : 0,
+      rowCount: included.length,
       statementName: fileName,
     });
 
@@ -320,7 +412,7 @@ export function StatementImportDialog({
     <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Import bank statement {account ? `· ${account.name}` : ""}</DialogTitle>
+          <DialogTitle>Reconcile bank statement {account ? `· ${account.name}` : ""}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
@@ -328,15 +420,15 @@ export function StatementImportDialog({
             <label className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border bg-surface/40 p-10 cursor-pointer hover:bg-surface-elevated/40 transition">
               <Upload className="h-7 w-7 text-muted-foreground" />
               <div className="text-sm">
-                <span className="font-medium">Click to upload</span> or drop a CSV file
+                <span className="font-medium">Click to upload</span> or drop a CSV or Excel file
               </div>
               <p className="text-[11px] text-muted-foreground text-center max-w-md">
                 Expected columns: <code>date, description, amount</code> — or <code>date, description, debit, credit</code>.
-                Invoices are auto-matched when their number appears in the transaction description.
+                Rows already in the ledger are detected and skipped, and invoices are auto-matched when their number appears in the description.
               </p>
               <input
                 type="file"
-                accept=".csv,text/csv"
+                accept=".csv,.xlsx,.xls,.xlsm,text/csv"
                 className="hidden"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }}
               />
@@ -353,17 +445,61 @@ export function StatementImportDialog({
                   <span className="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-success/40 text-success bg-success/10">
                     {matched} matched
                   </span>
-                  <span className="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-muted text-muted-foreground bg-muted/30">
-                    {rows.length - matched} unmatched
-                  </span>
+                  {duplicates > 0 && (
+                    <span className="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10">
+                      {duplicates} duplicate
+                    </span>
+                  )}
                   <Button variant="outline" size="sm" onClick={reset}>Clear</Button>
                 </div>
               </div>
 
-              <div className="max-h-[400px] overflow-y-auto rounded-lg border border-border">
+              {/* Reconciliation summary */}
+              <div className="rounded-lg border border-border bg-surface/40 p-4 space-y-3">
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-[11px] text-muted-foreground">Period start</Label>
+                    <Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} className="h-8" />
+                  </div>
+                  <div>
+                    <Label className="text-[11px] text-muted-foreground">Period end</Label>
+                    <Input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} className="h-8" />
+                  </div>
+                  <div>
+                    <Label className="text-[11px] text-muted-foreground">Bank closing balance</Label>
+                    <Input type="number" value={closingInput} onChange={(e) => setClosingInput(e.target.value)} placeholder="From the statement" className="h-8 font-tnum" />
+                  </div>
+                </div>
+
+                <div className="text-xs space-y-1">
+                  <div className="flex justify-between"><span className="text-muted-foreground">Opening balance ({account?.openingBalanceDate ?? "start"})</span><span className="font-tnum">{money(account ? openingOf(account) : 0)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Ledger balance before import</span><span className="font-tnum">{money(ledgerBefore)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Statement movements ({included.length} rows)</span><span className="font-tnum">{movements >= 0 ? "+" : "−"}{money(Math.abs(movements))}</span></div>
+                  <div className="flex justify-between font-medium border-t border-border/60 pt-1"><span>Expected closing balance</span><span className="font-tnum">{money(expectedClosing)}</span></div>
+                  {hasClosing && (
+                    <div className={cn("flex justify-between font-medium", balanced ? "text-success" : "text-destructive")}>
+                      <span>{balanced ? "Reconciled — matches the bank" : "Difference vs bank"}</span>
+                      <span className="font-tnum">{balanced ? money(0) : `${difference > 0 ? "+" : "−"}${money(Math.abs(difference))}`}</span>
+                    </div>
+                  )}
+                </div>
+
+                {hasClosing && !balanced && (
+                  <label className="flex items-start gap-2 text-xs cursor-pointer">
+                    <input type="checkbox" checked={postAdjustment} onChange={(e) => setPostAdjustment(e.target.checked)} className="mt-0.5" />
+                    <span>
+                      Post a balancing adjustment of <span className="font-tnum font-medium">{money(Math.abs(difference))}</span> (“Écart de rapprochement”)
+                      so the ledger matches the bank from {periodEnd || "today"} on. Otherwise, correct the opening balance on the account.
+                    </span>
+                  </label>
+                )}
+              </div>
+
+              <div className="max-h-[320px] overflow-y-auto rounded-lg border border-border">
                 <table className="w-full text-xs">
                   <thead className="sticky top-0 bg-surface">
                     <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                      <th className="text-left font-medium px-3 py-2 w-8" />
                       <th className="text-left font-medium px-3 py-2">Date</th>
                       <th className="text-left font-medium px-3 py-2">Description</th>
                       <th className="text-left font-medium px-3 py-2">Match</th>
@@ -371,12 +507,18 @@ export function StatementImportDialog({
                     </tr>
                   </thead>
                   <tbody>
-                    {rows.map((r, i) => {
+                    {rows.map((r) => {
                       const inv = r.matchedInvoiceId ? invoicesArr.find((x) => x.id === r.matchedInvoiceId) : null;
                       return (
-                        <tr key={i} className="border-b border-border/40 last:border-0">
+                        <tr key={r.key} className={cn("border-b border-border/40 last:border-0", !r.include && "opacity-45")}>
+                          <td className="px-3 py-2">
+                            <input type="checkbox" checked={r.include} onChange={() => toggleRow(r.key)} />
+                          </td>
                           <td className="px-3 py-2 font-tnum text-muted-foreground">{format(parseISO(r.date), "MMM d, yyyy")}</td>
-                          <td className="px-3 py-2 truncate max-w-[260px]">{r.description}</td>
+                          <td className="px-3 py-2 truncate max-w-[240px]">
+                            {r.description}
+                            {r.duplicate && <span className="ml-2 text-[10px] uppercase tracking-wider text-warning">already in ledger</span>}
+                          </td>
                           <td className="px-3 py-2">
                             {inv ? (
                               <div className="flex flex-col">
@@ -422,8 +564,8 @@ export function StatementImportDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={doImport} disabled={!rows.length}>
-            Import {rows.length || ""} {rows.length ? "transactions" : ""}
+          <Button onClick={doImport} disabled={!included.length}>
+            Import {included.length || ""} {included.length ? "transactions" : ""}
           </Button>
         </DialogFooter>
       </DialogContent>
