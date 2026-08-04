@@ -315,6 +315,8 @@ export interface PurchaseOrder {
   lines?: QuoteLine[];
   /** Short object / title printed on the document. */
   subject?: string;
+  /** Which company bank account prints in the payment details block. */
+  bankAccountId?: string;
 }
 
 
