@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Download, Printer, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { formatRib } from "@/lib/payment-details";
+import { formatRib, resolveBankAccount } from "@/lib/payment-details";
 import {
   fmt, type Company, type Client, type Project, type Currency, type QuoteLine,
 } from "@/lib/mock-data";
@@ -34,6 +34,8 @@ export interface DocumentData {
   taxRate?: number;
   taxAmount?: number;
   totalAmount?: number;
+  /** Which company bank account to print in the payment details block. */
+  bankAccountId?: string;
 }
 
 interface Props {
@@ -140,18 +142,19 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment }: {
     client?.rcs && `RCS: ${client.rcs}`,
     poRef && `PO Ref: ${poRef}`,
   ].filter(Boolean) as string[];
-  const rib = formatRib(company?.bankCode, company?.branchCode, company?.accountNumber, company?.ribKey);
+  const bank = resolveBankAccount(company, doc.bankAccountId);
+  const rib = formatRib(bank?.bankCode, bank?.branchCode, bank?.accountNumber, bank?.ribKey);
   const wireLines = [
-    company?.bankName && `Bank: ${company.bankName}`,
-    (company?.bankHolder || company?.legalName || company?.name) && `Account Name: ${company?.bankHolder || company?.legalName || company?.name}`,
-    rib ? `RIB: ${rib}` : company?.bankAccount && `Account: ${company.bankAccount}`,
-    company?.intlEnabled && company?.bankSwift && `SWIFT/BIC: ${company.bankSwift}`,
-    company?.intlEnabled && company?.iban && `IBAN: ${company.iban}`,
+    bank?.bankName && `Bank: ${bank.bankName}`,
+    (bank?.bankHolder || company?.legalName || company?.name) && `Account Name: ${bank?.bankHolder || company?.legalName || company?.name}`,
+    rib ? `RIB: ${rib}` : bank?.bankAccount && `Account: ${bank.bankAccount}`,
+    bank?.intlEnabled && bank?.bankSwift && `SWIFT/BIC: ${bank.bankSwift}`,
+    bank?.intlEnabled && bank?.iban && `IBAN: ${bank.iban}`,
   ].filter(Boolean) as string[];
-  const mobileLines = company?.mobileEnabled
+  const mobileLines = bank?.mobileEnabled
     ? ([
-        company?.mobileNumber && `Number: ${company.mobileNumber}`,
-        company?.mobileName && `Name: ${company.mobileName}`,
+        bank?.mobileNumber && `Number: ${bank.mobileNumber}`,
+        bank?.mobileName && `Name: ${bank.mobileName}`,
       ].filter(Boolean) as string[])
     : [];
   const paymentVisible = (showPayment ?? company?.showPaymentDetails !== false)
@@ -165,7 +168,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment }: {
             ${wireLines.map((l) => `<div>${esc(l)}</div>`).join("")}
           </div>` : ""}
           ${mobileLines.length ? `<div class="paycol">
-            <div class="paytitle"><span class="paybadge">${esc(company?.mobileProvider ?? "Mobile money")}</span></div>
+            <div class="paytitle"><span class="paybadge">${esc(bank?.mobileProvider ?? "Mobile money")}</span></div>
             ${mobileLines.map((l) => `<div>${esc(l)}</div>`).join("")}
           </div>` : ""}
         </div>
