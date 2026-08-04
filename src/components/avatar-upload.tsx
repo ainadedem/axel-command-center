@@ -32,14 +32,26 @@ function initialsOf(name?: string): string {
 
 /** Click-to-upload avatar editor. Stores the image as a data URL. */
 export function AvatarUpload({ value, onChange, name, size = 64, square, className }: AvatarUploadProps) {
+/** Click-to-upload avatar editor. Uploads to the private `avatars` bucket. */
+export function AvatarUpload({ value, onChange, name, size = 64, square, folder = "misc", className }: AvatarUploadProps) {
   const ref = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const src = useFileUrl(value);
 
   const pick = () => ref.current?.click();
-  const handleFile = (file: File) => {
-    if (!file.type.startsWith("image/")) return;
-    const reader = new FileReader();
-    reader.onload = () => onChange(typeof reader.result === "string" ? reader.result : undefined);
-    reader.readAsDataURL(file);
+  const handleFile = async (file: File) => {
+    setError("");
+    if (!file.type.startsWith("image/")) { setError("Images only"); return; }
+    if (file.size > 5 * 1024 * 1024) { setError("Max 5 MB"); return; }
+    setBusy(true);
+    try {
+      onChange(await uploadFile(AVATARS_BUCKET, folder, file));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -47,22 +59,30 @@ export function AvatarUpload({ value, onChange, name, size = 64, square, classNa
       <button
         type="button"
         onClick={pick}
+        disabled={busy}
         className={cn(
           "relative overflow-hidden border border-border bg-gradient-to-br from-primary/20 to-chart-2/20 grid place-items-center text-xs font-semibold hover:border-primary/50 transition w-full h-full",
           square ? "rounded-lg" : "rounded-full",
         )}
         aria-label="Change profile picture"
       >
-        {value ? (
-          <img src={value} alt={name ?? ""} className="w-full h-full object-cover" />
+        {src ? (
+          <img src={src} alt={name ?? ""} className="w-full h-full object-cover" />
         ) : (
           <span className="text-foreground/80" style={{ fontSize: Math.max(10, size / 3.2) }}>
             {initialsOf(name)}
           </span>
         )}
-        <span className="absolute inset-0 grid place-items-center bg-black/50 opacity-0 group-hover:opacity-100 transition">
-          <Camera className="h-4 w-4 text-white" />
+        <span className={cn(
+          "absolute inset-0 grid place-items-center bg-black/50 transition",
+          busy ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+        )}>
+          {busy ? <Loader2 className="h-4 w-4 text-white animate-spin" /> : <Camera className="h-4 w-4 text-white" />}
         </span>
+      </button>
+      {error && (
+        <div className="absolute top-full left-0 mt-1 text-[10px] text-destructive whitespace-nowrap">{error}</div>
+      )}
       </button>
       {value && (
         <button
