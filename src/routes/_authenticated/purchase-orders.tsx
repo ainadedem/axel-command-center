@@ -313,16 +313,18 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader><DialogTitle>{editing ? "Edit PO" : "New purchase order"}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{editing ? "Edit client PO" : "Record client PO"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
           <FormErrorBanner show={showErrors} />
+          <p className="text-[11px] text-muted-foreground -mt-1">Enter the purchase order details exactly as issued by your client, then attach their document.</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label><RequiredLabel>PO number</RequiredLabel></Label>
-              <Input value={number} onChange={(e) => setNumber(e.target.value)} className={invalidFieldClassName(showErrors && !number.trim())} aria-invalid={showErrors && !number.trim()} />
+              <Label><RequiredLabel>Client PO number</RequiredLabel></Label>
+              <Input value={number} onChange={(e) => setNumber(e.target.value)} placeholder="As written on the client PO" className={invalidFieldClassName(showErrors && !number.trim())} aria-invalid={showErrors && !number.trim()} />
             </div>
-            <div><Label>Client reference</Label><Input value={clientReference} onChange={(e) => setClientReference(e.target.value)} placeholder="Their internal #" /></div>
+            <div><Label>Client internal reference</Label><Input value={clientReference} onChange={(e) => setClientReference(e.target.value)} placeholder="Their internal #" /></div>
           </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label><RequiredLabel>Company</RequiredLabel></Label>
