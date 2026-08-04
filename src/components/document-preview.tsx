@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -46,6 +46,7 @@ interface Props {
 export function DocumentPreview({ open, onOpenChange, doc, company, client, project }: Props) {
   const [showStatus, setShowStatus] = useState(true);
   const [showPayment, setShowPayment] = useState(company?.showPaymentDetails !== false);
+  useEffect(() => { setShowPayment(company?.showPaymentDetails !== false); }, [company?.id, company?.showPaymentDetails]);
 
   const html = useMemo(() => {
     if (!doc) return "";

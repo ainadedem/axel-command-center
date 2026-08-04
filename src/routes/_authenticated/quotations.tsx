@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, FileCheck2, Plus, X, Eye, Copy, Send, Loader2, CheckCircle2 } from "lucide-react";
 import { DocumentPreview, buildPrintableDocument, type DocumentData } from "@/components/document-preview";
-import { nextNumber } from "@/lib/numbering";
+import { nextNumber, isNumberTaken } from "@/lib/numbering";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import html2pdf from "html2pdf.js";
@@ -406,8 +406,11 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
 
   const removeLine = (id: string) => setLines((prev) => prev.filter((l) => l.id !== id));
 
+  const duplicateNumber = Boolean(number.trim()) && Boolean(companyId)
+    && isNumberTaken("quote", companyId, number, editing?.id);
+
   const submit = () => {
-    if (!number.trim() || !companyId || !clientId) return;
+    if (!number.trim() || !companyId || !clientId || duplicateNumber) return;
     const amountInt = Math.round(subtotal);
     const taxRateNum = Number(taxRate) || 0;
     const computed = computeTotals(amountInt, taxRateNum);
@@ -437,7 +440,11 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
         <DialogHeader><DialogTitle>{editing ? "Edit quote" : "New quote"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Number</Label><Input value={number} onChange={(e) => setNumber(e.target.value)} /></div>
+            <div>
+              <Label>Number</Label>
+              <Input value={number} onChange={(e) => setNumber(e.target.value)} aria-invalid={duplicateNumber} />
+              {duplicateNumber && <p className="text-[11px] text-destructive mt-1">This number is already used by another quote.</p>}
+            </div>
             <div>
               <Label>Status</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as QuoteStatus)}>
