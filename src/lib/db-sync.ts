@@ -1006,6 +1006,7 @@ export async function deleteRecurringBillingDb(id: string) {
 const tmToDb = (t: TeamMember) => ({
   id: isUuid(t.id) ? t.id : undefined,
   name: t.name,
+  company_id: t.companyId ? (toDbCompanyId(t.companyId) ?? null) : null,
   first_name: t.firstName ?? null,
   last_name: t.lastName ?? null,
   email: t.email ?? null,
@@ -1017,6 +1018,7 @@ const tmToDb = (t: TeamMember) => ({
 const tmFromDb = (r: Record<string, unknown>): TeamMember => ({
   id: r.id as string,
   name: r.name as string,
+  companyId: r.company_id ? toLocalCompanyId(r.company_id as string) : undefined,
   firstName: (r.first_name as string) ?? undefined,
   lastName: (r.last_name as string) ?? undefined,
   email: (r.email as string) ?? undefined,
