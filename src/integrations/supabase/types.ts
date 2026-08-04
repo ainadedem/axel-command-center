@@ -499,6 +499,8 @@ export type Database = {
           paid: number
           paid_date: string | null
           po_id: string | null
+          po_waived: boolean
+          po_waiver_reason: string | null
           project_id: string | null
           quote_id: string | null
           status: string
@@ -519,6 +521,8 @@ export type Database = {
           paid?: number
           paid_date?: string | null
           po_id?: string | null
+          po_waived?: boolean
+          po_waiver_reason?: string | null
           project_id?: string | null
           quote_id?: string | null
           status?: string
@@ -539,6 +543,8 @@ export type Database = {
           paid?: number
           paid_date?: string | null
           po_id?: string | null
+          po_waived?: boolean
+          po_waiver_reason?: string | null
           project_id?: string | null
           quote_id?: string | null
           status?: string
