@@ -561,6 +561,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setCompanyId(fallback); setCompanyIds(fallback ? [fallback] : []); setName(""); setCountry(""); setAcquisition(""); setReferral("");
       setAcquiredAt(new Date().toISOString().slice(0, 10));
       setWebsite(""); setEmail(""); setPhone(""); setAddress(""); setIndustry(""); setContacts("");
+      setNif(""); setStat(""); setRcs("");
       setAvatarUrl(undefined);
       setStatus("client");
       setCategories(["client"]);
