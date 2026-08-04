@@ -579,8 +579,6 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
     company: !companyId,
     address: !address.trim(),
     email: !email.trim() || !emailValid,
-    nif: !nif.trim(),
-    stat: !stat.trim(),
   };
 
   const submit = async () => {
@@ -746,12 +744,12 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
             <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">Tax & legal identifiers</div>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <Label><RequiredLabel>NIF</RequiredLabel></Label>
-                <Input value={nif} onChange={(e) => setNif(e.target.value)} placeholder="Numéro d'Identification Fiscale" className={invalidFieldClassName(showErrors && missing.nif)} aria-invalid={showErrors && missing.nif} />
+                <Label>NIF</Label>
+                <Input value={nif} onChange={(e) => setNif(e.target.value)} placeholder="Numéro d'Identification Fiscale (optional)" />
               </div>
               <div>
-                <Label><RequiredLabel>STAT</RequiredLabel></Label>
-                <Input value={stat} onChange={(e) => setStat(e.target.value)} placeholder="Numéro Statistique" className={invalidFieldClassName(showErrors && missing.stat)} aria-invalid={showErrors && missing.stat} />
+                <Label>STAT</Label>
+                <Input value={stat} onChange={(e) => setStat(e.target.value)} placeholder="Numéro Statistique (optional)" />
               </div>
               <div>
                 <Label>RCS</Label>
