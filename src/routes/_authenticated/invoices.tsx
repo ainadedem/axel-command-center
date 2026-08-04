@@ -87,6 +87,8 @@ function Body() {
     { key: "project", label: "Project", type: "enum", accessor: (i) => projects.find((p) => p.id === i.projectId)?.name ?? "" },
     { key: "company", label: "Company", type: "enum", accessor: (i) => companies.find((c) => c.id === i.companyId)?.shortName ?? "" },
     { key: "status", label: "Status", type: "enum", accessor: (i) => i.status },
+    { key: "poMissing", label: "PO missing", type: "boolean", accessor: (i) => !i.poId },
+
     { key: "currency", label: "Currency", type: "enum", accessor: (i) => i.currency },
     { key: "issueDate", label: "Issued", type: "date", accessor: (i) => i.issueDate, noGroup: true },
     { key: "dueDate", label: "Due", type: "date", accessor: (i) => i.dueDate, noGroup: true },
