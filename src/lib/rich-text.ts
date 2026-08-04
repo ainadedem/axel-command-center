@@ -64,5 +64,5 @@ export function renderRichText(raw: unknown): string {
   return out.join("");
 }
 
-/** Short hint shown under editable description fields. */
-export const RICH_TEXT_HINT = "Multi-line supported — use \"- \" for bullets, \"1. \" for numbers, **bold**, *italic*.";
+/** Short hint shown under editable line-item fields. */
+export const RICH_TEXT_HINT = "Description is plain text. Formatting applies to Details only — use \"- \" for bullets, \"1. \" for numbers, **bold**, *italic*.";

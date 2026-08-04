@@ -193,7 +193,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment }: {
         const qty = Number(l.quantity) || 0;
         const rate = Number(l.rate) || 0;
         const total = qty * rate;
-        const descHtml = renderRichText(l.description) || esc("—");
+        const descHtml = esc(String(l.description ?? "").trim() || "—");
         const detailHtml = renderRichText(l.details);
         const meta = [l.capability, l.level].filter(Boolean).join(" · ");
         return `
