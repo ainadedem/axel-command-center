@@ -25,6 +25,8 @@ import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, Ban, BadgeCheck, ToggleLeft, ToggleRight } from "lucide-react";
 import { InvoicePreview } from "@/components/invoice-preview";
 import { RecordPaymentDialog } from "@/components/statement-import-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+
 import { Textarea } from "@/components/ui/textarea";
 import { Wallet } from "lucide-react";
 import { nextNumber } from "@/lib/numbering";
