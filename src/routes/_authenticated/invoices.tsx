@@ -617,7 +617,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
 
           <div>
             <Label><RequiredLabel>Purchase order</RequiredLabel></Label>
-            <Select value={poId || "__none__"} onValueChange={(v) => setPoId(v === "__none__" ? "" : v)} disabled={!clientId}>
+            <Select value={poId || "__none__"} onValueChange={(v) => { const next = v === "__none__" ? "" : v; setPoId(next); if (next) setPoWaived(false); }} disabled={!clientId}>
               <SelectTrigger className={cn(!processOk && status !== "draft" && "border-destructive")}>
                 <SelectValue placeholder={clientId ? (clientPOs.length ? "Select PO" : "No PO for this client") : "Select client first"} />
               </SelectTrigger>
@@ -626,13 +626,33 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                 {clientPOs.map((p) => <SelectItem key={p.id} value={p.id}>{p.number} · {fmtAmount(p.amount, p.currency)} · {p.status}</SelectItem>)}
               </SelectContent>
             </Select>
-            {blocked && (
-              <p className="text-[11px] text-destructive mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Process: link an accepted PO before sending the invoice.</p>
+
+            {!poId && (
+              <div className="mt-2 rounded-md border border-warning/40 bg-warning/5 px-3 py-2 space-y-2">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <Checkbox checked={poWaived} onCheckedChange={(v) => setPoWaived(Boolean(v))} className="mt-0.5" />
+                  <span className="text-xs">
+                    <span className="font-medium">Invoice without PO (bypass)</span>
+                    <span className="block text-[11px] text-muted-foreground">The invoice will be flagged <strong>PO missing</strong> everywhere in the system.</span>
+                  </span>
+                </label>
+                {poWaived && (
+                  <Input value={poWaiverReason} onChange={(e) => setPoWaiverReason(e.target.value)} placeholder="Reason (e.g. client confirmed by email)" className="h-8 text-xs" />
+                )}
+              </div>
             )}
-            {!blocked && processOk && (
+
+            {blocked && (
+              <p className="text-[11px] text-destructive mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Link a client PO — or tick the bypass above — before sending the invoice.</p>
+            )}
+            {!blocked && poId && (
               <p className="text-[11px] text-success mt-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Quote → PO → Invoice process complete.</p>
             )}
+            {!poId && poWaived && (
+              <p className="text-[11px] text-warning mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> PO missing — bypass recorded.</p>
+            )}
           </div>
+
 
           <div>
             <Label>Project</Label>
