@@ -3,7 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
   useRecurringBillings, useCompanies, useClients, useProjects, useInvoices,
-  recurringBillingsStore, invoicesStore, companyCode,
+  recurringBillingsStore, invoicesStore, companyCode, contactBelongsTo,
   fmtAmount, type RecurringBilling, type BillingFrequency, type Currency, type Invoice,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
@@ -209,7 +209,7 @@ function Kpi({ label, value, accent, mono }: { label: string; value: string; acc
 function BillingDialog({
   open, onOpenChange, editing, defaultCurrency,
 }: { open: boolean; onOpenChange: (v: boolean) => void; editing: RecurringBilling | null; defaultCurrency: Currency }) {
-  const { scope } = useCompany();
+  const { scope, scopedCompanies } = useCompany();
   const companies = useCompanies();
   const clients = useClients();
   const projects = useProjects();
@@ -245,14 +245,14 @@ function BillingDialog({
       setNotes(editing.notes ?? "");
     } else {
       setName("");
-      setCompanyId(scope.id === "company" ? scope.companyId : companies[0]?.id ?? "");
+      setCompanyId(scope.id === "company" ? scope.companyId : scopedCompanies[0]?.id ?? companies[0]?.id ?? "");
       setClientId(""); setProjectId(""); setAmount(""); setCurrency(defaultCurrency);
       setFrequency("monthly");
       setStartDate(format(new Date(), "yyyy-MM-dd"));
       setEndDate(""); setPaymentTermsDays("30"); setActive(true); setNotes("");
     }
     setShowErrors(false);
-  }, [open, editing, defaultCurrency, scope, companies]);
+  }, [open, editing, defaultCurrency, scope, companies, scopedCompanies]);
 
   const submit = () => {
     const amt = parseFloat(amount);
@@ -278,13 +278,14 @@ function BillingDialog({
     onOpenChange(false);
   };
 
-  const scopedClients = clients.filter((c) => !companyId || c.companyId === companyId || (c.companyIds ?? []).includes(companyId));
+  const companyOptions = scope.id === "company" ? scopedCompanies : companies;
+  const scopedClients = clients.filter((client) => !companyId || contactBelongsTo(client, companyId));
   const scopedProjects = projects.filter((p) => (!companyId || p.companyId === companyId) && (!clientId || p.clientId === clientId));
 
   useReconciledSelection({
     open,
     currentValue: companyId,
-    options: companies,
+    options: companyOptions,
     getId: (company) => company.id,
     onChange: setCompanyId,
   });
@@ -323,7 +324,7 @@ function BillingDialog({
               <Select value={companyId} onValueChange={setCompanyId}>
                 <SelectTrigger className={invalidFieldClassName(showErrors && !companyId)} aria-invalid={showErrors && !companyId}><SelectValue placeholder="Choose…" /></SelectTrigger>
                 <SelectContent>
-                  {companies.map((c) => <SelectItem key={c.id} value={c.id}>{companyCode(c)} — {c.name}</SelectItem>)}
+                  {companyOptions.map((c) => <SelectItem key={c.id} value={c.id}>{companyCode(c)} — {c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -404,7 +405,7 @@ function BillingDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit} disabled={!name.trim() || !companyId || !clientId || !amount}>{editing ? "Save" : "Create"}</Button>
+          <Button onClick={submit}>{editing ? "Save" : "Create"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
