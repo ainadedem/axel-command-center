@@ -318,9 +318,17 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setProjectId(""); setIssueDate(today); setValidUntil(addDays(new Date(), 30).toISOString().slice(0, 10));
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
       setMode("rate-card");
-      setLines([]); setNotes(""); setTaxRate(0);
+      setLines([]); setNotes(""); setTaxRate(defaultTaxRate(companies[0], today));
     }
   }, [open, editing, companies, today]);
+
+  // Re-apply the default tax rate when the company or issue date changes on a new quote.
+  useEffect(() => {
+    if (!open || editing || !companyId) return;
+    const c = companies.find((x) => x.id === companyId);
+    setTaxRate(defaultTaxRate(c, issueDate));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId, issueDate]);
 
   useEffect(() => {
     if (!open || editing || !companyId) return;
