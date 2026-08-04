@@ -129,12 +129,15 @@ export type Database = {
       bank_reconciliations: {
         Row: {
           account_id: string
+          adjustment_amount: number | null
+          adjustment_transaction_id: string | null
           company_id: string
           computed_closing_balance: number
           created_at: string
           created_by: string | null
           difference: number
           id: string
+          opening_balance: number | null
           period_end: string | null
           period_start: string | null
           row_count: number
@@ -144,12 +147,15 @@ export type Database = {
         }
         Insert: {
           account_id: string
+          adjustment_amount?: number | null
+          adjustment_transaction_id?: string | null
           company_id: string
           computed_closing_balance?: number
           created_at?: string
           created_by?: string | null
           difference?: number
           id?: string
+          opening_balance?: number | null
           period_end?: string | null
           period_start?: string | null
           row_count?: number
@@ -159,12 +165,15 @@ export type Database = {
         }
         Update: {
           account_id?: string
+          adjustment_amount?: number | null
+          adjustment_transaction_id?: string | null
           company_id?: string
           computed_closing_balance?: number
           created_at?: string
           created_by?: string | null
           difference?: number
           id?: string
+          opening_balance?: number | null
           period_end?: string | null
           period_start?: string | null
           row_count?: number

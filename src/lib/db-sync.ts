@@ -1338,6 +1338,9 @@ export interface BankReconciliation {
   difference: number;
   rowCount: number;
   statementName?: string;
+  openingBalance?: number;
+  adjustmentAmount?: number;
+  adjustmentTransactionId?: string;
   createdAt: string;
 }
 
@@ -1351,6 +1354,9 @@ const reconFromDb = (r: Record<string, unknown>): BankReconciliation => ({
   difference: Number(r.difference) || 0,
   rowCount: Number(r.row_count) || 0,
   statementName: (r.statement_name as string) ?? undefined,
+  openingBalance: r.opening_balance == null ? undefined : Number(r.opening_balance),
+  adjustmentAmount: r.adjustment_amount == null ? undefined : Number(r.adjustment_amount),
+  adjustmentTransactionId: (r.adjustment_transaction_id as string) ?? undefined,
   createdAt: (r.created_at as string) ?? new Date().toISOString(),
 });
 
@@ -1375,6 +1381,9 @@ export async function saveReconciliation(input: {
   difference: number;
   rowCount: number;
   statementName?: string;
+  openingBalance?: number;
+  adjustmentAmount?: number;
+  adjustmentTransactionId?: string;
 }): Promise<void> {
   const dbCompany = toDbCompanyId(input.companyId);
   if (!dbCompany || !isUuid(input.accountId)) return;
@@ -1389,6 +1398,9 @@ export async function saveReconciliation(input: {
     difference: input.difference,
     row_count: input.rowCount,
     statement_name: input.statementName ?? null,
+    opening_balance: input.openingBalance ?? null,
+    adjustment_amount: input.adjustmentAmount ?? null,
+    adjustment_transaction_id: isUuid(input.adjustmentTransactionId ?? "") ? input.adjustmentTransactionId : null,
     created_by: auth.user?.id ?? null,
   });
   if (error) console.warn("[db-sync] saveReconciliation", error.message);
