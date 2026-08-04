@@ -68,7 +68,12 @@ export interface Account {
   name: string;
   type: "bank" | "mobile" | "cash";
   currency: Currency;
+  /** Legacy stored balance. Display uses the computed balance instead. */
   balance: number;
+  /** Verified starting balance of the account. */
+  openingBalance?: number;
+  /** Date (yyyy-mm-dd) the opening balance is stated at. */
+  openingBalanceDate?: string;
   /** ISO datetime of the last bank statement CSV upload. */
   statementUploadedAt?: string;
   /** Filename of the last uploaded statement (for display). */
