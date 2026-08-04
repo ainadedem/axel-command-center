@@ -83,7 +83,6 @@ export function AvatarUpload({ value, onChange, name, size = 64, square, folder 
       {error && (
         <div className="absolute top-full left-0 mt-1 text-[10px] text-destructive whitespace-nowrap">{error}</div>
       )}
-      </button>
       {value && (
         <button
           type="button"
