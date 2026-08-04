@@ -449,8 +449,11 @@ export interface TeamMember {
   id: string;
   /** Full display name — kept in sync with firstName + lastName. */
   name: string;
-  /** Company this person belongs to (undefined = visible in every company). */
-  companyId?: string;
+  /** Company this person belongs to.
+   *  - undefined = visible in every company (global)
+   *  - null = not assigned to any company (only visible in group view)
+   *  - string = visible only in that company */
+  companyId?: string | null;
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -460,6 +463,7 @@ export interface TeamMember {
   /** Profile picture (data URL or remote URL). */
   avatarUrl?: string;
 }
+
 
 export type SalesRole = "acquisition" | "closer" | "both";
 
