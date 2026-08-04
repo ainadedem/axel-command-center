@@ -5,6 +5,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Download, Printer, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { formatRib, resolveBankAccount } from "@/lib/payment-details";
+import { renderRichText } from "@/lib/rich-text";
+
 import {
   fmt, type Company, type Client, type Project, type Currency, type QuoteLine,
 } from "@/lib/mock-data";
