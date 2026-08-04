@@ -256,14 +256,13 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
       </table>
 
       <div class="totals">
-        <div class="line"><span>Subtotal</span><span>${fmt(doc.amount, doc.currency)}</span></div>
+        <div class="line"><span>Subtotal HT</span><span>${fmt(subtotalHT, doc.currency)}</span></div>
+        <div class="line"><span>TVA (${Number(vatRate).toFixed(2)}%)</span><span>${fmt(vatAmount, doc.currency)}</span></div>
+        <div class="line grand"><span>Total TTC</span><span>${fmt(totalTTC, doc.currency)}</span></div>
         ${doc.kind === "invoice" ? `
           <div class="line"><span>Paid to date</span><span>${fmt(doc.paid ?? 0, doc.currency)}</span></div>
           <div class="line grand"><span>Balance due</span><span class="due">${fmt(balance, doc.currency)}</span></div>
-        ` : `
-          <div class="line"><span>Tax (${Number(doc.taxRate ?? 0).toFixed(2)}%)</span><span>${fmt(doc.taxAmount ?? 0, doc.currency)}</span></div>
-          <div class="line grand"><span>Total</span><span>${fmt(doc.totalAmount ?? doc.amount, doc.currency)}</span></div>
-        `}
+        ` : ""}
       </div>
 
       ${doc.notes ? `<div class="notes"><strong>Notes</strong><div style="margin-top: 4px;">${esc(doc.notes)}</div></div>` : ""}
