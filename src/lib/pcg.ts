@@ -692,7 +692,7 @@ export function enrichClientsFromAccounts() {
 
 // Auto-seed on first load (idempotent). Declared AFTER `accountLabels`
 // because seedLogiaDerivedData() reads from it.
-const DERIVED_VERSION = "12"; // bump to force re-derive on existing local data
+const DERIVED_VERSION = "13"; // bump to force re-derive on existing local data
 const AXIOM_INVOICES_VERSION = "3";
 const AXIOM_BANK_VERSION = "2";
 const AXIOM_RECONCILE_VERSION = "1";
