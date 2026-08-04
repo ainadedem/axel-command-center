@@ -7,13 +7,14 @@ import {
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
-import { Landmark, Smartphone, Banknote, Pencil, Trash2, Upload, History, CheckCircle2, AlertTriangle } from "lucide-react";
-import { Fragment, useEffect, useState } from "react";
+import { Landmark, Smartphone, Banknote, Pencil, Trash2, Upload, History, CheckCircle2, AlertTriangle, Search, Download, FileDown, Info } from "lucide-react";
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { StatementImportDialog } from "@/components/statement-import-dialog";
 import { format, parseISO } from "date-fns";
@@ -22,7 +23,21 @@ import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
 import { useAccountBalances, openingOf } from "@/lib/account-balance";
 import { fetchReconciliations, type BankReconciliation } from "@/lib/db-sync";
+import {
+  exportReconciliationCsv, exportReconciliationPdf, type ReconciliationSummary,
+} from "@/lib/reconciliation-export";
 import { cn } from "@/lib/utils";
+
+function TooltipHint({ label, children }: { label: ReactNode; children: ReactNode }) {
+  return (
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipContent className="max-w-[240px] text-center">{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/accounts")({ component: AccountsPage });
 
