@@ -297,69 +297,105 @@ export type Database = {
       }
       companies: {
         Row: {
+          account_number: string | null
           address: string | null
           bank_account: string | null
+          bank_code: string | null
+          bank_holder: string | null
           bank_name: string | null
           bank_swift: string | null
           base_currency: string
+          branch_code: string | null
           code: string
           color: string | null
           created_at: string
           email: string | null
+          iban: string | null
           id: string
+          intl_enabled: boolean
           legal_name: string | null
           logo_url: string | null
+          mobile_enabled: boolean
+          mobile_name: string | null
+          mobile_number: string | null
+          mobile_provider: string | null
           name: string
           nif: string | null
           phone: string | null
           rcs: string | null
+          rib_key: string | null
           short_name: string | null
+          show_payment_details: boolean
           stat: string | null
           tax_id: string | null
           updated_at: string
           website: string | null
         }
         Insert: {
+          account_number?: string | null
           address?: string | null
           bank_account?: string | null
+          bank_code?: string | null
+          bank_holder?: string | null
           bank_name?: string | null
           bank_swift?: string | null
           base_currency?: string
+          branch_code?: string | null
           code: string
           color?: string | null
           created_at?: string
           email?: string | null
+          iban?: string | null
           id?: string
+          intl_enabled?: boolean
           legal_name?: string | null
           logo_url?: string | null
+          mobile_enabled?: boolean
+          mobile_name?: string | null
+          mobile_number?: string | null
+          mobile_provider?: string | null
           name: string
           nif?: string | null
           phone?: string | null
           rcs?: string | null
+          rib_key?: string | null
           short_name?: string | null
+          show_payment_details?: boolean
           stat?: string | null
           tax_id?: string | null
           updated_at?: string
           website?: string | null
         }
         Update: {
+          account_number?: string | null
           address?: string | null
           bank_account?: string | null
+          bank_code?: string | null
+          bank_holder?: string | null
           bank_name?: string | null
           bank_swift?: string | null
           base_currency?: string
+          branch_code?: string | null
           code?: string
           color?: string | null
           created_at?: string
           email?: string | null
+          iban?: string | null
           id?: string
+          intl_enabled?: boolean
           legal_name?: string | null
           logo_url?: string | null
+          mobile_enabled?: boolean
+          mobile_name?: string | null
+          mobile_number?: string | null
+          mobile_provider?: string | null
           name?: string
           nif?: string | null
           phone?: string | null
           rcs?: string | null
+          rib_key?: string | null
           short_name?: string | null
+          show_payment_details?: boolean
           stat?: string | null
           tax_id?: string | null
           updated_at?: string
