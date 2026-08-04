@@ -1,4 +1,3 @@
-import { defaultTaxRate } from "@/lib/vat";
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -116,12 +115,9 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment }: {
   const due = doc.dueDate ? format(parseISO(doc.dueDate), "MMM d, yyyy") : null;
   const paidOn = doc.paidDate ? format(parseISO(doc.paidDate), "MMM d, yyyy") : null;
   const subtotalHT = doc.amount ?? 0;
-  const vatRate = doc.kind === "invoice"
-    ? (doc.taxRate ?? defaultTaxRate(company, doc.issueDate))
-    : (doc.taxRate ?? 0);
-  const vatAmount = doc.kind === "invoice"
-    ? (doc.taxAmount ?? subtotalHT * (vatRate / 100))
-    : (doc.taxAmount ?? 0);
+  // Never invent VAT: only show tax when the document actually carries it.
+  const vatRate = doc.taxRate ?? 0;
+  const vatAmount = doc.taxAmount ?? subtotalHT * (vatRate / 100);
   const totalTTC = doc.totalAmount ?? subtotalHT + vatAmount;
   const balance = (doc.kind === "invoice" ? totalTTC : subtotalHT) - (doc.paid ?? 0);
 

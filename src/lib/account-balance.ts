@@ -12,8 +12,14 @@ export interface AccountBalance {
   txCount: number;
 }
 
+/**
+ * Verified opening balance. It only counts as a starting point when it was
+ * explicitly anchored to a date (via the account form or a reconciliation).
+ * Without a date the ledger is summed from zero, so returning the stored
+ * balance here would double-count every past movement.
+ */
 export function openingOf(a: Account): number {
-  return a.openingBalance ?? a.balance ?? 0;
+  return a.openingBalanceDate ? (a.openingBalance ?? 0) : 0;
 }
 
 /** Ledger movements on an account, counted from its opening balance date. */
@@ -33,6 +39,11 @@ export function accountMovements(a: Account, txs: Transaction[]): { total: numbe
 export function computeAccountBalance(a: Account, txs: Transaction[]): AccountBalance {
   const opening = openingOf(a);
   const { total, count } = accountMovements(a, txs);
+  // No anchored opening and no ledger movements → fall back to the stored balance.
+  if (!a.openingBalanceDate && count === 0) {
+    const stored = a.balance ?? 0;
+    return { opening: stored, movements: 0, computed: stored, txCount: 0 };
+  }
   return { opening, movements: total, computed: opening + total, txCount: count };
 }
 
