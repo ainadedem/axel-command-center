@@ -211,24 +211,38 @@ export type Database = {
       }
       clients: {
         Row: {
+          account_number: string | null
           acquired_at: string | null
           acquisition: string | null
           acquisition_year: number | null
           address: string | null
           avatar_url: string | null
+          bank_account: string | null
+          bank_code: string | null
+          bank_holder: string | null
+          bank_name: string | null
+          bank_swift: string | null
+          branch_code: string | null
           categories: string[] | null
           company_id: string
           contacts: string | null
           country: string | null
           created_at: string
           email: string | null
+          iban: string | null
           id: string
           industry: string | null
+          intl_enabled: boolean
+          mobile_enabled: boolean
+          mobile_name: string | null
+          mobile_number: string | null
+          mobile_provider: string | null
           name: string
           nif: string | null
           phone: string | null
           rcs: string | null
           referral: string | null
+          rib_key: string | null
           stat: string | null
           status: string | null
           tax_id: string | null
@@ -236,24 +250,38 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          account_number?: string | null
           acquired_at?: string | null
           acquisition?: string | null
           acquisition_year?: number | null
           address?: string | null
           avatar_url?: string | null
+          bank_account?: string | null
+          bank_code?: string | null
+          bank_holder?: string | null
+          bank_name?: string | null
+          bank_swift?: string | null
+          branch_code?: string | null
           categories?: string[] | null
           company_id: string
           contacts?: string | null
           country?: string | null
           created_at?: string
           email?: string | null
+          iban?: string | null
           id?: string
           industry?: string | null
+          intl_enabled?: boolean
+          mobile_enabled?: boolean
+          mobile_name?: string | null
+          mobile_number?: string | null
+          mobile_provider?: string | null
           name: string
           nif?: string | null
           phone?: string | null
           rcs?: string | null
           referral?: string | null
+          rib_key?: string | null
           stat?: string | null
           status?: string | null
           tax_id?: string | null
@@ -261,24 +289,38 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          account_number?: string | null
           acquired_at?: string | null
           acquisition?: string | null
           acquisition_year?: number | null
           address?: string | null
           avatar_url?: string | null
+          bank_account?: string | null
+          bank_code?: string | null
+          bank_holder?: string | null
+          bank_name?: string | null
+          bank_swift?: string | null
+          branch_code?: string | null
           categories?: string[] | null
           company_id?: string
           contacts?: string | null
           country?: string | null
           created_at?: string
           email?: string | null
+          iban?: string | null
           id?: string
           industry?: string | null
+          intl_enabled?: boolean
+          mobile_enabled?: boolean
+          mobile_name?: string | null
+          mobile_number?: string | null
+          mobile_provider?: string | null
           name?: string
           nif?: string | null
           phone?: string | null
           rcs?: string | null
           referral?: string | null
+          rib_key?: string | null
           stat?: string | null
           status?: string | null
           tax_id?: string | null
@@ -1054,25 +1096,36 @@ export type Database = {
       suppliers: {
         Row: {
           account: string
+          account_number: string | null
           address: string | null
           avatar_url: string | null
           bank_account: string | null
+          bank_code: string | null
+          bank_holder: string | null
           bank_name: string | null
           bank_swift: string | null
+          branch_code: string | null
           categories: string[] | null
           company_id: string
           contact_person: string | null
           country: string | null
           created_at: string
           email: string | null
+          iban: string | null
           id: string
+          intl_enabled: boolean
           kind: string
+          mobile_enabled: boolean
+          mobile_name: string | null
+          mobile_number: string | null
+          mobile_provider: string | null
           name: string
           nif: string | null
           notes: string | null
           payment_terms: number | null
           phone: string | null
           rcs: string | null
+          rib_key: string | null
           stat: string | null
           tax_id: string | null
           updated_at: string
@@ -1080,25 +1133,36 @@ export type Database = {
         }
         Insert: {
           account: string
+          account_number?: string | null
           address?: string | null
           avatar_url?: string | null
           bank_account?: string | null
+          bank_code?: string | null
+          bank_holder?: string | null
           bank_name?: string | null
           bank_swift?: string | null
+          branch_code?: string | null
           categories?: string[] | null
           company_id: string
           contact_person?: string | null
           country?: string | null
           created_at?: string
           email?: string | null
+          iban?: string | null
           id?: string
+          intl_enabled?: boolean
           kind?: string
+          mobile_enabled?: boolean
+          mobile_name?: string | null
+          mobile_number?: string | null
+          mobile_provider?: string | null
           name: string
           nif?: string | null
           notes?: string | null
           payment_terms?: number | null
           phone?: string | null
           rcs?: string | null
+          rib_key?: string | null
           stat?: string | null
           tax_id?: string | null
           updated_at?: string
@@ -1106,25 +1170,36 @@ export type Database = {
         }
         Update: {
           account?: string
+          account_number?: string | null
           address?: string | null
           avatar_url?: string | null
           bank_account?: string | null
+          bank_code?: string | null
+          bank_holder?: string | null
           bank_name?: string | null
           bank_swift?: string | null
+          branch_code?: string | null
           categories?: string[] | null
           company_id?: string
           contact_person?: string | null
           country?: string | null
           created_at?: string
           email?: string | null
+          iban?: string | null
           id?: string
+          intl_enabled?: boolean
           kind?: string
+          mobile_enabled?: boolean
+          mobile_name?: string | null
+          mobile_number?: string | null
+          mobile_provider?: string | null
           name?: string
           nif?: string | null
           notes?: string | null
           payment_terms?: number | null
           phone?: string | null
           rcs?: string | null
+          rib_key?: string | null
           stat?: string | null
           tax_id?: string | null
           updated_at?: string

@@ -17,6 +17,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/crud-toolbar";
+import { PaymentDetailsFields, paymentFrom, paymentValues, emptyPayment, type PaymentFormState } from "@/components/payment-details-fields";
+
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
 import {
   Pencil, Trash2, Building2, User, LayoutGrid, List as ListIcon,
@@ -404,9 +406,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
   const [nif, setNif] = useState("");
   const [stat, setStat] = useState("");
   const [rcs, setRcs] = useState("");
-  const [bankName, setBankName] = useState("");
-  const [bankAccount, setBankAccount] = useState("");
-  const [bankSwift, setBankSwift] = useState("");
+  const [pay, setPay] = useState<PaymentFormState>(emptyPayment);
   const [notes, setNotes] = useState("");
   const [categories, setCategories] = useState<ContactCategory[]>(["supplier"]);
   const [showErrors, setShowErrors] = useState(false);
@@ -420,7 +420,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
       setWebsite(editing.website ?? ""); setAddress(editing.address ?? ""); setCountry(editing.country ?? "");
       setPaymentTerms(editing.paymentTerms != null ? String(editing.paymentTerms) : "");
       setTaxId(editing.taxId ?? ""); setNif(editing.nif ?? ""); setStat(editing.stat ?? ""); setRcs(editing.rcs ?? "");
-      setBankName(editing.bankName ?? ""); setBankAccount(editing.bankAccount ?? ""); setBankSwift(editing.bankSwift ?? "");
+      setPay(paymentFrom(editing));
       setNotes(editing.notes ?? "");
       setCategories(defaultCategoriesFor("supplier", editing.categories));
     } else {
@@ -428,7 +428,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
       setName(""); setCompanyId(fallback); setCompanyIds(fallback ? [fallback] : []); setAccount("401000"); setKind("external");
       setAvatarUrl(undefined); setContactPerson(""); setEmail(""); setPhone(""); setWebsite("");
       setAddress(""); setCountry(""); setPaymentTerms(""); setTaxId(""); setNif(""); setStat(""); setRcs("");
-      setBankName(""); setBankAccount(""); setBankSwift(""); setNotes("");
+      setPay(emptyPayment); setNotes("");
       setCategories(["supplier"]);
     }
     setShowErrors(false);
@@ -447,7 +447,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
       website: website || undefined, address: address || undefined, country: country || undefined,
       paymentTerms: paymentTerms ? Number(paymentTerms) : undefined,
       taxId: taxId || undefined, nif: nif || undefined, stat: stat || undefined, rcs: rcs || undefined,
-      bankName: bankName || undefined, bankAccount: bankAccount || undefined, bankSwift: bankSwift || undefined,
+      ...paymentValues(pay),
       notes: notes || undefined,
       categories: categories.length > 0 ? categories : undefined,
     };
@@ -550,12 +550,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
             <div><Label>RCS</Label><Input value={rcs} onChange={(e) => setRcs(e.target.value)} /></div>
             <div><Label>Tax / VAT ID</Label><Input value={taxId} onChange={(e) => setTaxId(e.target.value)} /></div>
           </div>
-          <div className="pt-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Bank</div>
-          <div className="grid grid-cols-3 gap-3">
-            <div><Label>Bank name</Label><Input value={bankName} onChange={(e) => setBankName(e.target.value)} /></div>
-            <div><Label>Account / IBAN</Label><Input value={bankAccount} onChange={(e) => setBankAccount(e.target.value)} /></div>
-            <div><Label>SWIFT / BIC</Label><Input value={bankSwift} onChange={(e) => setBankSwift(e.target.value)} /></div>
-          </div>
+          <PaymentDetailsFields value={pay} onChange={setPay} />
           <div><Label>Notes</Label><Input value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
         </div>
         <DialogFooter>

@@ -15,6 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { PaymentDetailsFields, paymentFrom, paymentValues, emptyPayment, type PaymentFormState } from "@/components/payment-details-fields";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -528,6 +529,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   const [nif, setNif] = useState("");
   const [stat, setStat] = useState("");
   const [rcs, setRcs] = useState("");
+  const [pay, setPay] = useState<PaymentFormState>(emptyPayment);
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [status, setStatus] = useState<"lead" | "client">("client");
   const [categories, setCategories] = useState<ContactCategory[]>(["client"]);
@@ -549,6 +551,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setNif(editing.nif ?? "");
       setStat(editing.stat ?? "");
       setRcs(editing.rcs ?? "");
+      setPay(paymentFrom(editing));
       setAvatarUrl(editing.avatarUrl);
       setStatus(editing.status ?? "client");
       setCategories(defaultCategoriesFor("client", editing.categories));
@@ -562,6 +565,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setAcquiredAt(new Date().toISOString().slice(0, 10));
       setWebsite(""); setEmail(""); setPhone(""); setAddress(""); setIndustry(""); setContacts("");
       setNif(""); setStat(""); setRcs("");
+      setPay(emptyPayment);
       setAvatarUrl(undefined);
       setStatus("client");
       setCategories(["client"]);
@@ -600,6 +604,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       nif: nif.trim() || undefined,
       stat: stat.trim() || undefined,
       rcs: rcs.trim() || undefined,
+      ...paymentValues(pay),
       avatarUrl,
       categories: categories.length > 0 ? categories : undefined,
     };
@@ -754,6 +759,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
               </div>
             </div>
           </div>
+          <PaymentDetailsFields value={pay} onChange={setPay} />
           <div><Label>Key contacts</Label><Input value={contacts} onChange={(e) => setContacts(e.target.value)} placeholder="Name, role; Name, role…" /></div>
           <div>
             <Label>Acquisition</Label>
