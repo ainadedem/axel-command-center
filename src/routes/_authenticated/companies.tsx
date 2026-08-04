@@ -126,6 +126,18 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [bankName, setBankName] = useState("");
   const [bankAccount, setBankAccount] = useState("");
   const [bankSwift, setBankSwift] = useState("");
+  const [bankHolder, setBankHolder] = useState("");
+  const [bankCode, setBankCode] = useState("");
+  const [branchCode, setBranchCode] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [ribKey, setRibKey] = useState("");
+  const [iban, setIban] = useState("");
+  const [intlEnabled, setIntlEnabled] = useState(false);
+  const [mobileEnabled, setMobileEnabled] = useState(false);
+  const [mobileProvider, setMobileProvider] = useState("MVola");
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [mobileName, setMobileName] = useState("");
+  const [showPaymentDetails, setShowPaymentDetails] = useState(true);
   const [logoUrl, setLogoUrl] = useState<string | undefined>();
   const [showErrors, setShowErrors] = useState(false);
 
@@ -137,11 +149,19 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setEmail(editing.email ?? ""); setPhone(editing.phone ?? ""); setWebsite(editing.website ?? "");
       setNif(editing.nif ?? ""); setStat(editing.stat ?? ""); setRcs(editing.rcs ?? ""); setTaxId(editing.taxId ?? "");
       setBankName(editing.bankName ?? ""); setBankAccount(editing.bankAccount ?? ""); setBankSwift(editing.bankSwift ?? "");
+      setBankHolder(editing.bankHolder ?? ""); setBankCode(editing.bankCode ?? ""); setBranchCode(editing.branchCode ?? "");
+      setAccountNumber(editing.accountNumber ?? ""); setRibKey(editing.ribKey ?? ""); setIban(editing.iban ?? "");
+      setIntlEnabled(Boolean(editing.intlEnabled)); setMobileEnabled(Boolean(editing.mobileEnabled));
+      setMobileProvider(editing.mobileProvider ?? "MVola"); setMobileNumber(editing.mobileNumber ?? ""); setMobileName(editing.mobileName ?? "");
+      setShowPaymentDetails(editing.showPaymentDetails !== false);
       setLogoUrl(editing.logoUrl);
     } else {
       setName(""); setShortName(""); setCode(""); setColor(PALETTE[0]); setBaseCurrency("MGA");
       setLegalName(""); setAddress(""); setEmail(""); setPhone(""); setWebsite("");
       setNif(""); setStat(""); setRcs(""); setTaxId(""); setBankName(""); setBankAccount(""); setBankSwift("");
+      setBankHolder(""); setBankCode(""); setBranchCode(""); setAccountNumber(""); setRibKey(""); setIban("");
+      setIntlEnabled(false); setMobileEnabled(false); setMobileProvider("MVola"); setMobileNumber(""); setMobileName("");
+      setShowPaymentDetails(true);
       setLogoUrl(undefined);
     }
     setShowErrors(false);
@@ -160,6 +180,11 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       email: email || undefined, phone: phone || undefined, website: website || undefined,
       nif: nif || undefined, stat: stat || undefined, rcs: rcs || undefined, taxId: taxId || undefined,
       bankName: bankName || undefined, bankAccount: bankAccount || undefined, bankSwift: bankSwift || undefined,
+      bankHolder: bankHolder || undefined, bankCode: bankCode || undefined, branchCode: branchCode || undefined,
+      accountNumber: accountNumber || undefined, ribKey: ribKey || undefined, iban: iban || undefined,
+      intlEnabled, mobileEnabled,
+      mobileProvider: mobileProvider || undefined, mobileNumber: mobileNumber || undefined, mobileName: mobileName || undefined,
+      showPaymentDetails,
       logoUrl,
     };
     const dbRow = {
@@ -168,6 +193,12 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       email: email || null, phone: phone || null, website: website || null,
       nif: nif || null, stat: stat || null, rcs: rcs || null, tax_id: taxId || null,
       bank_name: bankName || null, bank_account: bankAccount || null, bank_swift: bankSwift || null,
+      bank_holder: bankHolder || null, bank_code: bankCode || null, branch_code: branchCode || null,
+      account_number: accountNumber || null, rib_key: ribKey || null, iban: iban || null,
+      intl_enabled: intlEnabled, mobile_enabled: mobileEnabled,
+      mobile_provider: mobileEnabled ? mobileProvider || null : null,
+      mobile_number: mobileNumber || null, mobile_name: mobileName || null,
+      show_payment_details: showPaymentDetails,
       logo_url: logoUrl || null,
     };
     if (editing) {
@@ -222,6 +253,57 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
             <div><Label>Bank name</Label><Input value={bankName} onChange={(e) => setBankName(e.target.value)} /></div>
             <div><Label>Account / IBAN</Label><Input value={bankAccount} onChange={(e) => setBankAccount(e.target.value)} /></div>
             <div><Label>SWIFT / BIC</Label><Input value={bankSwift} onChange={(e) => setBankSwift(e.target.value)} /></div>
+          </div>
+          <div className="rounded-lg border border-border p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Payment details &amp; bank info</div>
+              <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+                <Checkbox checked={showPaymentDetails} onCheckedChange={(v) => setShowPaymentDetails(!!v)} />
+                Show on documents
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Account holder (Titulaire)</Label><Input value={bankHolder} onChange={(e) => setBankHolder(e.target.value)} placeholder="LOGIA SARL" /></div>
+              <div><Label>Bank / Domiciliation</Label><Input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="BNI Madagascar" /></div>
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              <div><Label>Code banque</Label><Input value={bankCode} maxLength={5} inputMode="numeric" onChange={(e) => setBankCode(e.target.value.replace(/\D/g, "").slice(0, 5))} placeholder="00008" /></div>
+              <div><Label>Code guichet</Label><Input value={branchCode} maxLength={5} inputMode="numeric" onChange={(e) => setBranchCode(e.target.value.replace(/\D/g, "").slice(0, 5))} placeholder="03016" /></div>
+              <div><Label>N° de compte</Label><Input value={accountNumber} maxLength={11} inputMode="numeric" onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, "").slice(0, 11))} placeholder="05003013776" /></div>
+              <div><Label>Clé RIB</Label><Input value={ribKey} maxLength={2} inputMode="numeric" onChange={(e) => setRibKey(e.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="43" /></div>
+            </div>
+            <p className="text-[10px] font-tnum text-muted-foreground">RIB: {formatRib(bankCode, branchCode, accountNumber, ribKey) || "—"}</p>
+            <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+              <Checkbox checked={intlEnabled} onCheckedChange={(v) => setIntlEnabled(!!v)} />
+              International transfers (SWIFT / IBAN)
+            </label>
+            {intlEnabled && (
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>SWIFT / BIC</Label><Input value={bankSwift} onChange={(e) => setBankSwift(e.target.value)} placeholder="BNMGMGMG" /></div>
+                <div><Label>IBAN / MG format</Label><Input value={iban} onChange={(e) => setIban(e.target.value)} placeholder="MG46 00008 03016 05003013776 43" /></div>
+              </div>
+            )}
+            <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+              <Checkbox checked={mobileEnabled} onCheckedChange={(v) => setMobileEnabled(!!v)} />
+              Mobile money transfer
+            </label>
+            {mobileEnabled && (
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label>Provider</Label>
+                  <Select value={mobileProvider} onValueChange={setMobileProvider}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MVola">MVola</SelectItem>
+                      <SelectItem value="Orange Money">Orange Money</SelectItem>
+                      <SelectItem value="Airtel Money">Airtel Money</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Phone number</Label><Input value={mobileNumber} onChange={(e) => setMobileNumber(e.target.value)} placeholder="+261 34 12 345 67" /></div>
+                <div><Label>Account name</Label><Input value={mobileName} onChange={(e) => setMobileName(e.target.value)} /></div>
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
