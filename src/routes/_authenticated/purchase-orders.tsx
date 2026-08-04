@@ -381,7 +381,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
                 <div className="flex items-center gap-2 rounded-md border border-border bg-surface-elevated/40 px-3 py-2 text-sm">
                   <FileText className="h-4 w-4 text-primary shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <a href={documentUrl} download={documentName} target="_blank" rel="noreferrer" className="block truncate text-primary hover:underline">{documentName}</a>
+                    <button type="button" onClick={() => openStoredFile(documentUrl)} className="block w-full text-left truncate text-primary hover:underline">{documentName}</button>
                     {documentUploadedAt && (
                       <p className="text-[10px] text-muted-foreground font-tnum">Uploaded {format(parseISO(documentUploadedAt), "MMM d, yyyy · HH:mm")}{documentHistory.length > 0 && ` · v${documentHistory.length + 1}`}</p>
                     )}
