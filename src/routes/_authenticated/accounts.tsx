@@ -159,11 +159,19 @@ function Body() {
                           </td>
                           <td className="px-5 py-3.5 text-right font-tnum text-muted-foreground">{fmtCompact(toMGA(balanceOf(a), a.currency), "MGA")}</td>
                           <td className="px-5 py-3.5 text-right">
-                            <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
-                              <button onClick={() => setHistoryFor(a)} title="Reconciliation history" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><History className="h-3.5 w-3.5" /></button>
-                              <button onClick={() => setImporting(a)} title="Reconcile bank statement" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Upload className="h-3.5 w-3.5" /></button>
-                              <button onClick={() => openEdit(a)} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                              <button onClick={() => confirm(`Delete ${a.name}?`) && accountsStore.remove(a.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+                            <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 flex gap-1 justify-end">
+                              <TooltipHint label="Reconciliation history — past statement checks, with CSV/PDF export">
+                                <button onClick={() => setHistoryFor(a)} aria-label="Reconciliation history" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-primary"><History className="h-3.5 w-3.5" /></button>
+                              </TooltipHint>
+                              <TooltipHint label="Reconcile bank statement — upload a CSV or Excel statement and step through opening balance, rows and closing balance">
+                                <button onClick={() => setImporting(a)} aria-label="Reconcile bank statement" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-primary"><Upload className="h-3.5 w-3.5" /></button>
+                              </TooltipHint>
+                              <TooltipHint label="Edit account">
+                                <button onClick={() => openEdit(a)} aria-label="Edit account" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
+                              </TooltipHint>
+                              <TooltipHint label="Delete account">
+                                <button onClick={() => confirm(`Delete ${a.name}?`) && accountsStore.remove(a.id)} aria-label="Delete account" className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+                              </TooltipHint>
                             </div>
                           </td>
                         </tr>
