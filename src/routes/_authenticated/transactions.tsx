@@ -22,6 +22,8 @@ import { ResizeHandle, useResizableColumns } from "@/components/resizable-column
 import { Pencil, Trash2 } from "lucide-react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 
 export const Route = createFileRoute("/_authenticated/transactions")({
   component: TransactionsPage,
@@ -333,6 +335,7 @@ function Body() {
 
 
 function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Transaction | null }) {
+  const { dataLoading, scopedCompanies } = useCompany();
   const companies = useCompanies();
   const accounts = useAccounts();
   const clients = useClients();
@@ -351,6 +354,7 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
   const [clientId, setClientId] = useState<string>("");
   const [supplierId, setSupplierId] = useState<string>("");
   const [projectId, setProjectId] = useState<string>("");
+  const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -362,14 +366,19 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
       setClientId(editing.clientId ?? ""); setSupplierId(editing.supplierId ?? "");
       setProjectId(editing.projectId ?? "");
     } else {
-      const c = companies[0]; setCompanyId(c?.id ?? ""); setAccountId(""); setDate(new Date().toISOString().slice(0, 10));
+      const c = scopedCompanies[0] ?? companies[0];
+      setCompanyId(c?.id ?? "");
+      setAccountId("");
+      setDate(new Date().toISOString().slice(0, 10));
       setType("expense"); setCategoryId(""); setCategoryName(""); setDescription(""); setAmount("0");
       setCurrency(c?.baseCurrency ?? "MGA");
       setClientId(""); setSupplierId(""); setProjectId("");
     }
-  }, [open, editing, companies]);
+    setShowErrors(false);
+  }, [open, editing, companies, scopedCompanies]);
 
   const companyAccounts = accounts.filter((a) => a.companyId === companyId);
+  const accountsLoading = dataLoading && !!companyId && companyAccounts.length === 0;
   const companyClients = clients.filter((c) => contactBelongsTo(c, companyId));
   const companySuppliers = suppliers.filter((s) => s.companyId === companyId);
   const kind: "income" | "expense" | null =
@@ -377,9 +386,80 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
   const companyCategories = categories.filter(
     (c) => c.companyId === companyId && (kind ? c.kind === kind : true),
   );
+  const companyProjects = projects.filter(
+    (project) => project.companyId === companyId && (type === "expense" || !clientId || project.clientId === clientId),
+  );
+
+  useReconciledSelection({
+    open,
+    currentValue: companyId,
+    options: scopedCompanies,
+    getId: (company) => company.id,
+    onChange: setCompanyId,
+  });
+
+  useEffect(() => {
+    if (!open || !companyId) return;
+    const currentStillAvailable = companyAccounts.some((account) => account.id === accountId);
+    if (currentStillAvailable) return;
+    if (companyAccounts.length > 0) {
+      setAccountId(companyAccounts[0].id);
+      return;
+    }
+    if (!accountsLoading) setAccountId("");
+  }, [open, companyId, accountId, companyAccounts, accountsLoading]);
+
+  useReconciledSelection({
+    open,
+    currentValue: accountId,
+    options: companyAccounts,
+    getId: (account) => account.id,
+    loading: accountsLoading,
+    onChange: setAccountId,
+  });
+
+  useReconciledSelection({
+    open,
+    currentValue: clientId,
+    options: companyClients,
+    getId: (client) => client.id,
+    allowEmpty: true,
+    onChange: setClientId,
+  });
+
+  useReconciledSelection({
+    open,
+    currentValue: supplierId,
+    options: companySuppliers,
+    getId: (supplier) => supplier.id,
+    allowEmpty: true,
+    onChange: setSupplierId,
+  });
+
+  useReconciledSelection({
+    open,
+    currentValue: categoryId,
+    options: companyCategories,
+    getId: (category) => category.id,
+    allowEmpty: true,
+    onChange: setCategoryId,
+  });
+
+  useReconciledSelection({
+    open,
+    currentValue: projectId,
+    options: companyProjects,
+    getId: (project) => project.id,
+    allowEmpty: true,
+    onChange: setProjectId,
+  });
 
   const submit = () => {
-    if (!description.trim() || !companyId || !accountId) return;
+    const invalid = !description.trim() || !companyId || !accountId;
+    if (invalid) {
+      setShowErrors(true);
+      return;
+    }
     // Resolve category: explicit selection wins, otherwise create a new one
     // from the free-text name when provided.
     let resolvedId = categoryId || undefined;
@@ -420,18 +500,19 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
       <DialogContent>
         <DialogHeader><DialogTitle>{editing ? "Edit transaction" : "New transaction"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
+          <FormErrorBanner show={showErrors} />
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Company</Label>
-              <Select value={companyId} onValueChange={(v) => { setCompanyId(v); setAccountId(""); }}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+              <Label><RequiredLabel>Company</RequiredLabel></Label>
+                <Select value={companyId} onValueChange={(v) => { setCompanyId(v); setAccountId(""); }}>
+                  <SelectTrigger className={invalidFieldClassName(showErrors && !companyId)} aria-invalid={showErrors && !companyId}><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{scopedCompanies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Account</Label>
-              <Select value={accountId} onValueChange={setAccountId}>
-                <SelectTrigger><SelectValue placeholder={companyAccounts.length ? "Select" : "Create account first"} /></SelectTrigger>
+              <Label><RequiredLabel>Account</RequiredLabel></Label>
+              <Select value={accountId} onValueChange={setAccountId} disabled={accountsLoading || companyAccounts.length === 0}>
+                <SelectTrigger className={invalidFieldClassName(showErrors && !accountId)} aria-invalid={showErrors && !accountId}><SelectValue placeholder={accountsLoading ? "Loading accounts..." : companyAccounts.length ? "Select" : "Create account first"} /></SelectTrigger>
                 <SelectContent>{companyAccounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -451,7 +532,7 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
               </Select>
             </div>
           </div>
-          <div><Label>Description</Label><Input value={description} onChange={(e) => setDescription(e.target.value)} /></div>
+          <div><Label><RequiredLabel>Description</RequiredLabel></Label><Input value={description} onChange={(e) => setDescription(e.target.value)} className={invalidFieldClassName(showErrors && !description.trim())} aria-invalid={showErrors && !description.trim()} /></div>
           <div>
             <Label>Category</Label>
             <Select
@@ -521,7 +602,6 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
             </div>
           )}
           {(type === "income" || type === "expense") && (() => {
-            const companyProjects = projects.filter((p) => p.companyId === companyId && (type === "expense" || !clientId || p.clientId === clientId));
             return (
               <div>
                 <Label>Project</Label>

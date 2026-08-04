@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
 import { Pencil, Trash2, Users } from "lucide-react";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
 
 export const Route = createFileRoute("/_authenticated/team")({ component: TeamPage });
 
@@ -36,7 +37,7 @@ function TeamPage() {
 
   return (
     <AppShell>
-      <PageHeader title="Team" description="Everyone in the organization — the source of truth for people." />
+      <PageHeader title="Team" description="Everyone in the organization - the source of truth for people." />
       <div className="p-8 space-y-5">
         <CrudToolbar count={team.length} label="people" onCreate={openCreate} />
         {team.length === 0 ? (
@@ -51,7 +52,7 @@ function TeamPage() {
               <div className="col-span-1">Job</div>
               <div className="col-span-1">Dept</div>
               <div className="col-span-1">Sales</div>
-              <div className="col-span-1 text-right">·</div>
+              <div className="col-span-1 text-right">.</div>
             </div>
             {team
               .slice()
@@ -64,18 +65,18 @@ function TeamPage() {
                       <Avatar src={m.avatarUrl} name={m.name} size={28} />
                       <div className="text-sm font-medium truncate">{m.firstName || m.name}</div>
                     </div>
-                    <div className="col-span-2 text-sm truncate">{m.lastName || "—"}</div>
-                    <div className="col-span-2 text-xs text-muted-foreground truncate">{m.email || "—"}</div>
-                    <div className="col-span-2 text-xs text-muted-foreground truncate font-tnum">{m.phone || "—"}</div>
-                    <div className="col-span-1 text-xs text-muted-foreground truncate">{m.jobTitle || "—"}</div>
-                    <div className="col-span-1 text-xs text-muted-foreground truncate">{m.department || "—"}</div>
+                    <div className="col-span-2 text-sm truncate">{m.lastName || "-"}</div>
+                    <div className="col-span-2 text-xs text-muted-foreground truncate">{m.email || "-"}</div>
+                    <div className="col-span-2 text-xs text-muted-foreground truncate font-tnum">{m.phone || "-"}</div>
+                    <div className="col-span-1 text-xs text-muted-foreground truncate">{m.jobTitle || "-"}</div>
+                    <div className="col-span-1 text-xs text-muted-foreground truncate">{m.department || "-"}</div>
                     <div className="col-span-1">
                       {s ? (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 inline-flex items-center gap-1">
                           <Users className="h-2.5 w-2.5" /> {s.role}
                         </span>
                       ) : (
-                        <span className="text-[10px] text-muted-foreground">—</span>
+                        <span className="text-[10px] text-muted-foreground">-</span>
                       )}
                     </div>
                     <div className="col-span-1 flex justify-end gap-0.5 opacity-0 group-hover:opacity-100">
@@ -101,11 +102,12 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
   const [jobTitle, setJobTitle] = useState("");
   const [department, setDepartment] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+  const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
     if (!open) return;
+    setShowErrors(false);
     if (editing) {
-      // Fall back to splitting legacy `name` if firstName/lastName aren't set.
       const [fnFallback, ...rest] = (editing.name || "").trim().split(/\s+/);
       setFirstName(editing.firstName ?? fnFallback ?? "");
       setLastName(editing.lastName ?? rest.join(" "));
@@ -115,14 +117,23 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
       setDepartment(editing.department ?? "");
       setAvatarUrl(editing.avatarUrl);
     } else {
-      setFirstName(""); setLastName(""); setEmail(""); setPhone(""); setJobTitle(""); setDepartment(""); setAvatarUrl(undefined);
+      setFirstName("");
+      setLastName("");
+      setEmail("");
+      setPhone("");
+      setJobTitle("");
+      setDepartment("");
+      setAvatarUrl(undefined);
     }
   }, [open, editing]);
 
   const displayName = `${firstName.trim()} ${lastName.trim()}`.trim();
 
   const submit = () => {
-    if (!displayName) return;
+    if (!displayName) {
+      setShowErrors(true);
+      return;
+    }
     const data = {
       name: displayName,
       firstName: firstName.trim() || undefined,
@@ -143,16 +154,17 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
       <DialogContent>
         <DialogHeader><DialogTitle>{editing ? "Edit team member" : "New team member"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
+          <FormErrorBanner show={showErrors} />
           <div className="flex items-start gap-4">
             <AvatarUpload value={avatarUrl} onChange={setAvatarUrl} name={displayName} size={72} />
             <div className="flex-1 grid grid-cols-2 gap-3">
-              <div><Label>First name</Label><Input value={firstName} onChange={(e) => setFirstName(e.target.value)} /></div>
-              <div><Label>Last name</Label><Input value={lastName} onChange={(e) => setLastName(e.target.value)} /></div>
+              <div><Label><RequiredLabel>First name</RequiredLabel></Label><Input value={firstName} onChange={(e) => setFirstName(e.target.value)} className={invalidFieldClassName(showErrors && !displayName)} aria-invalid={showErrors && !displayName} /></div>
+              <div><Label>Last name</Label><Input value={lastName} onChange={(e) => setLastName(e.target.value)} className={invalidFieldClassName(showErrors && !displayName)} aria-invalid={showErrors && !displayName} /></div>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-            <div><Label>Phone</Label><Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+261 …" /></div>
+            <div><Label>Phone</Label><Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+261 ..." /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Job title</Label><Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} /></div>
@@ -162,7 +174,7 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit} disabled={!displayName}>{editing ? "Save" : "Create"}</Button>
+          <Button onClick={submit}>{editing ? "Save" : "Create"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -16,6 +16,7 @@ import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2 } from "lucide-react";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { supabase } from "@/integrations/supabase/client";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
 
 export const Route = createFileRoute("/_authenticated/companies")({ component: CompaniesPage });
 
@@ -126,6 +127,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [bankAccount, setBankAccount] = useState("");
   const [bankSwift, setBankSwift] = useState("");
   const [logoUrl, setLogoUrl] = useState<string | undefined>();
+  const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -142,10 +144,15 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setNif(""); setStat(""); setRcs(""); setTaxId(""); setBankName(""); setBankAccount(""); setBankSwift("");
       setLogoUrl(undefined);
     }
+    setShowErrors(false);
   }, [open, editing]);
 
   const submit = async () => {
-    if (!name.trim() || !shortName.trim()) return;
+    const invalid = !name.trim() || !shortName.trim();
+    if (invalid) {
+      setShowErrors(true);
+      return;
+    }
     const finalCode = (code.trim() || shortName.trim()).toUpperCase();
     const local = {
       name, shortName, code: finalCode, color, baseCurrency,
@@ -181,6 +188,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       <DialogContent className="max-h-[80vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{editing ? "Edit company" : "New company"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
+          <FormErrorBanner show={showErrors} />
           <div className="flex items-start gap-4">
             <div>
               <Label>Logo</Label>
@@ -188,8 +196,8 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               <p className="text-[10px] text-muted-foreground mt-1">Shown on invoice / PO / quote PDFs.</p>
             </div>
             <div className="flex-1 grid grid-cols-3 gap-3">
-              <div className="col-span-3"><Label>Trading name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Logia Madagascar" /></div>
-              <div><Label>Short name</Label><Input value={shortName} onChange={(e) => setShortName(e.target.value.toUpperCase().slice(0, 4))} placeholder="LOG" /></div>
+              <div className="col-span-3"><Label><RequiredLabel>Trading name</RequiredLabel></Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Logia Madagascar" className={invalidFieldClassName(showErrors && !name.trim())} aria-invalid={showErrors && !name.trim()} /></div>
+              <div><Label><RequiredLabel>Short name</RequiredLabel></Label><Input value={shortName} onChange={(e) => setShortName(e.target.value.toUpperCase().slice(0, 4))} placeholder="LOG" className={invalidFieldClassName(showErrors && !shortName.trim())} aria-invalid={showErrors && !shortName.trim()} /></div>
               <div>
                 <Label>Code</Label>
                 <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 6))} placeholder={shortName || "LOG"} />

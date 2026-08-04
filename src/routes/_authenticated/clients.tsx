@@ -8,6 +8,7 @@ import {
   type Client, type ContactCategory,
 } from "@/lib/mock-data";
 import { upsertClient, deleteClientDb } from "@/lib/db-sync";
+import { useCompany } from "@/lib/company-context";
 
 import { newId } from "@/lib/data-store";
 import { useEffect, useMemo, useState } from "react";
@@ -24,6 +25,8 @@ import {
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CategoryChips, CategoryMultiSelect, CompanyTag, CompanyTags, defaultCategoriesFor } from "@/components/category-chips";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/clients")({ component: ClientsPage });
 
@@ -34,6 +37,7 @@ function isWonClient(cl: Client, hasActivity: boolean): boolean {
 }
 
 function ClientsPage() {
+  const { scope } = useCompany();
   const clients = useClients();
   const companies = useCompanies();
   const projects = useProjects();
@@ -47,7 +51,12 @@ function ClientsPage() {
   const [sort, setSort] = useState<"name_asc" | "name_desc" | "revenue_desc" | "outstanding_desc" | "margin_desc">("name_asc");
   const [group, setGroup] = useState<"none" | "company" | "status" | "acquisition">("none");
 
-  const partitioned = clients.map((cl) => {
+  const scopedClients = useMemo(
+    () => scope.id === "group" ? clients : clients.filter((cl) => contactBelongsTo(cl, scope.companyId)),
+    [clients, scope],
+  );
+
+  const partitioned = scopedClients.map((cl) => {
     const hasActivity =
       invoices.some((i) => i.clientId === cl.id) ||
       projects.some((p) => p.clientId === cl.id) ||
@@ -84,7 +93,7 @@ function ClientsPage() {
     })
     .sort((a, b) => b.r - a.r)[0];
 
-  const base = tab === "clients" ? wonClients : tab === "leads" ? leadClients : clients;
+  const base = tab === "clients" ? wonClients : tab === "leads" ? leadClients : scopedClients;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -202,7 +211,7 @@ function ClientsPage() {
               <TabsList className="h-8">
                 <TabsTrigger value="clients" className="text-xs px-2.5"><UserCheck className="h-3 w-3 mr-1" />Clients <span className="ml-1 text-[10px] opacity-60 font-tnum">{wonClients.length}</span></TabsTrigger>
                 <TabsTrigger value="leads" className="text-xs px-2.5"><Sparkles className="h-3 w-3 mr-1" />Leads <span className="ml-1 text-[10px] opacity-60 font-tnum">{leadClients.length}</span></TabsTrigger>
-                <TabsTrigger value="all" className="text-xs px-2.5">All <span className="ml-1 text-[10px] opacity-60 font-tnum">{clients.length}</span></TabsTrigger>
+                <TabsTrigger value="all" className="text-xs px-2.5">All <span className="ml-1 text-[10px] opacity-60 font-tnum">{scopedClients.length}</span></TabsTrigger>
               </TabsList>
             </Tabs>
             <div className="flex items-center border rounded-md overflow-hidden h-8">
@@ -498,6 +507,7 @@ function KpiTile({ icon, label, value, sub, tint, ring }: { icon: React.ReactNod
 }
 
 function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Client | null }) {
+  const { scope } = useCompany();
   const companies = useCompanies();
   const acqPeople = useSalesPeople("acquisition");
   const teamMembers = useTeamMembers();
@@ -517,6 +527,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [status, setStatus] = useState<"lead" | "client">("client");
   const [categories, setCategories] = useState<ContactCategory[]>(["client"]);
+  const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -535,7 +546,11 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setStatus(editing.status ?? "client");
       setCategories(defaultCategoriesFor("client", editing.categories));
     } else {
-      const fallback = companies[0]?.id ?? "";
+      const scopeFallback =
+        scope.id === "company" && companies.some((company) => company.id === scope.companyId)
+          ? scope.companyId
+          : companies[0]?.id ?? "";
+      const fallback = scopeFallback;
       setCompanyId(fallback); setCompanyIds(fallback ? [fallback] : []); setName(""); setCountry(""); setAcquisition(""); setReferral("");
       setAcquiredAt(new Date().toISOString().slice(0, 10));
       setWebsite(""); setEmail(""); setPhone(""); setAddress(""); setIndustry(""); setContacts("");
@@ -543,10 +558,15 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setStatus("client");
       setCategories(["client"]);
     }
-  }, [open, editing, companies]);
+    setShowErrors(false);
+  }, [open, editing, companies, scope]);
 
-  const submit = () => {
-    if (!name.trim() || !companyId) return;
+  const submit = async () => {
+    const invalid = !name.trim() || !companyId;
+    if (invalid) {
+      setShowErrors(true);
+      return;
+    }
     const ids = Array.from(new Set([companyId, ...companyIds].filter(Boolean)));
     const data = {
       companyId, companyIds: ids, name, country,
@@ -563,21 +583,37 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       avatarUrl,
       categories: categories.length > 0 ? categories : undefined,
     };
-    if (editing) {
-      clientsStore.update(editing.id, data);
-      void upsertClient({ ...editing, ...data } as Client);
-    } else {
-      const localId = newId("cli");
-      const local = { id: localId, ...data } as Client;
-      clientsStore.add(local);
-      void upsertClient(local).then((dbId) => {
-        if (dbId && dbId !== localId) {
-          // Re-id the local record to match DB so future updates align.
-          clientsStore.replaceAll(clientsStore.items.map((c) => c.id === localId ? { ...c, id: dbId } : c));
+    try {
+      if (editing) {
+        const persisted = { ...editing, ...data } as Client;
+        const dbId = await upsertClient(persisted);
+        if (!dbId) {
+          throw new Error("Client sync failed before saving.");
         }
+        clientsStore.update(editing.id, data);
+        if (dbId !== editing.id) {
+          clientsStore.replaceAll(clientsStore.items.map((client) => client.id === editing.id ? { ...client, id: dbId } : client));
+        }
+      } else {
+        const localId = newId("cli");
+        const draft = { id: localId, ...data } as Client;
+        const dbId = await upsertClient(draft);
+        if (!dbId) {
+          throw new Error("Client sync failed before creation.");
+        }
+        clientsStore.add({ ...draft, id: dbId });
+      }
+      onOpenChange(false);
+    } catch (error) {
+      console.error("[clients] create/update failed", {
+        error,
+        editingId: editing?.id,
+        companyId,
+        companyIds: ids,
+        name,
       });
+      toast.error("Unable to save client. Check the console for details.");
     }
-    onOpenChange(false);
   };
 
 
@@ -598,12 +634,13 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       <DialogContent className="max-w-2xl">
         <DialogHeader><DialogTitle>{editing ? "Edit client" : "New client"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-1">
+          <FormErrorBanner show={showErrors} />
           <div className="flex items-start gap-4">
             <AvatarUpload value={avatarUrl} onChange={setAvatarUrl} name={name} size={72} />
             <div className="flex-1 space-y-3">
-              <div><Label>Client name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+              <div><Label><RequiredLabel>Client name</RequiredLabel></Label><Input value={name} onChange={(e) => setName(e.target.value)} className={invalidFieldClassName(showErrors && !name.trim())} aria-invalid={showErrors && !name.trim()} /></div>
               <div>
-                <Label>Linked companies</Label>
+                <Label><RequiredLabel>Linked companies</RequiredLabel></Label>
                 <div className="flex flex-wrap gap-1.5 mt-1.5">
                   {companies.map((c) => {
                     const active = companyIds.includes(c.id);

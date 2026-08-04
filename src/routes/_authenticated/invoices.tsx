@@ -28,6 +28,8 @@ import { RecordPaymentDialog } from "@/components/statement-import-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Wallet } from "lucide-react";
 import { nextNumber } from "@/lib/numbering";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 
 export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage });
 
@@ -381,11 +383,15 @@ function Body() {
 
 function CancelInvoiceDialog({ open, onOpenChange, invoice }: { open: boolean; onOpenChange: (v: boolean) => void; invoice: Invoice | null }) {
   const [reason, setReason] = useState("");
+  const [showErrors, setShowErrors] = useState(false);
   useEffect(() => { if (open) setReason(""); }, [open]);
   if (!invoice) return null;
   const submit = () => {
     const trimmed = reason.trim();
-    if (!trimmed) return;
+    if (!trimmed) {
+      setShowErrors(true);
+      return;
+    }
     invoicesStore.update(invoice.id, {
       status: "cancelled",
       cancelledAt: new Date().toISOString(),
@@ -398,22 +404,25 @@ function CancelInvoiceDialog({ open, onOpenChange, invoice }: { open: boolean; o
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>Cancel invoice {invoice.number}</DialogTitle></DialogHeader>
         <div className="space-y-3 py-2">
+          <FormErrorBanner show={showErrors} />
           <p className="text-xs text-muted-foreground">
             The invoice will remain in the CRM with a <span className="text-foreground font-medium">cancelled</span> status. This action cannot be undone from this dialog.
           </p>
           <div>
-            <Label>Reason <span className="text-destructive">*</span></Label>
+            <Label><RequiredLabel>Reason</RequiredLabel></Label>
             <Textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Why is this invoice being cancelled?"
               rows={4}
+              className={invalidFieldClassName(showErrors && !reason.trim())}
+              aria-invalid={showErrors && !reason.trim()}
             />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Keep invoice</Button>
-          <Button variant="destructive" onClick={submit} disabled={!reason.trim()}>
+          <Button variant="destructive" onClick={submit}>
             <Ban className="h-3.5 w-3.5 mr-1.5" /> Cancel invoice
           </Button>
         </DialogFooter>
@@ -448,6 +457,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [paid, setPaid] = useState("0");
   const [currency, setCurrency] = useState<Currency>("EUR");
   const [status, setStatus] = useState<Invoice["status"]>("draft");
+  const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -464,6 +474,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setIssueDate(today); setDueDate(today); setAmount("0"); setPaid("0");
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
     }
+    setShowErrors(false);
   }, [open, editing, companies, today]);
 
   // Re-derive the number when the user switches company on a NEW invoice.
@@ -480,6 +491,40 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const selectedPO = pos.find((p) => p.id === poId);
   const linkedQuote = selectedPO?.quoteId ? quotes.find((q) => q.id === selectedPO.quoteId) : undefined;
 
+  useReconciledSelection({
+    open,
+    currentValue: companyId,
+    options: companies,
+    getId: (company) => company.id,
+    onChange: setCompanyId,
+  });
+
+  useReconciledSelection({
+    open,
+    currentValue: clientId,
+    options: companyClients,
+    getId: (client) => client.id,
+    onChange: setClientId,
+  });
+
+  useReconciledSelection({
+    open,
+    currentValue: poId,
+    options: clientPOs,
+    getId: (po) => po.id,
+    allowEmpty: true,
+    onChange: setPoId,
+  });
+
+  useReconciledSelection({
+    open,
+    currentValue: projectId,
+    options: clientProjects,
+    getId: (project) => project.id,
+    allowEmpty: true,
+    onChange: setProjectId,
+  });
+
   // When PO is picked, prefill amount/currency/project from it.
   useEffect(() => {
     if (!poId) return;
@@ -494,8 +539,11 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const blocked = !processOk && status !== "draft";
 
   const submit = () => {
-    if (!number.trim() || !companyId || !clientId) return;
-    if (blocked) return;
+    const invalid = !number.trim() || !companyId || !clientId || blocked;
+    if (invalid) {
+      setShowErrors(true);
+      return;
+    }
     const a = Number(amount) || 0;
     const p = Number(paid) || 0;
     const finalStatus = status === "draft" ? "draft" : deriveStatus(a, p, dueDate);
@@ -523,8 +571,9 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
         <ProcessStrip hasQuote={Boolean(linkedQuote)} hasPO={Boolean(selectedPO)} />
 
         <div className="space-y-4 py-2">
+          <FormErrorBanner show={showErrors} />
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Number</Label><Input value={number} onChange={(e) => setNumber(e.target.value)} /></div>
+            <div><Label><RequiredLabel>Number</RequiredLabel></Label><Input value={number} onChange={(e) => setNumber(e.target.value)} className={invalidFieldClassName(showErrors && !number.trim())} aria-invalid={showErrors && !number.trim()} /></div>
             <div>
               <Label>Status</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as Invoice["status"])}>
@@ -538,16 +587,16 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Company</Label>
+              <Label><RequiredLabel>Company</RequiredLabel></Label>
               <Select value={companyId} onValueChange={(v) => { setCompanyId(v); setClientId(""); setPoId(""); }}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectTrigger className={invalidFieldClassName(showErrors && !companyId)} aria-invalid={showErrors && !companyId}><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Client</Label>
+              <Label><RequiredLabel>Client</RequiredLabel></Label>
               <Select value={clientId} onValueChange={(v) => { setClientId(v); setProjectId(""); setPoId(""); }}>
-                <SelectTrigger><SelectValue placeholder={companyClients.length ? "Select" : "Create client first"} /></SelectTrigger>
+                <SelectTrigger className={invalidFieldClassName(showErrors && !clientId)} aria-invalid={showErrors && !clientId}><SelectValue placeholder={companyClients.length ? "Select" : "Create client first"} /></SelectTrigger>
                 <SelectContent>{companyClients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
               {selectedClient?.acquisition && (
@@ -557,7 +606,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
           </div>
 
           <div>
-            <Label>Purchase order <span className="text-destructive">*</span></Label>
+            <Label><RequiredLabel>Purchase order</RequiredLabel></Label>
             <Select value={poId || "__none__"} onValueChange={(v) => setPoId(v === "__none__" ? "" : v)} disabled={!clientId}>
               <SelectTrigger className={cn(!processOk && status !== "draft" && "border-destructive")}>
                 <SelectValue placeholder={clientId ? (clientPOs.length ? "Select PO" : "No PO for this client") : "Select client first"} />
@@ -674,12 +723,14 @@ function Stat({ label, value, danger, good }: { label: string; value: string; da
 }
 
 function MarkPaidDialog({ open, onOpenChange, invoice }: { open: boolean; onOpenChange: (v: boolean) => void; invoice: Invoice | null }) {
+  const { dataLoading } = useCompany();
   const accounts = useAccounts();
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [accountId, setAccountId] = useState<string>("");
   const [receivedMga, setReceivedMga] = useState<string>("");
 
   const coAccounts = invoice ? accounts.filter((a) => a.companyId === invoice.companyId) : [];
+  const accountsLoading = !!invoice && dataLoading && coAccounts.length === 0;
   const expectedMga = invoice ? Math.round(toMGA(invoice.amount - invoice.paid, invoice.currency)) : 0;
   const isForeign = !!invoice && invoice.currency !== "MGA";
 
@@ -693,6 +744,27 @@ function MarkPaidDialog({ open, onOpenChange, invoice }: { open: boolean; onOpen
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, invoice]);
+
+  useEffect(() => {
+    if (!open || !invoice) return;
+    const currentStillAvailable = coAccounts.some((account) => account.id === accountId);
+    if (currentStillAvailable) return;
+    const preferred = coAccounts.find((account) => account.currency === "MGA") ?? coAccounts[0];
+    if (preferred) {
+      setAccountId(preferred.id);
+      return;
+    }
+    if (!accountsLoading) setAccountId("");
+  }, [open, invoice, accountId, coAccounts, accountsLoading]);
+
+  useReconciledSelection({
+    open,
+    currentValue: accountId,
+    options: coAccounts,
+    getId: (account) => account.id,
+    loading: accountsLoading,
+    onChange: setAccountId,
+  });
 
   if (!invoice) return null;
 
@@ -770,8 +842,8 @@ function MarkPaidDialog({ open, onOpenChange, invoice }: { open: boolean; onOpen
             </div>
             <div>
               <Label>Account</Label>
-              <Select value={accountId} onValueChange={setAccountId}>
-                <SelectTrigger className="h-9"><SelectValue placeholder="Select account" /></SelectTrigger>
+              <Select value={accountId} onValueChange={setAccountId} disabled={accountsLoading || coAccounts.length === 0}>
+                <SelectTrigger className="h-9"><SelectValue placeholder={accountsLoading ? "Loading accounts..." : coAccounts.length ? "Select account" : "Create account first"} /></SelectTrigger>
                 <SelectContent>
                   {coAccounts.map((a) => (
                     <SelectItem key={a.id} value={a.id}>{a.name} ({a.currency})</SelectItem>

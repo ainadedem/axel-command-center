@@ -19,6 +19,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, Receipt, FileText, BanknoteIcon, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 
 export const Route = createFileRoute("/_authenticated/expenses")({ component: ExpensesPage });
 
@@ -222,6 +224,7 @@ function ExpenseDialog({
   const [account, setAccount] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
+  const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -248,11 +251,16 @@ function ExpenseDialog({
       setAmount(""); setPaid("0"); setCurrency(defaultCurrency);
       setAccount(""); setCategory(""); setDescription("");
     }
+    setShowErrors(false);
   }, [open, editing, defaultKind, defaultCurrency, scope, companies]);
 
   const submit = () => {
     const amt = parseFloat(amount);
-    if (!companyId || !amt || isNaN(amt)) return;
+    const invalid = !companyId || !amt || isNaN(amt);
+    if (invalid) {
+      setShowErrors(true);
+      return;
+    }
     const pd = Math.max(0, parseFloat(paid) || 0);
     const data: Omit<Expense, "id"> = {
       companyId, kind,
@@ -276,11 +284,29 @@ function ExpenseDialog({
 
   const scopedSuppliers = suppliers.filter((s) => !companyId || s.companyId === companyId || (s.companyIds ?? []).includes(companyId));
 
+  useReconciledSelection({
+    open,
+    currentValue: companyId,
+    options: companies,
+    getId: (company) => company.id,
+    onChange: setCompanyId,
+  });
+
+  useReconciledSelection({
+    open,
+    currentValue: supplierId,
+    options: scopedSuppliers,
+    getId: (supplier) => supplier.id,
+    allowEmpty: true,
+    onChange: setSupplierId,
+  });
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader><DialogTitle>{editing ? "Edit expense" : kind === "bill" ? "New bill" : "New expense"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
+          <FormErrorBanner show={showErrors} />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Type</Label>
@@ -293,9 +319,9 @@ function ExpenseDialog({
               </Select>
             </div>
             <div>
-              <Label>Company</Label>
+              <Label><RequiredLabel>Company</RequiredLabel></Label>
               <Select value={companyId} onValueChange={setCompanyId}>
-                <SelectTrigger><SelectValue placeholder="Choose…" /></SelectTrigger>
+                <SelectTrigger className={invalidFieldClassName(showErrors && !companyId)} aria-invalid={showErrors && !companyId}><SelectValue placeholder="Choose…" /></SelectTrigger>
                 <SelectContent>
                   {companies.map((c) => <SelectItem key={c.id} value={c.id}>{companyCode(c)} — {c.name}</SelectItem>)}
                 </SelectContent>
@@ -337,8 +363,8 @@ function ExpenseDialog({
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <Label>Amount</Label>
-              <Input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
+              <Label><RequiredLabel>Amount</RequiredLabel></Label>
+              <Input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className={invalidFieldClassName(showErrors && !(parseFloat(amount) > 0))} aria-invalid={showErrors && !(parseFloat(amount) > 0)} />
             </div>
             <div>
               <Label>Paid so far</Label>

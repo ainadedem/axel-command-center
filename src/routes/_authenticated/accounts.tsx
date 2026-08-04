@@ -19,6 +19,7 @@ import { StatementImportDialog } from "@/components/statement-import-dialog";
 import { format, parseISO } from "date-fns";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
 
 export const Route = createFileRoute("/_authenticated/accounts")({ component: AccountsPage });
 
@@ -154,6 +155,7 @@ function AccountDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [type, setType] = useState<Account["type"]>("bank");
   const [currency, setCurrency] = useState<Currency>("MGA");
   const [balance, setBalance] = useState("0");
+  const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -162,10 +164,15 @@ function AccountDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     } else {
       setCompanyId(companies[0]?.id ?? ""); setName(""); setType("bank"); setCurrency("MGA"); setBalance("0");
     }
+    setShowErrors(false);
   }, [open, editing, companies]);
 
   const submit = () => {
-    if (!name.trim() || !companyId) return;
+    const invalid = !name.trim() || !companyId;
+    if (invalid) {
+      setShowErrors(true);
+      return;
+    }
     const data = { companyId, name, type, currency, balance: Number(balance) || 0 };
     if (editing) accountsStore.update(editing.id, data);
     else accountsStore.add({ id: newId("acc"), ...data });
@@ -177,14 +184,15 @@ function AccountDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       <DialogContent>
         <DialogHeader><DialogTitle>{editing ? "Edit account" : "New account"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
+          <FormErrorBanner show={showErrors} />
           <div>
-            <Label>Company</Label>
+            <Label><RequiredLabel>Company</RequiredLabel></Label>
             <Select value={companyId} onValueChange={setCompanyId}>
-              <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
+              <SelectTrigger className={invalidFieldClassName(showErrors && !companyId)} aria-invalid={showErrors && !companyId}><SelectValue placeholder="Select company" /></SelectTrigger>
               <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div><Label>Account name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="BNI Madagascar" /></div>
+          <div><Label><RequiredLabel>Account name</RequiredLabel></Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="BNI Madagascar" className={invalidFieldClassName(showErrors && !name.trim())} aria-invalid={showErrors && !name.trim()} /></div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Type</Label>

@@ -15,13 +15,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Avatar } from "@/components/avatar-upload";
 import { Pencil, Trash2, Target, Handshake } from "lucide-react";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
 
 export const Route = createFileRoute("/_authenticated/sales-team")({ component: SalesTeamPage });
 
 const ROLE_STYLES: Record<SalesRole, { label: string; cls: string; icon: React.ComponentType<{ className?: string }> }> = {
-  acquisition: { label: "Acquisition", cls: "bg-sky-500/10 text-sky-700 border border-sky-500/20",       icon: Target },
-  closer:      { label: "Closer",      cls: "bg-emerald-500/10 text-emerald-700 border border-emerald-500/20", icon: Handshake },
-  both:        { label: "Acq + Closer", cls: "bg-violet-500/10 text-violet-700 border border-violet-500/20",   icon: Handshake },
+  acquisition: { label: "Acquisition", cls: "bg-sky-500/10 text-sky-700 border border-sky-500/20", icon: Target },
+  closer: { label: "Closer", cls: "bg-emerald-500/10 text-emerald-700 border border-emerald-500/20", icon: Handshake },
+  both: { label: "Acq + Closer", cls: "bg-violet-500/10 text-violet-700 border border-violet-500/20", icon: Handshake },
 };
 
 function SalesTeamPage() {
@@ -37,13 +38,13 @@ function SalesTeamPage() {
 
   return (
     <AppShell>
-      <PageHeader title="Sales team" description="People who acquire or close deals — drawn from the Team database." />
+      <PageHeader title="Sales team" description="People who acquire or close deals - drawn from the Team database." />
       <div className="p-8 space-y-5">
         <div className="flex items-center justify-between">
           <CrudToolbar count={sales.length} label="sales people" onCreate={() => { if (team.length > 0) { setEditing(null); setOpen(true); } }} />
           {team.length === 0 && (
             <div className="text-xs text-muted-foreground">
-              No people yet — <Link to="/team" className="text-primary underline">add team members</Link> first.
+              No people yet - <Link to="/team" className="text-primary underline">add team members</Link> first.
             </div>
           )}
         </div>
@@ -69,7 +70,7 @@ function SalesTeamPage() {
                       <Avatar src={tm.avatarUrl} name={tm.name} size={40} />
                       <div className="min-w-0">
                         <div className="font-medium text-sm truncate">{tm.name}</div>
-                        <div className="text-[11px] text-muted-foreground truncate">{tm.jobTitle || tm.email || "—"}</div>
+                        <div className="text-[11px] text-muted-foreground truncate">{tm.jobTitle || tm.email || "-"}</div>
                       </div>
                     </div>
                     <div className="flex gap-0.5 opacity-0 group-hover:opacity-100">
@@ -102,12 +103,13 @@ function SalesDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const sales = useSalesMembers();
   const [teamMemberId, setTeamMemberId] = useState("");
   const [role, setRole] = useState<SalesRole>("acquisition");
+  const [showErrors, setShowErrors] = useState(false);
 
-  // Team members not yet in the sales team (when creating).
   const available = team.filter((t) => editing?.teamMemberId === t.id || !sales.some((s) => s.teamMemberId === t.id));
 
   useEffect(() => {
     if (!open) return;
+    setShowErrors(false);
     if (editing) {
       setTeamMemberId(editing.teamMemberId);
       setRole(editing.role);
@@ -115,11 +117,13 @@ function SalesDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setTeamMemberId(available[0]?.id ?? "");
       setRole("acquisition");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, editing]);
+  }, [open, editing, available]);
 
   const submit = () => {
-    if (!teamMemberId) return;
+    if (!teamMemberId) {
+      setShowErrors(true);
+      return;
+    }
     if (editing) salesMembersStore.update(editing.id, { teamMemberId, role });
     else salesMembersStore.add({ id: newId("sm"), teamMemberId, role });
     onOpenChange(false);
@@ -130,10 +134,11 @@ function SalesDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       <DialogContent>
         <DialogHeader><DialogTitle>{editing ? "Edit sales member" : "Add sales member"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
+          <FormErrorBanner show={showErrors} />
           <div>
-            <Label>Team member</Label>
+            <Label><RequiredLabel>Team member</RequiredLabel></Label>
             <Select value={teamMemberId} onValueChange={setTeamMemberId} disabled={!!editing}>
-              <SelectTrigger><SelectValue placeholder="Select a person" /></SelectTrigger>
+              <SelectTrigger className={invalidFieldClassName(showErrors && !teamMemberId)} aria-invalid={showErrors && !teamMemberId}><SelectValue placeholder="Select a person" /></SelectTrigger>
               <SelectContent>
                 {available.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
               </SelectContent>
@@ -145,8 +150,8 @@ function SalesDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
             <Select value={role} onValueChange={(v) => setRole(v as SalesRole)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="acquisition">Acquisition — brings new clients</SelectItem>
-                <SelectItem value="closer">Closer — finalizes deals</SelectItem>
+                <SelectItem value="acquisition">Acquisition - brings new clients</SelectItem>
+                <SelectItem value="closer">Closer - finalizes deals</SelectItem>
                 <SelectItem value="both">Both</SelectItem>
               </SelectContent>
             </Select>
@@ -154,7 +159,7 @@ function SalesDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit} disabled={!teamMemberId}>{editing ? "Save" : "Add"}</Button>
+          <Button onClick={submit}>{editing ? "Save" : "Add"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

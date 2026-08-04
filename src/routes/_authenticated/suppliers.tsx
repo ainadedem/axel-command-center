@@ -25,6 +25,7 @@ import {
 import {
   CategoryChips, CategoryMultiSelect, CategoryFilterTabs, CompanyTag, CompanyTags, defaultCategoriesFor,
 } from "@/components/category-chips";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
 
 export const Route = createFileRoute("/_authenticated/suppliers")({ component: SuppliersPage });
 
@@ -408,6 +409,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
   const [bankSwift, setBankSwift] = useState("");
   const [notes, setNotes] = useState("");
   const [categories, setCategories] = useState<ContactCategory[]>(["supplier"]);
+  const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -429,10 +431,15 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
       setBankName(""); setBankAccount(""); setBankSwift(""); setNotes("");
       setCategories(["supplier"]);
     }
+    setShowErrors(false);
   }, [open, editing, companies]);
 
   function submit() {
-    if (!name.trim() || !companyId) return;
+    const invalid = !name.trim() || !companyId;
+    if (invalid) {
+      setShowErrors(true);
+      return;
+    }
     const ids = Array.from(new Set([companyId, ...companyIds].filter(Boolean)));
     const data: Omit<Supplier, "id"> = {
       name, companyId, companyIds: ids, account, kind, avatarUrl,
@@ -466,20 +473,21 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
       <DialogContent className="max-h-[80vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{editing ? "Edit contact" : "New contact"}</DialogTitle></DialogHeader>
         <div className="space-y-3 py-2">
+          <FormErrorBanner show={showErrors} />
           <div className="flex items-start gap-4">
             <AvatarUpload value={avatarUrl} onChange={setAvatarUrl} name={name} size={64} square={kind === "external"} />
             <div className="flex-1">
-              <Label>Name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
+              <Label><RequiredLabel>Name</RequiredLabel></Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} className={invalidFieldClassName(showErrors && !name.trim())} aria-invalid={showErrors && !name.trim()} />
             </div>
           </div>
           <div>
-            <Label>Categories</Label>
+            <Label><RequiredLabel>Categories</RequiredLabel></Label>
             <div className="mt-1.5"><CategoryMultiSelect value={categories} onChange={setCategories} /></div>
             <p className="text-[11px] text-muted-foreground mt-1.5">Tag this contact with one or more roles. Defaults to <span className="font-medium text-foreground">Supplier</span>.</p>
           </div>
           <div>
-            <Label>Linked companies</Label>
+            <Label><RequiredLabel>Linked companies</RequiredLabel></Label>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
               {companies.map((c) => {
                 const active = companyIds.includes(c.id);

@@ -40,7 +40,27 @@ function Dashboard() {
 }
 
 function DashboardBody() {
-  const { scope } = useCompany();
+  const { scope, bootstrapReady, accessLoading, dataLoading } = useCompany();
+
+  if (!bootstrapReady || accessLoading || dataLoading) {
+    return (
+      <div className="p-8 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <div key={idx} className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 space-y-3">
+              <div className="h-3 w-24 rounded-full bg-surface animate-pulse" />
+              <div className="h-8 w-32 rounded-full bg-surface animate-pulse" />
+              <div className="h-3 w-20 rounded-full bg-surface animate-pulse" />
+            </div>
+          ))}
+        </div>
+        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-6 space-y-3">
+          <div className="h-4 w-40 rounded-full bg-surface animate-pulse" />
+          <div className="h-64 rounded-2xl bg-surface animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
   const acc = inScope(useAccounts(), scope);
   const tx = inScope(useTransactions(), scope);

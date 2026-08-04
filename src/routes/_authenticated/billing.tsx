@@ -21,6 +21,8 @@ import { Switch } from "@/components/ui/switch";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, Repeat, Play, Pause, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 
 export const Route = createFileRoute("/_authenticated/billing")({ component: BillingPage });
 
@@ -224,6 +226,7 @@ function BillingDialog({
   const [paymentTermsDays, setPaymentTermsDays] = useState("30");
   const [active, setActive] = useState(true);
   const [notes, setNotes] = useState("");
+  const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -248,11 +251,16 @@ function BillingDialog({
       setStartDate(format(new Date(), "yyyy-MM-dd"));
       setEndDate(""); setPaymentTermsDays("30"); setActive(true); setNotes("");
     }
+    setShowErrors(false);
   }, [open, editing, defaultCurrency, scope, companies]);
 
   const submit = () => {
     const amt = parseFloat(amount);
-    if (!name.trim() || !companyId || !clientId || !amt) return;
+    const invalid = !name.trim() || !companyId || !clientId || !amt;
+    if (invalid) {
+      setShowErrors(true);
+      return;
+    }
     const data: Omit<RecurringBilling, "id"> = {
       name: name.trim(), companyId, clientId,
       projectId: projectId || undefined,
@@ -273,30 +281,56 @@ function BillingDialog({
   const scopedClients = clients.filter((c) => !companyId || c.companyId === companyId || (c.companyIds ?? []).includes(companyId));
   const scopedProjects = projects.filter((p) => (!companyId || p.companyId === companyId) && (!clientId || p.clientId === clientId));
 
+  useReconciledSelection({
+    open,
+    currentValue: companyId,
+    options: companies,
+    getId: (company) => company.id,
+    onChange: setCompanyId,
+  });
+
+  useReconciledSelection({
+    open,
+    currentValue: clientId,
+    options: scopedClients,
+    getId: (client) => client.id,
+    onChange: setClientId,
+  });
+
+  useReconciledSelection({
+    open,
+    currentValue: projectId,
+    options: scopedProjects,
+    getId: (project) => project.id,
+    allowEmpty: true,
+    onChange: setProjectId,
+  });
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader><DialogTitle>{editing ? "Edit schedule" : "New billing schedule"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
+          <FormErrorBanner show={showErrors} />
           <div>
-            <Label>Name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Monthly retainer — Acme" />
+            <Label><RequiredLabel>Name</RequiredLabel></Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Monthly retainer — Acme" className={invalidFieldClassName(showErrors && !name.trim())} aria-invalid={showErrors && !name.trim()} />
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <Label>Company</Label>
+              <Label><RequiredLabel>Company</RequiredLabel></Label>
               <Select value={companyId} onValueChange={setCompanyId}>
-                <SelectTrigger><SelectValue placeholder="Choose…" /></SelectTrigger>
+                <SelectTrigger className={invalidFieldClassName(showErrors && !companyId)} aria-invalid={showErrors && !companyId}><SelectValue placeholder="Choose…" /></SelectTrigger>
                 <SelectContent>
                   {companies.map((c) => <SelectItem key={c.id} value={c.id}>{companyCode(c)} — {c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Client</Label>
+              <Label><RequiredLabel>Client</RequiredLabel></Label>
               <Select value={clientId} onValueChange={setClientId}>
-                <SelectTrigger><SelectValue placeholder="Choose…" /></SelectTrigger>
+                <SelectTrigger className={invalidFieldClassName(showErrors && !clientId)} aria-invalid={showErrors && !clientId}><SelectValue placeholder="Choose…" /></SelectTrigger>
                 <SelectContent>
                   {scopedClients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
@@ -316,8 +350,8 @@ function BillingDialog({
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <Label>Amount per cycle</Label>
-              <Input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
+              <Label><RequiredLabel>Amount per cycle</RequiredLabel></Label>
+              <Input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className={invalidFieldClassName(showErrors && !(parseFloat(amount) > 0))} aria-invalid={showErrors && !(parseFloat(amount) > 0)} />
             </div>
             <div>
               <Label>Currency</Label>

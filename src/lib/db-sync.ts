@@ -24,6 +24,10 @@ import {
   type SalaryRegisterEntry, type PayrollRun, type PayrollEntry,
 } from "./mock-data";
 
+export type HydrationScope =
+  | { mode: "all" }
+  | { mode: "scoped"; companyIds: string[] };
+
 /** Maps local company id (e.g. "axi") → DB uuid. Populated by company-context. */
 const companyDbIdByLocal = new Map<string, string>();
 /** Reverse: DB uuid → local company id. */
@@ -43,6 +47,14 @@ const toLocalCompanyId = (dbId: string) => companyLocalIdByDb.get(dbId) ?? dbId;
 
 const isUuid = (v: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+
+async function fetchScopedRows(table: string, scope: HydrationScope) {
+  if (scope.mode === "scoped" && scope.companyIds.length === 0) return [] as Record<string, unknown>[];
+  let query = supabase.from(table).select("*");
+  if (scope.mode === "scoped") query = query.in("company_id", scope.companyIds);
+  const { data } = await query;
+  return (data ?? []) as Record<string, unknown>[];
+}
 
 /* ───────────────────────── CLIENTS ───────────────────────── */
 
@@ -101,9 +113,27 @@ const clientFromDb = (r: Record<string, unknown>): Client => ({
 /** Insert or update a client in DB. Returns the DB uuid if persisted. */
 export async function upsertClient(c: Client): Promise<string | null> {
   const row = clientToDb(c);
-  if (!row) return null;
+  if (!row) {
+    console.error("[db-sync] upsertClient skipped: missing DB company mapping", {
+      clientId: c.id,
+      companyId: c.companyId,
+      companyIds: c.companyIds,
+      name: c.name,
+    });
+    return null;
+  }
   const { data, error } = await supabase.from("clients").upsert(row, { onConflict: "company_id,name" }).select("id").single();
-  if (error) { console.warn("[db-sync] upsertClient", error.message); return null; }
+  if (error) {
+    console.error("[db-sync] upsertClient failed", {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+      client: c,
+      row,
+    });
+    return null;
+  }
   return data.id;
 }
 
@@ -226,28 +256,16 @@ export async function deleteProjectDb(id: string) {
 /* ─────────────────────── HYDRATION ─────────────────────── */
 
 /** Pull clients/suppliers/projects from DB and merge into local stores by id. */
-export async function hydrateContacts() {
-  const [{ data: cli }, { data: sup }, { data: prj }] = await Promise.all([
-    supabase.from("clients").select("*"),
-    supabase.from("suppliers").select("*"),
-    supabase.from("projects").select("*"),
+export async function hydrateContacts(scope: HydrationScope = { mode: "all" }) {
+  const [cli, sup, prj] = await Promise.all([
+    fetchScopedRows("clients", scope),
+    fetchScopedRows("suppliers", scope),
+    fetchScopedRows("projects", scope),
   ]);
 
-  if (cli) {
-    const byId = new Map(clientsStore.items.map((c) => [c.id, c]));
-    cli.forEach((r) => byId.set(r.id, clientFromDb(r as Record<string, unknown>)));
-    clientsStore.replaceAll([...byId.values()]);
-  }
-  if (sup) {
-    const byId = new Map(suppliersStore.items.map((s) => [s.id, s]));
-    sup.forEach((r) => byId.set(r.id, supplierFromDb(r as Record<string, unknown>)));
-    suppliersStore.replaceAll([...byId.values()]);
-  }
-  if (prj) {
-    const byId = new Map(projectsStore.items.map((p) => [p.id, p]));
-    prj.forEach((r) => byId.set(r.id, projectFromDb(r as Record<string, unknown>)));
-    projectsStore.replaceAll([...byId.values()]);
-  }
+  clientsStore.replaceAll(cli.map((r) => clientFromDb(r)));
+  suppliersStore.replaceAll(sup.map((r) => supplierFromDb(r)));
+  projectsStore.replaceAll(prj.map((r) => projectFromDb(r)));
 }
 
 /* ─────────── ONE-TIME PUSH OF LOCAL MOCK SEED ─────────── */
@@ -569,65 +587,52 @@ export function registerFinancialSync() {
 
 /* ───────────────────────── HYDRATION (financial) ───────────────────────── */
 
-export async function hydrateFinancials() {
+export async function hydrateFinancials(scope: HydrationScope = { mode: "all" }) {
   const [
-    { data: accs },
-    { data: cats },
-    { data: buds },
-    { data: txs },
-    { data: invs },
-    { data: lines },
+    accs,
+    cats,
+    buds,
+    txs,
+    invs,
   ] = await Promise.all([
-    supabase.from("accounts").select("*"),
-    supabase.from("categories").select("*"),
-    supabase.from("budgets").select("*"),
-    supabase.from("transactions").select("*"),
-    supabase.from("invoices").select("*"),
-    supabase.from("invoice_lines").select("*").order("position", { ascending: true }),
+    fetchScopedRows("accounts", scope),
+    fetchScopedRows("categories", scope),
+    fetchScopedRows("budgets", scope),
+    fetchScopedRows("transactions", scope),
+    fetchScopedRows("invoices", scope),
   ]);
+  let lines: Record<string, unknown>[] = [];
+  const invoiceIds = invs.map((r) => r.id as string).filter(Boolean);
+  if (scope.mode === "all") {
+    const { data } = await supabase.from("invoice_lines").select("*").order("position", { ascending: true });
+    lines = (data ?? []) as Record<string, unknown>[];
+  } else if (invoiceIds.length > 0) {
+    const { data } = await supabase.from("invoice_lines").select("*").in("invoice_id", invoiceIds).order("position", { ascending: true });
+    lines = (data ?? []) as Record<string, unknown>[];
+  }
 
-  if (accs) {
-    const byId = new Map(accountsStore.items.map((x) => [x.id, x]));
-    accs.forEach((r) => byId.set(r.id, accountFromDb(r as Record<string, unknown>)));
-    accountsStore.replaceAll([...byId.values()]);
-  }
-  if (cats) {
-    const byId = new Map(categoriesStore.items.map((x) => [x.id, x]));
-    cats.forEach((r) => byId.set(r.id, categoryFromDb(r as Record<string, unknown>)));
-    categoriesStore.replaceAll([...byId.values()]);
-  }
-  if (buds) {
-    const byId = new Map(budgetsStore.items.map((x) => [x.id, x]));
-    buds.forEach((r) => byId.set(r.id, budgetFromDb(r as Record<string, unknown>)));
-    budgetsStore.replaceAll([...byId.values()]);
-  }
-  if (txs) {
-    const byId = new Map(transactionsStore.items.map((x) => [x.id, x]));
-    txs.forEach((r) => byId.set(r.id, transactionFromDb(r as Record<string, unknown>)));
-    transactionsStore.replaceAll([...byId.values()]);
-  }
-  if (invs) {
-    const linesByInv = new Map<string, QuoteLine[]>();
-    (lines ?? []).forEach((l) => {
-      const arr = linesByInv.get(l.invoice_id as string) ?? [];
-      arr.push({
-        id: l.id as string,
-        description: (l.description as string) ?? "",
-        capability: (l.capability as string) ?? undefined,
-        level: (l.level as string) ?? undefined,
-        unit: (l.unit as QuoteLine["unit"]) ?? "fixed",
-        quantity: Number(l.quantity) || 0,
-        rate: Number(l.rate) || 0,
-      });
-      linesByInv.set(l.invoice_id as string, arr);
+  accountsStore.replaceAll(accs.map((r) => accountFromDb(r)));
+  categoriesStore.replaceAll(cats.map((r) => categoryFromDb(r)));
+  budgetsStore.replaceAll(buds.map((r) => budgetFromDb(r)));
+  transactionsStore.replaceAll(txs.map((r) => transactionFromDb(r)));
+
+  const linesByInv = new Map<string, QuoteLine[]>();
+  lines.forEach((l) => {
+    const arr = linesByInv.get(l.invoice_id as string) ?? [];
+    arr.push({
+      id: l.id as string,
+      description: (l.description as string) ?? "",
+      capability: (l.capability as string) ?? undefined,
+      level: (l.level as string) ?? undefined,
+      unit: (l.unit as QuoteLine["unit"]) ?? "fixed",
+      quantity: Number(l.quantity) || 0,
+      rate: Number(l.rate) || 0,
     });
-    const byId = new Map(invoicesStore.items.map((x) => [x.id, x]));
-    invs.forEach((r) => {
-      const ls = linesByInv.get(r.id as string) ?? [];
-      byId.set(r.id as string, invoiceFromDb(r as Record<string, unknown>, ls));
-    });
-    invoicesStore.replaceAll([...byId.values()]);
-  }
+    linesByInv.set(l.invoice_id as string, arr);
+  });
+  invoicesStore.replaceAll(
+    invs.map((r) => invoiceFromDb(r, linesByInv.get(r.id as string) ?? [])),
+  );
 }
 
 /* ─────────── PUSH LOCAL FINANCIAL SEED ─────────── */
@@ -1148,40 +1153,35 @@ export function registerExtraSync() {
   payrollRunsStore.setSync({ upsert: upsertPayrollRun, remove: deletePayrollRunDb });
 }
 
-export async function hydrateExtras() {
-  const [
-    { data: ops }, { data: qts }, { data: pos }, { data: exps },
-    { data: rbs }, { data: tms }, { data: sms }, { data: srs }, { data: prs },
-  ] = await Promise.all([
-    supabase.from("opportunities").select("*"),
-    supabase.from("quotes").select("*"),
-    supabase.from("purchase_orders").select("*"),
-    supabase.from("expenses").select("*"),
-    supabase.from("recurring_billings").select("*"),
-    supabase.from("team_members").select("*"),
-    supabase.from("sales_members").select("*"),
-    supabase.from("salary_register").select("*"),
-    supabase.from("payroll_runs").select("*"),
+export async function hydrateExtras(scope: HydrationScope = { mode: "all" }) {
+  const [ops, qts, pos, exps, rbs, srs, prs] = await Promise.all([
+    fetchScopedRows("opportunities", scope),
+    fetchScopedRows("quotes", scope),
+    fetchScopedRows("purchase_orders", scope),
+    fetchScopedRows("expenses", scope),
+    fetchScopedRows("recurring_billings", scope),
+    fetchScopedRows("salary_register", scope),
+    fetchScopedRows("payroll_runs", scope),
   ]);
-  const merge = <T extends { id: string }>(
-    store: { items: T[]; replaceAll: (n: T[]) => void },
-    rows: Array<Record<string, unknown>> | null,
-    map: (r: Record<string, unknown>) => T,
-  ) => {
-    if (!rows) return;
-    const byId = new Map(store.items.map((x) => [x.id, x]));
-    rows.forEach((r) => byId.set(r.id as string, map(r)));
-    store.replaceAll([...byId.values()]);
-  };
-  merge(opportunitiesStore, ops, opportunityFromDb);
-  merge(quotesStore, qts, quoteFromDb);
-  merge(purchaseOrdersStore, pos, poFromDb);
-  merge(expensesStore, exps, expenseFromDb);
-  merge(recurringBillingsStore, rbs, rbFromDb);
-  merge(teamMembersStore, tms, tmFromDb);
-  merge(salesMembersStore, sms, smFromDb);
-  merge(salaryRegisterStore, srs, srFromDb);
-  merge(payrollRunsStore, prs, prFromDb);
+  opportunitiesStore.replaceAll(ops.map((r) => opportunityFromDb(r)));
+  quotesStore.replaceAll(qts.map((r) => quoteFromDb(r)));
+  purchaseOrdersStore.replaceAll(pos.map((r) => poFromDb(r)));
+  expensesStore.replaceAll(exps.map((r) => expenseFromDb(r)));
+  recurringBillingsStore.replaceAll(rbs.map((r) => rbFromDb(r)));
+  salaryRegisterStore.replaceAll(srs.map((r) => srFromDb(r)));
+  payrollRunsStore.replaceAll(prs.map((r) => prFromDb(r)));
+
+  if (scope.mode === "all") {
+    const [{ data: tms }, { data: sms }] = await Promise.all([
+      supabase.from("team_members").select("*"),
+      supabase.from("sales_members").select("*"),
+    ]);
+    teamMembersStore.replaceAll(((tms ?? []) as Record<string, unknown>[]).map((r) => tmFromDb(r)));
+    salesMembersStore.replaceAll(((sms ?? []) as Record<string, unknown>[]).map((r) => smFromDb(r)));
+  } else {
+    teamMembersStore.replaceAll([]);
+    salesMembersStore.replaceAll([]);
+  }
 }
 
 export async function pushLocalExtrasSeed(): Promise<Record<string, number>> {

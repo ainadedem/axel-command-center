@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
 
 export const Route = createFileRoute("/_authenticated/pipeline")({ component: PipelinePage });
 
@@ -423,6 +424,7 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
   const [currency, setCurrency] = useState<Currency>("EUR");
   const [expectedClose, setExpectedClose] = useState(() => new Date().toISOString().slice(0, 10));
   const [probability, setProbability] = useState("");
+  const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -443,6 +445,7 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
       setCloser("");
       setStage("Lead"); setValue("0"); setCurrency(c?.baseCurrency ?? "EUR"); setExpectedClose(new Date().toISOString().slice(0, 10)); setProbability("");
     }
+    setShowErrors(false);
   }, [open, editing, companies, clients]);
 
   // Reset client picker when company changes (so we don't keep a client from another company).
@@ -468,14 +471,18 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
   }, [closerPeople, closer]);
 
   const submit = () => {
-    if (!name.trim() || !companyId) return;
+    const missingLinkedLead = !clientId && !newLeadName.trim();
+    const invalid = !name.trim() || !companyId || missingLinkedLead;
+    if (invalid) {
+      setShowErrors(true);
+      return;
+    }
 
     // Resolve / create the linked client.
     let linkedClientId = clientId;
     let clientDisplayName = selectedClient?.name ?? "";
     if (!linkedClientId) {
       const trimmed = newLeadName.trim();
-      if (!trimmed) return; // require either a picked client or a new lead name
       // De-dupe: if a client with this name already exists for the company, reuse it.
       const existing = clients.find(
         (c) => c.companyId === companyId && c.name.toLowerCase() === trimmed.toLowerCase(),
@@ -527,22 +534,23 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
       <DialogContent>
         <DialogHeader><DialogTitle>{editing ? "Edit opportunity" : "New opportunity"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
+          <FormErrorBanner show={showErrors} />
           <div>
-            <Label>Company</Label>
+            <Label><RequiredLabel>Company</RequiredLabel></Label>
             <Select value={companyId} onValueChange={setCompanyId}>
-              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+              <SelectTrigger className={invalidFieldClassName(showErrors && !companyId)} aria-invalid={showErrors && !companyId}><SelectValue placeholder="Select" /></SelectTrigger>
               <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div><Label>Opportunity name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div><Label><RequiredLabel>Opportunity name</RequiredLabel></Label><Input value={name} onChange={(e) => setName(e.target.value)} className={invalidFieldClassName(showErrors && !name.trim())} aria-invalid={showErrors && !name.trim()} /></div>
           <div>
-            <Label>Client / lead <span className="text-destructive">*</span></Label>
+            <Label><RequiredLabel>Client / lead</RequiredLabel></Label>
             <Select
               value={clientId || "__new__"}
               onValueChange={(v) => setClientId(v === "__new__" ? "" : v)}
               disabled={!companyId}
             >
-              <SelectTrigger>
+              <SelectTrigger className={invalidFieldClassName(showErrors && !clientId && !newLeadName.trim())} aria-invalid={showErrors && !clientId && !newLeadName.trim()}>
                 <SelectValue placeholder={companyId ? "Select client" : "Select company first"} />
               </SelectTrigger>
               <SelectContent>

@@ -24,6 +24,8 @@ import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { cn } from "@/lib/utils";
 import { KpiCard } from "@/components/kpi-card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 
 export const Route = createFileRoute("/_authenticated/projects")({ component: ProjectsPage });
 
@@ -451,6 +453,7 @@ function ProjectDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [revenue, setRevenue] = useState("0");
   const [cost, setCost] = useState("0");
   const [currency, setCurrency] = useState<Currency>("EUR");
+  const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -460,12 +463,33 @@ function ProjectDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     } else {
       setCompanyId(companies[0]?.id ?? ""); setClientId(""); setName(""); setRevenue("0"); setCost("0"); setCurrency("EUR");
     }
+    setShowErrors(false);
   }, [open, editing, companies]);
 
   const companyClients = clients.filter((c) => contactBelongsTo(c, companyId));
 
+  useReconciledSelection({
+    open,
+    currentValue: companyId,
+    options: companies,
+    getId: (company) => company.id,
+    onChange: setCompanyId,
+  });
+
+  useReconciledSelection({
+    open,
+    currentValue: clientId,
+    options: companyClients,
+    getId: (client) => client.id,
+    onChange: setClientId,
+  });
+
   const submit = () => {
-    if (!name.trim() || !companyId || !clientId) return;
+    const invalid = !name.trim() || !companyId || !clientId;
+    if (invalid) {
+      setShowErrors(true);
+      return;
+    }
     const data = { companyId, clientId, name, revenue: Number(revenue) || 0, cost: Number(cost) || 0, currency };
     if (editing) {
       projectsStore.update(editing.id, data);
@@ -489,21 +513,22 @@ function ProjectDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       <DialogContent>
         <DialogHeader><DialogTitle>{editing ? "Edit project" : "New project"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
+          <FormErrorBanner show={showErrors} />
           <div>
-            <Label>Company</Label>
+            <Label><RequiredLabel>Company</RequiredLabel></Label>
             <Select value={companyId} onValueChange={(v) => { setCompanyId(v); setClientId(""); }}>
-              <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
+              <SelectTrigger className={invalidFieldClassName(showErrors && !companyId)} aria-invalid={showErrors && !companyId}><SelectValue placeholder="Select company" /></SelectTrigger>
               <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div>
-            <Label>Client</Label>
+            <Label><RequiredLabel>Client</RequiredLabel></Label>
             <Select value={clientId} onValueChange={setClientId}>
-              <SelectTrigger><SelectValue placeholder={companyClients.length ? "Select client" : "Create a client first"} /></SelectTrigger>
+              <SelectTrigger className={invalidFieldClassName(showErrors && !clientId)} aria-invalid={showErrors && !clientId}><SelectValue placeholder={companyClients.length ? "Select client" : "Create a client first"} /></SelectTrigger>
               <SelectContent>{companyClients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div><Label>Project name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div><Label><RequiredLabel>Project name</RequiredLabel></Label><Input value={name} onChange={(e) => setName(e.target.value)} className={invalidFieldClassName(showErrors && !name.trim())} aria-invalid={showErrors && !name.trim()} /></div>
           <div className="grid grid-cols-3 gap-3">
             <div><Label>Revenue</Label><Input type="number" value={revenue} onChange={(e) => setRevenue(e.target.value)} /></div>
             <div><Label>Cost</Label><Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} /></div>

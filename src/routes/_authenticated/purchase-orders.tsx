@@ -22,6 +22,8 @@ import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, Upload, FileText, X, History, RefreshCw, Eye } from "lucide-react";
 import { DocumentPreview, type DocumentData } from "@/components/document-preview";
 import { nextNumber } from "@/lib/numbering";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 
 type DocVersion = { url: string; name?: string; type?: string; uploadedAt: string };
 
@@ -192,6 +194,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
   const [documentUploadedAt, setDocumentUploadedAt] = useState<string | undefined>();
   const [documentHistory, setDocumentHistory] = useState<DocVersion[]>([]);
   const [uploadError, setUploadError] = useState<string>("");
+  const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -213,6 +216,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
       setDocumentUploadedAt(undefined); setDocumentHistory([]);
     }
     setUploadError("");
+    setShowErrors(false);
   }, [open, editing, companies, today]);
 
   useEffect(() => {
@@ -247,6 +251,40 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
   const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
   const clientQuotes = quotes.filter((q) => q.companyId === companyId && q.clientId === clientId);
 
+  useReconciledSelection({
+    open,
+    currentValue: companyId,
+    options: companies,
+    getId: (company) => company.id,
+    onChange: setCompanyId,
+  });
+
+  useReconciledSelection({
+    open,
+    currentValue: clientId,
+    options: companyClients,
+    getId: (client) => client.id,
+    onChange: setClientId,
+  });
+
+  useReconciledSelection({
+    open,
+    currentValue: quoteId,
+    options: clientQuotes,
+    getId: (quote) => quote.id,
+    allowEmpty: true,
+    onChange: setQuoteId,
+  });
+
+  useReconciledSelection({
+    open,
+    currentValue: projectId,
+    options: clientProjects,
+    getId: (project) => project.id,
+    allowEmpty: true,
+    onChange: setProjectId,
+  });
+
   // When a quote is selected, prefill amount/currency/project.
   useEffect(() => {
     if (!quoteId) return;
@@ -258,7 +296,11 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
   }, [quoteId, quotes]);
 
   const submit = () => {
-    if (!number.trim() || !companyId || !clientId) return;
+    const invalid = !number.trim() || !companyId || !clientId;
+    if (invalid) {
+      setShowErrors(true);
+      return;
+    }
     // Stamp upload time when a document is present but doesn't have one yet (e.g. legacy data).
     const uploadedAt = documentUrl ? (documentUploadedAt ?? new Date().toISOString()) : undefined;
     const data = { number, clientReference: clientReference || undefined, companyId, clientId, projectId: projectId || undefined, quoteId: quoteId || undefined, issueDate, amount: Number(amount) || 0, currency, status, documentUrl, documentName, documentType, documentUploadedAt: uploadedAt, documentHistory: documentHistory.length ? documentHistory : undefined };
@@ -272,22 +314,26 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
       <DialogContent>
         <DialogHeader><DialogTitle>{editing ? "Edit PO" : "New purchase order"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
+          <FormErrorBanner show={showErrors} />
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>PO number</Label><Input value={number} onChange={(e) => setNumber(e.target.value)} /></div>
+            <div>
+              <Label><RequiredLabel>PO number</RequiredLabel></Label>
+              <Input value={number} onChange={(e) => setNumber(e.target.value)} className={invalidFieldClassName(showErrors && !number.trim())} aria-invalid={showErrors && !number.trim()} />
+            </div>
             <div><Label>Client reference</Label><Input value={clientReference} onChange={(e) => setClientReference(e.target.value)} placeholder="Their internal #" /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Company</Label>
+              <Label><RequiredLabel>Company</RequiredLabel></Label>
               <Select value={companyId} onValueChange={(v) => { setCompanyId(v); setClientId(""); setQuoteId(""); }}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectTrigger className={invalidFieldClassName(showErrors && !companyId)} aria-invalid={showErrors && !companyId}><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Client</Label>
+              <Label><RequiredLabel>Client</RequiredLabel></Label>
               <Select value={clientId} onValueChange={(v) => { setClientId(v); setProjectId(""); setQuoteId(""); }}>
-                <SelectTrigger><SelectValue placeholder={companyClients.length ? "Select" : "Create client first"} /></SelectTrigger>
+                <SelectTrigger className={invalidFieldClassName(showErrors && !clientId)} aria-invalid={showErrors && !clientId}><SelectValue placeholder={companyClients.length ? "Select" : "Create client first"} /></SelectTrigger>
                 <SelectContent>{companyClients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>

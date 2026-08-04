@@ -21,6 +21,7 @@ import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Avatar } from "@/components/avatar-upload";
 import { Pencil, Trash2, Users, CalendarDays, CheckCircle2, BanknoteIcon, Plus, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 
 export const Route = createFileRoute("/_authenticated/payroll")({ component: PayrollPage });
 
@@ -181,6 +182,22 @@ function RegisterDialog({
       setStartDate(format(new Date(), "yyyy-MM-dd")); setActive(true);
     }
   }, [open, editing, defaultCurrency, scope, companies]);
+
+  useReconciledSelection({
+    open,
+    currentValue: companyId,
+    options: companies,
+    getId: (company) => company.id,
+    onChange: setCompanyId,
+  });
+
+  useReconciledSelection({
+    open,
+    currentValue: teamMemberId,
+    options: team,
+    getId: (member) => member.id,
+    onChange: setTeamMemberId,
+  });
 
   const submit = () => {
     const g = parseFloat(gross);
@@ -476,6 +493,14 @@ function NewRunDialog({ onClose, register }: { onClose: () => void; register: Sa
 
   const eligible = register.filter((e) => e.active && e.companyId === companyId);
   const currency: Currency = eligible[0]?.currency ?? companies.find((c) => c.id === companyId)?.baseCurrency ?? "MGA";
+
+  useReconciledSelection({
+    open: true,
+    currentValue: companyId,
+    options: companies,
+    getId: (company) => company.id,
+    onChange: setCompanyId,
+  });
 
   const submit = () => {
     if (!companyId || !month || eligible.length === 0) return;

@@ -26,6 +26,7 @@ import { nextNumber } from "@/lib/numbering";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import html2pdf from "html2pdf.js";
+import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 
 export const Route = createFileRoute("/_authenticated/quotations")({ component: QuotationsPage });
 
@@ -329,6 +330,31 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
 
   const companyClients = clients.filter((c) => contactBelongsTo(c, companyId));
   const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
+
+  useReconciledSelection({
+    open,
+    currentValue: companyId,
+    options: companies,
+    getId: (company) => company.id,
+    onChange: setCompanyId,
+  });
+
+  useReconciledSelection({
+    open,
+    currentValue: clientId,
+    options: companyClients,
+    getId: (client) => client.id,
+    onChange: setClientId,
+  });
+
+  useReconciledSelection({
+    open,
+    currentValue: projectId,
+    options: clientProjects,
+    getId: (project) => project.id,
+    allowEmpty: true,
+    onChange: setProjectId,
+  });
 
   const subtotal = useMemo(() => lines.reduce((s, l) => s + (Number(l.quantity) || 0) * (Number(l.rate) || 0), 0), [lines]);
   const { taxAmount, totalAmount } = useMemo(() => computeTotals(Math.round(subtotal), Number(taxRate) || 0), [subtotal, taxRate]);

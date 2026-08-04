@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   useCompanies, companiesStore, accountsStore, categoriesStore, budgetsStore,
   transactionsStore, invoicesStore, opportunitiesStore, quotesStore, purchaseOrdersStore,
@@ -11,18 +11,12 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   setCompanyIdMap, hydrateContacts, pushLocalSeed,
   registerFinancialSync, hydrateFinancials, pushLocalFinancialSeed,
-  registerExtraSync, hydrateExtras, pushLocalExtrasSeed,
+  registerExtraSync, hydrateExtras, pushLocalExtrasSeed, type HydrationScope,
 } from "./db-sync";
-// Side-effect import: pcg.ts auto-seeds Logia + Axiom derived data
-// (accounts, categories, invoices, transactions, opportunities) into the
-// local stores at module load. Importing it here guarantees the stores are
-// populated BEFORE pushLocalFinancialSeed() runs below.
 import "./pcg";
 
-// Wire financial stores → Supabase once at module load.
 registerFinancialSync();
 registerExtraSync();
-
 
 const FALLBACK_COLORS = ["#7c3aed", "#0ea5e9", "#f59e0b", "#10b981", "#ef4444", "#ec4899"];
 
@@ -68,7 +62,6 @@ function restrictLocalStores(allowedCompanies: Company[]) {
   if (salesMembersStore.items.length) salesMembersStore.replaceAll([]);
 }
 
-
 type Scope = { id: "group" } | { id: "company"; companyId: string };
 
 export type CompanyRole =
@@ -91,18 +84,14 @@ export const COMPANY_ROLES: CompanyRole[] = [
 interface Ctx {
   scope: Scope;
   setScope: (s: Scope) => void;
-  /** Companies the current user is allowed to see (already filtered by access). */
   accessibleCompanies: Company[];
-  /** Companies further narrowed by the active scope. */
   scopedCompanies: Company[];
   label: string;
-  /** True while we are still resolving the user's company access. */
   accessLoading: boolean;
-  /** True if user has group-wide access (super_admin / group_admin). */
+  dataLoading: boolean;
+  bootstrapReady: boolean;
   isGroupAdmin: boolean;
-  /** Role the user holds in a given company (undefined = no access). Group admins implicitly act as company_admin everywhere. */
   roleFor: (companyId: string) => CompanyRole | undefined;
-  /** True if the user can act with one of the given roles in that company. */
   hasCompanyRole: (companyId: string, allowed: CompanyRole[]) => boolean;
 }
 
@@ -125,260 +114,358 @@ function loadScope(): Scope {
   return { id: "group" };
 }
 
+function mapCompanyRow(row: Record<string, unknown>, fallbackColorIdx: number): Company {
+  const code = String(row.code || "").toUpperCase();
+  const shortName = (row.short_name as string) || code || String(row.name).slice(0, 3).toUpperCase();
+  return {
+    id: row.id as string,
+    name: row.name as string,
+    shortName,
+    code,
+    color: (row.color as string) || FALLBACK_COLORS[fallbackColorIdx % FALLBACK_COLORS.length],
+    baseCurrency: ((row.base_currency as Company["baseCurrency"]) || "MGA"),
+    legalName: (row.legal_name as string) || undefined,
+    address: (row.address as string) || undefined,
+    email: (row.email as string) || undefined,
+    phone: (row.phone as string) || undefined,
+    website: (row.website as string) || undefined,
+    nif: (row.nif as string) || undefined,
+    stat: (row.stat as string) || undefined,
+    rcs: (row.rcs as string) || undefined,
+    taxId: (row.tax_id as string) || undefined,
+    bankName: (row.bank_name as string) || undefined,
+    bankAccount: (row.bank_account as string) || undefined,
+    bankSwift: (row.bank_swift as string) || undefined,
+    logoUrl: (row.logo_url as string) || undefined,
+  };
+}
+
+function mergeCompanies(rows: Record<string, unknown>[]) {
+  const existing = companiesStore.items;
+  const seedIds = new Set(["log", "win", "axi"]);
+  const seen = new Map<string, Company>();
+  const noCode: Company[] = [];
+
+  for (const company of existing) {
+    const key = (company.code || company.shortName || "").toUpperCase();
+    if (!key) {
+      noCode.push(company);
+      continue;
+    }
+    const prev = seen.get(key);
+    if (!prev) seen.set(key, company);
+    else if (seedIds.has(company.id) && !seedIds.has(prev.id)) seen.set(key, company);
+  }
+
+  const deduped: Company[] = [...seen.values(), ...noCode];
+  const byCode = new Map(deduped.map((company) => [(company.code || company.shortName || "").toUpperCase(), company]));
+  const merged: Company[] = [];
+  const idMap: Array<{ localId: string; dbId: string }> = [];
+
+  rows.forEach((row, idx) => {
+    const entry = mapCompanyRow(row, deduped.length + idx);
+    const key = entry.code || entry.shortName;
+    if (!key) {
+      merged.push(entry);
+      idMap.push({ localId: entry.id, dbId: row.id as string });
+      return;
+    }
+
+    const existingEntry = byCode.get(key);
+    if (existingEntry) {
+      merged.push({ ...entry, id: existingEntry.id });
+      idMap.push({ localId: existingEntry.id, dbId: row.id as string });
+    } else {
+      merged.push(entry);
+      idMap.push({ localId: entry.id, dbId: row.id as string });
+    }
+  });
+
+  return { merged, idMap };
+}
+
+function resolveScopeForHydration(
+  requestedScope: Scope,
+  isGroupAdmin: boolean,
+  accessibleDbCompanyIds: string[],
+  accessibleCompanies: Company[],
+  idMap: Array<{ localId: string; dbId: string }>,
+): Scope {
+  if (requestedScope.id === "group" && isGroupAdmin) return requestedScope;
+  if (accessibleCompanies.length === 0) return requestedScope;
+  if (requestedScope.id === "company" && accessibleCompanies.some((company) => company.id === requestedScope.companyId)) {
+    return requestedScope;
+  }
+  return { id: "company", companyId: accessibleCompanies[0].id };
+}
+
+function getHydrationScope(
+  selectedScope: Scope,
+  isGroupAdmin: boolean,
+  accessibleDbCompanyIds: string[],
+  idMap: Array<{ localId: string; dbId: string }>,
+): HydrationScope {
+  if (selectedScope.id === "group") {
+    return isGroupAdmin
+      ? { mode: "all" }
+      : { mode: "scoped", companyIds: accessibleDbCompanyIds };
+  }
+
+  const dbId = idMap.find((entry) => entry.localId === selectedScope.companyId)?.dbId;
+  return { mode: "scoped", companyIds: dbId ? [dbId] : [] };
+}
+
+async function maybePushSeeds(userId: string) {
+  const seedFlag = `axel.seedPushed.${userId}.v3`;
+  const finSeedFlag = `axel.finSeedPushed.${userId}.v3`;
+  const extrasFlag = `axel.extrasSeedPushed.${userId}.v1`;
+
+  try {
+    const { count: clientCount } = await supabase
+      .from("clients").select("id", { count: "exact", head: true });
+    if (!window.localStorage.getItem(seedFlag) || (clientCount ?? 0) === 0) {
+      const res = await pushLocalSeed();
+      window.localStorage.setItem(seedFlag, new Date().toISOString());
+      console.info("[pushLocalSeed]", res);
+    }
+  } catch (e) {
+    console.warn("[pushLocalSeed]", e);
+  }
+
+  try {
+    const { count: accCount } = await supabase
+      .from("accounts").select("id", { count: "exact", head: true });
+    if (!window.localStorage.getItem(finSeedFlag) || (accCount ?? 0) === 0) {
+      const res = await pushLocalFinancialSeed();
+      window.localStorage.setItem(finSeedFlag, new Date().toISOString());
+      console.info("[pushLocalFinancialSeed]", res);
+    }
+  } catch (e) {
+    console.warn("[pushLocalFinancialSeed]", e);
+  }
+
+  try {
+    const { count: opCount } = await supabase
+      .from("opportunities").select("id", { count: "exact", head: true });
+    if (!window.localStorage.getItem(extrasFlag) || (opCount ?? 0) === 0) {
+      const res = await pushLocalExtrasSeed();
+      window.localStorage.setItem(extrasFlag, new Date().toISOString());
+      console.info("[pushLocalExtrasSeed]", res);
+    }
+  } catch (e) {
+    console.warn("[pushLocalExtrasSeed]", e);
+  }
+}
+
 export function CompanyProvider({ children }: { children: ReactNode }) {
   const [scope, setScopeState] = useState<Scope>(loadScope);
   const allCompanies = useCompanies();
-  const { user, roles } = useAuth();
+  const { user, roles, loading: authLoading } = useAuth();
+  const currentScopeRef = useRef(scope);
+  const scopeReloadSeq = useRef(0);
+  const hasCompletedInitialHydration = useRef(false);
 
   const isGroupAdmin = roles.includes("group_admin") || roles.includes("super_admin");
 
   const [allowedCodes, setAllowedCodes] = useState<string[] | null>(null);
+  const [accessibleDbCompanyIds, setAccessibleDbCompanyIds] = useState<string[]>([]);
+  const [companyIdMapEntries, setCompanyIdMapEntries] = useState<Array<{ localId: string; dbId: string }>>([]);
   const [roleByCompanyId, setRoleByCompanyId] = useState<Map<string, CompanyRole>>(new Map());
   const [accessLoading, setAccessLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [bootstrapReady, setBootstrapReady] = useState(false);
 
-  // Hydrate the local companies store from the database so that users on a
-  // fresh browser (empty localStorage) still see the companies they have
-  // access to. Existing local entries are preserved (matched by code).
   useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    (async () => {
-      const { data, error } = await supabase
-        .from("companies")
-        .select("*");
-      if (cancelled || error || !data) return;
-      const existing = companiesStore.items;
-
-      // Dedupe existing items by code, preferring stable seed ids
-      // ("log"/"win"/"axi") that the rest of the mock data references.
-      const seedIds = new Set(["log", "win", "axi"]);
-      const seen = new Map<string, Company>();
-      const noCode: Company[] = [];
-      for (const c of existing) {
-        const key = (c.code || c.shortName || "").toUpperCase();
-        if (!key) { noCode.push(c); continue; }
-        const prev = seen.get(key);
-        if (!prev) seen.set(key, c);
-        else if (seedIds.has(c.id) && !seedIds.has(prev.id)) seen.set(key, c);
-      }
-      const deduped: Company[] = [...seen.values(), ...noCode];
-
-      // Merge DB rows into the local store. Existing entries (matched by
-      // code) get their fields refreshed from the DB so updates made in the
-      // Companies page show up everywhere; new rows are appended.
-      const byCode = new Map(deduped.map((c) => [(c.code || c.shortName || "").toUpperCase(), c]));
-      const merged: Company[] = [...deduped];
-      let changed = deduped.length !== existing.length;
-
-      const toEntry = (row: Record<string, unknown>, fallbackColorIdx: number): Company => {
-        const code = String(row.code || "").toUpperCase();
-        const shortName = (row.short_name as string) || code || String(row.name).slice(0, 3).toUpperCase();
-        return {
-          id: row.id as string,
-          name: row.name as string,
-          shortName,
-          code,
-          color: (row.color as string) || FALLBACK_COLORS[fallbackColorIdx % FALLBACK_COLORS.length],
-          baseCurrency: ((row.base_currency as Company["baseCurrency"]) || "MGA"),
-          legalName: (row.legal_name as string) || undefined,
-          address: (row.address as string) || undefined,
-          email: (row.email as string) || undefined,
-          phone: (row.phone as string) || undefined,
-          website: (row.website as string) || undefined,
-          nif: (row.nif as string) || undefined,
-          stat: (row.stat as string) || undefined,
-          rcs: (row.rcs as string) || undefined,
-          taxId: (row.tax_id as string) || undefined,
-          bankName: (row.bank_name as string) || undefined,
-          bankAccount: (row.bank_account as string) || undefined,
-          bankSwift: (row.bank_swift as string) || undefined,
-          logoUrl: (row.logo_url as string) || undefined,
-        };
-      };
-
-      const idMap: Array<{ localId: string; dbId: string }> = [];
-      data.forEach((row, idx) => {
-        const code = String((row as { code?: string }).code || "").toUpperCase();
-        const entry = toEntry(row as Record<string, unknown>, deduped.length + idx);
-        if (!code) {
-          merged.push(entry);
-          idMap.push({ localId: entry.id, dbId: row.id as string });
-          changed = true;
-          return;
-        }
-        const existingEntry = byCode.get(code);
-        if (existingEntry) {
-          const refreshed: Company = { ...entry, id: existingEntry.id };
-          const i = merged.indexOf(existingEntry);
-          if (i >= 0 && JSON.stringify(merged[i]) !== JSON.stringify(refreshed)) {
-            merged[i] = refreshed;
-            changed = true;
-          }
-          idMap.push({ localId: existingEntry.id, dbId: row.id as string });
-        } else {
-          merged.push(entry);
-          byCode.set(code, entry);
-          idMap.push({ localId: entry.id, dbId: row.id as string });
-          changed = true;
-        }
-      });
-      if (changed) companiesStore.replaceAll(merged);
-      setCompanyIdMap(idMap);
-      // Push local mock seed → DB once per user, then hydrate from DB.
-      // Bump the suffix below to force a re-push for all users (e.g. when
-      // new mock data is added or a previous push ran before the stores
-      // were fully seeded).
-      const seedFlag = `axel.seedPushed.${user.id}.v3`;
-      const finSeedFlag = `axel.finSeedPushed.${user.id}.v3`;
-      (async () => {
-        try {
-          // Always push if DB has no clients yet for this user.
-          const { count: clientCount } = await supabase
-            .from("clients").select("id", { count: "exact", head: true });
-          if (!window.localStorage.getItem(seedFlag) || (clientCount ?? 0) === 0) {
-            const res = await pushLocalSeed();
-            window.localStorage.setItem(seedFlag, new Date().toISOString());
-            console.info("[pushLocalSeed]", res);
-          }
-        } catch (e) {
-          console.warn("[pushLocalSeed]", e);
-        }
-        try {
-          // Always push if DB has no accounts yet (financial tables empty).
-          const { count: accCount } = await supabase
-            .from("accounts").select("id", { count: "exact", head: true });
-          if (!window.localStorage.getItem(finSeedFlag) || (accCount ?? 0) === 0) {
-            const res = await pushLocalFinancialSeed();
-            window.localStorage.setItem(finSeedFlag, new Date().toISOString());
-            console.info("[pushLocalFinancialSeed]", res);
-          }
-        } catch (e) {
-          console.warn("[pushLocalFinancialSeed]", e);
-        }
-        try {
-          const extrasFlag = `axel.extrasSeedPushed.${user.id}.v1`;
-          const { count: opCount } = await supabase
-            .from("opportunities").select("id", { count: "exact", head: true });
-          if (!window.localStorage.getItem(extrasFlag) || (opCount ?? 0) === 0) {
-            const res = await pushLocalExtrasSeed();
-            window.localStorage.setItem(extrasFlag, new Date().toISOString());
-            console.info("[pushLocalExtrasSeed]", res);
-          }
-        } catch (e) {
-          console.warn("[pushLocalExtrasSeed]", e);
-        }
-        hydrateContacts().catch((e) => console.warn("[hydrateContacts]", e));
-        hydrateFinancials().catch((e) => console.warn("[hydrateFinancials]", e));
-        hydrateExtras().catch((e) => console.warn("[hydrateExtras]", e));
-      })();
-
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
-
-
+    currentScopeRef.current = scope;
+  }, [scope]);
 
   useEffect(() => {
     let cancelled = false;
 
-    async function load() {
+    async function bootstrap() {
+      if (authLoading) return;
+
+      setBootstrapReady(false);
+      setAccessLoading(true);
+      setDataLoading(true);
+
       if (!user) {
         setAllowedCodes(null);
+        setAccessibleDbCompanyIds([]);
+        setCompanyIdMapEntries([]);
         setRoleByCompanyId(new Map());
         setAccessLoading(false);
+        setDataLoading(false);
+        setBootstrapReady(true);
         return;
       }
-      setAccessLoading(true);
+
       const { data } = await supabase
         .from("user_company_access")
         .select("company_id, role, companies ( code )")
         .eq("user_id", user.id);
       if (cancelled) return;
+
       const rows = (data ?? []) as Array<{
         company_id: string;
         role: CompanyRole;
         companies: { code: string } | null;
       }>;
       const nextRoles = new Map<string, CompanyRole>();
-      for (const r of rows) nextRoles.set(r.company_id, r.role);
+      for (const row of rows) nextRoles.set(row.company_id, row.role);
       setRoleByCompanyId(nextRoles);
-      if (isGroupAdmin) {
-        setAllowedCodes(null); // null = all
-      } else {
-        setAllowedCodes(rows.map((r) => r.companies?.code).filter((c): c is string => !!c));
-      }
+
+      const accessibleDbCompanyIds = isGroupAdmin ? null : rows.map((row) => row.company_id);
+      const nextAccessibleDbCompanyIds = accessibleDbCompanyIds ?? [];
+      setAccessibleDbCompanyIds(nextAccessibleDbCompanyIds);
+      setAllowedCodes(
+        isGroupAdmin
+          ? null
+          : rows.map((row) => row.companies?.code).filter((code): code is string => !!code),
+      );
       setAccessLoading(false);
+
+      let companyRows: Record<string, unknown>[] = [];
+      if (isGroupAdmin) {
+        const { data: allRows, error } = await supabase.from("companies").select("*");
+        if (cancelled || error) return;
+        companyRows = (allRows ?? []) as Record<string, unknown>[];
+      } else if ((accessibleDbCompanyIds ?? []).length > 0) {
+        const { data: scopedRows, error } = await supabase.from("companies").select("*").in("id", accessibleDbCompanyIds!);
+        if (cancelled || error) return;
+        companyRows = (scopedRows ?? []) as Record<string, unknown>[];
+      }
+
+      const { merged, idMap } = mergeCompanies(companyRows);
+      companiesStore.replaceAll(merged);
+      setCompanyIdMap(idMap);
+      setCompanyIdMapEntries(idMap);
+
+      if (!isGroupAdmin) restrictLocalStores(merged);
+
+      await maybePushSeeds(user.id);
+      if (cancelled) return;
+
+      const currentScope = currentScopeRef.current;
+      const nextScope = resolveScopeForHydration(currentScope, isGroupAdmin, nextAccessibleDbCompanyIds, merged, idMap);
+      if (
+        nextScope.id !== currentScope.id ||
+        (nextScope.id === "company" && currentScope.id === "company" && nextScope.companyId !== currentScope.companyId)
+      ) {
+        setScopeState(nextScope);
+      }
+
+      const hydrationScope = getHydrationScope(nextScope, isGroupAdmin, nextAccessibleDbCompanyIds, idMap);
+      await Promise.all([
+        hydrateContacts(hydrationScope).catch((e) => console.warn("[hydrateContacts]", e)),
+        hydrateFinancials(hydrationScope).catch((e) => console.warn("[hydrateFinancials]", e)),
+        hydrateExtras(hydrationScope).catch((e) => console.warn("[hydrateExtras]", e)),
+      ]);
+      if (cancelled) return;
+
+      if (!isGroupAdmin) restrictLocalStores(merged);
+      setDataLoading(false);
+      setBootstrapReady(true);
     }
-    load();
+
+    bootstrap();
     return () => {
       cancelled = true;
     };
-  }, [user, isGroupAdmin]);
+  }, [authLoading, user, isGroupAdmin]);
 
   const accessibleCompanies = useMemo(() => {
     if (allowedCodes === null) return allCompanies;
-    const set = new Set(allowedCodes.map((c) => c.toUpperCase()));
-    return allCompanies.filter((c) => set.has((c.code || c.shortName || "").toUpperCase()));
+    const allowed = new Set(allowedCodes.map((code) => code.toUpperCase()));
+    return allCompanies.filter((company) => allowed.has((company.code || company.shortName || "").toUpperCase()));
   }, [allCompanies, allowedCodes]);
 
-  useEffect(() => {
-    if (accessLoading || isGroupAdmin || allowedCodes === null) return;
-    restrictLocalStores(accessibleCompanies);
-  }, [accessLoading, isGroupAdmin, allowedCodes, accessibleCompanies]);
-
-  const setScope = (s: Scope) => {
-    setScopeState(s);
+  const setScope = (nextScope: Scope) => {
+    setScopeState(nextScope);
     if (typeof window !== "undefined") {
       try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextScope));
       } catch {
         // ignore
       }
     }
   };
 
-  // Auto-correct scope if user lost access to the currently selected company,
-  // or if they only have access to a single company.
   useEffect(() => {
-    if (accessLoading) return;
+    if (!bootstrapReady) return;
     if (accessibleCompanies.length === 0) return;
+
     if (scope.id === "company") {
-      const stillOk = accessibleCompanies.some((c) => c.id === scope.companyId);
-      if (!stillOk) {
-        setScope({ id: "company", companyId: accessibleCompanies[0].id });
-      }
+      const stillOk = accessibleCompanies.some((company) => company.id === scope.companyId);
+      if (!stillOk) setScope({ id: "company", companyId: accessibleCompanies[0].id });
     } else if (!isGroupAdmin) {
-      // Non-group users should never see "group" scope. Pin to their first company.
       setScope({ id: "company", companyId: accessibleCompanies[0].id });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessLoading, accessibleCompanies, isGroupAdmin]);
+  }, [bootstrapReady, accessibleCompanies, isGroupAdmin]);
+
+  useEffect(() => {
+    if (!bootstrapReady) return;
+    if (!hasCompletedInitialHydration.current) {
+      hasCompletedInitialHydration.current = true;
+      return;
+    }
+    const requestId = ++scopeReloadSeq.current;
+    let cancelled = false;
+
+    async function reloadScopeData() {
+      setDataLoading(true);
+      const hydrationScope = getHydrationScope(scope, isGroupAdmin, accessibleDbCompanyIds, companyIdMapEntries);
+
+      await Promise.all([
+        hydrateContacts(hydrationScope).catch((e) => console.warn("[hydrateContacts]", e)),
+        hydrateFinancials(hydrationScope).catch((e) => console.warn("[hydrateFinancials]", e)),
+        hydrateExtras(hydrationScope).catch((e) => console.warn("[hydrateExtras]", e)),
+      ]);
+
+      if (cancelled || requestId !== scopeReloadSeq.current) return;
+      setDataLoading(false);
+    }
+
+    reloadScopeData();
+    return () => {
+      cancelled = true;
+    };
+  }, [bootstrapReady, scope, isGroupAdmin, accessibleDbCompanyIds, companyIdMapEntries]);
 
   const value = useMemo<Ctx>(() => {
     const scopedCompanies =
       scope.id === "group"
         ? accessibleCompanies
-        : accessibleCompanies.filter((c) => c.id === scope.companyId);
+        : accessibleCompanies.filter((company) => company.id === scope.companyId);
     const label =
       scope.id === "group"
-        ? "Group · All companies"
-        : accessibleCompanies.find((c) => c.id === scope.companyId)?.name ?? "—";
+        ? "Group Â· All companies"
+        : accessibleCompanies.find((company) => company.id === scope.companyId)?.name ?? "â€”";
     const roleFor = (companyId: string): CompanyRole | undefined => {
       if (isGroupAdmin) return "company_admin";
       return roleByCompanyId.get(companyId);
     };
     const hasCompanyRole = (companyId: string, allowed: CompanyRole[]): boolean => {
       if (isGroupAdmin) return true;
-      const r = roleByCompanyId.get(companyId);
-      return !!r && allowed.includes(r);
+      const role = roleByCompanyId.get(companyId);
+      return !!role && allowed.includes(role);
     };
+
     return {
-      scope, setScope, accessibleCompanies, scopedCompanies, label,
-      accessLoading, isGroupAdmin, roleFor, hasCompanyRole,
+      scope,
+      setScope,
+      accessibleCompanies,
+      scopedCompanies,
+      label,
+      accessLoading,
+      dataLoading,
+      bootstrapReady,
+      isGroupAdmin,
+      roleFor,
+      hasCompanyRole,
     };
-  }, [scope, accessibleCompanies, accessLoading, isGroupAdmin, roleByCompanyId]);
+  }, [scope, accessibleCompanies, accessLoading, dataLoading, bootstrapReady, isGroupAdmin, roleByCompanyId]);
 
   return <CompanyCtx.Provider value={value}>{children}</CompanyCtx.Provider>;
 }
@@ -390,4 +477,4 @@ export const useCompany = () => {
 };
 
 export const inScope = <T extends { companyId: string }>(items: T[], scope: Scope) =>
-  scope.id === "group" ? items : items.filter((i) => i.companyId === scope.companyId);
+  scope.id === "group" ? items : items.filter((item) => item.companyId === scope.companyId);

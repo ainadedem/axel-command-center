@@ -1,4 +1,4 @@
-import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Building2, Wallet, ArrowLeftRight, FileText,
   Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus, Truck,
@@ -7,21 +7,25 @@ import {
   Sparkles, CreditCard, Repeat, Wallet2, ExternalLink,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { CompanyProvider, useCompany } from "@/lib/company-context";
 
+import { useCompany } from "@/lib/company-context";
 import { useFxRates } from "@/lib/fx";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import axelIcon from "@/assets/axel-icon-purple.png";
 
-interface NavItem { to: string; label: string; icon: React.ComponentType<{ className?: string }>; requireGroupAdmin?: boolean }
+interface NavItem {
+  to: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  requireGroupAdmin?: boolean;
+}
 
 interface NavSection {
   label: string;
   items: NavItem[];
 }
-
 
 const sections: NavSection[] = [
   {
@@ -70,14 +74,14 @@ const sections: NavSection[] = [
     ],
   },
   {
-    label: "Comptabilité",
+    label: "Comptabilite",
     items: [
       { to: "/plan-comptable", label: "Plan comptable", icon: Library },
       { to: "/journal", label: "Journal", icon: BookOpen },
       { to: "/grand-livre", label: "Grand-livre", icon: BookText },
       { to: "/balance", label: "Balance", icon: Scale },
       { to: "/bilan", label: "Bilan", icon: Receipt },
-      { to: "/compte-resultat", label: "Compte de résultat", icon: BarChart3 },
+      { to: "/compte-resultat", label: "Compte de resultat", icon: BarChart3 },
     ],
   },
 ];
@@ -85,6 +89,7 @@ const sections: NavSection[] = [
 function CompanySwitcher() {
   const { scope, setScope, label, accessibleCompanies: companies, isGroupAdmin } = useCompany();
   const [open, setOpen] = useState(false);
+
   return (
     <div className="relative">
       <button
@@ -117,17 +122,17 @@ function CompanySwitcher() {
                 <div className="h-px bg-border" />
               </>
             )}
-            {companies.map((c) => (
+            {companies.map((company) => (
               <button
-                key={c.id}
-                onClick={() => { setScope({ id: "company", companyId: c.id }); setOpen(false); }}
+                key={company.id}
+                onClick={() => { setScope({ id: "company", companyId: company.id }); setOpen(false); }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-accent text-sm"
               >
-                <div className="h-6 w-6 rounded grid place-items-center text-[9px] font-bold text-primary-foreground" style={{ background: c.color }}>
-                  {c.shortName}
+                <div className="h-6 w-6 rounded grid place-items-center text-[9px] font-bold text-primary-foreground" style={{ background: company.color }}>
+                  {company.shortName}
                 </div>
-                <span className="flex-1 text-left">{c.name}</span>
-                {scope.id === "company" && scope.companyId === c.id && <Check className="h-4 w-4 text-primary" />}
+                <span className="flex-1 text-left">{company.name}</span>
+                {scope.id === "company" && scope.companyId === company.id && <Check className="h-4 w-4 text-primary" />}
               </button>
             ))}
           </div>
@@ -138,10 +143,7 @@ function CompanySwitcher() {
 }
 
 function SidebarSection({ section, pathname }: { section: NavSection; pathname: string }) {
-  const hasActive = section.items.some(
-    (item) => pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to)),
-  );
-  // Default: every section is expanded; opens automatically when a child route is active.
+  const hasActive = section.items.some((item) => pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to)));
   const [open, setOpen] = useState(true);
 
   useEffect(() => {
@@ -187,8 +189,9 @@ function Sidebar() {
   const { roles } = useAuth();
   const isGroupAdmin = roles.includes("group_admin") || roles.includes("super_admin");
   const visibleSections = sections
-    .map((s) => ({ ...s, items: s.items.filter((i) => !i.requireGroupAdmin || isGroupAdmin) }))
-    .filter((s) => s.items.length > 0);
+    .map((section) => ({ ...section, items: section.items.filter((item) => !item.requireGroupAdmin || isGroupAdmin) }))
+    .filter((section) => section.items.length > 0);
+
   return (
     <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
       <div className="px-5 py-5 flex items-center gap-2.5">
@@ -212,9 +215,8 @@ function Sidebar() {
   );
 }
 
-
-// Map current path → the create action exposed by that page (via window event)
 const CREATE_EVENT = "axel:open-create";
+
 const NEW_BUTTON_ROUTES: { match: (p: string) => boolean; to: string; label: string }[] = [
   { match: (p) => p.startsWith("/accounts"), to: "/accounts", label: "New account" },
   { match: (p) => p.startsWith("/transactions"), to: "/transactions", label: "New transaction" },
@@ -244,16 +246,15 @@ function Topbar() {
   const [query, setQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
   const name = profile?.display_name || user?.email || "—";
-  const initials = name.split(/\s+/).map((s) => s[0]).slice(0, 2).join("").toUpperCase();
+  const initials = name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("").toUpperCase();
   const role = roles[0]?.replace("_", " ") ?? "no role";
-
-  const newAction = NEW_BUTTON_ROUTES.find((r) => r.match(pathname));
+  const newAction = NEW_BUTTON_ROUTES.find((route) => route.match(pathname));
   const newLabel = newAction?.label ?? "New";
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
         searchRef.current?.focus();
         searchRef.current?.select();
       }
@@ -262,8 +263,8 @@ function Topbar() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const submitSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitSearch = (event: React.FormEvent) => {
+    event.preventDefault();
     const q = query.trim();
     if (!q) return;
     navigate({ to: "/transactions", search: { q } as never });
@@ -271,11 +272,8 @@ function Topbar() {
 
   const handleNew = () => {
     if (newAction) {
-      if (pathname.startsWith(newAction.to)) {
-        window.dispatchEvent(new CustomEvent(CREATE_EVENT));
-      } else {
-        navigate({ to: newAction.to });
-      }
+      if (pathname.startsWith(newAction.to)) window.dispatchEvent(new CustomEvent(CREATE_EVENT));
+      else navigate({ to: newAction.to });
     } else {
       navigate({ to: "/transactions" });
     }
@@ -288,8 +286,8 @@ function Topbar() {
         <input
           ref={searchRef}
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search transactions, invoices, clients…"
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search transactions, invoices, clients..."
           className="w-full h-9 pl-9 pr-12 rounded-md bg-surface border border-border text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring"
         />
         <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
@@ -367,6 +365,7 @@ function FxBadge() {
     ? new Date(updatedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
     : "never";
   const onRefresh = async () => { setBusy(true); try { await refresh(); } finally { setBusy(false); } };
+
   return (
     <div className="relative">
       <button
@@ -412,28 +411,55 @@ function FxBadge() {
   );
 }
 
-export function AppShell({ children }: { children: ReactNode }) {
+function AppShellLoading() {
   return (
-    <CompanyProvider>
-      <div className="min-h-screen flex bg-background text-foreground">
-        <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0">
-          <Topbar />
-          <main className="flex-1 overflow-y-auto">
-            <div className="absolute inset-0 pointer-events-none [background:var(--gradient-glow)] opacity-60" />
-            <div className="relative">{children}</div>
-          </main>
-          <footer className="shrink-0 border-t border-border bg-background/70 backdrop-blur px-6 py-3 flex items-center justify-between text-[11px] text-muted-foreground">
-            <span>© {new Date().getFullYear()} AXEL by WeAxiom</span>
-            <div className="flex items-center gap-4">
-              <Link to="/about" className="hover:text-foreground transition">About</Link>
-              <a href="https://axel.weaxiom.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition flex items-center gap-1">
-                Help <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-          </footer>
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-[var(--gradient-surface)] p-8 shadow-[var(--shadow-soft)]">
+        <div className="flex items-center gap-3">
+          <img src={axelIcon} alt="AXEL Business Platform logo" className="h-10 w-10 rounded-xl shadow-[var(--shadow-glow)]" />
+          <div>
+            <div className="font-display text-base font-semibold">Axel Command Center</div>
+            <div className="text-sm text-muted-foreground">Loading your workspace access and data...</div>
+          </div>
+        </div>
+        <div className="mt-6 space-y-3">
+          <div className="h-3 rounded-full bg-surface animate-pulse" />
+          <div className="h-3 w-5/6 rounded-full bg-surface animate-pulse" />
+          <div className="h-3 w-2/3 rounded-full bg-surface animate-pulse" />
         </div>
       </div>
-    </CompanyProvider>
+    </div>
   );
+}
+
+function AppShellFrame({ children }: { children: ReactNode }) {
+  const { bootstrapReady } = useCompany();
+
+  if (!bootstrapReady) return <AppShellLoading />;
+
+  return (
+    <div className="min-h-screen flex bg-background text-foreground">
+      <Sidebar />
+      <div className="flex-1 flex flex-col min-w-0">
+        <Topbar />
+        <main className="flex-1 overflow-y-auto">
+          <div className="absolute inset-0 pointer-events-none [background:var(--gradient-glow)] opacity-60" />
+          <div className="relative">{children}</div>
+        </main>
+        <footer className="shrink-0 border-t border-border bg-background/70 backdrop-blur px-6 py-3 flex items-center justify-between text-[11px] text-muted-foreground">
+          <span>© {new Date().getFullYear()} AXEL by WeAxiom</span>
+          <div className="flex items-center gap-4">
+            <Link to="/about" className="hover:text-foreground transition">About</Link>
+            <a href="https://axel.weaxiom.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition flex items-center gap-1">
+              Help <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+export function AppShell({ children }: { children: ReactNode }) {
+  return <AppShellFrame>{children}</AppShellFrame>;
 }
