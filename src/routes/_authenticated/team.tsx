@@ -28,7 +28,8 @@ function TeamPage() {
   const { scope, accessibleCompanies } = useCompany();
   const team = scope.id === "group"
     ? allTeam
-    : allTeam.filter((m) => !m.companyId || m.companyId === scope.companyId);
+    : allTeam.filter((m) => m.companyId === undefined || m.companyId === scope.companyId);
+
   const companyById = new Map(accessibleCompanies.map((c) => [c.id, c]));
   const sales = useSalesMembers();
   const [open, setOpen] = useState(false);
