@@ -198,6 +198,7 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
       .doc .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 28px; }
       .doc .party div { margin-bottom: 2px; }
       .doc .legal { margin-top: 6px; color: #64748b; font-size: 10px; }
+      .doc .taxmeta { margin-top: 8px; padding: 8px 10px; background: #f8fafc; border-left: 3px solid ${accent}; font-size: 10px; color: #475569; font-variant-numeric: tabular-nums; }
       .doc table { width: 100%; border-collapse: collapse; margin-top: 32px; font-size: 11px; }
       .doc th { text-align: left; padding: 10px 8px; background: #f8fafc; border-bottom: 2px solid ${accent}; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; }
       .doc td { padding: 12px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
