@@ -164,6 +164,11 @@ export interface Invoice {
   projectId?: string;
   /** Required (in workflow) — the accepted PO this invoice fulfils. */
   poId?: string;
+  /** Explicit bypass: invoice approved without a client PO ("PO missing"). */
+  poWaived?: boolean;
+  /** Optional justification for the PO bypass. */
+  poWaiverReason?: string;
+
   /** Convenience: quote that the PO descends from. */
   quoteId?: string;
   issueDate: string;
