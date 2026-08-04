@@ -224,6 +224,8 @@ export interface Invoice {
   lines?: QuoteLine[];
   /** Short object / title printed on the document. */
   subject?: string;
+  /** Which company bank account prints in the payment details block. */
+  bankAccountId?: string;
 }
 
 /* ─── Sales process: Quote → PO → Invoice ───────────────────────────── */
