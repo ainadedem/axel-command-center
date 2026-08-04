@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import {
   useInvoices, useCompanies, useClients, useProjects, usePurchaseOrders, useQuotes, useAccounts,
   invoicesStore, transactionsStore, projectsStore, purchaseOrdersStore, quotesStore,
-  fmtAmount, toMGA, FX, type Invoice, type Project, type Currency, type QuoteLine,
+  fmtAmount, toMGA, FX, type Invoice, type Project, type Currency, type QuoteLine, type Client,
   getNumberFormat, setNumberFormat, type NumberFormatMode,
   contactBelongsTo,
 } from "@/lib/mock-data";
@@ -15,7 +15,7 @@ import { inScope, useCompany } from "@/lib/company-context";
 import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Fragment, useEffect, useState, useCallback } from "react";
+import { Fragment, useEffect, useState, useCallback, useMemo } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -514,7 +514,10 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId, issueDate]);
 
-  const companyClients = clients.filter((c) => contactBelongsTo(c, companyId));
+  const companyClients = useMemo(
+    () => clients.filter((c: Client) => contactBelongsTo(c, companyId)).sort((a, b) => a.name.localeCompare(b.name)),
+    [clients, companyId],
+  );
   const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
   const clientPOs = pos.filter((p) => p.companyId === companyId && p.clientId === clientId && p.status !== "cancelled");
   const selectedClient = clients.find((c) => c.id === clientId);
