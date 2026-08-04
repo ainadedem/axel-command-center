@@ -508,6 +508,9 @@ const invoiceToDb = (inv: Invoice) => {
     client_id: inv.clientId && isUuid(inv.clientId) ? inv.clientId : null,
     project_id: inv.projectId && isUuid(inv.projectId) ? inv.projectId : null,
     po_id: inv.poId && isUuid(inv.poId) ? inv.poId : null,
+    po_waived: inv.poWaived ?? false,
+    po_waiver_reason: inv.poWaiverReason ?? null,
+
     quote_id: inv.quoteId && isUuid(inv.quoteId) ? inv.quoteId : null,
     number: inv.number,
     issue_date: inv.issueDate,
