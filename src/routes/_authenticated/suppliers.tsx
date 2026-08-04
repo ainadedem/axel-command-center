@@ -404,9 +404,6 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
   const [nif, setNif] = useState("");
   const [stat, setStat] = useState("");
   const [rcs, setRcs] = useState("");
-  const [bankName, setBankName] = useState("");
-  const [bankAccount, setBankAccount] = useState("");
-  const [bankSwift, setBankSwift] = useState("");
   const [pay, setPay] = useState<PaymentFormState>(emptyPayment);
   const [notes, setNotes] = useState("");
   const [categories, setCategories] = useState<ContactCategory[]>(["supplier"]);
@@ -421,7 +418,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
       setWebsite(editing.website ?? ""); setAddress(editing.address ?? ""); setCountry(editing.country ?? "");
       setPaymentTerms(editing.paymentTerms != null ? String(editing.paymentTerms) : "");
       setTaxId(editing.taxId ?? ""); setNif(editing.nif ?? ""); setStat(editing.stat ?? ""); setRcs(editing.rcs ?? "");
-      setBankName(editing.bankName ?? ""); setBankAccount(editing.bankAccount ?? ""); setBankSwift(editing.bankSwift ?? ""); setPay(paymentFrom(editing));
+      setPay(paymentFrom(editing));
       setNotes(editing.notes ?? "");
       setCategories(defaultCategoriesFor("supplier", editing.categories));
     } else {
@@ -429,7 +426,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
       setName(""); setCompanyId(fallback); setCompanyIds(fallback ? [fallback] : []); setAccount("401000"); setKind("external");
       setAvatarUrl(undefined); setContactPerson(""); setEmail(""); setPhone(""); setWebsite("");
       setAddress(""); setCountry(""); setPaymentTerms(""); setTaxId(""); setNif(""); setStat(""); setRcs("");
-      setBankName(""); setBankAccount(""); setBankSwift(""); setNotes("");
+      setPay(emptyPayment); setNotes("");
       setCategories(["supplier"]);
     }
     setShowErrors(false);
