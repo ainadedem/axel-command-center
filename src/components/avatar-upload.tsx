@@ -6,13 +6,16 @@ import { useFileUrl } from "@/hooks/use-file-url";
 
 interface AvatarUploadProps {
   value?: string;
-  onChange: (dataUrl: string | undefined) => void;
+  /** Receives a storage reference (`storage:avatars/...`) or undefined. */
+  onChange: (value: string | undefined) => void;
   /** Used to derive initials when no image is set. */
   name?: string;
   /** Pixel size of the avatar. */
   size?: number;
   /** Render as a square (rounded) instead of a circle. */
   square?: boolean;
+  /** Sub-folder inside the avatars bucket (e.g. "clients"). */
+  folder?: string;
   className?: string;
 }
 
