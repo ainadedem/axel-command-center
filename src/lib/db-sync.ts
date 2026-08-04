@@ -50,7 +50,7 @@ const isUuid = (v: string) =>
 
 async function fetchScopedRows(table: string, scope: HydrationScope) {
   if (scope.mode === "scoped" && scope.companyIds.length === 0) return [] as Record<string, unknown>[];
-  let query = supabase.from(table).select("*");
+  let query = (supabase.from as (t: string) => ReturnType<typeof supabase.from>)(table).select("*");
   if (scope.mode === "scoped") query = query.in("company_id", scope.companyIds);
   const { data } = await query;
   return (data ?? []) as Record<string, unknown>[];
