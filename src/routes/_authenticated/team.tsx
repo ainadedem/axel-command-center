@@ -45,8 +45,12 @@ function TeamPage() {
     teamMembersStore.remove(m.id);
   };
 
-  const companyLabel = (id?: string) =>
-    id ? companyById.get(id)?.shortName || companyById.get(id)?.name || "-" : "All companies";
+  const companyLabel = (id?: string | null) => {
+    if (id === null) return "No company";
+    if (id === undefined) return "All companies";
+    return companyById.get(id)?.shortName || companyById.get(id)?.name || "-";
+  };
+
 
   const fields = useMemo<FieldDef<TeamMember>[]>(() => [
     { key: "firstName", label: "First name", type: "string", accessor: (m) => m.firstName || m.name },
