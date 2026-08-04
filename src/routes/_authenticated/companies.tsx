@@ -17,6 +17,9 @@ import { Pencil, Trash2 } from "lucide-react";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { supabase } from "@/integrations/supabase/client";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { Checkbox } from "@/components/ui/checkbox";
+import { formatRib } from "@/lib/payment-details";
+
 
 export const Route = createFileRoute("/_authenticated/companies")({ component: CompaniesPage });
 
