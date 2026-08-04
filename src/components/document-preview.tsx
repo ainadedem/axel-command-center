@@ -1,4 +1,3 @@
-import { defaultTaxRate } from "@/lib/vat";
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
