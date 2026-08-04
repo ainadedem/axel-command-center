@@ -229,8 +229,9 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
         </div>
         <div class="party">
           <h2>${doc.kind === "po" ? "Issued by" : "Bill to"}</h2>
-          ${clientLines.length ? clientLines.map((l) => `<div>${esc(l)}</div>`).join("") : "<div>—</div>"}
-          ${clientLegal.length ? `<div class="legal">${clientLegal.map(esc).join(" · ")}</div>` : ""}
+          <div style="font-weight: 700; font-size: 13px;">${esc(client?.name ?? "—")}</div>
+          ${[client?.address, client?.email, client?.phone].filter(Boolean).map((l) => `<div>${esc(l as string)}</div>`).join("")}
+          ${taxMeta.length ? `<div class="taxmeta">${taxMeta.map((l) => `<div>${esc(l)}</div>`).join("")}</div>` : ""}
         </div>
       </div>
 
