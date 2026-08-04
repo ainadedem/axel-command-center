@@ -44,68 +44,112 @@ function TeamPage() {
     teamMembersStore.remove(m.id);
   };
 
+  const companyLabel = (id?: string) =>
+    id ? companyById.get(id)?.shortName || companyById.get(id)?.name || "-" : "All companies";
+
+  const fields = useMemo<FieldDef<TeamMember>[]>(() => [
+    { key: "firstName", label: "First name", type: "string", accessor: (m) => m.firstName || m.name },
+    { key: "lastName", label: "Last name", type: "string", accessor: (m) => m.lastName ?? "" },
+    { key: "email", label: "Email", type: "string", accessor: (m) => m.email ?? "", noGroup: true },
+    { key: "phone", label: "Phone", type: "string", accessor: (m) => m.phone ?? "", noGroup: true },
+    { key: "jobTitle", label: "Job title", type: "enum", accessor: (m) => m.jobTitle ?? "" },
+    { key: "department", label: "Department", type: "enum", accessor: (m) => m.department ?? "" },
+    { key: "company", label: "Company", type: "enum", accessor: (m) => companyLabel(m.companyId) },
+    { key: "salesRole", label: "Sales role", type: "enum", accessor: (m) => salesByTm.get(m.id)?.role ?? "—" },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [accessibleCompanies, sales]);
+
+  const view = useDataView<TeamMember>("team", fields);
+  const groups = view.apply(team);
+  const total = groups.reduce((n, g) => n + g.items.length, 0);
+  const grouped = !!view.state.group;
+
+  const renderRow = (m: TeamMember) => {
+    const s = salesByTm.get(m.id);
+    return (
+      <div key={m.id} className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated/60 transition group">
+        <div className="col-span-2 flex items-center gap-2.5 min-w-0">
+          <Avatar src={m.avatarUrl} name={m.name} size={28} />
+          <div className="text-sm font-medium truncate">{m.firstName || m.name}</div>
+        </div>
+        <div className="col-span-2 text-sm truncate">{m.lastName || "-"}</div>
+        <div className="col-span-2 text-xs text-muted-foreground truncate">{m.email || "-"}</div>
+        <div className="col-span-2 text-xs text-muted-foreground truncate font-tnum">{m.phone || "-"}</div>
+        <div className="col-span-1 text-xs text-muted-foreground truncate">{m.jobTitle || "-"}</div>
+        <div className="col-span-1 text-xs truncate">
+          {m.companyId ? (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/10 text-accent-foreground border border-border">
+              {companyLabel(m.companyId)}
+            </span>
+          ) : (
+            <span className="text-[10px] text-muted-foreground">All</span>
+          )}
+        </div>
+        <div className="col-span-1">
+          {s ? (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 inline-flex items-center gap-1">
+              <Users className="h-2.5 w-2.5" /> {s.role}
+            </span>
+          ) : (
+            <span className="text-[10px] text-muted-foreground">-</span>
+          )}
+        </div>
+        <div className="col-span-1 flex justify-end gap-0.5 opacity-0 group-hover:opacity-100">
+          <button onClick={() => { setEditing(m); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
+          <button onClick={() => remove(m)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+        </div>
+      </div>
+    );
+  };
+
+  const header = (
+    <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+      <div className="col-span-2">First name</div>
+      <div className="col-span-2">Last name</div>
+      <div className="col-span-2">Email</div>
+      <div className="col-span-2">Phone</div>
+      <div className="col-span-1">Job</div>
+      <div className="col-span-1">Company</div>
+      <div className="col-span-1">Sales</div>
+      <div className="col-span-1 text-right">.</div>
+    </div>
+  );
+
   return (
     <AppShell>
       <PageHeader title="Team" description="Everyone in the organization - the source of truth for people." />
       <div className="p-8 space-y-5">
-        <CrudToolbar count={team.length} label="people" onCreate={openCreate} />
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <CrudToolbar count={total} label="people" onCreate={openCreate} />
+          <DataToolbar view={view} items={team} />
+        </div>
         {team.length === 0 ? (
           <EmptyState label="team members" onCreate={openCreate} />
+        ) : total === 0 ? (
+          <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-8 text-center text-sm text-muted-foreground">
+            No people match the current filters.
+          </div>
+        ) : grouped ? (
+          <div className="space-y-4">
+            {groups.map((g) => (
+              <div key={g.key} className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2 bg-primary/5 border-b border-border">
+                  <div className="text-xs font-medium">{g.label}</div>
+                  <div className="text-[11px] text-muted-foreground font-tnum">{g.items.length}</div>
+                </div>
+                {header}
+                {g.items.map(renderRow)}
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-            <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
-              <div className="col-span-2">First name</div>
-              <div className="col-span-2">Last name</div>
-              <div className="col-span-2">Email</div>
-              <div className="col-span-2">Phone</div>
-              <div className="col-span-1">Job</div>
-              <div className="col-span-1">Company</div>
-              <div className="col-span-1">Sales</div>
-              <div className="col-span-1 text-right">.</div>
-            </div>
-            {team
-              .slice()
-              .sort((a, b) => (a.lastName || a.name).localeCompare(b.lastName || b.name))
-              .map((m) => {
-                const s = salesByTm.get(m.id);
-                return (
-                  <div key={m.id} className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated/60 transition group">
-                    <div className="col-span-2 flex items-center gap-2.5 min-w-0">
-                      <Avatar src={m.avatarUrl} name={m.name} size={28} />
-                      <div className="text-sm font-medium truncate">{m.firstName || m.name}</div>
-                    </div>
-                    <div className="col-span-2 text-sm truncate">{m.lastName || "-"}</div>
-                    <div className="col-span-2 text-xs text-muted-foreground truncate">{m.email || "-"}</div>
-                    <div className="col-span-2 text-xs text-muted-foreground truncate font-tnum">{m.phone || "-"}</div>
-                    <div className="col-span-1 text-xs text-muted-foreground truncate">{m.jobTitle || "-"}</div>
-                    <div className="col-span-1 text-xs truncate">
-                      {m.companyId ? (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/10 text-accent-foreground border border-border">
-                          {companyById.get(m.companyId)?.shortName || companyById.get(m.companyId)?.name || "-"}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-muted-foreground">All</span>
-                      )}
-                    </div>
-                    <div className="col-span-1">
-                      {s ? (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 inline-flex items-center gap-1">
-                          <Users className="h-2.5 w-2.5" /> {s.role}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-muted-foreground">-</span>
-                      )}
-                    </div>
-                    <div className="col-span-1 flex justify-end gap-0.5 opacity-0 group-hover:opacity-100">
-                      <button onClick={() => { setEditing(m); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                      <button onClick={() => remove(m)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                    </div>
-                  </div>
-                );
-              })}
+            {header}
+            {groups[0].items.map(renderRow)}
           </div>
         )}
       </div>
+
       <TeamDialog open={open} onOpenChange={setOpen} editing={editing} />
     </AppShell>
   );
