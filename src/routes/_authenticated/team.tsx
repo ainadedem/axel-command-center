@@ -187,7 +187,8 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
       setJobTitle(editing.jobTitle ?? "");
       setDepartment(editing.department ?? "");
       setAvatarUrl(editing.avatarUrl);
-      setCompanyId(editing.companyId ?? "all");
+      setCompanyId(editing.companyId === undefined ? "all" : editing.companyId === null ? "none" : editing.companyId);
+
     } else {
       setFirstName("");
       setLastName("");
