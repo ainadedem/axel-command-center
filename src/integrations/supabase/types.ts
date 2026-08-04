@@ -608,6 +608,7 @@ export type Database = {
           capability: string | null
           created_at: string
           description: string | null
+          details: string | null
           id: string
           invoice_id: string
           level: string | null
@@ -620,6 +621,7 @@ export type Database = {
           capability?: string | null
           created_at?: string
           description?: string | null
+          details?: string | null
           id?: string
           invoice_id: string
           level?: string | null
@@ -632,6 +634,7 @@ export type Database = {
           capability?: string | null
           created_at?: string
           description?: string | null
+          details?: string | null
           id?: string
           invoice_id?: string
           level?: string | null
@@ -671,6 +674,7 @@ export type Database = {
           project_id: string | null
           quote_id: string | null
           status: string
+          subject: string | null
           updated_at: string
         }
         Insert: {
@@ -693,6 +697,7 @@ export type Database = {
           project_id?: string | null
           quote_id?: string | null
           status?: string
+          subject?: string | null
           updated_at?: string
         }
         Update: {
@@ -715,6 +720,7 @@ export type Database = {
           project_id?: string | null
           quote_id?: string | null
           status?: string
+          subject?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -929,6 +935,7 @@ export type Database = {
           project_id: string | null
           quote_id: string | null
           status: string
+          subject: string | null
           updated_at: string
         }
         Insert: {
@@ -950,6 +957,7 @@ export type Database = {
           project_id?: string | null
           quote_id?: string | null
           status?: string
+          subject?: string | null
           updated_at?: string
         }
         Update: {
@@ -971,6 +979,7 @@ export type Database = {
           project_id?: string | null
           quote_id?: string | null
           status?: string
+          subject?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -995,6 +1004,7 @@ export type Database = {
           sent_at: string | null
           sent_to: string | null
           status: string
+          subject: string | null
           tax_amount: number
           tax_rate: number
           total_amount: number
@@ -1020,6 +1030,7 @@ export type Database = {
           sent_at?: string | null
           sent_to?: string | null
           status?: string
+          subject?: string | null
           tax_amount?: number
           tax_rate?: number
           total_amount?: number
@@ -1045,6 +1056,7 @@ export type Database = {
           sent_at?: string | null
           sent_to?: string | null
           status?: string
+          subject?: string | null
           tax_amount?: number
           tax_rate?: number
           total_amount?: number

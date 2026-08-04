@@ -222,6 +222,8 @@ export interface Invoice {
   cancellationReason?: string;
   /** Line items inherited from the source quote / PO for information consistency. */
   lines?: QuoteLine[];
+  /** Short object / title printed on the document. */
+  subject?: string;
 }
 
 /* ─── Sales process: Quote → PO → Invoice ───────────────────────────── */
@@ -230,6 +232,8 @@ export type QuoteStatus = "draft" | "sent" | "accepted" | "rejected" | "expired"
 export interface QuoteLine {
   id: string;
   description: string;
+  /** Second free-text description column printed under the main description. */
+  details?: string;
   /** Capability bucket from the rate card (CREATIVE / PR / PRODUCTION / MEDIA). */
   capability?: string;
   /** Level code (P1…P10). */
@@ -253,6 +257,8 @@ export interface Quote {
   currency: Currency;
   status: QuoteStatus;
   notes?: string;
+  /** Short object / title printed on the document. */
+  subject?: string;
   /** Pricing mode — rate-card (capability/level driven) or standard (free-form). */
   mode?: QuoteMode;
   /** Line items — priced from rate card or free-form depending on mode. */
@@ -303,6 +309,8 @@ export interface PurchaseOrder {
   }>;
   /** Line items inherited from the source quote for information consistency. */
   lines?: QuoteLine[];
+  /** Short object / title printed on the document. */
+  subject?: string;
 }
 
 

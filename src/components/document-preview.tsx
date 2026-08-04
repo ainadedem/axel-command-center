@@ -14,6 +14,8 @@ export type DocKind = "invoice" | "po" | "quote";
 export interface DocumentData {
   kind: DocKind;
   number: string;
+  /** Short object / title printed under the document number. */
+  subject?: string;
   status: string;
   issueDate: string;
   /** Due date (invoice) or "valid until" (quote). */
@@ -186,7 +188,8 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment }: {
         const qty = Number(l.quantity) || 0;
         const rate = Number(l.rate) || 0;
         const total = qty * rate;
-        const sub = [l.capability, l.level].filter(Boolean).join(" · ");
+        const detail = (l.details ?? "").trim();
+        const sub = detail || [l.capability, l.level].filter(Boolean).join(" · ");
         return `
           <tr>
             <td>
@@ -256,6 +259,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment }: {
           ${logoHtml}
           <h1>${headingFor(doc.kind)}</h1>
           <div style="margin-top: 8px; font-size: 13px; font-weight: 600;">${esc(doc.number)}</div>
+          ${doc.subject ? `<div style="margin-top: 6px; font-size: 12px; color: #0f172a;"><strong>Object:</strong> ${esc(doc.subject)}</div>` : ""}
           ${refsHtml ? `<div style="margin-top: 6px; font-size: 11px; color: #475569;">${refsHtml}</div>` : ""}
         </div>
         <div class="meta">

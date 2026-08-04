@@ -581,6 +581,7 @@ const invoiceToDb = (inv: Invoice) => {
     status: inv.status,
     cancelled_at: inv.cancelledAt ?? null,
     cancellation_reason: inv.cancellationReason ?? null,
+    subject: inv.subject ?? null,
   };
 };
 
@@ -604,6 +605,7 @@ const invoiceFromDb = (r: Record<string, unknown>, lines: QuoteLine[]): Invoice 
   status: (r.status as Invoice["status"]) ?? "draft",
   cancelledAt: (r.cancelled_at as string) ?? undefined,
   cancellationReason: (r.cancellation_reason as string) ?? undefined,
+  subject: (r.subject as string) ?? undefined,
   lines: lines.length ? lines : undefined,
 });
 
@@ -621,6 +623,7 @@ export async function upsertInvoice(inv: Invoice): Promise<string | null> {
         invoice_id: invId,
         position: i,
         description: l.description ?? null,
+        details: l.details ?? null,
         capability: l.capability ?? null,
         level: l.level ?? null,
         unit: l.unit,
@@ -687,6 +690,7 @@ export async function hydrateFinancials(scope: HydrationScope = { mode: "all" })
     arr.push({
       id: l.id as string,
       description: (l.description as string) ?? "",
+      details: (l.details as string) ?? undefined,
       capability: (l.capability as string) ?? undefined,
       level: (l.level as string) ?? undefined,
       unit: (l.unit as QuoteLine["unit"]) ?? "fixed",
@@ -859,6 +863,7 @@ const quoteToDb = (q: Quote) => {
     currency: q.currency,
     status: q.status,
     notes: q.notes ?? null,
+    subject: q.subject ?? null,
     mode: q.mode ?? null,
     lines: (q.lines ?? null) as unknown as never,
     tax_rate: q.taxRate ?? 0,
@@ -883,6 +888,7 @@ const quoteFromDb = (r: Record<string, unknown>): Quote => ({
   currency: (r.currency as Quote["currency"]) ?? "MGA",
   status: (r.status as Quote["status"]) ?? "draft",
   notes: (r.notes as string) ?? undefined,
+  subject: (r.subject as string) ?? undefined,
   mode: (r.mode as Quote["mode"]) ?? undefined,
   lines: (r.lines as QuoteLine[]) ?? undefined,
   taxRate: r.tax_rate != null ? Number(r.tax_rate) : undefined,
@@ -929,6 +935,7 @@ const poToDb = (p: PurchaseOrder) => {
     document_uploaded_at: p.documentUploadedAt ?? null,
     document_history: (p.documentHistory ?? null) as unknown as never,
     lines: (p.lines ?? null) as unknown as never,
+    subject: p.subject ?? null,
   };
 };
 const poFromDb = (r: Record<string, unknown>): PurchaseOrder => ({
@@ -949,6 +956,7 @@ const poFromDb = (r: Record<string, unknown>): PurchaseOrder => ({
   documentUploadedAt: (r.document_uploaded_at as string) ?? undefined,
   documentHistory: (r.document_history as PurchaseOrder["documentHistory"]) ?? undefined,
   lines: (r.lines as QuoteLine[]) ?? undefined,
+  subject: (r.subject as string) ?? undefined,
 });
 export async function upsertPurchaseOrder(p: PurchaseOrder): Promise<string | null> {
   const row = poToDb(p);
