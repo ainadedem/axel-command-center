@@ -389,6 +389,8 @@ const accountToDb = (a: Account) => {
     type: a.type,
     currency: a.currency,
     balance: a.balance,
+    opening_balance: a.openingBalance ?? a.balance ?? 0,
+    opening_balance_date: a.openingBalanceDate ?? null,
     statement_uploaded_at: a.statementUploadedAt ?? null,
     statement_name: a.statementName ?? null,
   };
@@ -401,6 +403,8 @@ const accountFromDb = (r: Record<string, unknown>): Account => ({
   type: (r.type as Account["type"]) ?? "bank",
   currency: (r.currency as Account["currency"]) ?? "MGA",
   balance: Number(r.balance) || 0,
+  openingBalance: r.opening_balance == null ? Number(r.balance) || 0 : Number(r.opening_balance) || 0,
+  openingBalanceDate: (r.opening_balance_date as string) ?? undefined,
   statementUploadedAt: (r.statement_uploaded_at as string) ?? undefined,
   statementName: (r.statement_name as string) ?? undefined,
 });
