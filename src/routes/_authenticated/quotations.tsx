@@ -576,7 +576,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                     {lines.map((l) => (
                       <tr key={l.id} className="border-t border-border/40">
                         <td className="px-2 py-1.5">
-                          <RichTextField value={l.description} onChange={(v) => updateLine(l.id, { description: v })} placeholder="Description" />
+                          <Input className="h-8 text-xs" value={l.description} onChange={(e) => updateLine(l.id, { description: e.target.value })} placeholder="Description" />
                           <RichTextField compact className="mt-1" value={l.details ?? ""} onChange={(v) => updateLine(l.id, { details: v })} placeholder="Details (optional)" rows={2} />
 
                         </td>
