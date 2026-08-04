@@ -76,6 +76,21 @@ export interface Account {
 }
 
 export interface Client {
+  /** Payment details & bank info. */
+  bankName?: string;
+  bankAccount?: string;
+  bankSwift?: string;
+  bankHolder?: string;
+  bankCode?: string;
+  branchCode?: string;
+  accountNumber?: string;
+  ribKey?: string;
+  iban?: string;
+  intlEnabled?: boolean;
+  mobileEnabled?: boolean;
+  mobileProvider?: string;
+  mobileNumber?: string;
+  mobileName?: string;
   id: string;
   /** Primary owning company (kept for historical references). */
   companyId: string;
@@ -347,9 +362,21 @@ export interface Supplier {
   stat?: string;
   rcs?: string;
   /** Bank details for payouts. */
+  /** Payment details & bank info. */
   bankName?: string;
   bankAccount?: string;
   bankSwift?: string;
+  bankHolder?: string;
+  bankCode?: string;
+  branchCode?: string;
+  accountNumber?: string;
+  ribKey?: string;
+  iban?: string;
+  intlEnabled?: boolean;
+  mobileEnabled?: boolean;
+  mobileProvider?: string;
+  mobileNumber?: string;
+  mobileName?: string;
   notes?: string;
   /** Contact categories — supports multiple (client, supplier, referral, partner). */
   categories?: ContactCategory[];
