@@ -532,6 +532,9 @@ const invoiceFromDb = (r: Record<string, unknown>, lines: QuoteLine[]): Invoice 
   clientId: (r.client_id as string) ?? "",
   projectId: (r.project_id as string) ?? undefined,
   poId: (r.po_id as string) ?? undefined,
+  poWaived: Boolean(r.po_waived),
+  poWaiverReason: (r.po_waiver_reason as string) ?? undefined,
+
   quoteId: (r.quote_id as string) ?? undefined,
   issueDate: (r.issue_date as string) ?? "",
   dueDate: (r.due_date as string) ?? "",
