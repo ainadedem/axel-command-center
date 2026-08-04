@@ -420,6 +420,7 @@ export type Database = {
           account_number: string | null
           address: string | null
           bank_account: string | null
+          bank_accounts: Json
           bank_code: string | null
           bank_holder: string | null
           bank_name: string | null
@@ -455,6 +456,7 @@ export type Database = {
           account_number?: string | null
           address?: string | null
           bank_account?: string | null
+          bank_accounts?: Json
           bank_code?: string | null
           bank_holder?: string | null
           bank_name?: string | null
@@ -490,6 +492,7 @@ export type Database = {
           account_number?: string | null
           address?: string | null
           bank_account?: string | null
+          bank_accounts?: Json
           bank_code?: string | null
           bank_holder?: string | null
           bank_name?: string | null
@@ -656,6 +659,7 @@ export type Database = {
       invoices: {
         Row: {
           amount: number
+          bank_account_id: string | null
           cancellation_reason: string | null
           cancelled_at: string | null
           client_id: string | null
@@ -679,6 +683,7 @@ export type Database = {
         }
         Insert: {
           amount?: number
+          bank_account_id?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
           client_id?: string | null
@@ -702,6 +707,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          bank_account_id?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
           client_id?: string | null
@@ -918,6 +924,7 @@ export type Database = {
       purchase_orders: {
         Row: {
           amount: number
+          bank_account_id: string | null
           client_id: string | null
           client_reference: string | null
           company_id: string
@@ -940,6 +947,7 @@ export type Database = {
         }
         Insert: {
           amount?: number
+          bank_account_id?: string | null
           client_id?: string | null
           client_reference?: string | null
           company_id: string
@@ -962,6 +970,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          bank_account_id?: string | null
           client_id?: string | null
           client_reference?: string | null
           company_id?: string
@@ -987,6 +996,7 @@ export type Database = {
       quotes: {
         Row: {
           amount: number
+          bank_account_id: string | null
           client_id: string | null
           company_id: string
           created_at: string
@@ -1013,6 +1023,7 @@ export type Database = {
         }
         Insert: {
           amount?: number
+          bank_account_id?: string | null
           client_id?: string | null
           company_id: string
           created_at?: string
@@ -1039,6 +1050,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          bank_account_id?: string | null
           client_id?: string | null
           company_id?: string
           created_at?: string

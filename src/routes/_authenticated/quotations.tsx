@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { BankAccountSelect } from "@/components/bank-account-select";
+import { defaultBankAccount } from "@/lib/payment-details";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -277,6 +279,7 @@ function quoteToDoc(q: Quote): DocumentData {
     currency: q.currency,
     lines: q.lines,
     subject: q.subject,
+    bankAccountId: q.bankAccountId,
     notes: q.notes,
     taxRate,
     taxAmount: q.taxAmount ?? taxAmount,
@@ -302,6 +305,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
+  const [bankAccountId, setBankAccountId] = useState("");
   const [taxRate, setTaxRate] = useState<number>(0);
 
   useEffect(() => {
@@ -315,6 +319,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setLines(editing.lines ?? []);
       setNotes(editing.notes ?? "");
       setSubject(editing.subject ?? "");
+      setBankAccountId(editing.bankAccountId ?? "");
       setTaxRate(editing.taxRate ?? 0);
     } else {
       const cid = companies[0]?.id ?? "";
@@ -322,7 +327,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setProjectId(""); setIssueDate(today); setValidUntil(addDays(new Date(), 30).toISOString().slice(0, 10));
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
       setMode("rate-card");
-      setLines([]); setNotes(""); setSubject(""); setTaxRate(defaultTaxRate(companies[0], today));
+      setLines([]); setNotes(""); setSubject(""); setBankAccountId(""); setTaxRate(defaultTaxRate(companies[0], today));
     }
   }, [open, editing, companies, today]);
 
@@ -439,6 +444,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       taxAmount: computed.taxAmount,
       totalAmount: computed.totalAmount,
       currency, status, mode, lines, notes: notes || undefined, subject: subject.trim() || undefined,
+      bankAccountId: bankAccountId || defaultBankAccount(companies.find((c) => c.id === companyId))?.id,
       ...fxFields,
     };
     if (editing) quotesStore.update(editing.id, data);
@@ -660,6 +666,8 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
             <Label>Object</Label>
             <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Brand campaign production — Q3 2026" />
           </div>
+
+          <BankAccountSelect company={companies.find((c) => c.id === companyId)} value={bankAccountId} onChange={setBankAccountId} />
 
           <div>
             <Label>Notes</Label>

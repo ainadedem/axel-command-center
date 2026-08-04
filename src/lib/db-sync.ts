@@ -582,6 +582,7 @@ const invoiceToDb = (inv: Invoice) => {
     cancelled_at: inv.cancelledAt ?? null,
     cancellation_reason: inv.cancellationReason ?? null,
     subject: inv.subject ?? null,
+    bank_account_id: inv.bankAccountId ?? null,
   };
 };
 
@@ -606,6 +607,7 @@ const invoiceFromDb = (r: Record<string, unknown>, lines: QuoteLine[]): Invoice 
   cancelledAt: (r.cancelled_at as string) ?? undefined,
   cancellationReason: (r.cancellation_reason as string) ?? undefined,
   subject: (r.subject as string) ?? undefined,
+  bankAccountId: (r.bank_account_id as string) ?? undefined,
   lines: lines.length ? lines : undefined,
 });
 
@@ -864,6 +866,7 @@ const quoteToDb = (q: Quote) => {
     status: q.status,
     notes: q.notes ?? null,
     subject: q.subject ?? null,
+    bank_account_id: q.bankAccountId ?? null,
     mode: q.mode ?? null,
     lines: (q.lines ?? null) as unknown as never,
     tax_rate: q.taxRate ?? 0,
@@ -889,6 +892,7 @@ const quoteFromDb = (r: Record<string, unknown>): Quote => ({
   status: (r.status as Quote["status"]) ?? "draft",
   notes: (r.notes as string) ?? undefined,
   subject: (r.subject as string) ?? undefined,
+  bankAccountId: (r.bank_account_id as string) ?? undefined,
   mode: (r.mode as Quote["mode"]) ?? undefined,
   lines: (r.lines as QuoteLine[]) ?? undefined,
   taxRate: r.tax_rate != null ? Number(r.tax_rate) : undefined,
@@ -936,6 +940,7 @@ const poToDb = (p: PurchaseOrder) => {
     document_history: (p.documentHistory ?? null) as unknown as never,
     lines: (p.lines ?? null) as unknown as never,
     subject: p.subject ?? null,
+    bank_account_id: p.bankAccountId ?? null,
   };
 };
 const poFromDb = (r: Record<string, unknown>): PurchaseOrder => ({
@@ -957,6 +962,7 @@ const poFromDb = (r: Record<string, unknown>): PurchaseOrder => ({
   documentHistory: (r.document_history as PurchaseOrder["documentHistory"]) ?? undefined,
   lines: (r.lines as QuoteLine[]) ?? undefined,
   subject: (r.subject as string) ?? undefined,
+  bankAccountId: (r.bank_account_id as string) ?? undefined,
 });
 export async function upsertPurchaseOrder(p: PurchaseOrder): Promise<string | null> {
   const row = poToDb(p);

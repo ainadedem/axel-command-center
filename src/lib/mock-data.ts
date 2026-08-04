@@ -57,9 +57,34 @@ export interface Company {
   mobileName?: string;
   /** Print the payment details block on documents. */
   showPaymentDetails?: boolean;
+  /** Additional bank accounts that can be selected per document. */
+  bankAccounts?: CompanyBankAccount[];
 
   /** Logo data URL or remote URL printed in the header. */
   logoUrl?: string;
+}
+
+/** One selectable bank account (payment details block) of a company. */
+export interface CompanyBankAccount {
+  id: string;
+  /** Display label in the picker, e.g. "BNI MGA". */
+  label: string;
+  bankName?: string;
+  bankAccount?: string;
+  bankSwift?: string;
+  bankHolder?: string;
+  bankCode?: string;
+  branchCode?: string;
+  accountNumber?: string;
+  ribKey?: string;
+  iban?: string;
+  intlEnabled?: boolean;
+  mobileEnabled?: boolean;
+  mobileProvider?: string;
+  mobileNumber?: string;
+  mobileName?: string;
+  /** Preselected on new documents. */
+  isDefault?: boolean;
 }
 
 export interface Account {
@@ -224,6 +249,8 @@ export interface Invoice {
   lines?: QuoteLine[];
   /** Short object / title printed on the document. */
   subject?: string;
+  /** Which company bank account prints in the payment details block. */
+  bankAccountId?: string;
 }
 
 /* ─── Sales process: Quote → PO → Invoice ───────────────────────────── */
@@ -259,6 +286,8 @@ export interface Quote {
   notes?: string;
   /** Short object / title printed on the document. */
   subject?: string;
+  /** Which company bank account prints in the payment details block. */
+  bankAccountId?: string;
   /** Pricing mode — rate-card (capability/level driven) or standard (free-form). */
   mode?: QuoteMode;
   /** Line items — priced from rate card or free-form depending on mode. */
@@ -311,6 +340,8 @@ export interface PurchaseOrder {
   lines?: QuoteLine[];
   /** Short object / title printed on the document. */
   subject?: string;
+  /** Which company bank account prints in the payment details block. */
+  bankAccountId?: string;
 }
 
 
