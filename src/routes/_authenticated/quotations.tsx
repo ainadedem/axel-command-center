@@ -8,6 +8,7 @@ import {
 } from "@/lib/mock-data";
 import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
 import { newId } from "@/lib/data-store";
+import { defaultTaxRate } from "@/lib/vat";
 import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -318,9 +319,17 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setProjectId(""); setIssueDate(today); setValidUntil(addDays(new Date(), 30).toISOString().slice(0, 10));
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
       setMode("rate-card");
-      setLines([]); setNotes(""); setTaxRate(0);
+      setLines([]); setNotes(""); setTaxRate(defaultTaxRate(companies[0], today));
     }
   }, [open, editing, companies, today]);
+
+  // Re-apply the default tax rate when the company or issue date changes on a new quote.
+  useEffect(() => {
+    if (!open || editing || !companyId) return;
+    const c = companies.find((x) => x.id === companyId);
+    setTaxRate(defaultTaxRate(c, issueDate));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId, issueDate]);
 
   useEffect(() => {
     if (!open || editing || !companyId) return;

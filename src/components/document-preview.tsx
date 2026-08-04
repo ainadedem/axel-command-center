@@ -1,3 +1,4 @@
+import { defaultTaxRate } from "@/lib/vat";
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -115,7 +116,9 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment }: {
   const due = doc.dueDate ? format(parseISO(doc.dueDate), "MMM d, yyyy") : null;
   const paidOn = doc.paidDate ? format(parseISO(doc.paidDate), "MMM d, yyyy") : null;
   const subtotalHT = doc.amount ?? 0;
-  const vatRate = doc.kind === "invoice" ? (doc.taxRate ?? 20) : (doc.taxRate ?? 0);
+  const vatRate = doc.kind === "invoice"
+    ? (doc.taxRate ?? defaultTaxRate(company, doc.issueDate))
+    : (doc.taxRate ?? 0);
   const vatAmount = doc.kind === "invoice"
     ? (doc.taxAmount ?? subtotalHT * (vatRate / 100))
     : (doc.taxAmount ?? 0);
