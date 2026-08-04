@@ -1,55 +1,38 @@
-# Migration plan: TanStack Start → SPA mode
+# Accurate opening balances + bank statement reconciliation
 
-## Goal
-
-Stop rendering routes on the server. Ship a static `index.html` + JS bundle that boots the router in the browser. Keep the small server surface we actually need (the streaming `/api/axel-chat` route and the `createServerFn` handlers used by Axel chat).
-
-This removes the whole class of "missing `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` at SSR time", hydration mismatches, and the h3-swallowed 500s the SSR wrapper exists to catch.
+Today an account has a single editable number (labelled "Opening balance" in the dialog, but it is actually the running balance). Importing a statement simply adds the sum of the rows to it, with no check against the bank's own closing balance and no protection against importing the same statement twice. That is why the balance can drift.
 
 ## What changes
 
-### 1. Router: disable SSR globally
-In `src/router.tsx`, set `defaultSsr: false` on `createRouter(...)`. Every route renders on the client; loaders still run, just in the browser.
+### 1. A real opening balance
+- Each account gets an **opening balance** and an **opening balance date** (the day you took the account into Axel).
+- The balance shown everywhere becomes **computed**: opening balance + every transaction on that account dated on/after the opening date.
+- The Accounts page shows: Opening balance, Computed balance, and (after a reconciliation) Bank closing balance + Difference.
+- The Accounts dialog no longer lets you type a "current" balance — only the opening balance and its date, so the number is auditable.
 
-### 2. Root route: static shell
-`src/routes/__root.tsx` keeps its `head()` (title, meta, JSON-LD, font `<link>` tags) so the shipped `index.html` still has good baseline SEO/OG. No per-route SSR HTML — dynamic `head()` becomes client-only.
+### 2. Statement upload and reconciliation
+- Upload **CSV or Excel (.xlsx)** statements. Same auto-detection of date / description / amount or debit / credit columns as today, plus Excel parsing.
+- Before importing you enter (or the parser detects) the **statement period** and the **bank closing balance**.
+- The dialog shows a reconciliation summary:
+  - Opening (Axel) + statement movements = expected closing
+  - vs the bank's stated closing balance
+  - **Difference** — green when zero, red when not, so an inaccurate opening balance is visible immediately.
+- **Duplicate detection**: rows already present in Axel (same account, date, amount, similar description) are flagged and skipped by default, so re-importing an overlapping statement can't double-count.
+- Unmatched rows can be individually excluded before importing.
+- Invoice auto-matching and FX gain/loss entries keep working as they do now.
 
-### 3. Route files: drop SSR-only workarounds
-- Remove the per-route `ssr: false` we added to `_authenticated.tsx` and `login.tsx` (now the global default).
-- Loaders that call `requireSupabaseAuth`-protected server functions become safe from any route (no more prerender 401s).
-- Keep `_authenticated/route.tsx` as the auth gate.
+### 3. Reconciliation history
+- Each import is saved as a reconciliation record: period, closing balance, difference, row count, file name, who ran it.
+- An account detail panel lists past reconciliations so you can see when the account was last proven correct.
 
-### 4. Server surface we keep
-- `src/routes/api/axel-chat.ts` — streaming AI endpoint, must stay server-side.
-- `src/lib/axel.functions.ts` — `createServerFn` handlers (threads/messages). Still callable from the SPA via the generated RPC endpoint.
-- `src/routes/sitemap[.]xml.ts` — server route, keep.
-- `src/start.ts` middleware (`errorMiddleware`, `attachSupabaseAuth`) — keep for the server functions.
+### 4. Fixing an inaccurate opening balance
+- If the difference is non-zero you can either adjust the opening balance, or post a one-click **balancing adjustment** transaction ("Écart de rapprochement") for the difference so the ledger and the bank agree from that date on.
 
-### 5. Build output & hosting
-- Configure `@lovable.dev/vite-tanstack-config` for SPA output: prerender only `/` (single `index.html`) and enable SPA fallback so deep links like `/accounts` serve `index.html` and the client router takes over.
-- The Cloudflare Worker still runs, but only to serve `/api/*`, `/sitemap.xml`, and the static assets + SPA fallback. No React SSR in the request path.
+## Technical notes
 
-### 6. Remove SSR error scaffolding that no longer applies
-- `src/server.ts` response-normalizer for h3-swallowed React SSR errors → simplified; kept only if the Worker still wraps `/api/*`.
-- `src/lib/error-capture.ts` global listeners → keep (cheap, still useful for server-fn errors).
-- Route-level `errorComponent` / `notFoundComponent` stay — they run client-side.
-
-### 7. Env vars
-Once SSR is off, the client only needs `import.meta.env.VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` inlined at build time (already handled in `vite.config.ts`). The runtime `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` are only read inside `createServerFn` handlers and the `/api/axel-chat` route — no more SSR module-init crashes when they're absent.
-
-### 8. Verification
-- `bun run build` produces `dist/` with `index.html` + hashed assets.
-- Playwright against the built output: `/`, `/login`, `/accounts` (redirects to `/login`), `/axel` (post-login) all render with **no** "Missing Supabase env" error and **no** hydration warnings.
-- `/api/axel-chat` still streams; thread list still loads via server functions.
-- Publish and confirm the same on `axel-command-center.lovable.app`.
-
-## Risk & rollback
-
-- Low risk: the app is already almost entirely client-driven (auth-gated, `_authenticated` subtree runs `ssr: false` today).
-- Rollback = revert the router `defaultSsr: false` flip and the vite config SPA setting; everything else is additive/subtractive around that switch.
-
-## Out of scope
-
-- No changes to Supabase schema, RLS, or business logic.
-- No UI changes.
-- No changes to Axel chat behavior — only how the shell is delivered.
+- Migration on `accounts`: add `opening_balance numeric not null default 0`, `opening_balance_date date`. Keep the existing `balance` column, backfilled as the opening balance, then stop writing to it from the importer.
+- New table `bank_reconciliations` (company_id, account_id, period_start, period_end, statement_closing_balance, computed_closing_balance, difference, row_count, statement_name, created_by) with GRANTs, RLS scoped by company access, and `created_at`/`updated_at`.
+- Computed balance derived client-side from `transactionsStore` per account; a shared `useAccountBalance` helper in `src/lib/` so Accounts, Dashboard and Expenses all read the same number.
+- Excel parsing via `xlsx` (SheetJS) added to the existing CSV parser in `src/components/statement-import-dialog.tsx`; the dialog is split into a parse step and a reconcile/confirm step.
+- Duplicate detection: match on account + date (±1 day) + exact amount + normalised description prefix.
+- `src/lib/db-sync.ts` gains mapping for the new account columns and the reconciliation table.
