@@ -16,11 +16,18 @@ import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
 import { Pencil, Trash2, Users } from "lucide-react";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useCompany } from "@/lib/company-context";
 
 export const Route = createFileRoute("/_authenticated/team")({ component: TeamPage });
 
 function TeamPage() {
-  const team = useTeamMembers();
+  const allTeam = useTeamMembers();
+  const { scope, accessibleCompanies } = useCompany();
+  const team = scope.id === "group"
+    ? allTeam
+    : allTeam.filter((m) => !m.companyId || m.companyId === scope.companyId);
+  const companyById = new Map(accessibleCompanies.map((c) => [c.id, c]));
   const sales = useSalesMembers();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<TeamMember | null>(null);
@@ -50,7 +57,7 @@ function TeamPage() {
               <div className="col-span-2">Email</div>
               <div className="col-span-2">Phone</div>
               <div className="col-span-1">Job</div>
-              <div className="col-span-1">Dept</div>
+              <div className="col-span-1">Company</div>
               <div className="col-span-1">Sales</div>
               <div className="col-span-1 text-right">.</div>
             </div>
@@ -69,7 +76,15 @@ function TeamPage() {
                     <div className="col-span-2 text-xs text-muted-foreground truncate">{m.email || "-"}</div>
                     <div className="col-span-2 text-xs text-muted-foreground truncate font-tnum">{m.phone || "-"}</div>
                     <div className="col-span-1 text-xs text-muted-foreground truncate">{m.jobTitle || "-"}</div>
-                    <div className="col-span-1 text-xs text-muted-foreground truncate">{m.department || "-"}</div>
+                    <div className="col-span-1 text-xs truncate">
+                      {m.companyId ? (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/10 text-accent-foreground border border-border">
+                          {companyById.get(m.companyId)?.shortName || companyById.get(m.companyId)?.name || "-"}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">All</span>
+                      )}
+                    </div>
                     <div className="col-span-1">
                       {s ? (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 inline-flex items-center gap-1">
@@ -102,7 +117,9 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
   const [jobTitle, setJobTitle] = useState("");
   const [department, setDepartment] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+  const [companyId, setCompanyId] = useState<string>("all");
   const [showErrors, setShowErrors] = useState(false);
+  const { scope, accessibleCompanies } = useCompany();
 
   useEffect(() => {
     if (!open) return;
@@ -116,6 +133,7 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
       setJobTitle(editing.jobTitle ?? "");
       setDepartment(editing.department ?? "");
       setAvatarUrl(editing.avatarUrl);
+      setCompanyId(editing.companyId ?? "all");
     } else {
       setFirstName("");
       setLastName("");
@@ -124,8 +142,9 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
       setJobTitle("");
       setDepartment("");
       setAvatarUrl(undefined);
+      setCompanyId(scope.id === "company" ? scope.companyId : "all");
     }
-  }, [open, editing]);
+  }, [open, editing, scope]);
 
   const displayName = `${firstName.trim()} ${lastName.trim()}`.trim();
 
@@ -143,6 +162,7 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
       jobTitle: jobTitle.trim() || undefined,
       department: department.trim() || undefined,
       avatarUrl,
+      companyId: companyId === "all" ? undefined : companyId,
     };
     if (editing) teamMembersStore.update(editing.id, data);
     else teamMembersStore.add({ id: newId("tm"), ...data });
@@ -165,6 +185,19 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
             <div><Label>Phone</Label><Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+261 ..." /></div>
+          </div>
+          <div>
+            <Label>Company</Label>
+            <Select value={companyId} onValueChange={setCompanyId}>
+              <SelectTrigger><SelectValue placeholder="Select a company" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All companies</SelectItem>
+                {accessibleCompanies.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground mt-1">The person only appears in the Team page of the selected company.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Job title</Label><Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} /></div>
