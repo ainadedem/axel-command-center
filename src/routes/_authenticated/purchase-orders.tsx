@@ -54,7 +54,6 @@ function Body() {
   const baseList = inScope(pos, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<PurchaseOrder | null>(null);
-  const [previewing, setPreviewing] = useState<PurchaseOrder | null>(null);
   const openCreate = () => { setEditing(null); setOpen(true); };
 
   const fields: FieldDef<PurchaseOrder>[] = [
