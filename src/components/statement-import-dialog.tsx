@@ -4,16 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
   accountsStore, transactionsStore, invoicesStore, invoices as invoicesArr,
-  transactions as transactionsArr,
+  transactions as transactionsArr, useCompanies,
   toMGA, FX, fmtCompact,
   type Account, type Transaction, type Invoice,
 } from "@/lib/mock-data";
 import { computeAccountBalance, openingOf } from "@/lib/account-balance";
 import { saveReconciliation } from "@/lib/db-sync";
+import {
+  exportReconciliationCsv, exportReconciliationPdf, type ReconciliationSummary,
+} from "@/lib/reconciliation-export";
 import * as XLSX from "xlsx";
 import { Input } from "@/components/ui/input";
 import { newId } from "@/lib/data-store";
-import { Upload, CheckCircle2, AlertCircle, FileText } from "lucide-react";
+import { Upload, CheckCircle2, AlertCircle, FileText, Download, FileDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInDays } from "date-fns";
 
