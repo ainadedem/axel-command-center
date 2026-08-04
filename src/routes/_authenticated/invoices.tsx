@@ -466,6 +466,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [poId, setPoId] = useState<string>("");
   const [poWaived, setPoWaived] = useState(false);
   const [poWaiverReason, setPoWaiverReason] = useState("");
+  const [subject, setSubject] = useState("");
 
   const [issueDate, setIssueDate] = useState(today);
   const [dueDate, setDueDate] = useState(today);
@@ -481,6 +482,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setNumber(editing.number); setCompanyId(editing.companyId); setClientId(editing.clientId);
       setProjectId(editing.projectId ?? ""); setPoId(editing.poId ?? "");
       setPoWaived(Boolean(editing.poWaived)); setPoWaiverReason(editing.poWaiverReason ?? "");
+      setSubject(editing.subject ?? "");
 
       setIssueDate(editing.issueDate); setDueDate(editing.dueDate);
       setAmount(String(editing.amount)); setPaid(String(editing.paid));
@@ -488,7 +490,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     } else {
       const cid = companies[0]?.id ?? "";
       setNumber(cid ? nextNumber("invoice", cid, today) : ""); setCompanyId(cid); setClientId("");
-      setProjectId(""); setPoId(""); setPoWaived(false); setPoWaiverReason("");
+      setProjectId(""); setPoId(""); setPoWaived(false); setPoWaiverReason(""); setSubject("");
 
       setIssueDate(today); setDueDate(today); setAmount("0"); setPaid("0");
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
@@ -581,6 +583,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
 
       quoteId: linkedQuote?.id,
       issueDate, dueDate, amount: a, paid: p, currency, status: finalStatus,
+      subject: subject.trim() || undefined,
       lines: inheritedLines ? inheritedLines.map((l) => ({ ...l })) : (editing?.lines ?? undefined),
     };
     if (editing) invoicesStore.update(editing.id, data);
@@ -683,6 +686,10 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                 {clientProjects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
               </SelectContent>
             </Select>
+          </div>
+          <div>
+            <Label>Object</Label>
+            <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Brand campaign production — Q3 2026" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Issue date</Label><Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>

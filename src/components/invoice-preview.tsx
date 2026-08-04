@@ -18,6 +18,7 @@ export function InvoicePreview({ open, onOpenChange, invoice, company, client, p
     ? {
         kind: "invoice",
         number: invoice.number,
+        subject: invoice.subject,
         status: invoice.status,
         issueDate: invoice.issueDate,
         dueDate: invoice.dueDate,
