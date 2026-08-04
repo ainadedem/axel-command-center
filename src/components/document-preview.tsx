@@ -107,7 +107,13 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
   const issued = format(parseISO(doc.issueDate), "MMM d, yyyy");
   const due = doc.dueDate ? format(parseISO(doc.dueDate), "MMM d, yyyy") : null;
   const paidOn = doc.paidDate ? format(parseISO(doc.paidDate), "MMM d, yyyy") : null;
-  const balance = (doc.amount ?? 0) - (doc.paid ?? 0);
+  const subtotalHT = doc.amount ?? 0;
+  const vatRate = doc.kind === "invoice" ? (doc.taxRate ?? 20) : (doc.taxRate ?? 0);
+  const vatAmount = doc.kind === "invoice"
+    ? (doc.taxAmount ?? subtotalHT * (vatRate / 100))
+    : (doc.taxAmount ?? 0);
+  const totalTTC = doc.totalAmount ?? subtotalHT + vatAmount;
+  const balance = (doc.kind === "invoice" ? totalTTC : subtotalHT) - (doc.paid ?? 0);
 
   const companyLines = [
     company?.legalName ?? company?.name,
@@ -119,12 +125,12 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
     company?.nif && `NIF ${company.nif}`,
     company?.stat && `STAT ${company.stat}`,
   ].filter(Boolean) as string[];
-  const clientLines = [
-    client?.name, client?.address, client?.email, client?.phone,
-  ].filter(Boolean) as string[];
-  const clientLegal = [
-    client?.nif && `NIF ${client.nif}`,
-    client?.stat && `STAT ${client.stat}`,
+  const poRef = (doc.references ?? []).find((r) => r.label.toUpperCase() === "PO")?.value;
+  const taxMeta = [
+    client?.nif && `NIF: ${client.nif}`,
+    client?.stat && `STAT: ${client.stat}`,
+    client?.rcs && `RCS: ${client.rcs}`,
+    poRef && `PO Ref: ${poRef}`,
   ].filter(Boolean) as string[];
   const bank = [
     company?.bankName && `Bank: ${company.bankName}`,
@@ -192,6 +198,7 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
       .doc .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 28px; }
       .doc .party div { margin-bottom: 2px; }
       .doc .legal { margin-top: 6px; color: #64748b; font-size: 10px; }
+      .doc .taxmeta { margin-top: 8px; padding: 8px 10px; background: #f8fafc; border-left: 3px solid ${accent}; font-size: 10px; color: #475569; font-variant-numeric: tabular-nums; }
       .doc table { width: 100%; border-collapse: collapse; margin-top: 32px; font-size: 11px; }
       .doc th { text-align: left; padding: 10px 8px; background: #f8fafc; border-bottom: 2px solid ${accent}; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; }
       .doc td { padding: 12px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
@@ -229,8 +236,9 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
         </div>
         <div class="party">
           <h2>${doc.kind === "po" ? "Issued by" : "Bill to"}</h2>
-          ${clientLines.length ? clientLines.map((l) => `<div>${esc(l)}</div>`).join("") : "<div>—</div>"}
-          ${clientLegal.length ? `<div class="legal">${clientLegal.map(esc).join(" · ")}</div>` : ""}
+          <div style="font-weight: 700; font-size: 13px;">${esc(client?.name ?? "—")}</div>
+          ${[client?.address, client?.email, client?.phone].filter(Boolean).map((l) => `<div>${esc(l as string)}</div>`).join("")}
+          ${taxMeta.length ? `<div class="taxmeta">${taxMeta.map((l) => `<div>${esc(l)}</div>`).join("")}</div>` : ""}
         </div>
       </div>
 
@@ -238,24 +246,23 @@ function buildHTML({ doc, company, client, project, showStatus }: { doc: Documen
         <thead>
           <tr>
             <th>Description</th>
-            <th class="num" style="width: 60px;">Qty</th>
+            <th class="num" style="width: 70px;">Quantity</th>
             <th class="num" style="width: 60px;">Unit</th>
-            <th class="num" style="width: 110px;">Rate</th>
-            <th class="num" style="width: 120px;">Amount</th>
+            <th class="num" style="width: 120px;">Unit Price HT</th>
+            <th class="num" style="width: 130px;">Total HT</th>
           </tr>
         </thead>
         <tbody>${linesHtml}</tbody>
       </table>
 
       <div class="totals">
-        <div class="line"><span>Subtotal</span><span>${fmt(doc.amount, doc.currency)}</span></div>
+        <div class="line"><span>Subtotal HT</span><span>${fmt(subtotalHT, doc.currency)}</span></div>
+        <div class="line"><span>TVA (${Number(vatRate).toFixed(2)}%)</span><span>${fmt(vatAmount, doc.currency)}</span></div>
+        <div class="line grand"><span>Total TTC</span><span>${fmt(totalTTC, doc.currency)}</span></div>
         ${doc.kind === "invoice" ? `
           <div class="line"><span>Paid to date</span><span>${fmt(doc.paid ?? 0, doc.currency)}</span></div>
           <div class="line grand"><span>Balance due</span><span class="due">${fmt(balance, doc.currency)}</span></div>
-        ` : `
-          <div class="line"><span>Tax (${Number(doc.taxRate ?? 0).toFixed(2)}%)</span><span>${fmt(doc.taxAmount ?? 0, doc.currency)}</span></div>
-          <div class="line grand"><span>Total</span><span>${fmt(doc.totalAmount ?? doc.amount, doc.currency)}</span></div>
-        `}
+        ` : ""}
       </div>
 
       ${doc.notes ? `<div class="notes"><strong>Notes</strong><div style="margin-top: 4px;">${esc(doc.notes)}</div></div>` : ""}

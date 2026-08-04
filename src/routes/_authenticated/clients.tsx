@@ -14,6 +14,7 @@ import { newId } from "@/lib/data-store";
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -524,6 +525,9 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   const [address, setAddress] = useState("");
   const [industry, setIndustry] = useState("");
   const [contacts, setContacts] = useState("");
+  const [nif, setNif] = useState("");
+  const [stat, setStat] = useState("");
+  const [rcs, setRcs] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [status, setStatus] = useState<"lead" | "client">("client");
   const [categories, setCategories] = useState<ContactCategory[]>(["client"]);
@@ -542,6 +546,9 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setAddress(editing.address ?? "");
       setIndustry(editing.industry ?? "");
       setContacts(editing.contacts ?? "");
+      setNif(editing.nif ?? "");
+      setStat(editing.stat ?? "");
+      setRcs(editing.rcs ?? "");
       setAvatarUrl(editing.avatarUrl);
       setStatus(editing.status ?? "client");
       setCategories(defaultCategoriesFor("client", editing.categories));
@@ -554,6 +561,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setCompanyId(fallback); setCompanyIds(fallback ? [fallback] : []); setName(""); setCountry(""); setAcquisition(""); setReferral("");
       setAcquiredAt(new Date().toISOString().slice(0, 10));
       setWebsite(""); setEmail(""); setPhone(""); setAddress(""); setIndustry(""); setContacts("");
+      setNif(""); setStat(""); setRcs("");
       setAvatarUrl(undefined);
       setStatus("client");
       setCategories(["client"]);
@@ -561,9 +569,18 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
     setShowErrors(false);
   }, [open, editing, companies, scope]);
 
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const missing = {
+    name: !name.trim(),
+    company: !companyId,
+    address: !address.trim(),
+    email: !email.trim() || !emailValid,
+    nif: !nif.trim(),
+    stat: !stat.trim(),
+  };
+
   const submit = async () => {
-    const invalid = !name.trim() || !companyId;
-    if (invalid) {
+    if (Object.values(missing).some(Boolean)) {
       setShowErrors(true);
       return;
     }
@@ -580,6 +597,9 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       address: address.trim() || undefined,
       industry: industry.trim() || undefined,
       contacts: contacts.trim() || undefined,
+      nif: nif.trim() || undefined,
+      stat: stat.trim() || undefined,
+      rcs: rcs.trim() || undefined,
       avatarUrl,
       categories: categories.length > 0 ? categories : undefined,
     };
@@ -706,10 +726,34 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
             <div><Label>Website</Label><Input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://…" /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+            <div>
+              <Label><RequiredLabel>Billing email</RequiredLabel></Label>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="billing@client.com" className={invalidFieldClassName(showErrors && missing.email)} aria-invalid={showErrors && missing.email} />
+              {showErrors && missing.email && <p className="text-[11px] text-destructive mt-1">Enter a valid billing email address.</p>}
+            </div>
             <div><Label>Phone</Label><Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
           </div>
-          <div><Label>HQ address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} /></div>
+          <div>
+            <Label><RequiredLabel>Registered business address</RequiredLabel></Label>
+            <Textarea rows={3} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, city, postal code, country" className={invalidFieldClassName(showErrors && missing.address)} aria-invalid={showErrors && missing.address} />
+          </div>
+          <div className="rounded-lg border border-border bg-surface p-3 space-y-3">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">Tax & legal identifiers</div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label><RequiredLabel>NIF</RequiredLabel></Label>
+                <Input value={nif} onChange={(e) => setNif(e.target.value)} placeholder="Numéro d'Identification Fiscale" className={invalidFieldClassName(showErrors && missing.nif)} aria-invalid={showErrors && missing.nif} />
+              </div>
+              <div>
+                <Label><RequiredLabel>STAT</RequiredLabel></Label>
+                <Input value={stat} onChange={(e) => setStat(e.target.value)} placeholder="Numéro Statistique" className={invalidFieldClassName(showErrors && missing.stat)} aria-invalid={showErrors && missing.stat} />
+              </div>
+              <div>
+                <Label>RCS</Label>
+                <Input value={rcs} onChange={(e) => setRcs(e.target.value)} placeholder="Registre du Commerce (optional)" />
+              </div>
+            </div>
+          </div>
           <div><Label>Key contacts</Label><Input value={contacts} onChange={(e) => setContacts(e.target.value)} placeholder="Name, role; Name, role…" /></div>
           <div>
             <Label>Acquisition</Label>
