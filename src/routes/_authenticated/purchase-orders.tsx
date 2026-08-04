@@ -7,6 +7,7 @@ import {
   contactBelongsTo,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
+import { DOCUMENTS_BUCKET, uploadFile, openStoredFile } from "@/lib/storage";
 import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -120,9 +121,9 @@ function Body() {
                     <td className="px-5 py-3.5"><span className={cn("text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[po.status])}>{po.status}</span></td>
                     <td className="px-5 py-3.5 text-xs">
                       {po.documentUrl ? (
-                        <a href={po.documentUrl} download={po.documentName} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-primary hover:underline max-w-[180px] truncate">
+                        <button type="button" onClick={() => openStoredFile(po.documentUrl)} className="inline-flex items-center gap-1.5 text-primary hover:underline max-w-[180px] truncate">
                           <FileText className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{po.documentName ?? "PO file"}</span>
-                        </a>
+                        </button>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10" title="No client PO document uploaded">
                           <AlertTriangle className="h-2.5 w-2.5" /> File missing
@@ -135,7 +136,7 @@ function Body() {
                     <td className="px-5 py-3.5 text-right">
                       <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
                         {po.documentUrl && (
-                          <a href={po.documentUrl} download={po.documentName} target="_blank" rel="noreferrer" title="Open client PO document" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></a>
+                          <button type="button" onClick={() => openStoredFile(po.documentUrl)} title="Open client PO document" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
                         )}
 
                         <button onClick={() => { setEditing(po); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
@@ -179,6 +180,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
   const [documentUploadedAt, setDocumentUploadedAt] = useState<string | undefined>();
   const [documentHistory, setDocumentHistory] = useState<DocVersion[]>([]);
   const [uploadError, setUploadError] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
@@ -206,12 +208,12 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
 
 
 
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     setUploadError("");
-    if (file.size > 5 * 1024 * 1024) { setUploadError("Max 5 MB"); return; }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const url = reader.result as string;
+    if (file.size > 10 * 1024 * 1024) { setUploadError("Max 10 MB"); return; }
+    setUploading(true);
+    try {
+      const ref = await uploadFile(DOCUMENTS_BUCKET, "purchase-orders", file);
       // If replacing an existing doc, push the old one onto history.
       if (documentUrl) {
         setDocumentHistory((h) => [
@@ -219,12 +221,15 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
           ...h,
         ]);
       }
-      setDocumentUrl(url);
+      setDocumentUrl(ref);
       setDocumentName(file.name);
       setDocumentType(file.type);
       setDocumentUploadedAt(new Date().toISOString());
-    };
-    reader.readAsDataURL(file);
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
   };
 
 
@@ -376,7 +381,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
                 <div className="flex items-center gap-2 rounded-md border border-border bg-surface-elevated/40 px-3 py-2 text-sm">
                   <FileText className="h-4 w-4 text-primary shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <a href={documentUrl} download={documentName} target="_blank" rel="noreferrer" className="block truncate text-primary hover:underline">{documentName}</a>
+                    <button type="button" onClick={() => openStoredFile(documentUrl)} className="block w-full text-left truncate text-primary hover:underline">{documentName}</button>
                     {documentUploadedAt && (
                       <p className="text-[10px] text-muted-foreground font-tnum">Uploaded {format(parseISO(documentUploadedAt), "MMM d, yyyy · HH:mm")}{documentHistory.length > 0 && ` · v${documentHistory.length + 1}`}</p>
                     )}
@@ -399,7 +404,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
                           <li key={i} className="flex items-center gap-2 py-1 border-t border-border/40 first:border-0">
                             <span className="text-[10px] text-muted-foreground font-tnum w-8 shrink-0">v{versionNumber}</span>
                             <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                            <a href={v.url} download={v.name} target="_blank" rel="noreferrer" className="flex-1 truncate text-primary hover:underline">{v.name ?? "PO file"}</a>
+                            <button type="button" onClick={() => openStoredFile(v.url)} className="flex-1 truncate text-left text-primary hover:underline">{v.name ?? "PO file"}</button>
                             <span className="text-[10px] text-muted-foreground font-tnum">{format(parseISO(v.uploadedAt), "MMM d, yyyy · HH:mm")}</span>
                             <button type="button" onClick={() => setDocumentHistory((h) => h.filter((_, idx) => idx !== i))} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive" title="Delete this version"><X className="h-3 w-3" /></button>
                           </li>
@@ -411,10 +416,10 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
               </div>
             ) : (
               <>
-                <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-warning/50 bg-warning/5 hover:bg-warning/10 px-3 py-2.5 text-sm text-muted-foreground transition-colors">
+                <label className={cn("flex items-center gap-2 rounded-md border border-dashed border-warning/50 bg-warning/5 hover:bg-warning/10 px-3 py-2.5 text-sm text-muted-foreground transition-colors", uploading ? "opacity-60 cursor-wait" : "cursor-pointer")}>
                   <Upload className="h-4 w-4" />
-                  <span>Upload the client's PO — PDF or image (max 5 MB)</span>
-                  <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
+                  <span>{uploading ? "Uploading…" : "Upload the client's PO — PDF or image (max 10 MB)"}</span>
+                  <input type="file" accept=".pdf,image/*" disabled={uploading} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
                 </label>
                 <p className="text-[11px] text-warning mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Without a file this PO stays flagged “File missing”.</p>
               </>
