@@ -449,6 +449,8 @@ export interface TeamMember {
   id: string;
   /** Full display name — kept in sync with firstName + lastName. */
   name: string;
+  /** Company this person belongs to (undefined = visible in every company). */
+  companyId?: string;
   firstName?: string;
   lastName?: string;
   email?: string;
