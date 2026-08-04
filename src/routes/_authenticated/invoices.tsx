@@ -467,13 +467,16 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     if (editing) {
       setNumber(editing.number); setCompanyId(editing.companyId); setClientId(editing.clientId);
       setProjectId(editing.projectId ?? ""); setPoId(editing.poId ?? "");
+      setPoWaived(Boolean(editing.poWaived)); setPoWaiverReason(editing.poWaiverReason ?? "");
+
       setIssueDate(editing.issueDate); setDueDate(editing.dueDate);
       setAmount(String(editing.amount)); setPaid(String(editing.paid));
       setCurrency(editing.currency); setStatus(editing.status);
     } else {
       const cid = companies[0]?.id ?? "";
       setNumber(cid ? nextNumber("invoice", cid) : ""); setCompanyId(cid); setClientId("");
-      setProjectId(""); setPoId("");
+      setProjectId(""); setPoId(""); setPoWaived(false); setPoWaiverReason("");
+
       setIssueDate(today); setDueDate(today); setAmount("0"); setPaid("0");
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
     }
@@ -538,8 +541,9 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     }
   }, [poId, pos]);
 
-  const processOk = Boolean(poId);
+  const processOk = Boolean(poId) || poWaived;
   const blocked = !processOk && status !== "draft";
+
 
   const submit = () => {
     const invalid = !number.trim() || !companyId || !clientId || blocked;
@@ -556,6 +560,9 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       number, companyId, clientId,
       projectId: projectId || undefined,
       poId: poId || undefined,
+      poWaived: !poId && poWaived,
+      poWaiverReason: !poId && poWaived ? (poWaiverReason.trim() || undefined) : undefined,
+
       quoteId: linkedQuote?.id,
       issueDate, dueDate, amount: a, paid: p, currency, status: finalStatus,
       lines: inheritedLines ? inheritedLines.map((l) => ({ ...l })) : (editing?.lines ?? undefined),
