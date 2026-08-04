@@ -82,14 +82,17 @@ function TeamPage() {
         <div className="col-span-2 text-xs text-muted-foreground truncate font-tnum">{m.phone || "-"}</div>
         <div className="col-span-1 text-xs text-muted-foreground truncate">{m.jobTitle || "-"}</div>
         <div className="col-span-1 text-xs truncate">
-          {m.companyId ? (
+          {m.companyId === undefined ? (
+            <span className="text-[10px] text-muted-foreground">All</span>
+          ) : m.companyId === null ? (
+            <span className="text-[10px] text-muted-foreground">None</span>
+          ) : (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/10 text-accent-foreground border border-border">
               {companyLabel(m.companyId)}
             </span>
-          ) : (
-            <span className="text-[10px] text-muted-foreground">All</span>
           )}
         </div>
+
         <div className="col-span-1">
           {s ? (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 inline-flex items-center gap-1">
