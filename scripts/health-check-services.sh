@@ -3,7 +3,7 @@
 set -euo pipefail
 
 PUBLIC_BASE_URL="${PUBLIC_BASE_URL:-}"
-LOCAL_PORT="${PORT:-3009}"
+LOCAL_PORT="${PORT:-${SSR_PORT:-3009}}"
 
 if [ -n "$PUBLIC_BASE_URL" ]; then
   HEALTH_URL="${PUBLIC_BASE_URL%/}/api/health/supabase"
