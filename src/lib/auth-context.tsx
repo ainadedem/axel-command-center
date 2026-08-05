@@ -19,6 +19,8 @@ interface AuthState {
   loading: boolean;
   isAuthenticated: boolean;
   hasRole: (role: AppRole) => boolean;
+  /** True when the user is a sales rep with no admin/finance role — sales-only scope. */
+  isSalesOnly: boolean;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 }
