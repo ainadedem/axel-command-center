@@ -360,7 +360,7 @@ export function buildPrintableDocument(args: { doc: DocumentData; company?: Comp
     </head><body>${buildHTML(args)}</body></html>`;
 }
 
-export function buildDocumentHTML(args: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean; showPayment?: boolean }) {
+export function buildDocumentHTML(args: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean; showPayment?: boolean; showClientEmail?: boolean }) {
   return buildHTML(args);
 }
 
