@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { SALES_ROUTES } from "@/components/app-shell";
 import { CompanyProvider } from "@/lib/company-context";
 // Side-effect import: triggers idempotent data seeds (Logia + Axiom).
 import "@/lib/pcg";
