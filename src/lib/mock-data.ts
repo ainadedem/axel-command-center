@@ -307,6 +307,8 @@ export interface Quote {
   sentAt?: string;
   /** Recipient address used for the last send. */
   sentTo?: string;
+  /** Auth user id of the person who created the quotation. */
+  createdBy?: string;
 }
 
 export type POStatus = "draft" | "issued" | "fulfilled" | "cancelled";
