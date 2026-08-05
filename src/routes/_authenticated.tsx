@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { SALES_ROUTES } from "@/components/app-shell";
 import { CompanyProvider } from "@/lib/company-context";
 // Side-effect import: triggers idempotent data seeds (Logia + Axiom).
 import "@/lib/pcg";
@@ -12,7 +13,7 @@ export const Route = createFileRoute("/_authenticated")({
 function AuthenticatedLayout() {
   const navigate = useNavigate();
   const location = useRouterState({ select: (state) => state.location });
-  const { loading, isAuthenticated } = useAuth();
+  const { loading, isAuthenticated, isSalesOnly } = useAuth();
 
   useEffect(() => {
     if (!loading && !isAuthenticated && location.pathname !== "/login") {
@@ -20,6 +21,12 @@ function AuthenticatedLayout() {
       navigate({ to: "/login", search: { redirect: redirectTo } });
     }
   }, [loading, isAuthenticated, location.href, location.pathname, navigate]);
+
+  useEffect(() => {
+    if (loading || !isAuthenticated || !isSalesOnly) return;
+    const allowed = SALES_ROUTES.some((r) => location.pathname === r || location.pathname.startsWith(`${r}/`));
+    if (!allowed) navigate({ to: "/quotations", replace: true });
+  }, [loading, isAuthenticated, isSalesOnly, location.pathname, navigate]);
 
   if (loading) {
     return (

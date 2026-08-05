@@ -12,6 +12,7 @@ import { capabilities, levels, getRate, type Capability, type Level, type Unit }
 import { newId } from "@/lib/data-store";
 import { defaultTaxRate } from "@/lib/vat";
 import { inScope, useCompany } from "@/lib/company-context";
+import { useAuth } from "@/lib/auth-context";
 import { format, parseISO, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Fragment, useEffect, useMemo, useState } from "react";
@@ -72,7 +73,35 @@ function Body() {
   const [editing, setEditing] = useState<Quote | null>(null);
   const [previewing, setPreviewing] = useState<Quote | null>(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const { user } = useAuth();
+  const [owners, setOwners] = useState<Record<string, string>>({});
   const openCreate = () => { setEditing(null); setOpen(true); };
+
+  // Resolve quotation owners to readable names (colleagues sharing a company).
+  const ownerIds = useMemo(
+    () => Array.from(new Set(baseList.map((q) => q.createdBy).filter(Boolean) as string[])).sort().join(","),
+    [baseList],
+  );
+  useEffect(() => {
+    const ids = ownerIds ? ownerIds.split(",") : [];
+    if (ids.length === 0) { setOwners({}); return; }
+    let cancelled = false;
+    supabase
+      .from("profiles")
+      .select("user_id, display_name, email")
+      .in("user_id", ids)
+      .then(({ data }) => {
+        if (cancelled) return;
+        const map: Record<string, string> = {};
+        for (const p of (data ?? []) as { user_id: string; display_name: string | null; email: string | null }[]) {
+          map[p.user_id] = p.display_name || p.email || "";
+        }
+        setOwners(map);
+      });
+    return () => { cancelled = true; };
+  }, [ownerIds]);
+
+  const ownerName = (q: Quote) => (q.createdBy ? owners[q.createdBy] || "—" : "—");
 
   const sendToClient = async (q: Quote) => {
     const cl = clients.find((c) => c.id === q.clientId);
@@ -131,6 +160,7 @@ function Body() {
     { key: "issueDate", label: "Issued", type: "date", accessor: (q) => q.issueDate, noGroup: true },
     { key: "validUntil", label: "Valid until", type: "date", accessor: (q) => q.validUntil, noGroup: true },
     { key: "amount", label: "Amount", type: "number", accessor: (q) => q.amount, noGroup: true },
+    { key: "owner", label: "Owner", type: "enum", accessor: (q) => ownerName(q) },
   ];
   const view = useDataView<Quote>("quotations", fields);
   const groups = view.apply(baseList);
@@ -168,6 +198,7 @@ function Body() {
       mode: q.mode ?? "rate-card",
       lines: q.lines ? q.lines.map((l) => ({ ...l, id: newId("ql") })) : undefined,
       notes: q.notes,
+      createdBy: user?.id,
     });
   };
 
@@ -188,6 +219,7 @@ function Body() {
                 <th className="text-left font-medium px-5 py-3">Client</th>
                 <th className="text-left font-medium px-5 py-3">Project</th>
                 <th className="text-left font-medium px-5 py-3">Company</th>
+                <th className="text-left font-medium px-5 py-3">Owner</th>
                 <th className="text-left font-medium px-5 py-3">Issued</th>
                 <th className="text-left font-medium px-5 py-3">Valid until</th>
                 <th className="text-left font-medium px-5 py-3">Status</th>
@@ -198,7 +230,7 @@ function Body() {
             <tbody>
               {groups.map((g) => (
                 <Fragment key={g.key}>
-                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={9} />}
+                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={10} />}
                   {g.items.map((q) => {
                 const co = companies.find((c) => c.id === q.companyId);
                 const cl = clients.find((c) => c.id === q.clientId);
@@ -209,6 +241,7 @@ function Body() {
                     <td className="px-5 py-3.5 font-medium">{cl?.name ?? "—"}</td>
                     <td className="px-5 py-3.5 text-xs">{proj ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}</td>
                     <td className="px-5 py-3.5">{co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}</td>
+                    <td className="px-5 py-3.5 text-xs text-muted-foreground">{ownerName(q)}</td>
                     <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">{format(parseISO(q.issueDate), "MMM d, yyyy")}</td>
                     <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">{format(parseISO(q.validUntil), "MMM d, yyyy")}</td>
                     <td className="px-5 py-3.5">
@@ -334,6 +367,8 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     }
   }, [open, editing, companies, today]);
 
+  const { user } = useAuth();
+
   // Re-apply the default tax rate when the company or issue date changes on a new quote.
   useEffect(() => {
     if (!open || editing || !companyId) return;
@@ -454,7 +489,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       ...fxFields,
     };
     if (editing) quotesStore.update(editing.id, data);
-    else quotesStore.add({ id: newId("q"), ...data });
+    else quotesStore.add({ id: newId("q"), ...data, createdBy: user?.id });
     onOpenChange(false);
   };
 

@@ -27,6 +27,9 @@ interface NavSection {
   items: NavItem[];
 }
 
+/** Routes a sales-only user may reach. Everything else is hidden and redirected. */
+export const SALES_ROUTES = ["/quotations", "/clients", "/projects", "/settings"];
+
 const sections: NavSection[] = [
   {
     label: "Overview",
@@ -186,10 +189,17 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
 
 function Sidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const { roles } = useAuth();
+  const { roles, isSalesOnly } = useAuth();
   const isGroupAdmin = roles.includes("group_admin") || roles.includes("super_admin");
   const visibleSections = sections
-    .map((section) => ({ ...section, items: section.items.filter((item) => !item.requireGroupAdmin || isGroupAdmin) }))
+    .map((section) => ({
+      ...section,
+      items: section.items.filter(
+        (item) =>
+          (!item.requireGroupAdmin || isGroupAdmin) &&
+          (!isSalesOnly || SALES_ROUTES.includes(item.to)),
+      ),
+    }))
     .filter((section) => section.items.length > 0);
 
   return (

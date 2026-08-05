@@ -9,6 +9,7 @@ import {
 } from "@/lib/mock-data";
 import { upsertClient, deleteClientDb } from "@/lib/db-sync";
 import { useCompany } from "@/lib/company-context";
+import { useAuth } from "@/lib/auth-context";
 
 import { newId } from "@/lib/data-store";
 import { useEffect, useMemo, useState } from "react";
@@ -164,18 +165,20 @@ function ClientsPage() {
   };
 
   const openCreate = () => { setEditing(null); setOpen(true); };
+  const { isSalesOnly: salesOnly } = useAuth();
 
   return (
     <AppShell>
       <PageHeader title="Clients" description="Leads from the pipeline and won clients — kept separate." />
       <div className="p-6 space-y-5">
-        {/* KPI strip */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {/* KPI strip — money tiles are hidden for sales-only users */}
+        <div className={salesOnly ? "grid grid-cols-1 gap-3" : "grid grid-cols-2 md:grid-cols-4 gap-3"}>
           <KpiTile icon={<UserCheck className="h-4 w-4" />} label="Won clients" value={String(wonClients.length)} sub={`${leadClients.length} lead${leadClients.length === 1 ? "" : "s"}`} tint="from-primary/25 to-primary/5" ring="ring-primary/30" />
-          <KpiTile icon={<Wallet className="h-4 w-4" />} label="Revenue booked" value={fmtCompact(totals.revenue, "MGA")} tint="from-emerald-500/25 to-emerald-500/5" ring="ring-emerald-500/30" />
-          <KpiTile icon={<AlertCircle className="h-4 w-4" />} label="Outstanding" value={fmtCompact(totals.outstanding, "MGA")} sub={`${totals.overdue} overdue`} tint="from-amber-500/25 to-amber-500/5" ring="ring-amber-500/30" />
-          <KpiTile icon={<TrendingUp className="h-4 w-4" />} label="Top client" value={topClient?.cl.name ?? "—"} sub={topClient ? fmtCompact(topClient.r, "MGA") : undefined} tint="from-sky-500/25 to-sky-500/5" ring="ring-sky-500/30" />
+          {!salesOnly && <KpiTile icon={<Wallet className="h-4 w-4" />} label="Revenue booked" value={fmtCompact(totals.revenue, "MGA")} tint="from-emerald-500/25 to-emerald-500/5" ring="ring-emerald-500/30" />}
+          {!salesOnly && <KpiTile icon={<AlertCircle className="h-4 w-4" />} label="Outstanding" value={fmtCompact(totals.outstanding, "MGA")} sub={`${totals.overdue} overdue`} tint="from-amber-500/25 to-amber-500/5" ring="ring-amber-500/30" />}
+          {!salesOnly && <KpiTile icon={<TrendingUp className="h-4 w-4" />} label="Top client" value={topClient?.cl.name ?? "—"} sub={topClient ? fmtCompact(topClient.r, "MGA") : undefined} tint="from-sky-500/25 to-sky-500/5" ring="ring-sky-500/30" />}
         </div>
+
 
         {/* Toolbar */}
         <div className="flex flex-col gap-3">
@@ -194,9 +197,9 @@ function ClientsPage() {
               <SelectContent>
                 <SelectItem value="name_asc">Name A-Z</SelectItem>
                 <SelectItem value="name_desc">Name Z-A</SelectItem>
-                <SelectItem value="revenue_desc">Revenue ↓</SelectItem>
-                <SelectItem value="outstanding_desc">Outstanding ↓</SelectItem>
-                <SelectItem value="margin_desc">Margin ↓</SelectItem>
+                {!salesOnly && <SelectItem value="revenue_desc">Revenue ↓</SelectItem>}
+                {!salesOnly && <SelectItem value="outstanding_desc">Outstanding ↓</SelectItem>}
+                {!salesOnly && <SelectItem value="margin_desc">Margin ↓</SelectItem>}
               </SelectContent>
             </Select>
             <Select value={group} onValueChange={(v) => setGroup(v as typeof group)}>
@@ -296,6 +299,7 @@ function ClientCard({
   onEdit: (cl: Client) => void;
   onPromote: (cl: Client) => void;
 }) {
+  const { isSalesOnly: salesOnly } = useAuth();
   const linkedIds = contactCompanyIds(cl);
   const co = companies.find((c) => c.id === cl.companyId);
   const cliProjects = projects.filter((p) => p.clientId === cl.id);
@@ -361,7 +365,7 @@ function ClientCard({
         <div className="mt-2 text-[11px] text-muted-foreground/80 border-t border-border/50 pt-2">
           Lead from the pipeline. Promote when the deal is won.
         </div>
-      ) : (
+      ) : salesOnly ? null : (
         <div className="mt-2 border-t border-border/50 pt-2">
           <div className="grid grid-cols-3 gap-1.5">
             <StatMini label="Revenue" value={fmtCompact(revenue, "MGA")} />
@@ -372,8 +376,8 @@ function ClientCard({
       )}
 
       <div className="mt-2 flex gap-2 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-        <span>{cliInvoices.length} inv</span>
-        <span>{cliTx.length} txn</span>
+        {!salesOnly && <span>{cliInvoices.length} inv</span>}
+        {!salesOnly && <span>{cliTx.length} txn</span>}
         <span>{cliProjects.length} proj</span>
       </div>
     </div>
@@ -394,6 +398,7 @@ function ClientListView({
   group: string;
   grouped: { key: string; label: string; items: Client[] }[];
 }) {
+  const { isSalesOnly: salesOnly } = useAuth();
   const renderRow = (cl: Client) => {
     const co = companies.find((c) => c.id === cl.companyId);
     const cliProjects = projects.filter((p) => p.clientId === cl.id);
@@ -435,9 +440,9 @@ function ClientListView({
             </div>
           </div>
         </div>
-        <div className="text-right font-tnum text-[13px]">{isLead ? "—" : fmtCompact(revenue, "MGA")}</div>
-        <div className={`text-right font-tnum text-[13px] ${outstanding > 0 ? "text-amber-600" : ""}`}>{isLead ? "—" : fmtCompact(outstanding, "MGA")}</div>
-        <div className={`text-right font-tnum text-[13px] ${margin >= 30 ? "text-emerald-600" : margin < 0 ? "text-destructive" : ""}`}>{isLead ? "—" : `${margin.toFixed(0)}%`}</div>
+        <div className="text-right font-tnum text-[13px]">{isLead || salesOnly ? "—" : fmtCompact(revenue, "MGA")}</div>
+        <div className={`text-right font-tnum text-[13px] ${!salesOnly && outstanding > 0 ? "text-amber-600" : ""}`}>{isLead || salesOnly ? "—" : fmtCompact(outstanding, "MGA")}</div>
+        <div className={`text-right font-tnum text-[13px] ${salesOnly ? "" : margin >= 30 ? "text-emerald-600" : margin < 0 ? "text-destructive" : ""}`}>{isLead || salesOnly ? "—" : `${margin.toFixed(0)}%`}</div>
         <div className="flex justify-end">
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
             {isLead && (
