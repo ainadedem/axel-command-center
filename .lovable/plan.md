@@ -24,7 +24,7 @@ Hidden pages: Dashboard/finance KPIs, Invoices, Purchase orders, Expenses, Trans
 
 Database migration:
 - Add `created_by uuid` to `quotes`, defaulting to `auth.uid()` on insert.
-- Replace the quotes SELECT policy so a user with only the `sales` company role sees rows where `created_by = auth.uid()`; other roles keep full company-scoped visibility. Same restriction on UPDATE/DELETE for sales.
+- Quote access policies stay as they are (company-scoped): sales can read and edit every quotation of their company.
 - Add a small read path so quote owner names can be resolved: allow authenticated users to read `display_name`/`email` from `profiles` of users sharing a company (via `app_private.has_company_access`), so the Owner column can render a name instead of a UUID.
 
 Frontend:
