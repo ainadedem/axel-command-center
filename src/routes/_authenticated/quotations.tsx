@@ -454,7 +454,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       ...fxFields,
     };
     if (editing) quotesStore.update(editing.id, data);
-    else quotesStore.add({ id: newId("q"), ...data });
+    else quotesStore.add({ id: newId("q"), ...data, createdBy: user?.id });
     onOpenChange(false);
   };
 
