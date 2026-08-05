@@ -326,6 +326,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment }: {
         <div class="line"><span>TVA (${Number(vatRate).toFixed(2)}%)</span><span>${fmt(vatAmount, doc.currency)}</span></div>
         <div class="line grand"><span>Total TTC</span><span>${fmt(totalTTC, doc.currency)}</span></div>
         ${doc.kind === "invoice" ? `
+          <div class="arrete">Arrêté à la somme de ${esc(amountInFrench(totalTTC, doc.currency))}.</div>
           <div class="line"><span>Paid to date</span><span>${fmt(doc.paid ?? 0, doc.currency)}</span></div>
           <div class="line grand"><span>Balance due</span><span class="due">${fmt(balance, doc.currency)}</span></div>
         ` : ""}
