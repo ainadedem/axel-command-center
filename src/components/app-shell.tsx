@@ -341,7 +341,7 @@ function Topbar() {
                   <Settings className="h-4 w-4" /> Settings
                 </button>
                 <button
-                  onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
+                  onClick={async () => { await signOut(); navigate({ to: "/login", search: { redirect: "/" } }); }}
                   className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-accent"
                 >
                   <LogOut className="h-4 w-4" /> Sign out
