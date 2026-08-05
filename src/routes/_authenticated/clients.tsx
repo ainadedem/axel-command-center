@@ -364,7 +364,7 @@ function ClientCard({
         <div className="mt-2 text-[11px] text-muted-foreground/80 border-t border-border/50 pt-2">
           Lead from the pipeline. Promote when the deal is won.
         </div>
-      ) : (
+      ) : salesOnly ? null : (
         <div className="mt-2 border-t border-border/50 pt-2">
           <div className="grid grid-cols-3 gap-1.5">
             <StatMini label="Revenue" value={fmtCompact(revenue, "MGA")} />
@@ -375,8 +375,8 @@ function ClientCard({
       )}
 
       <div className="mt-2 flex gap-2 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-        <span>{cliInvoices.length} inv</span>
-        <span>{cliTx.length} txn</span>
+        {!salesOnly && <span>{cliInvoices.length} inv</span>}
+        {!salesOnly && <span>{cliTx.length} txn</span>}
         <span>{cliProjects.length} proj</span>
       </div>
     </div>
