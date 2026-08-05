@@ -52,19 +52,20 @@ interface Props {
 
 export function DocumentPreview({ open, onOpenChange, doc, company, client, project }: Props) {
   const [showStatus, setShowStatus] = useState(true);
+  const [showClientEmail, setShowClientEmail] = useState(true);
   const [showPayment, setShowPayment] = useState(company?.showPaymentDetails !== false);
   useEffect(() => { setShowPayment(company?.showPaymentDetails !== false); }, [company?.id, company?.showPaymentDetails]);
 
   const html = useMemo(() => {
     if (!doc) return "";
-    return buildHTML({ doc, company, client, project, showStatus, showPayment });
-  }, [doc, company, client, project, showStatus, showPayment]);
+    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail });
+  }, [doc, company, client, project, showStatus, showPayment, showClientEmail]);
 
   const printPdf = () => {
     if (!doc) return;
     const w = window.open("", "_blank", "width=900,height=1100");
     if (!w) return;
-    w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment }));
+    w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail }));
     w.document.close();
     setTimeout(() => { w.focus(); w.print(); }, 250);
   };
