@@ -1,7 +1,7 @@
 # Sales role scoping + quotation owner
 
 ## Goal
-1. A user with the **Sales** role only works with sales: their own quotations, the client directory (without any money information), and projects. Everything else is out of reach.
+1. A user with the **Sales** role only works with sales: quotations, the client directory (without any money information), and projects. Everything else is out of reach.
 2. Every quotation shows who created it (owner name) inside the app. The printed/PDF document is not changed.
 
 ## What changes for a Sales user
