@@ -1000,6 +1000,7 @@ export type Database = {
           client_id: string | null
           company_id: string
           created_at: string
+          created_by: string | null
           currency: string
           fx_base_currency: string | null
           fx_rate: number | null
@@ -1027,6 +1028,7 @@ export type Database = {
           client_id?: string | null
           company_id: string
           created_at?: string
+          created_by?: string | null
           currency?: string
           fx_base_currency?: string | null
           fx_rate?: number | null
@@ -1054,6 +1056,7 @@ export type Database = {
           client_id?: string | null
           company_id?: string
           created_at?: string
+          created_by?: string | null
           currency?: string
           fx_base_currency?: string | null
           fx_rate?: number | null
