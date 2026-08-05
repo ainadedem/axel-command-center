@@ -58,19 +58,49 @@ Deno.serve(async (req) => {
     return json({ error: "missing_fields", required: ["quote_id", "recipient_email", "pdf_base64"] }, 400);
   }
 
+  // --- Authentication: require a valid Supabase session ---
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const token = authHeader.toLowerCase().startsWith("bearer ")
+    ? authHeader.slice(7).trim()
+    : "";
+  if (!token) return json({ error: "unauthorized" }, 401);
+
   const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  // Look up quote
-  const { data: quote, error: qErr } = await admin
+  const { data: userData, error: userErr } = await admin.auth.getUser(token);
+  if (userErr || !userData?.user) return json({ error: "unauthorized" }, 401);
+
+  // --- Authorization: read the quote AS THE CALLER so RLS (company access)
+  // decides whether they may touch it. Not found => no access.
+  const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+  if (!ANON_KEY) return json({ error: "server_misconfigured" }, 500);
+
+  const asUser = createClient(SUPABASE_URL, ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const { data: quote, error: qErr } = await asUser
     .from("quotes")
     .select("id, number, company_id")
     .eq("id", quote_id)
     .maybeSingle();
 
   if (qErr) return json({ error: "db_error", detail: qErr.message }, 500);
-  if (!quote) return json({ error: "quote_not_found" }, 404);
+  if (!quote) return json({ error: "forbidden" }, 403);
+
+  // --- Basic input validation ---
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(recipient_email)) || String(recipient_email).length > 320) {
+    return json({ error: "invalid_recipient_email" }, 400);
+  }
+  if (subject !== undefined && (typeof subject !== "string" || subject.length > 200)) {
+    return json({ error: "invalid_subject" }, 400);
+  }
+  if (message !== undefined && (typeof message !== "string" || message.length > 20000)) {
+    return json({ error: "invalid_message" }, 400);
+  }
 
   const pdfBytes = base64ToBytes(pdf_base64);
   const safeNumber = String(quote.number).replace(/[^A-Za-z0-9_.-]/g, "_");

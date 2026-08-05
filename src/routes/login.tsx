@@ -3,14 +3,28 @@ import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import axelLogo from "@/assets/axel-logo.png";
 
+/**
+ * Only same-origin relative paths are allowed as post-login destinations.
+ * Anything else (absolute URLs, protocol-relative `//evil.com`, backslash
+ * tricks) falls back to the home page to prevent open-redirect phishing.
+ */
+function safeRedirect(value: unknown): string {
+  if (typeof value !== "string" || !value) return "/";
+  const path = value.trim();
+  if (!path.startsWith("/")) return "/";
+  if (path.startsWith("//") || path.startsWith("/\\")) return "/";
+  if (/^\/[a-z][a-z0-9+.-]*:/i.test(path)) return "/";
+  return path;
+}
+
 export const Route = createFileRoute("/login")({
   validateSearch: (s: Record<string, unknown>) => ({
-    redirect: (s.redirect as string) || "/",
+    redirect: safeRedirect(s.redirect),
   }),
   beforeLoad: async ({ search }) => {
     if (typeof window === "undefined") return;
     const { data } = await supabase.auth.getUser();
-    if (data.user) throw redirect({ to: search.redirect });
+    if (data.user) throw redirect({ to: safeRedirect(search.redirect) });
   },
   head: () => ({
     meta: [
@@ -41,7 +55,7 @@ function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      navigate({ to: search.redirect });
+      navigate({ to: safeRedirect(search.redirect) });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");
     } finally {
