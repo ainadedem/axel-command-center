@@ -81,6 +81,10 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
               Show status
             </label>
             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+              <Checkbox checked={showClientEmail} onCheckedChange={(v) => setShowClientEmail(!!v)} />
+              Show client email
+            </label>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
               <Checkbox checked={showPayment} onCheckedChange={(v) => setShowPayment(!!v)} />
               Show payment details
             </label>
