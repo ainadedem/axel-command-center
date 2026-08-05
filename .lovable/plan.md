@@ -9,7 +9,7 @@
 Visible pages: Quotations, Clients, Projects (plus About/Settings profile).
 Hidden pages: Dashboard/finance KPIs, Invoices, Purchase orders, Expenses, Transactions, Accounts, Journal, Grand livre, Balance, Bilan, Compte de résultat, Reports, Budgets, Payroll, Billing, Suppliers, Team, Sales team, Companies, Users & access, Pipeline.
 
-- **Quotations**: sees and edits only quotations they created. Revenue/aggregate stat cards limited to their own quotes.
+- **Quotations**: sees and edits all quotations of the company, including those created by other sales people. The Owner column identifies who made each one.
 - **Clients**: sees the client directory (name, contacts, address, industry, tax IDs) but no revenue, outstanding balance, lifetime value, invoices, or payment/bank details. The bank-details section of the client form is hidden.
 - **Projects**: sees project names/clients but not revenue, cost, or margin columns.
 
