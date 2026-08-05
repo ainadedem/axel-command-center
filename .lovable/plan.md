@@ -17,7 +17,7 @@ Hidden pages: Dashboard/finance KPIs, Invoices, Purchase orders, Expenses, Trans
 
 - Each quotation records the user who created it.
 - The Quotations table gets an **Owner** column (display name, falling back to email), sortable and groupable like the other columns.
-- The quotation preview/PDF prints a small "Prepared by: <name>" line in the document meta block.
+- The printed quotation/PDF stays exactly as it is — no owner name on the document.
 - Existing quotations have no recorded owner and will show "—" until edited; no back-filling is attempted.
 
 ## Technical notes
