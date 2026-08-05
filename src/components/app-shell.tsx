@@ -186,10 +186,17 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
 
 function Sidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const { roles } = useAuth();
+  const { roles, isSalesOnly } = useAuth();
   const isGroupAdmin = roles.includes("group_admin") || roles.includes("super_admin");
   const visibleSections = sections
-    .map((section) => ({ ...section, items: section.items.filter((item) => !item.requireGroupAdmin || isGroupAdmin) }))
+    .map((section) => ({
+      ...section,
+      items: section.items.filter(
+        (item) =>
+          (!item.requireGroupAdmin || isGroupAdmin) &&
+          (!isSalesOnly || SALES_ROUTES.includes(item.to)),
+      ),
+    }))
     .filter((section) => section.items.length > 0);
 
   return (
