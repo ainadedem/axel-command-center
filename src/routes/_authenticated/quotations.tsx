@@ -334,6 +334,8 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     }
   }, [open, editing, companies, today]);
 
+  const { user } = useAuth();
+
   // Re-apply the default tax rate when the company or issue date changes on a new quote.
   useEffect(() => {
     if (!open || editing || !companyId) return;
