@@ -79,6 +79,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     isAuthenticated: !!session,
     hasRole: (r) => roles.includes(r),
+    isSalesOnly:
+      roles.includes("sales") &&
+      !roles.some((r) => r === "super_admin" || r === "group_admin" || r === "company_admin" || r === "finance"),
     signOut: async () => { await supabase.auth.signOut(); },
     refresh: async () => { if (session?.user) await loadUserData(session.user.id); },
   };
