@@ -198,6 +198,7 @@ function Body() {
       mode: q.mode ?? "rate-card",
       lines: q.lines ? q.lines.map((l) => ({ ...l, id: newId("ql") })) : undefined,
       notes: q.notes,
+      createdBy: user?.id,
     });
   };
 
