@@ -102,7 +102,7 @@ function Body() {
     },
   ];
 
-  const fields: FieldDef<Project>[] = [
+  const allFields: FieldDef<Project>[] = [
     { key: "name", label: "Project", type: "string", accessor: (p) => p.name, noGroup: true },
     { key: "client", label: "Client", type: "enum", accessor: (p) => clients.find((c) => c.id === p.clientId)?.name ?? "" },
     { key: "salesRep", label: "Sales rep", type: "enum", accessor: (p) => clients.find((c) => c.id === p.clientId)?.acquisition ?? "" },
