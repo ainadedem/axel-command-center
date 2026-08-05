@@ -265,6 +265,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment }: {
       .doc .totals { margin-top: 20px; margin-left: auto; width: 280px; font-size: 11px; }
       .doc .totals .line { display: flex; justify-content: space-between; padding: 6px 0; }
       .doc .totals .grand { border-top: 2px solid ${accent}; margin-top: 6px; padding-top: 10px; font-size: 14px; font-weight: 700; }
+      .doc .totals .arrete { font-style: italic; color: #475569; font-size: 10px; margin: 8px 0 10px; padding-top: 6px; border-top: 1px dashed #cbd5e1; }
       .doc .totals .due { color: ${balance > 0 ? "#dc2626" : "#16a34a"}; font-weight: 700; }
       .doc .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #64748b; }
       .doc .paycard { margin-top: 28px; padding: 14px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid ${accent}; font-size: 11px; }
