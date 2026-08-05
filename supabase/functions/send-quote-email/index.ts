@@ -70,8 +70,7 @@ Deno.serve(async (req) => {
   });
 
   const { data: userData, error: userErr } = await admin.auth.getUser(token);
-  const user = userData?.user;
-  if (userErr || !user) return json({ error: "unauthorized" }, 401);
+  if (userErr || !userData?.user) return json({ error: "unauthorized" }, 401);
 
   // --- Authorization: read the quote AS THE CALLER so RLS (company access)
   // decides whether they may touch it. Not found => no access.
