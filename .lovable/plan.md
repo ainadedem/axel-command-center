@@ -2,7 +2,7 @@
 
 ## Goal
 1. A user with the **Sales** role only works with sales: their own quotations, the client directory (without any money information), and projects. Everything else is out of reach.
-2. Every quotation shows who created it (owner name), in the list and on the printed/PDF document.
+2. Every quotation shows who created it (owner name) inside the app. The printed/PDF document is not changed.
 
 ## What changes for a Sales user
 
@@ -17,7 +17,7 @@ Hidden pages: Dashboard/finance KPIs, Invoices, Purchase orders, Expenses, Trans
 
 - Each quotation records the user who created it.
 - The Quotations table gets an **Owner** column (display name, falling back to email), sortable and groupable like the other columns.
-- The quotation preview/PDF prints a small "Prepared by: <name>" line in the document meta block.
+- The printed quotation/PDF stays exactly as it is — no owner name on the document.
 - Existing quotations have no recorded owner and will show "—" until edited; no back-filling is attempted.
 
 ## Technical notes
@@ -34,7 +34,7 @@ Frontend:
 - `src/routes/_authenticated/quotations.tsx`: stamp `createdBy` on create, filter list when sales-only, add the Owner column, resolve names from a profiles map.
 - `src/routes/_authenticated/clients.tsx` and `projects.tsx`: hide money columns/cards and the payment-details block when sales-only.
 - `src/lib/mock-data.ts` + `src/lib/db-sync.ts`: add `createdBy` to the `Quote` type and its row mapping.
-- `src/components/document-preview.tsx`: optional `preparedBy` field rendered in the meta block.
+- `src/components/document-preview.tsx`: unchanged.
 
 ## Out of scope
 - Changing what other roles (finance, viewer, admins) can see.
