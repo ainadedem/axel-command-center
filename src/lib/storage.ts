@@ -39,7 +39,17 @@ function safeName(name: string): string {
 /** Uploads a file and returns the `storage:` reference to store on the row. */
 export async function uploadFile(bucket: string, folder: string, file: File): Promise<string> {
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const path = `${folder.replace(/^\/+|\/+$/g, "") || "misc"}/${stamp}-${safeName(file.name)}`;
+  let prefix = folder.replace(/^\/+|\/+$/g, "") || "misc";
+
+  // Avatars are scoped per uploader: storage policies only allow writing into
+  // a folder named after the authenticated user's id.
+  if (bucket === AVATARS_BUCKET) {
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) throw new Error("You must be signed in to upload an image");
+    prefix = `${data.user.id}/${prefix}`;
+  }
+
+  const path = `${prefix}/${stamp}-${safeName(file.name)}`;
   const { error } = await supabase.storage.from(bucket).upload(path, file, {
     cacheControl: "3600",
     upsert: false,
