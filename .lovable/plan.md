@@ -31,7 +31,7 @@ Frontend:
 - Extend `AppRole` usage with a `isSalesOnly` helper in `src/lib/auth-context.tsx` (`roles` contains `sales` and none of super_admin/group_admin/company_admin/finance).
 - `src/components/app-shell.tsx`: filter the nav sections by `isSalesOnly`.
 - Add a route-level guard: sales-only users hitting a restricted route are redirected to `/quotations`.
-- `src/routes/_authenticated/quotations.tsx`: stamp `createdBy` on create, filter list when sales-only, add the Owner column, resolve names from a profiles map.
+- `src/routes/_authenticated/quotations.tsx`: stamp `createdBy` on create, add the Owner column, resolve names from a profiles map.
 - `src/routes/_authenticated/clients.tsx` and `projects.tsx`: hide money columns/cards and the payment-details block when sales-only.
 - `src/lib/mock-data.ts` + `src/lib/db-sync.ts`: add `createdBy` to the `Quote` type and its row mapping.
 - `src/components/document-preview.tsx`: unchanged.
