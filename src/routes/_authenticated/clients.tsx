@@ -435,9 +435,9 @@ function ClientListView({
             </div>
           </div>
         </div>
-        <div className="text-right font-tnum text-[13px]">{isLead ? "—" : fmtCompact(revenue, "MGA")}</div>
-        <div className={`text-right font-tnum text-[13px] ${outstanding > 0 ? "text-amber-600" : ""}`}>{isLead ? "—" : fmtCompact(outstanding, "MGA")}</div>
-        <div className={`text-right font-tnum text-[13px] ${margin >= 30 ? "text-emerald-600" : margin < 0 ? "text-destructive" : ""}`}>{isLead ? "—" : `${margin.toFixed(0)}%`}</div>
+        <div className="text-right font-tnum text-[13px]">{isLead || salesOnly ? "—" : fmtCompact(revenue, "MGA")}</div>
+        <div className={`text-right font-tnum text-[13px] ${!salesOnly && outstanding > 0 ? "text-amber-600" : ""}`}>{isLead || salesOnly ? "—" : fmtCompact(outstanding, "MGA")}</div>
+        <div className={`text-right font-tnum text-[13px] ${salesOnly ? "" : margin >= 30 ? "text-emerald-600" : margin < 0 ? "text-destructive" : ""}`}>{isLead || salesOnly ? "—" : `${margin.toFixed(0)}%`}</div>
         <div className="flex justify-end">
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
             {isLead && (
