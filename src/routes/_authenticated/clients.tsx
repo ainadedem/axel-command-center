@@ -394,6 +394,7 @@ function ClientListView({
   group: string;
   grouped: { key: string; label: string; items: Client[] }[];
 }) {
+  const { isSalesOnly: salesOnly } = useAuth();
   const renderRow = (cl: Client) => {
     const co = companies.find((c) => c.id === cl.companyId);
     const cliProjects = projects.filter((p) => p.clientId === cl.id);
