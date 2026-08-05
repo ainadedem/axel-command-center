@@ -73,23 +73,24 @@ Deno.serve(async (req) => {
   const user = userData?.user;
   if (userErr || !user) return json({ error: "unauthorized" }, 401);
 
-  // Look up quote
-  const { data: quote, error: qErr } = await admin
+  // --- Authorization: read the quote AS THE CALLER so RLS (company access)
+  // decides whether they may touch it. Not found => no access.
+  const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+  if (!ANON_KEY) return json({ error: "server_misconfigured" }, 500);
+
+  const asUser = createClient(SUPABASE_URL, ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const { data: quote, error: qErr } = await asUser
     .from("quotes")
     .select("id, number, company_id")
     .eq("id", quote_id)
     .maybeSingle();
 
   if (qErr) return json({ error: "db_error", detail: qErr.message }, 500);
-  if (!quote) return json({ error: "quote_not_found" }, 404);
-
-  // --- Authorization: caller must have access to the quote's company ---
-  const { data: allowed, error: accessErr } = await admin.rpc("has_company_access", {
-    _user_id: user.id,
-    _company_id: quote.company_id,
-  });
-  if (accessErr) return json({ error: "authz_check_failed", detail: accessErr.message }, 500);
-  if (allowed !== true) return json({ error: "forbidden" }, 403);
+  if (!quote) return json({ error: "forbidden" }, 403);
 
   // --- Basic input validation ---
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(recipient_email)) || String(recipient_email).length > 320) {
