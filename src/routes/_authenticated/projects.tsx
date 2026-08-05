@@ -47,6 +47,7 @@ function Body() {
   const transactions = useTransactions();
   const baseList = inScope(projects, scope);
   const [open, setOpen] = useState(false);
+  const { isSalesOnly: salesOnly } = useAuth();
   const [editing, setEditing] = useState<Project | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [mainTab, setMainTab] = useState<"projects" | "clients">("projects");
@@ -170,7 +171,7 @@ function Body() {
       ) : (
         <>
           {/* Portfolio KPI strip */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className={salesOnly ? "hidden" : "grid grid-cols-2 md:grid-cols-5 gap-3"}>
             <KpiCard label="Portfolio revenue" value={fmtCompact(kpi.rev, "MGA")} />
             <KpiCard label="Invoiced" value={fmtCompact(kpi.invoiced, "MGA")} />
             <KpiCard label="Collected" value={fmtCompact(kpi.collected, "MGA")} tone="success" />
@@ -199,21 +200,21 @@ function Body() {
                     <th className="text-left font-medium px-5 py-3">Client</th>
                     <th className="text-left font-medium px-5 py-3">Sales rep</th>
                     <th className="text-left font-medium px-5 py-3">Company</th>
-                    <th className="text-right font-medium px-5 py-3">Revenue</th>
-                    <th className="text-right font-medium px-5 py-3">Cost</th>
-                    <th className="text-right font-medium px-5 py-3">Profit</th>
-                    <th className="text-right font-medium px-5 py-3">Margin</th>
-                    <th className="text-right font-medium px-5 py-3">Invoiced</th>
-                    <th className="text-right font-medium px-5 py-3">Collected</th>
-                    <th className="text-right font-medium px-5 py-3">Logged spend</th>
-                    <th className="text-right font-medium px-5 py-3">Net P&amp;L</th>
+                    {!salesOnly && <th className="text-right font-medium px-5 py-3">Revenue</th>}
+                    {!salesOnly && <th className="text-right font-medium px-5 py-3">Cost</th>}
+                    {!salesOnly && <th className="text-right font-medium px-5 py-3">Profit</th>}
+                    {!salesOnly && <th className="text-right font-medium px-5 py-3">Margin</th>}
+                    {!salesOnly && <th className="text-right font-medium px-5 py-3">Invoiced</th>}
+                    {!salesOnly && <th className="text-right font-medium px-5 py-3">Collected</th>}
+                    {!salesOnly && <th className="text-right font-medium px-5 py-3">Logged spend</th>}
+                    {!salesOnly && <th className="text-right font-medium px-5 py-3">Net P&amp;L</th>}
                     <th className="px-5 py-3 w-20" />
                   </tr>
                 </thead>
                 <tbody>
                   {groups.map((g) => (
                     <Fragment key={g.key}>
-                      {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={14} />}
+                      {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={salesOnly ? 6 : 14} />}
                       {g.items.map((p) => {
                         const cl = clients.find((c) => c.id === p.clientId);
                         const co = companies.find((c) => c.id === p.companyId);
@@ -275,7 +276,7 @@ function Body() {
                             </tr>
                             {isExp && (
                               <tr className="border-b border-border/40 bg-surface-elevated/10">
-                                <td colSpan={14} className="p-0">
+                                <td colSpan={salesOnly ? 6 : 14} className="p-0">
                                   <ProjectDetail projInvoices={projInvoices} projTx={projTx} />
                                 </td>
                               </tr>
