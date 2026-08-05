@@ -117,7 +117,7 @@ function headingFor(k: DocKind) {
   return "INVOICE";
 }
 
-function buildHTML({ doc, company, client, project, showStatus, showPayment }: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean; showPayment?: boolean }) {
+function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail }: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean; showPayment?: boolean; showClientEmail?: boolean }) {
   const rawColor = company?.color ?? "#1e293b";
   // Validate against a strict CSS color allowlist to prevent CSS/script injection
   // via the company.color field (it is embedded verbatim in a <style> block below).
