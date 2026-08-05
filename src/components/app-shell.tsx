@@ -275,7 +275,7 @@ function Topbar() {
       if (pathname.startsWith(newAction.to)) window.dispatchEvent(new CustomEvent(CREATE_EVENT));
       else navigate({ to: newAction.to });
     } else {
-      navigate({ to: "/transactions" });
+      navigate({ to: "/transactions", search: { q: "" } });
     }
   };
 
