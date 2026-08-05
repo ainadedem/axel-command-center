@@ -52,19 +52,20 @@ interface Props {
 
 export function DocumentPreview({ open, onOpenChange, doc, company, client, project }: Props) {
   const [showStatus, setShowStatus] = useState(true);
+  const [showClientEmail, setShowClientEmail] = useState(true);
   const [showPayment, setShowPayment] = useState(company?.showPaymentDetails !== false);
   useEffect(() => { setShowPayment(company?.showPaymentDetails !== false); }, [company?.id, company?.showPaymentDetails]);
 
   const html = useMemo(() => {
     if (!doc) return "";
-    return buildHTML({ doc, company, client, project, showStatus, showPayment });
-  }, [doc, company, client, project, showStatus, showPayment]);
+    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail });
+  }, [doc, company, client, project, showStatus, showPayment, showClientEmail]);
 
   const printPdf = () => {
     if (!doc) return;
     const w = window.open("", "_blank", "width=900,height=1100");
     if (!w) return;
-    w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment }));
+    w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail }));
     w.document.close();
     setTimeout(() => { w.focus(); w.print(); }, 250);
   };
@@ -78,6 +79,10 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
               <Checkbox checked={showStatus} onCheckedChange={(v) => setShowStatus(!!v)} />
               Show status
+            </label>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+              <Checkbox checked={showClientEmail} onCheckedChange={(v) => setShowClientEmail(!!v)} />
+              Show client email
             </label>
             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
               <Checkbox checked={showPayment} onCheckedChange={(v) => setShowPayment(!!v)} />
@@ -112,7 +117,7 @@ function headingFor(k: DocKind) {
   return "INVOICE";
 }
 
-function buildHTML({ doc, company, client, project, showStatus, showPayment }: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean; showPayment?: boolean }) {
+function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail }: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean; showPayment?: boolean; showClientEmail?: boolean }) {
   const rawColor = company?.color ?? "#1e293b";
   // Validate against a strict CSS color allowlist to prevent CSS/script injection
   // via the company.color field (it is embedded verbatim in a <style> block below).
@@ -304,7 +309,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment }: {
         <div class="party">
           <h2>${doc.kind === "po" ? "Issued by" : "Bill to"}</h2>
           <div style="font-weight: 700; font-size: 13px;">${esc(client?.name ?? "—")}</div>
-          ${[client?.address, client?.email, client?.phone].filter(Boolean).map((l) => `<div>${esc(l as string)}</div>`).join("")}
+          ${[client?.address, showClientEmail === false ? null : client?.email, client?.phone].filter(Boolean).map((l) => `<div>${esc(l as string)}</div>`).join("")}
           ${taxMeta.length ? `<div class="taxmeta">${taxMeta.map((l) => `<div>${esc(l)}</div>`).join("")}</div>` : ""}
         </div>
       </div>
@@ -349,13 +354,13 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment }: {
   `;
 }
 
-export function buildPrintableDocument(args: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean; showPayment?: boolean }) {
+export function buildPrintableDocument(args: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean; showPayment?: boolean; showClientEmail?: boolean }) {
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(args.doc.number)}</title>
     <style>@page { size: A4; margin: 22mm; } body { margin: 0; }</style>
     </head><body>${buildHTML(args)}</body></html>`;
 }
 
-export function buildDocumentHTML(args: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean; showPayment?: boolean }) {
+export function buildDocumentHTML(args: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean; showPayment?: boolean; showClientEmail?: boolean }) {
   return buildHTML(args);
 }
 
