@@ -197,9 +197,9 @@ function ClientsPage() {
               <SelectContent>
                 <SelectItem value="name_asc">Name A-Z</SelectItem>
                 <SelectItem value="name_desc">Name Z-A</SelectItem>
-                <SelectItem value="revenue_desc">Revenue ↓</SelectItem>
-                <SelectItem value="outstanding_desc">Outstanding ↓</SelectItem>
-                <SelectItem value="margin_desc">Margin ↓</SelectItem>
+                {!salesOnly && <SelectItem value="revenue_desc">Revenue ↓</SelectItem>}
+                {!salesOnly && <SelectItem value="outstanding_desc">Outstanding ↓</SelectItem>}
+                {!salesOnly && <SelectItem value="margin_desc">Margin ↓</SelectItem>}
               </SelectContent>
             </Select>
             <Select value={group} onValueChange={(v) => setGroup(v as typeof group)}>
