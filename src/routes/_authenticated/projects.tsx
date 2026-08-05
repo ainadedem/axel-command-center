@@ -112,7 +112,7 @@ function Body() {
     { key: "cost", label: "Cost", type: "number", accessor: (p) => p.cost, noGroup: true },
     { key: "profit", label: "Profit", type: "number", accessor: (p) => p.revenue - p.cost, noGroup: true },
     { key: "margin", label: "Margin %", type: "number", accessor: (p) => p.revenue > 0 ? ((p.revenue - p.cost) / p.revenue) * 100 : 0, noGroup: true },
-  ].filter((f) => !salesOnly || !["revenue", "cost", "profit", "margin"].includes(f.key));
+  ].filter((f: FieldDef<Project>) => !salesOnly || !["revenue", "cost", "profit", "margin"].includes(f.key)) as FieldDef<Project>[];
   const view = useDataView<Project>("projects", fields);
   const groups = view.apply(baseList);
   const list = groups.flatMap((g) => g.items);
