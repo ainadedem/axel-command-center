@@ -309,7 +309,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
         <div class="party">
           <h2>${doc.kind === "po" ? "Issued by" : "Bill to"}</h2>
           <div style="font-weight: 700; font-size: 13px;">${esc(client?.name ?? "—")}</div>
-          ${[client?.address, client?.email, client?.phone].filter(Boolean).map((l) => `<div>${esc(l as string)}</div>`).join("")}
+          ${[client?.address, showClientEmail === false ? null : client?.email, client?.phone].filter(Boolean).map((l) => `<div>${esc(l as string)}</div>`).join("")}
           ${taxMeta.length ? `<div class="taxmeta">${taxMeta.map((l) => `<div>${esc(l)}</div>`).join("")}</div>` : ""}
         </div>
       </div>
