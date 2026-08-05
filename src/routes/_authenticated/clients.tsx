@@ -165,6 +165,7 @@ function ClientsPage() {
   };
 
   const openCreate = () => { setEditing(null); setOpen(true); };
+  const { isSalesOnly: salesOnly } = useAuth();
 
   return (
     <AppShell>
