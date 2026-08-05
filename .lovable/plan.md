@@ -34,7 +34,7 @@ Frontend:
 - `src/routes/_authenticated/quotations.tsx`: stamp `createdBy` on create, filter list when sales-only, add the Owner column, resolve names from a profiles map.
 - `src/routes/_authenticated/clients.tsx` and `projects.tsx`: hide money columns/cards and the payment-details block when sales-only.
 - `src/lib/mock-data.ts` + `src/lib/db-sync.ts`: add `createdBy` to the `Quote` type and its row mapping.
-- `src/components/document-preview.tsx`: optional `preparedBy` field rendered in the meta block.
+- `src/components/document-preview.tsx`: unchanged.
 
 ## Out of scope
 - Changing what other roles (finance, viewer, admins) can see.
