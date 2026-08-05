@@ -219,6 +219,7 @@ function Body() {
                 <th className="text-left font-medium px-5 py-3">Client</th>
                 <th className="text-left font-medium px-5 py-3">Project</th>
                 <th className="text-left font-medium px-5 py-3">Company</th>
+                <th className="text-left font-medium px-5 py-3">Owner</th>
                 <th className="text-left font-medium px-5 py-3">Issued</th>
                 <th className="text-left font-medium px-5 py-3">Valid until</th>
                 <th className="text-left font-medium px-5 py-3">Status</th>
@@ -229,7 +230,7 @@ function Body() {
             <tbody>
               {groups.map((g) => (
                 <Fragment key={g.key}>
-                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={9} />}
+                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={10} />}
                   {g.items.map((q) => {
                 const co = companies.find((c) => c.id === q.companyId);
                 const cl = clients.find((c) => c.id === q.clientId);
