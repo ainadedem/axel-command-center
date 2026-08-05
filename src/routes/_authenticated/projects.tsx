@@ -20,6 +20,7 @@ import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
+import { useAuth } from "@/lib/auth-context";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { cn } from "@/lib/utils";
 import { KpiCard } from "@/components/kpi-card";
@@ -255,6 +256,7 @@ function Body() {
                               <td className="px-5 py-3.5">
                                 {co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}
                               </td>
+                              {!salesOnly && <>
                               <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(p.revenue, p.currency)}</td>
                               <td className="px-5 py-3.5 text-right font-tnum text-muted-foreground">{fmtCompact(p.cost, p.currency)}</td>
                               <td className={`px-5 py-3.5 text-right font-tnum font-medium ${profit > 0 ? "text-success" : profit < 0 ? "text-destructive" : ""}`}>{fmtCompact(profit, p.currency)}</td>
@@ -267,6 +269,7 @@ function Body() {
                                   ? <span className={netPL >= 0 ? "text-success" : "text-destructive"}>{fmtCompact(netPL, p.currency)}</span>
                                   : <span className="text-muted-foreground/50">—</span>}
                               </td>
+                              </>}
                               <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
                                 <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
                                   <button onClick={() => { setEditing(p); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
