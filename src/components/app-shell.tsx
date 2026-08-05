@@ -27,6 +27,9 @@ interface NavSection {
   items: NavItem[];
 }
 
+/** Routes a sales-only user may reach. Everything else is hidden and redirected. */
+export const SALES_ROUTES = ["/quotations", "/clients", "/projects", "/settings"];
+
 const sections: NavSection[] = [
   {
     label: "Overview",
