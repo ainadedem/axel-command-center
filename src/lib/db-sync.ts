@@ -877,6 +877,7 @@ const quoteToDb = (q: Quote) => {
     pdf_url: q.pdfUrl ?? null,
     sent_at: q.sentAt ?? null,
     sent_to: q.sentTo ?? null,
+    ...(q.createdBy && isUuid(q.createdBy) ? { created_by: q.createdBy } : {}),
   };
 };
 const quoteFromDb = (r: Record<string, unknown>): Quote => ({
@@ -903,6 +904,7 @@ const quoteFromDb = (r: Record<string, unknown>): Quote => ({
   pdfUrl: (r.pdf_url as string) ?? undefined,
   sentAt: (r.sent_at as string) ?? undefined,
   sentTo: (r.sent_to as string) ?? undefined,
+  createdBy: (r.created_by as string) ?? undefined,
 });
 export async function upsertQuote(q: Quote): Promise<string | null> {
   const row = quoteToDb(q);
