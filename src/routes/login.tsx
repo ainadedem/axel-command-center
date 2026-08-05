@@ -55,7 +55,7 @@ function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      navigate({ to: search.redirect });
+      navigate({ to: safeRedirect(search.redirect) });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");
     } finally {

@@ -58,9 +58,20 @@ Deno.serve(async (req) => {
     return json({ error: "missing_fields", required: ["quote_id", "recipient_email", "pdf_base64"] }, 400);
   }
 
+  // --- Authentication: require a valid Supabase session ---
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const token = authHeader.toLowerCase().startsWith("bearer ")
+    ? authHeader.slice(7).trim()
+    : "";
+  if (!token) return json({ error: "unauthorized" }, 401);
+
   const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+
+  const { data: userData, error: userErr } = await admin.auth.getUser(token);
+  const user = userData?.user;
+  if (userErr || !user) return json({ error: "unauthorized" }, 401);
 
   // Look up quote
   const { data: quote, error: qErr } = await admin
@@ -71,6 +82,25 @@ Deno.serve(async (req) => {
 
   if (qErr) return json({ error: "db_error", detail: qErr.message }, 500);
   if (!quote) return json({ error: "quote_not_found" }, 404);
+
+  // --- Authorization: caller must have access to the quote's company ---
+  const { data: allowed, error: accessErr } = await admin.rpc("has_company_access", {
+    _user_id: user.id,
+    _company_id: quote.company_id,
+  });
+  if (accessErr) return json({ error: "authz_check_failed", detail: accessErr.message }, 500);
+  if (allowed !== true) return json({ error: "forbidden" }, 403);
+
+  // --- Basic input validation ---
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(recipient_email)) || String(recipient_email).length > 320) {
+    return json({ error: "invalid_recipient_email" }, 400);
+  }
+  if (subject !== undefined && (typeof subject !== "string" || subject.length > 200)) {
+    return json({ error: "invalid_subject" }, 400);
+  }
+  if (message !== undefined && (typeof message !== "string" || message.length > 20000)) {
+    return json({ error: "invalid_message" }, 400);
+  }
 
   const pdfBytes = base64ToBytes(pdf_base64);
   const safeNumber = String(quote.number).replace(/[^A-Za-z0-9_.-]/g, "_");
