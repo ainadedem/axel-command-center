@@ -9,6 +9,7 @@ import {
 } from "@/lib/mock-data";
 import { upsertClient, deleteClientDb } from "@/lib/db-sync";
 import { useCompany } from "@/lib/company-context";
+import { useAuth } from "@/lib/auth-context";
 
 import { newId } from "@/lib/data-store";
 import { useEffect, useMemo, useState } from "react";
