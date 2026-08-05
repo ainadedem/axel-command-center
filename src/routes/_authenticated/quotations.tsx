@@ -160,6 +160,7 @@ function Body() {
     { key: "issueDate", label: "Issued", type: "date", accessor: (q) => q.issueDate, noGroup: true },
     { key: "validUntil", label: "Valid until", type: "date", accessor: (q) => q.validUntil, noGroup: true },
     { key: "amount", label: "Amount", type: "number", accessor: (q) => q.amount, noGroup: true },
+    { key: "owner", label: "Owner", type: "enum", accessor: (q) => ownerName(q) },
   ];
   const view = useDataView<Quote>("quotations", fields);
   const groups = view.apply(baseList);
