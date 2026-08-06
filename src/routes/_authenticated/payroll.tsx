@@ -226,7 +226,7 @@ function RegisterDialog({
               <Select value={teamMemberId} onValueChange={setTeamMemberId}>
                 <SelectTrigger><SelectValue placeholder="Choose…" /></SelectTrigger>
                 <SelectContent>
-                  {team.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+                  {teamOptions.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
