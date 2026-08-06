@@ -199,6 +199,13 @@ function RegisterDialog({
     onChange: setTeamMemberId,
   });
 
+  const teamOptions = useMemo(
+    () => team
+      .filter((m) => m.companyId === undefined || m.companyId === companyId)
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    [team, companyId],
+  );
+
   const submit = () => {
     const g = parseFloat(gross);
     if (!teamMemberId || !companyId || !g) return;
