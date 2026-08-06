@@ -1264,17 +1264,29 @@ export async function hydrateExtras(scope: HydrationScope = { mode: "all" }) {
   salaryRegisterStore.replaceAll(srs.map((r) => srFromDb(r)));
   payrollRunsStore.replaceAll(prs.map((r) => prFromDb(r)));
 
-  if (scope.mode === "all") {
-    const [{ data: tms }, { data: sms }] = await Promise.all([
-      supabase.from("team_members").select("*"),
-      supabase.from("sales_members").select("*"),
-    ]);
-    teamMembersStore.replaceAll(((tms ?? []) as Record<string, unknown>[]).map((r) => tmFromDb(r)));
-    salesMembersStore.replaceAll(((sms ?? []) as Record<string, unknown>[]).map((r) => smFromDb(r)));
-  } else {
-    teamMembersStore.replaceAll([]);
-    salesMembersStore.replaceAll([]);
+  // Team + sales members load in every scope. In a single-company scope we
+  // keep globals ("all companies") plus people assigned to that company.
+  let tmQuery = supabase.from("team_members").select("*");
+  if (scope.mode === "scoped") {
+    tmQuery = scope.companyIds.length
+      ? tmQuery.or(`is_global.eq.true,company_id.in.(${scope.companyIds.join(",")})`)
+      : tmQuery.eq("is_global", true);
   }
+  const { data: tms } = await tmQuery;
+  const members = ((tms ?? []) as Record<string, unknown>[]).map((r) => tmFromDb(r));
+  teamMembersStore.replaceAll(members);
+
+  const memberIds = members.map((m) => m.id).filter((id) => isUuid(id));
+  let smQuery = supabase.from("sales_members").select("*");
+  if (scope.mode === "scoped") {
+    if (memberIds.length === 0) {
+      salesMembersStore.replaceAll([]);
+      return;
+    }
+    smQuery = smQuery.in("team_member_id", memberIds);
+  }
+  const { data: sms } = await smQuery;
+  salesMembersStore.replaceAll(((sms ?? []) as Record<string, unknown>[]).map((r) => smFromDb(r)));
 }
 
 export async function pushLocalExtrasSeed(): Promise<Record<string, number>> {

@@ -199,6 +199,13 @@ function RegisterDialog({
     onChange: setTeamMemberId,
   });
 
+  const teamOptions = useMemo(
+    () => team
+      .filter((m) => m.companyId === undefined || m.companyId === companyId)
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    [team, companyId],
+  );
+
   const submit = () => {
     const g = parseFloat(gross);
     if (!teamMemberId || !companyId || !g) return;
@@ -226,7 +233,7 @@ function RegisterDialog({
               <Select value={teamMemberId} onValueChange={setTeamMemberId}>
                 <SelectTrigger><SelectValue placeholder="Choose…" /></SelectTrigger>
                 <SelectContent>
-                  {team.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+                  {teamOptions.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

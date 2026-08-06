@@ -147,7 +147,7 @@ function CompanySwitcher() {
 
 function SidebarSection({ section, pathname }: { section: NavSection; pathname: string }) {
   const hasActive = section.items.some((item) => pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to)));
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(hasActive);
 
   useEffect(() => {
     if (hasActive) setOpen(true);
