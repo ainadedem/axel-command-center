@@ -365,7 +365,10 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setMode("rate-card");
       setLines([]); setNotes(""); setSubject(""); setBankAccountId(""); setTaxRate(defaultTaxRate(companies[0], today));
     }
-  }, [open, editing, companies, today]);
+    // Only re-initialise when the dialog opens (or switches record) — background
+    // data refreshes must never overwrite in-progress edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editing?.id]);
 
   const { user } = useAuth();
 
