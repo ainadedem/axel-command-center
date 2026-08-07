@@ -7,6 +7,7 @@ import { format, parseISO } from "date-fns";
 import { formatRib, resolveBankAccount } from "@/lib/payment-details";
 import { amountInFrench } from "@/lib/amount-words";
 import { renderRichText } from "@/lib/rich-text";
+import { useFileUrl } from "@/hooks/use-file-url";
 
 import {
   fmt, type Company, type Client, type Project, type Currency, type QuoteLine,
@@ -56,16 +57,20 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
   const [showPayment, setShowPayment] = useState(company?.showPaymentDetails !== false);
   useEffect(() => { setShowPayment(company?.showPaymentDetails !== false); }, [company?.id, company?.showPaymentDetails]);
 
+  // Logos are stored as private storage refs (`storage:bucket/path`) — resolve
+  // them to a signed URL before embedding into the document HTML.
+  const logoUrl = useFileUrl(company?.logoUrl);
+
   const html = useMemo(() => {
     if (!doc) return "";
-    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail });
-  }, [doc, company, client, project, showStatus, showPayment, showClientEmail]);
+    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl });
+  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl]);
 
   const printPdf = () => {
     if (!doc) return;
     const w = window.open("", "_blank", "width=900,height=1100");
     if (!w) return;
-    w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail }));
+    w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl }));
     w.document.close();
     setTimeout(() => { w.focus(); w.print(); }, 250);
   };
@@ -117,7 +122,7 @@ function headingFor(k: DocKind) {
   return "INVOICE";
 }
 
-function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail }: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean; showPayment?: boolean; showClientEmail?: boolean }) {
+function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl }: DocumentHtmlArgs) {
   const rawColor = company?.color ?? "#1e293b";
   // Validate against a strict CSS color allowlist to prevent CSS/script injection
   // via the company.color field (it is embedded verbatim in a <style> block below).
@@ -234,8 +239,9 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
   const refsHtml = (doc.references ?? []).filter((r) => r.value)
     .map((r) => `<div><strong>${esc(r.label)}:</strong> ${esc(r.value)}</div>`).join("");
 
-  const logoHtml = company?.logoUrl
-    ? `<img src="${esc(company.logoUrl)}" alt="${esc(company?.name ?? "")}" style="max-height: 52px; max-width: 180px; object-fit: contain; margin-bottom: 12px;" />`
+  const logoSrc = logoUrl && !logoUrl.startsWith("storage:") ? logoUrl : undefined;
+  const logoHtml = logoSrc
+    ? `<img src="${esc(logoSrc)}" alt="${esc(company?.name ?? "")}" style="max-height: 52px; max-width: 180px; object-fit: contain; margin-bottom: 12px;" />`
     : "";
 
   return `
@@ -354,13 +360,25 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
   `;
 }
 
-export function buildPrintableDocument(args: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean; showPayment?: boolean; showClientEmail?: boolean }) {
+export interface DocumentHtmlArgs {
+  doc: DocumentData;
+  company?: Company;
+  client?: Client;
+  project?: Project;
+  showStatus?: boolean;
+  showPayment?: boolean;
+  showClientEmail?: boolean;
+  /** Resolved (signed) company logo URL — storage refs must be resolved by the caller. */
+  logoUrl?: string;
+}
+
+export function buildPrintableDocument(args: DocumentHtmlArgs) {
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(args.doc.number)}</title>
     <style>@page { size: A4; margin: 22mm; } body { margin: 0; }</style>
     </head><body>${buildHTML(args)}</body></html>`;
 }
 
-export function buildDocumentHTML(args: { doc: DocumentData; company?: Company; client?: Client; project?: Project; showStatus?: boolean; showPayment?: boolean; showClientEmail?: boolean }) {
+export function buildDocumentHTML(args: DocumentHtmlArgs) {
   return buildHTML(args);
 }
 
