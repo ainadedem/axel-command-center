@@ -29,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, FileCheck2, Plus, X, Eye, Copy, Send, Loader2, CheckCircle2 } from "lucide-react";
 import { DocumentPreview, buildPrintableDocument, type DocumentData } from "@/components/document-preview";
+import { resolveFileUrl } from "@/lib/storage";
 import { nextNumber, isNumberTaken } from "@/lib/numbering";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -110,7 +111,8 @@ function Body() {
     if (!cl?.email) { toast.error("This client has no email on file."); return; }
     setSendingId(q.id);
     try {
-      const html = buildPrintableDocument({ doc: quoteToDoc(q), company: co, client: cl, project: proj, showStatus: true });
+      const logoUrl = await resolveFileUrl(co?.logoUrl);
+      const html = buildPrintableDocument({ doc: quoteToDoc(q), company: co, client: cl, project: proj, showStatus: true, logoUrl });
       const container = document.createElement("div");
       container.style.cssText = "position:fixed;left:-10000px;top:0;width:210mm;background:white;";
       container.innerHTML = html;
@@ -365,7 +367,10 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setMode("rate-card");
       setLines([]); setNotes(""); setSubject(""); setBankAccountId(""); setTaxRate(defaultTaxRate(companies[0], today));
     }
-  }, [open, editing, companies, today]);
+    // Only re-initialise when the dialog opens (or switches record) — background
+    // data refreshes must never overwrite in-progress edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editing?.id]);
 
   const { user } = useAuth();
 
@@ -394,6 +399,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     currentValue: companyId,
     options: companies,
     getId: (company) => company.id,
+    loading: companies.length === 0,
     onChange: setCompanyId,
   });
 
@@ -402,6 +408,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     currentValue: clientId,
     options: companyClients,
     getId: (client) => client.id,
+    loading: clients.length === 0,
     onChange: setClientId,
   });
 
@@ -411,6 +418,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     options: clientProjects,
     getId: (project) => project.id,
     allowEmpty: true,
+    loading: projects.length === 0,
     onChange: setProjectId,
   });
 

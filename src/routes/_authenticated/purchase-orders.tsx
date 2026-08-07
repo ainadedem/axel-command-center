@@ -205,7 +205,9 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     }
     setUploadError("");
     setShowErrors(false);
-  }, [open, editing, companies, today]);
+    // Only re-initialise when the dialog opens (or switches record).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editing?.id]);
 
 
 
@@ -245,6 +247,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     currentValue: companyId,
     options: companies,
     getId: (company) => company.id,
+    loading: companies.length === 0,
     onChange: setCompanyId,
   });
 
@@ -253,6 +256,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     currentValue: clientId,
     options: companyClients,
     getId: (client) => client.id,
+    loading: clients.length === 0,
     onChange: setClientId,
   });
 
@@ -262,6 +266,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     options: clientQuotes,
     getId: (quote) => quote.id,
     allowEmpty: true,
+    loading: quotes.length === 0,
     onChange: setQuoteId,
   });
 
@@ -271,6 +276,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     options: clientProjects,
     getId: (project) => project.id,
     allowEmpty: true,
+    loading: projects.length === 0,
     onChange: setProjectId,
   });
 
