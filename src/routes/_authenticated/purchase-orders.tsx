@@ -205,7 +205,9 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     }
     setUploadError("");
     setShowErrors(false);
-  }, [open, editing, companies, today]);
+    // Only re-initialise when the dialog opens (or switches record).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editing?.id]);
 
 
 
