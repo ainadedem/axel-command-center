@@ -397,6 +397,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     currentValue: companyId,
     options: companies,
     getId: (company) => company.id,
+    loading: companies.length === 0,
     onChange: setCompanyId,
   });
 
@@ -405,6 +406,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     currentValue: clientId,
     options: companyClients,
     getId: (client) => client.id,
+    loading: clients.length === 0,
     onChange: setClientId,
   });
 
@@ -414,6 +416,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     options: clientProjects,
     getId: (project) => project.id,
     allowEmpty: true,
+    loading: projects.length === 0,
     onChange: setProjectId,
   });
 
