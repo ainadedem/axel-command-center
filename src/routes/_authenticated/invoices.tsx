@@ -505,7 +505,9 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setLines([]);
     }
     setShowErrors(false);
-  }, [open, editing, companies, today]);
+    // Only re-initialise when the dialog opens (or switches record).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editing?.id]);
 
   // Re-derive the number when the user switches company on a NEW invoice.
   useEffect(() => {
