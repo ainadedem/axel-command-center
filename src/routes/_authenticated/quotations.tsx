@@ -29,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, FileCheck2, Plus, X, Eye, Copy, Send, Loader2, CheckCircle2 } from "lucide-react";
 import { DocumentPreview, buildPrintableDocument, type DocumentData } from "@/components/document-preview";
+import { resolveFileUrl } from "@/lib/storage";
 import { nextNumber, isNumberTaken } from "@/lib/numbering";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -110,7 +111,8 @@ function Body() {
     if (!cl?.email) { toast.error("This client has no email on file."); return; }
     setSendingId(q.id);
     try {
-      const html = buildPrintableDocument({ doc: quoteToDoc(q), company: co, client: cl, project: proj, showStatus: true });
+      const logoUrl = await resolveFileUrl(co?.logoUrl);
+      const html = buildPrintableDocument({ doc: quoteToDoc(q), company: co, client: cl, project: proj, showStatus: true, logoUrl });
       const container = document.createElement("div");
       container.style.cssText = "position:fixed;left:-10000px;top:0;width:210mm;background:white;";
       container.innerHTML = html;
