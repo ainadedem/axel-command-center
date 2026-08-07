@@ -531,6 +531,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     currentValue: companyId,
     options: companies,
     getId: (company) => company.id,
+    loading: companies.length === 0,
     onChange: setCompanyId,
   });
 
@@ -539,6 +540,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     currentValue: clientId,
     options: companyClients,
     getId: (client) => client.id,
+    loading: clients.length === 0,
     onChange: setClientId,
   });
 
@@ -548,6 +550,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     options: clientPOs,
     getId: (po) => po.id,
     allowEmpty: true,
+    loading: pos.length === 0,
     onChange: setPoId,
   });
 
@@ -557,6 +560,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     options: clientProjects,
     getId: (project) => project.id,
     allowEmpty: true,
+    loading: projects.length === 0,
     onChange: setProjectId,
   });
 
