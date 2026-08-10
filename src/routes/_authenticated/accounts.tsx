@@ -20,7 +20,7 @@ import { StatementImportDialog } from "@/components/statement-import-dialog";
 import { format, parseISO } from "date-fns";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
-import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useAccountBalances, openingOf } from "@/lib/account-balance";
 import { fetchReconciliations, type BankReconciliation } from "@/lib/db-sync";
 import {
@@ -243,6 +243,7 @@ function AccountDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     onOpenChange(false);
     return;
   };
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -293,7 +294,7 @@ function AccountDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit}>{editing ? "Save" : "Create"}</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>{editing ? "Save" : "Create"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

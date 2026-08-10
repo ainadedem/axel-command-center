@@ -22,7 +22,7 @@ import { ResizeHandle, useResizableColumns } from "@/components/resizable-column
 import { Pencil, Trash2 } from "lucide-react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
-import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 
 export const Route = createFileRoute("/_authenticated/transactions")({
@@ -504,6 +504,7 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
     else transactionsStore.add({ id: newId("tx"), ...data });
     onOpenChange(false);
   };
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
 
   return (
@@ -630,7 +631,7 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit}>{editing ? "Save" : "Create"}</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>{editing ? "Save" : "Create"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

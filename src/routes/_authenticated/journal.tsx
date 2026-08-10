@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, Plus, X } from "lucide-react";
+import { useSingleFlightSubmit } from "@/components/form-ux";
 
 export const Route = createFileRoute("/_authenticated/journal")({ component: JournalPage });
 
@@ -174,6 +175,7 @@ function JournalEntryDialog({ open, onOpenChange, editing }: { open: boolean; on
     else journalEntriesStore.add({ id: newId("je"), ...data });
     onOpenChange(false);
   };
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -240,7 +242,7 @@ function JournalEntryDialog({ open, onOpenChange, editing }: { open: boolean; on
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
-          <Button onClick={submit} disabled={!balanced}>{editing ? "Enregistrer" : "Créer"}</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting || !balanced}>{editing ? "Enregistrer" : "Créer"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

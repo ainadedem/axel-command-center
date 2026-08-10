@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, Receipt, FileText, BanknoteIcon, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 
 export const Route = createFileRoute("/_authenticated/expenses")({ component: ExpensesPage });
@@ -295,6 +295,7 @@ function ExpenseDialog({
     else expensesStore.add({ id: newId("exp"), ...data });
     onOpenChange(false);
   };
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
   const companyAccounts = accounts.filter((a) => !companyId || a.companyId === companyId);
 
@@ -430,7 +431,7 @@ function ExpenseDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit} disabled={!companyId || !amount}>{editing ? "Save" : "Create"}</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting || !companyId || !amount}>{editing ? "Save" : "Create"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

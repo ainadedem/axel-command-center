@@ -35,6 +35,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import html2pdf from "html2pdf.js";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
+import { useSingleFlightSubmit } from "@/components/form-ux";
 
 export const Route = createFileRoute("/_authenticated/quotations")({ component: QuotationsPage });
 
@@ -500,6 +501,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     else quotesStore.add({ id: newId("q"), ...data, createdBy: user?.id });
     onOpenChange(false);
   };
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -729,7 +731,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit}>{editing ? "Save" : "Create"}</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>{editing ? "Save" : "Create"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

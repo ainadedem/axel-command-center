@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, AlertTriangle } from "lucide-react";
-import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 
 export const Route = createFileRoute("/_authenticated/pipeline")({ component: PipelinePage });
 
@@ -528,6 +528,7 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
     else opportunitiesStore.add({ id: newId("opp"), ...data });
     onOpenChange(false);
   };
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -624,7 +625,7 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit} disabled={!name.trim() || !companyId || (!clientId && !newLeadName.trim())}>
+          <Button onClick={handleSubmit} disabled={isSubmitting || !name.trim() || !companyId || (!clientId && !newLeadName.trim())}>
             {editing ? "Save" : "Create"}
           </Button>
         </DialogFooter>

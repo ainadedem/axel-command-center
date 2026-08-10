@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CategoryChips, CategoryMultiSelect, CompanyTag, CompanyTags, defaultCategoriesFor } from "@/components/category-chips";
-import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/clients")({ component: ClientsPage });
@@ -643,6 +643,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       toast.error("Unable to save client. Check the console for details.");
     }
   };
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
 
   const acqOptions = (() => {
@@ -809,7 +810,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit}>{editing ? "Save" : "Create"}</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>{editing ? "Save" : "Create"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

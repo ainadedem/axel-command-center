@@ -25,7 +25,7 @@ import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { cn } from "@/lib/utils";
 import { KpiCard } from "@/components/kpi-card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 
 export const Route = createFileRoute("/_authenticated/projects")({ component: ProjectsPage });
@@ -511,6 +511,7 @@ function ProjectDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     }
     onOpenChange(false);
   };
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
 
   return (
@@ -552,7 +553,7 @@ function ProjectDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit}>{editing ? "Save" : "Create"}</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>{editing ? "Save" : "Create"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

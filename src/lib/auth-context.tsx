@@ -25,7 +25,20 @@ interface AuthState {
   refresh: () => Promise<void>;
 }
 
-const AuthCtx = createContext<AuthState | null>(null);
+const defaultAuthState: AuthState = {
+  session: null,
+  user: null,
+  profile: null,
+  roles: [],
+  loading: true,
+  isAuthenticated: false,
+  hasRole: () => false,
+  isSalesOnly: false,
+  signOut: async () => {},
+  refresh: async () => {},
+};
+
+const AuthCtx = createContext<AuthState>(defaultAuthState);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -44,14 +57,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Set up listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
-      if (s?.user) {
-        // defer to avoid deadlock
-        setTimeout(() => loadUserData(s.user.id), 0);
-      } else {
+
+      if (event === "SIGNED_OUT" || !s?.user) {
         setProfile(null);
         setRoles([]);
+        return;
+      }
+
+      if (event === "TOKEN_REFRESHED") return;
+
+      if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "USER_UPDATED") {
+        // defer to avoid deadlock
+        setTimeout(() => loadUserData(s.user.id), 0);
       }
     });
 
@@ -90,7 +109,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export const useAuth = () => {
-  const ctx = useContext(AuthCtx);
-  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
-  return ctx;
+  return useContext(AuthCtx);
 };

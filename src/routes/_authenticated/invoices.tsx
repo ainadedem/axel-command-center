@@ -34,7 +34,7 @@ import { RICH_TEXT_HINT } from "@/lib/rich-text";
 import { RichTextField } from "@/components/rich-text-field";
 import { Wallet } from "lucide-react";
 import { nextNumber, isNumberTaken } from "@/lib/numbering";
-import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 
 export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage });
@@ -416,6 +416,7 @@ function CancelInvoiceDialog({ open, onOpenChange, invoice }: { open: boolean; o
     });
     onOpenChange(false);
   };
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -439,7 +440,7 @@ function CancelInvoiceDialog({ open, onOpenChange, invoice }: { open: boolean; o
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Keep invoice</Button>
-          <Button variant="destructive" onClick={submit}>
+          <Button variant="destructive" onClick={handleSubmit} disabled={isSubmitting}>
             <Ban className="h-3.5 w-3.5 mr-1.5" /> Cancel invoice
           </Button>
         </DialogFooter>
@@ -622,6 +623,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     else invoicesStore.add({ id: newId("inv"), ...data });
     onOpenChange(false);
   };
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -840,7 +842,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit} disabled={blocked}>{editing ? "Save" : "Create"}</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting || blocked}>{editing ? "Save" : "Create"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -980,6 +982,7 @@ function MarkPaidDialog({ open, onOpenChange, invoice }: { open: boolean; onOpen
     }
     onOpenChange(false);
   };
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1028,7 +1031,7 @@ function MarkPaidDialog({ open, onOpenChange, invoice }: { open: boolean; onOpen
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit}>Mark paid</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>Mark paid</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

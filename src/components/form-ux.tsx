@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AlertCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -30,4 +30,32 @@ export function FormErrorBanner({ show, message = FORM_ERROR_MESSAGE }: { show: 
 
 export function invalidFieldClassName(invalid: boolean) {
   return cn(invalid && "border-destructive focus-visible:ring-destructive/30");
+}
+
+export function useSingleFlightSubmit<T extends unknown[]>(
+  handler: (...args: T) => void | Promise<void>,
+) {
+  const inFlightRef = useRef(false);
+  const mountedRef = useRef(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  const run = async (...args: T) => {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
+    if (mountedRef.current) setIsSubmitting(true);
+    try {
+      await handler(...args);
+    } finally {
+      inFlightRef.current = false;
+      if (mountedRef.current) setIsSubmitting(false);
+    }
+  };
+
+  return { run, isSubmitting };
 }

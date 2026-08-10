@@ -16,7 +16,7 @@ import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2 } from "lucide-react";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { supabase } from "@/integrations/supabase/client";
-import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BankAccountsEditor } from "@/components/bank-accounts-editor";
 import { companyBankAccounts } from "@/lib/payment-details";
@@ -224,6 +224,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     }
     onOpenChange(false);
   };
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
 
   return (
@@ -305,7 +306,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit}>{editing ? "Save" : "Create"}</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>{editing ? "Save" : "Create"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

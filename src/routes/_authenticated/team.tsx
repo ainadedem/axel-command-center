@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
 import { Pencil, Trash2, Users } from "lucide-react";
-import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCompany } from "@/lib/company-context";
 
@@ -224,6 +224,7 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
     else teamMembersStore.add({ id: newId("tm"), ...data });
     onOpenChange(false);
   };
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -267,7 +268,7 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit}>{editing ? "Save" : "Create"}</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>{editing ? "Save" : "Create"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

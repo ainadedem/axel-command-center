@@ -119,7 +119,7 @@ function RootComponent() {
   const router = useRouter();
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") return;
+      if (!["SIGNED_IN", "SIGNED_OUT", "USER_UPDATED"].includes(event)) return;
       router.invalidate();
       queryClient.invalidateQueries();
     });

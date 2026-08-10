@@ -22,6 +22,7 @@ import { Avatar } from "@/components/avatar-upload";
 import { Pencil, Trash2, Users, CalendarDays, CheckCircle2, BanknoteIcon, Plus, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
+import { useSingleFlightSubmit } from "@/components/form-ux";
 
 export const Route = createFileRoute("/_authenticated/payroll")({ component: PayrollPage });
 
@@ -221,6 +222,7 @@ function RegisterDialog({
     else salaryRegisterStore.add({ id: newId("sal"), ...data });
     onOpenChange(false);
   };
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -291,7 +293,7 @@ function RegisterDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit} disabled={!teamMemberId || !companyId || !gross}>{editing ? "Save" : "Add"}</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting || !teamMemberId || !companyId || !gross}>{editing ? "Save" : "Add"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -526,6 +528,7 @@ function NewRunDialog({ onClose, register }: { onClose: () => void; register: Sa
     payrollRunsStore.add(run);
     onClose();
   };
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
@@ -563,7 +566,7 @@ function NewRunDialog({ onClose, register }: { onClose: () => void; register: Sa
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={submit} disabled={!companyId || !month || eligible.length === 0}>Create draft</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting || !companyId || !month || eligible.length === 0}>Create draft</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Avatar } from "@/components/avatar-upload";
 import { Pencil, Trash2, Target, Handshake } from "lucide-react";
-import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 
 export const Route = createFileRoute("/_authenticated/sales-team")({ component: SalesTeamPage });
 
@@ -128,6 +128,7 @@ function SalesDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     else salesMembersStore.add({ id: newId("sm"), teamMemberId, role });
     onOpenChange(false);
   };
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -159,7 +160,7 @@ function SalesDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit}>{editing ? "Save" : "Add"}</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>{editing ? "Save" : "Add"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

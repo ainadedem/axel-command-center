@@ -21,7 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, Repeat, Play, Pause, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 
 export const Route = createFileRoute("/_authenticated/billing")({ component: BillingPage });
@@ -277,6 +277,7 @@ function BillingDialog({
     else recurringBillingsStore.add({ id: newId("bil"), ...data });
     onOpenChange(false);
   };
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
   const companyOptions = scope.id === "company" ? scopedCompanies : companies;
   const scopedClients = clients.filter((client) => !companyId || contactBelongsTo(client, companyId));
@@ -405,7 +406,7 @@ function BillingDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit}>{editing ? "Save" : "Create"}</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>{editing ? "Save" : "Create"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

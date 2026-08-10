@@ -306,6 +306,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const [scope, setScopeState] = useState<Scope>(loadScope);
   const allCompanies = useCompanies();
   const { user, roles, loading: authLoading } = useAuth();
+  const userId = user?.id ?? null;
   const currentScopeRef = useRef(scope);
   const scopeReloadSeq = useRef(0);
   const hasCompletedInitialHydration = useRef(false);
@@ -334,7 +335,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       setAccessLoading(true);
       setDataLoading(true);
 
-      if (!user) {
+      if (!userId) {
         setAllowedCodes(null);
         setAccessibleDbCompanyIds([]);
         setCompanyIdMapEntries([]);
@@ -348,7 +349,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       const { data } = await supabase
         .from("user_company_access")
         .select("company_id, role, companies ( code )")
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
       if (cancelled) return;
 
       const rows = (data ?? []) as Array<{
@@ -388,7 +389,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
       if (!isGroupAdmin) restrictLocalStores(merged);
 
-      await maybePushSeeds(user.id, idMap);
+      await maybePushSeeds(userId, idMap);
       if (cancelled) return;
 
       const currentScope = currentScopeRef.current;
@@ -417,7 +418,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [authLoading, user, isGroupAdmin]);
+  }, [authLoading, userId, isGroupAdmin]);
 
   const accessibleCompanies = useMemo(() => {
     if (allowedCodes === null) return allCompanies;

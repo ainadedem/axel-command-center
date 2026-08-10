@@ -27,7 +27,7 @@ import {
 import {
   CategoryChips, CategoryMultiSelect, CategoryFilterTabs, CompanyTag, CompanyTags, defaultCategoriesFor,
 } from "@/components/category-chips";
-import { FormErrorBanner, invalidFieldClassName, RequiredLabel } from "@/components/form-ux";
+import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 
 export const Route = createFileRoute("/_authenticated/suppliers")({ component: SuppliersPage });
 
@@ -466,6 +466,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
     }
     onOpenChange(false);
   }
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
 
   return (
@@ -555,7 +556,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit}>{editing ? "Save" : "Create"}</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>{editing ? "Save" : "Create"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

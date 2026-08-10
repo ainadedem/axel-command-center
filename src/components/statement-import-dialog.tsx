@@ -16,6 +16,7 @@ import {
 import * as XLSX from "xlsx";
 import { Input } from "@/components/ui/input";
 import { newId } from "@/lib/data-store";
+import { useSingleFlightSubmit } from "@/components/form-ux";
 import { Upload, CheckCircle2, AlertCircle, FileText, Download, FileDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInDays } from "date-fns";
@@ -794,6 +795,7 @@ export function RecordPaymentDialog({
     });
     onOpenChange(false);
   };
+  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
   const remaining = invoice ? invoice.amount - invoice.paid : 0;
 
@@ -826,7 +828,7 @@ export function RecordPaymentDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit} disabled={!amount || Number(amount) <= 0}>Record payment</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting || !amount || Number(amount) <= 0}>Record payment</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
