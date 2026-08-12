@@ -50,9 +50,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const currentUserIdRef = useRef<string | null>(null);
 
   const loadUserData = async (uid: string) => {
-    const [{ data: prof }, { data: roleRows }] = await Promise.all([
+    const [{ data: prof }, { data: roleRows }, { data: accessRows }] = await Promise.all([
       supabase.from("profiles").select("user_id, display_name, email, avatar_url").eq("user_id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
+      supabase.from("user_company_access").select("company_id, role").eq("user_id", uid),
     ]);
     setProfile((prev) => {
       const next = prof ?? null;
@@ -60,12 +61,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         && prev.email === next.email && prev.avatar_url === next.avatar_url) return prev;
       return next;
     });
+    const access = (accessRows ?? []) as { company_id: string; role: string }[];
+    setCompanyRoles((prev) => {
+      const next: Record<string, AppRole> = {};
+      for (const r of access) if (isAppRole(r.role)) next[r.company_id] = r.role;
+      const prevKeys = Object.keys(prev);
+      const same = prevKeys.length === Object.keys(next).length && prevKeys.every((k) => prev[k] === next[k]);
+      return same ? prev : next;
+    });
     setRoles((prev) => {
-      const next = ((roleRows ?? []) as { role: AppRole }[]).map((r) => r.role);
+      // Roles come from two places: the global `user_roles` table (super/group admin)
+      // and the per-company `user_company_access` table (company_admin, finance, sales…).
+      // Reading only the first one left every company-scoped user with no role at all,
+      // which silently granted them the full admin UI.
+      const global = ((roleRows ?? []) as { role: AppRole }[]).map((r) => r.role);
+      const scoped = access.map((r) => r.role).filter(isAppRole);
+      const next = Array.from(new Set([...global, ...scoped])) as AppRole[];
       const same = prev.length === next.length && prev.every((r, i) => r === next[i]);
       return same ? prev : next;
     });
   };
+
 
   useEffect(() => {
     // Set up listener FIRST
