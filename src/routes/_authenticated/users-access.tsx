@@ -52,9 +52,17 @@ const ROLE_LABEL: Record<CompanyRole, string> = {
   viewer: "Viewer",
 };
 
+/**
+ * Only these roles are understood end-to-end (UI gates + database policies).
+ * `manager` / `project_manager` remain readable for legacy rows but are no
+ * longer offered, because they grant less than their label implies.
+ */
+const ASSIGNABLE_ROLES: CompanyRole[] = ["company_admin", "finance", "sales", "viewer"];
+const LEGACY_ROLES: CompanyRole[] = COMPANY_ROLES.filter((r) => !ASSIGNABLE_ROLES.includes(r));
+
 function UsersAccessPage() {
   const { isGroupAdmin } = useCompany();
-  const { user: currentUser, roles: currentRoles } = useAuth();
+  const { user: currentUser, roles: currentRoles, refresh } = useAuth();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Row[]>([]);
   const [companies, setCompanies] = useState<DbCompany[]>([]);
@@ -62,6 +70,7 @@ function UsersAccessPage() {
   const [busy, setBusy] = useState<string | null>(null);
 
   const isSuperAdmin = currentRoles.includes("super_admin");
+
 
   const load = async () => {
     setLoading(true);
