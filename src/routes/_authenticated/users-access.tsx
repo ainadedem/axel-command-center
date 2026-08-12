@@ -247,7 +247,19 @@ function UsersAccessPage() {
           <div className="text-xs text-muted-foreground">
             {filtered.length} {filtered.length === 1 ? "user" : "users"}
           </div>
+          <Button size="sm" onClick={() => setAddOpen(true)}>
+            <UserPlus className="h-4 w-4" />
+            Add user
+          </Button>
         </div>
+
+        <AddUserDialog
+          open={addOpen}
+          onOpenChange={setAddOpen}
+          companies={companies}
+          isSuperAdmin={isSuperAdmin}
+          onCreated={load}
+        />
 
         <div className="rounded-lg border border-border bg-card overflow-hidden">
           <div className="overflow-x-auto">
