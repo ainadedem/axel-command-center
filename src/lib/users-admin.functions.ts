@@ -1,18 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { CreateAppUserInput, LogRoleChangeInput } from "./users-admin.types";
 
-export type CreateAppUserInput = {
-  email: string;
-  displayName?: string;
-  /** "invite" sends an email link, "password" activates the account immediately. */
-  mode: "invite" | "password";
-  password?: string;
-  platformRole?: "group_admin" | "super_admin" | null;
-  companyRoles?: Array<{ companyId: string; role: string }>;
-  redirectTo?: string;
-};
+export type { CreateAppUserInput, LogRoleChangeInput };
 
 const ALLOWED_COMPANY_ROLES = ["company_admin", "finance", "sales", "viewer"];
+
+/** Read-only: reports how the server currently sees the caller's admin rights. */
+export const checkMyAdminAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { diagnose } = await import("./users-admin.server");
+    return diagnose(context as any);
+  });
 
 export const createAppUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -26,22 +26,42 @@ export const createAppUser = createServerFn({ method: "POST" })
     return { ...input, email, companyRoles };
   })
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const { diagnose, writeAudit } = await import("./users-admin.server");
+    const { userId, claims } = context as any;
+    const actorEmail: string | null = claims?.email ?? null;
 
-    // Authorize the caller before touching any privileged client.
-    const [superRes, groupRes] = await Promise.all([
-      supabase.rpc("has_role", { _user_id: userId, _role: "super_admin" }),
-      supabase.rpc("has_role", { _user_id: userId, _role: "group_admin" }),
-    ]);
-    // A failed lookup is not the same as "no role" — surface it instead of a
-    // misleading permission message.
-    const lookupError = superRes.error ?? groupRes.error;
-    if (lookupError) throw new Error(`Could not verify your role: ${lookupError.message}`);
-    const isSuper = superRes.data;
-    const isGroup = groupRes.data;
-    if (!isSuper && !isGroup) throw new Error("Forbidden: administrators only.");
+    const diag = await diagnose(context as any);
 
-    if (data.platformRole && !isSuper) throw new Error("Only a super admin can grant platform roles.");
+    const fail = async (message: string): Promise<never> => {
+      await writeAudit({
+        actorUserId: userId ?? null,
+        actorEmail,
+        action: "create_user",
+        targetEmail: data.email,
+        requestedRole: data.platformRole ?? null,
+        success: false,
+        errorMessage: message,
+        details: { mode: data.mode, companyRoles: data.companyRoles, diagnostics: diag.checks },
+      });
+      throw new Error(message);
+    };
+
+    // Report the failing condition precisely instead of a blanket refusal.
+    if (diag.lookupError) {
+      await fail(`Could not verify your role: ${diag.lookupError}`);
+    }
+    if (!diag.canCreateUsers) {
+      await fail(
+        diag.roles.length > 0
+          ? `Not allowed: the server sees your platform roles as "${diag.roles.join(", ")}", which does not include super_admin or group_admin.`
+          : `Not allowed: the server sees no platform role for ${diag.email ?? "your account"} (user ${diag.userId}). Creating users requires super_admin or group_admin.`,
+      );
+    }
+    if (data.platformRole && !diag.isSuperAdmin) {
+      await fail(
+        "Not allowed: only a super admin can grant platform roles (your session resolves as group admin).",
+      );
+    }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -53,8 +73,8 @@ export const createAppUser = createServerFn({ method: "POST" })
         data: meta,
         redirectTo: data.redirectTo,
       });
-      if (error || !invited?.user) throw new Error(error?.message ?? "Could not send the invitation.");
-      newUserId = invited.user.id;
+      if (error || !invited?.user) await fail(error?.message ?? "Could not send the invitation.");
+      newUserId = invited!.user!.id;
     } else {
       const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
         email: data.email,
@@ -62,8 +82,8 @@ export const createAppUser = createServerFn({ method: "POST" })
         email_confirm: true,
         user_metadata: meta,
       });
-      if (error || !created?.user) throw new Error(error?.message ?? "Could not create the account.");
-      newUserId = created.user.id;
+      if (error || !created?.user) await fail(error?.message ?? "Could not create the account.");
+      newUserId = created!.user!.id;
     }
 
     try {
@@ -72,18 +92,84 @@ export const createAppUser = createServerFn({ method: "POST" })
           .from("user_roles")
           .insert({ user_id: newUserId, role: data.platformRole });
         if (error) throw new Error(error.message);
+        await writeAudit({
+          actorUserId: userId,
+          actorEmail,
+          action: "assign_platform_role",
+          targetEmail: data.email,
+          targetUserId: newUserId,
+          requestedRole: data.platformRole,
+          success: true,
+        });
       }
       if (data.companyRoles && data.companyRoles.length > 0) {
         const { error } = await supabaseAdmin.from("user_company_access").insert(
           data.companyRoles.map((r) => ({ user_id: newUserId, company_id: r.companyId, role: r.role })),
         );
         if (error) throw new Error(error.message);
+        for (const r of data.companyRoles) {
+          await writeAudit({
+            actorUserId: userId,
+            actorEmail,
+            action: "assign_company_role",
+            targetEmail: data.email,
+            targetUserId: newUserId,
+            companyId: r.companyId,
+            requestedRole: r.role,
+            success: true,
+          });
+        }
       }
     } catch (err) {
       // Never leave a half-provisioned account behind.
       await supabaseAdmin.auth.admin.deleteUser(newUserId).catch(() => undefined);
-      throw err instanceof Error ? err : new Error("Could not assign roles.");
+      const message = err instanceof Error ? err.message : "Could not assign roles.";
+      await writeAudit({
+        actorUserId: userId,
+        actorEmail,
+        action: "create_user",
+        targetEmail: data.email,
+        targetUserId: newUserId,
+        success: false,
+        errorMessage: `Roles could not be assigned, account rolled back: ${message}`,
+      });
+      throw new Error(`Roles could not be assigned, so the account was rolled back: ${message}`);
     }
 
+    await writeAudit({
+      actorUserId: userId,
+      actorEmail,
+      action: "create_user",
+      targetEmail: data.email,
+      targetUserId: newUserId,
+      requestedRole: data.platformRole ?? null,
+      success: true,
+      details: { mode: data.mode, companyRoles: data.companyRoles },
+    });
+
     return { userId: newUserId, email: data.email, invited: data.mode === "invite" };
+  });
+
+/**
+ * Records a role change performed through the page's inline selects. The actor is
+ * taken from the verified session, never from the request body.
+ */
+export const logRoleChange = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: LogRoleChangeInput) => input)
+  .handler(async ({ data, context }) => {
+    const { writeAudit } = await import("./users-admin.server");
+    const { userId, claims } = context as any;
+    await writeAudit({
+      actorUserId: userId,
+      actorEmail: claims?.email ?? null,
+      action: data.action,
+      targetUserId: data.targetUserId,
+      targetEmail: data.targetEmail ?? null,
+      companyId: data.companyId ?? null,
+      requestedRole: data.requestedRole ?? null,
+      success: data.success,
+      errorMessage: data.errorMessage ?? null,
+    });
+    return { ok: true };
   });

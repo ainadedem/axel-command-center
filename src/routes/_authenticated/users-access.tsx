@@ -19,9 +19,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useServerFn } from "@tanstack/react-start";
-import { createAppUser } from "@/lib/users-admin.functions";
+import { createAppUser, logRoleChange } from "@/lib/users-admin.functions";
+import { AccessDiagnosticsPanel } from "@/components/access-diagnostics-panel";
 import { Loader2, ShieldAlert, Search, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/_authenticated/users-access")({
   component: UsersAccessRoute,
@@ -81,6 +83,11 @@ function UsersAccessPage() {
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const audit = useServerFn(logRoleChange);
+  /** Audit is best-effort: it must never block or fail the role change itself. */
+  const recordRoleChange = (entry: Parameters<typeof audit>[0]["data"]) =>
+    audit({ data: entry }).catch(() => undefined);
+
 
   const isSuperAdmin = currentRoles.includes("super_admin");
 
@@ -146,12 +153,22 @@ function UsersAccessPage() {
     setBusy(row.user_id + ":platform");
     // Non-destructive: grant first, then drop the previous role. A refused insert
     // must never leave the user with no role at all.
+    const logEntry = (success: boolean, errorMessage?: string) =>
+      recordRoleChange({
+        action: value === "none" ? "revoke_platform_role" : "assign_platform_role",
+        targetUserId: row.user_id,
+        targetEmail: row.email,
+        requestedRole: value === "none" ? null : value,
+        success,
+        errorMessage: errorMessage ?? null,
+      });
     if (value !== "none") {
       const { error: insErr } = await supabase
         .from("user_roles")
         .upsert({ user_id: row.user_id, role: value }, { onConflict: "user_id,role" });
       if (insErr) {
         setBusy(null);
+        void logEntry(false, insErr.message);
         toast.error(`Could not set role: ${insErr.message}`);
         return;
       }
@@ -160,17 +177,30 @@ function UsersAccessPage() {
     const { error: delErr } = value === "none" ? await stale : await stale.neq("role", value);
     if (delErr) {
       setBusy(null);
+      void logEntry(false, `Stale role not removed: ${delErr.message}`);
       toast.error(`Role saved, but the previous one could not be removed: ${delErr.message}`);
       await afterWrite(row.user_id);
       return;
     }
+    void logEntry(true);
     toast.success("Platform role updated");
     await afterWrite(row.user_id);
     setBusy(null);
   };
 
+
   const setCompanyRole = async (row: Row, companyId: string, value: CompanyRole | "none") => {
     setBusy(row.user_id + ":" + companyId);
+    const logEntry = (success: boolean, errorMessage?: string) =>
+      recordRoleChange({
+        action: value === "none" ? "revoke_company_role" : "assign_company_role",
+        targetUserId: row.user_id,
+        targetEmail: row.email,
+        companyId,
+        requestedRole: value === "none" ? null : value,
+        success,
+        errorMessage: errorMessage ?? null,
+      });
     if (value === "none") {
       const { error } = await supabase
         .from("user_company_access")
@@ -179,6 +209,7 @@ function UsersAccessPage() {
         .eq("company_id", companyId);
       if (error) {
         setBusy(null);
+        void logEntry(false, error.message);
         toast.error(`Could not revoke access: ${error.message}`);
         return;
       }
@@ -191,11 +222,14 @@ function UsersAccessPage() {
         );
       if (error) {
         setBusy(null);
+        void logEntry(false, error.message);
         toast.error(`Could not set role: ${error.message}`);
         return;
       }
     }
+    void logEntry(true);
     toast.success(value === "none" ? "Access revoked" : `Set to ${ROLE_LABEL[value]}`);
+
     await afterWrite(row.user_id);
     setBusy(null);
   };
@@ -253,6 +287,9 @@ function UsersAccessPage() {
             Add user
           </Button>
         </div>
+
+        <AccessDiagnosticsPanel companies={companies} />
+
 
         <AddUserDialog
           open={addOpen}
