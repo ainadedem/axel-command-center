@@ -148,7 +148,12 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [showPaymentDetails, setShowPaymentDetails] = useState(true);
   const [bankAccounts, setBankAccounts] = useState<CompanyBankAccount[]>([]);
   const [logoUrl, setLogoUrl] = useState<string | undefined>();
+  const [logoHeight, setLogoHeight] = useState(52);
+  const [logoMaxWidth, setLogoMaxWidth] = useState(180);
+  const [logoCrop, setLogoCrop] = useState<CompanyLogoCrop | undefined>();
+  const [cropOpen, setCropOpen] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
+  const logoPreviewUrl = useFileUrl(logoUrl);
 
   useEffect(() => {
     if (!open) return;
