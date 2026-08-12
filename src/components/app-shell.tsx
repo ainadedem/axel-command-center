@@ -4,7 +4,7 @@ import {
   Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus, Truck,
   ChevronDown, ChevronRight, Check, LogOut, Target, UserCog, Handshake,
   BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList, RefreshCw,
-  Sparkles, CreditCard, Repeat, Wallet2, ExternalLink,
+  Sparkles, CreditCard, Repeat, Wallet2, ExternalLink, Info,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -39,45 +39,34 @@ const sections: NavSection[] = [
     ],
   },
   {
-    label: "Finance",
+    label: "Sales",
     items: [
-      { to: "/accounts", label: "Accounts", icon: Wallet },
-      { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-      { to: "/quotations", label: "Quotations", icon: FileSignature },
-      { to: "/purchase-orders", label: "Purchase orders", icon: ClipboardList },
-      { to: "/invoices", label: "Invoices", icon: FileText },
-      { to: "/budgets", label: "Budgets", icon: Target },
-      { to: "/reports", label: "Reports", icon: BarChart3 },
-    ],
-  },
-  {
-    label: "CRM",
-    items: [
-      { to: "/clients", label: "Clients", icon: Users },
-      { to: "/suppliers", label: "Suppliers", icon: Truck },
       { to: "/pipeline", label: "Pipeline", icon: TrendingUp },
-    ],
-  },
-  {
-    label: "Operations",
-    items: [
-      { to: "/expenses", label: "Expenses", icon: CreditCard },
-      { to: "/billing", label: "Billing", icon: Repeat },
-      { to: "/payroll", label: "Payroll", icon: Wallet2 },
-    ],
-  },
-  {
-    label: "Organization",
-    items: [
-      { to: "/companies", label: "Companies", icon: Building2 },
-      { to: "/users-access", label: "Users & Access", icon: Users, requireGroupAdmin: true },
+      { to: "/quotations", label: "Quotations", icon: FileSignature },
+      { to: "/clients", label: "Clients", icon: Users },
       { to: "/projects", label: "Projects", icon: Briefcase },
-      { to: "/team", label: "Team", icon: UserCog },
       { to: "/sales-team", label: "Sales team", icon: Handshake },
     ],
   },
   {
-    label: "Comptabilite",
+    label: "Billing",
+    items: [
+      { to: "/purchase-orders", label: "Purchase orders", icon: ClipboardList },
+      { to: "/invoices", label: "Invoices", icon: FileText },
+      { to: "/billing", label: "Recurring billing", icon: Repeat },
+    ],
+  },
+  {
+    label: "Treasury",
+    items: [
+      { to: "/accounts", label: "Accounts", icon: Wallet },
+      { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+      { to: "/expenses", label: "Expenses", icon: CreditCard },
+      { to: "/suppliers", label: "Suppliers", icon: Truck },
+    ],
+  },
+  {
+    label: "Accounting",
     items: [
       { to: "/plan-comptable", label: "Plan comptable", icon: Library },
       { to: "/journal", label: "Journal", icon: BookOpen },
@@ -87,7 +76,26 @@ const sections: NavSection[] = [
       { to: "/compte-resultat", label: "Compte de resultat", icon: BarChart3 },
     ],
   },
+  {
+    label: "Analysis",
+    items: [
+      { to: "/budgets", label: "Budgets", icon: Target },
+      { to: "/reports", label: "Reports", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Administration",
+    items: [
+      { to: "/companies", label: "Companies", icon: Building2 },
+      { to: "/team", label: "Team", icon: UserCog },
+      { to: "/payroll", label: "Payroll", icon: Wallet2 },
+      { to: "/users-access", label: "Users & Access", icon: Users, requireGroupAdmin: true },
+      { to: "/settings", label: "Settings", icon: Settings },
+      { to: "/about", label: "About", icon: Info },
+    ],
+  },
 ];
+
 
 function CompanySwitcher() {
   const { scope, setScope, label, accessibleCompanies: companies, isGroupAdmin } = useCompany();
