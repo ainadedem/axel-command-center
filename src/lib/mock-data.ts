@@ -485,7 +485,10 @@ export interface Expense {
   /** Receipt / scan (data URL). */
   attachmentUrl?: string;
   attachmentName?: string;
+  /** User id of whoever created this expense. */
+  createdBy?: string;
 }
+
 
 /* ─── Recurring billing schedules ──────────────────────────────────── */
 
