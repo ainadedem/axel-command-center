@@ -1,4 +1,11 @@
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
+import { AvatarUpload } from "@/components/avatar-upload";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { useAuth } from "@/lib/auth-context";
