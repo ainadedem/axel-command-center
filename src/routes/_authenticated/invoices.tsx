@@ -33,7 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RICH_TEXT_HINT } from "@/lib/rich-text";
 import { RichTextField } from "@/components/rich-text-field";
 import { Wallet } from "lucide-react";
-import { nextNumber, isNumberTaken } from "@/lib/numbering";
+import { nextNumber, nextNumberAsync, isNumberTaken } from "@/lib/numbering";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
@@ -514,7 +514,13 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   // Re-derive the number when the user switches company on a NEW invoice.
   useEffect(() => {
     if (!open || editing || !companyId) return;
-    setNumber(nextNumber("invoice", companyId, issueDate));
+    let cancelled = false;
+    void nextNumberAsync("invoice", companyId, issueDate).then((n) => {
+      if (!cancelled) setNumber(n);
+    });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId, issueDate]);
 
