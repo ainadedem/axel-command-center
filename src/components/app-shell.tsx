@@ -197,8 +197,8 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
 
 function Sidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const { roles, isSalesOnly } = useAuth();
-  const isGroupAdmin = roles.includes("group_admin") || roles.includes("super_admin");
+  const { isSalesOnly, isGroupAdmin } = useEffectiveRole();
+
   const visibleSections = sections
     .map((section) => ({
       ...section,
