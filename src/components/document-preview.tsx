@@ -57,8 +57,10 @@ interface Props {
 export function DocumentPreview({ open, onOpenChange, doc, company, client, project }: Props) {
   const [showStatus, setShowStatus] = useState(true);
   const [showClientEmail, setShowClientEmail] = useState(true);
+  const [showUnit, setShowUnit] = useState(true);
   const [showPayment, setShowPayment] = useState(company?.showPaymentDetails !== false);
   useEffect(() => { setShowPayment(company?.showPaymentDetails !== false); }, [company?.id, company?.showPaymentDetails]);
+
 
   // Logos are stored as private storage refs (`storage:bucket/path`) — resolve
   // them to a signed URL before embedding into the document HTML.
@@ -72,17 +74,18 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   const html = useMemo(() => {
     if (!doc) return "";
-    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale, lang });
-  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale, lang]);
+    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang });
+  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang]);
 
   const printPdf = () => {
     if (!doc) return;
     const w = window.open("", "_blank", "width=900,height=1100");
     if (!w) return;
-    w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale, lang }));
+    w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang }));
     w.document.close();
     setTimeout(() => { w.focus(); w.print(); }, 250);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -98,6 +101,11 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
               <Checkbox checked={showClientEmail} onCheckedChange={(v) => setShowClientEmail(!!v)} />
               Show client email
             </label>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+              <Checkbox checked={showUnit} onCheckedChange={(v) => setShowUnit(!!v)} />
+              Show unit column
+            </label>
+
             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
               <Checkbox checked={showPayment} onCheckedChange={(v) => setShowPayment(!!v)} />
               Show payment details
@@ -162,7 +170,9 @@ function headingFor(k: DocKind, lang?: DocLanguage) {
   return t.invoice;
 }
 
-function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale, lang }: DocumentHtmlArgs) {
+function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang }: DocumentHtmlArgs) {
+  const unitVisible = showUnit !== false;
+
   const L = (lang ?? doc.language ?? (company?.defaultDocumentLanguage as DocLanguage) ?? "en") as DocLanguage;
   const t = docLabels(L);
   const df = docDateFormat(L);
@@ -259,7 +269,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
                 : meta ? `<div class="sub">${esc(meta)}</div>` : ""}
             </td>
             <td class="num">${qty.toLocaleString()}</td>
-            <td class="num">${esc(l.unit)}</td>
+            ${unitVisible ? `<td class="num">${esc(l.unit)}</td>` : ""}
             <td class="num">${fmt(rate, doc.currency)}</td>
             <td class="num">${fmt(total, doc.currency)}</td>
           </tr>
@@ -273,7 +283,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
           ${project ? `<div style="color: #64748b; font-size: 10px; margin-top: 2px;">${esc(t.project)} · ${esc(project.name)}</div>` : ""}
         </td>
         <td class="num">1</td>
-        <td class="num">fixed</td>
+        ${unitVisible ? `<td class="num">fixed</td>` : ""}
         <td class="num">${fmt(doc.amount, doc.currency)}</td>
         <td class="num">${fmt(doc.amount, doc.currency)}</td>
       </tr>
@@ -371,7 +381,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
           <tr>
             <th>${esc(t.description)}</th>
             <th class="num" style="width: 70px;">${esc(t.quantity)}</th>
-            <th class="num" style="width: 60px;">${esc(t.unit)}</th>
+            ${unitVisible ? `<th class="num" style="width: 60px;">${esc(t.unit)}</th>` : ""}
             <th class="num" style="width: 120px;">${esc(t.unitPrice)}</th>
             <th class="num" style="width: 130px;">${esc(t.lineTotal)}</th>
           </tr>
@@ -414,6 +424,8 @@ export interface DocumentHtmlArgs {
   showStatus?: boolean;
   showPayment?: boolean;
   showClientEmail?: boolean;
+  /** Print the per-line unit column (default true). */
+  showUnit?: boolean;
   /** Resolved (signed) company logo URL — storage refs must be resolved by the caller. */
   logoUrl?: string;
   /** Per-document multiplier applied to the company's logo size (1 = company default). */
