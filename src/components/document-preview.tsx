@@ -283,7 +283,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
           ${project ? `<div style="color: #64748b; font-size: 10px; margin-top: 2px;">${esc(t.project)} · ${esc(project.name)}</div>` : ""}
         </td>
         <td class="num">1</td>
-        <td class="num">fixed</td>
+        ${unitVisible ? `<td class="num">fixed</td>` : ""}
         <td class="num">${fmt(doc.amount, doc.currency)}</td>
         <td class="num">${fmt(doc.amount, doc.currency)}</td>
       </tr>
