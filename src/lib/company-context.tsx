@@ -449,6 +449,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         setBootstrapError(e instanceof Error ? e.message : "Could not load your workspace.");
       } finally {
         if (!cancelled) {
+          bootstrapDoneRef.current = true;
           setAccessLoading(false);
           setDataLoading(false);
           setBootstrapReady(true);
