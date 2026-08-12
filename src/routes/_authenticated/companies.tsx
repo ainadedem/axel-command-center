@@ -254,6 +254,10 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
             <div>
               <Label>Logo</Label>
               <div className="mt-2"><AvatarUpload value={logoUrl} onChange={setLogoUrl} name={name || "Logo"} size={72} square /></div>
+          <div className="flex items-start gap-4">
+            <div>
+              <Label>Logo</Label>
+              <div className="mt-2"><AvatarUpload value={logoUrl} onChange={(v) => { setLogoUrl(v); setLogoCrop(undefined); }} name={name || "Logo"} size={72} square /></div>
               <p className="text-[10px] text-muted-foreground mt-1">Shown on invoice / PO / quote PDFs.</p>
             </div>
             <div className="flex-1 grid grid-cols-3 gap-3">
