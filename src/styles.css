@@ -463,3 +463,81 @@
   line-height: 1.35;
   letter-spacing: 0.01em;
 }
+
+/* ---------- Accessibility & interaction primitives ---------- */
+
+/* One focus recipe for the whole app. */
+@utility focus-ring {
+  outline: none;
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: inherit;
+  }
+}
+
+@utility skip-link {
+  position: absolute;
+  left: 1rem;
+  top: 0.5rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-elevated);
+  transition: transform var(--dur-base) var(--ease-out-soft);
+  &:focus-visible {
+    transform: translateY(0);
+    outline: 2px solid var(--foreground);
+    outline-offset: 2px;
+  }
+}
+
+/* Elevation ladder: rest -> hover -> active */
+@utility elevate {
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--dur-slow) var(--ease-out-soft),
+              transform var(--dur-slow) var(--ease-out-soft),
+              border-color var(--dur-base) var(--ease-out-soft);
+  &:hover {
+    box-shadow: var(--shadow-elevated);
+    transform: translateY(-2px);
+  }
+  &:active {
+    box-shadow: var(--shadow-soft);
+    transform: translateY(0);
+  }
+}
+
+/* Minimum comfortable tap target on touch devices. */
+@utility tap-target {
+  @media (pointer: coarse) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      scroll-behavior: auto !important;
+    }
+    .rise-in, .stagger-in > *, .shimmer::after {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    .hover-lift:hover, .elevate:hover, .press-scale:active, .icon-nudge:hover {
+      transform: none !important;
+    }
+  }
+}
