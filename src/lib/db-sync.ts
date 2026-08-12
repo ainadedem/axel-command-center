@@ -971,7 +971,9 @@ const poFromDb = (r: Record<string, unknown>): PurchaseOrder => ({
   lines: (r.lines as QuoteLine[]) ?? undefined,
   subject: (r.subject as string) ?? undefined,
   bankAccountId: (r.bank_account_id as string) ?? undefined,
+  createdBy: (r.created_by as string) ?? undefined,
 });
+
 export async function upsertPurchaseOrder(p: PurchaseOrder): Promise<string | null> {
   const row = poToDb(p);
   if (!row) return null;
