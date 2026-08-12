@@ -450,10 +450,34 @@ function AppShellLoading() {
   );
 }
 
-function AppShellFrame({ children }: { children: ReactNode }) {
-  const { bootstrapReady } = useCompany();
+function AppShellError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-[var(--gradient-surface)] p-8 shadow-[var(--shadow-soft)]">
+        <div className="flex items-center gap-3">
+          <img src={axelIcon} alt="AXEL Business Platform logo" className="h-10 w-10 rounded-xl shadow-[var(--shadow-glow)]" />
+          <div>
+            <div className="font-display text-base font-semibold">Couldn't load your workspace</div>
+            <div className="text-sm text-muted-foreground">{message}</div>
+          </div>
+        </div>
+        <button
+          onClick={onRetry}
+          className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+        >
+          Retry
+        </button>
+      </div>
+    </div>
+  );
+}
 
+function AppShellFrame({ children }: { children: ReactNode }) {
+  const { bootstrapReady, bootstrapError, retryBootstrap } = useCompany();
+
+  if (bootstrapError) return <AppShellError message={bootstrapError} onRetry={retryBootstrap} />;
   if (!bootstrapReady) return <AppShellLoading />;
+
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
