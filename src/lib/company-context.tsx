@@ -488,8 +488,8 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     bootstrap();
     return () => {
       cancelled = true;
-      // An aborted run must not keep the key claimed, or nothing ever bootstraps.
-      if (!bootstrapDoneRef.current) bootstrapKeyRef.current = null;
+      // An aborted run must never keep the key claimed, or nothing ever bootstraps.
+      bootstrapKeyRef.current = bootstrapDoneRef.current ? bootstrapKeyRef.current : null;
     };
   }, [authLoading, userId, isGroupAdmin, retryCount]);
 
