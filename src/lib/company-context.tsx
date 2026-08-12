@@ -101,7 +101,7 @@ interface Ctx {
 
 }
 
-const CompanyCtx = createContext<Ctx | null>(null);
+export const CompanyCtx = createContext<Ctx | null>(null);
 
 const STORAGE_KEY = "axel.companyScope";
 
