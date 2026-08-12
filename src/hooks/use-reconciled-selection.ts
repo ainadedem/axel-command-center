@@ -7,6 +7,11 @@ type ReconciledSelectionOptions<T> = {
   getId: (option: T) => string;
   allowEmpty?: boolean;
   loading?: boolean;
+  /**
+   * Edit mode: keep the saved value even when it is absent from the loaded
+   * options list. Background hydration must never rewrite a stored selection.
+   */
+  preserve?: boolean;
   onChange: (nextValue: string) => void;
 };
 
@@ -22,11 +27,13 @@ export function useReconciledSelection<T>({
   getId,
   allowEmpty = false,
   loading = false,
+  preserve = false,
   onChange,
 }: ReconciledSelectionOptions<T>) {
   useEffect(() => {
     if (!open) return;
     if (loading) return;
+    if (preserve && currentValue) return;
 
     const ids = options.map(getId).filter(Boolean);
     const hasCurrent = !!currentValue && ids.includes(currentValue);
@@ -42,5 +49,6 @@ export function useReconciledSelection<T>({
 
     const nextValue = allowEmpty && !currentValue ? "" : ids[0];
     if (nextValue !== currentValue) onChange(nextValue);
-  }, [open, currentValue, options, getId, allowEmpty, loading, onChange]);
+  }, [open, currentValue, options, getId, allowEmpty, loading, preserve, onChange]);
 }
+

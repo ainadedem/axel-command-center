@@ -35,6 +35,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import html2pdf from "html2pdf.js";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
+import { withSelected } from "@/lib/select-options";
 import { useSingleFlightSubmit } from "@/components/form-ux";
 
 export const Route = createFileRoute("/_authenticated/quotations")({ component: QuotationsPage });
@@ -390,10 +391,19 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   }, [companyId, issueDate]);
 
   const companyClients = useMemo(
-    () => clients.filter((c) => contactBelongsTo(c, companyId)).sort((a, b) => a.name.localeCompare(b.name)),
-    [clients, companyId],
+    () => withSelected(
+      clients.filter((c) => contactBelongsTo(c, companyId)).sort((a, b) => a.name.localeCompare(b.name)),
+      editing ? clientId : undefined,
+      clients,
+    ),
+    [clients, companyId, clientId, editing],
   );
-  const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
+  const clientProjects = withSelected(
+    projects.filter((p) => p.companyId === companyId && p.clientId === clientId),
+    editing ? projectId : undefined,
+    projects,
+  );
+
 
   useReconciledSelection({
     open,
@@ -401,6 +411,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     options: companies,
     getId: (company) => company.id,
     loading: companies.length === 0,
+    preserve: !!editing,
     onChange: setCompanyId,
   });
 
@@ -410,6 +421,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     options: companyClients,
     getId: (client) => client.id,
     loading: clients.length === 0,
+    preserve: !!editing,
     onChange: setClientId,
   });
 
@@ -420,6 +432,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     getId: (project) => project.id,
     allowEmpty: true,
     loading: projects.length === 0,
+    preserve: !!editing,
     onChange: setProjectId,
   });
 

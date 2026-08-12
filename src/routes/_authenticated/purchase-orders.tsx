@@ -25,6 +25,7 @@ import { Pencil, Trash2, Upload, FileText, X, History, RefreshCw, Eye, AlertTria
 
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
+import { withSelected } from "@/lib/select-options";
 
 type DocVersion = { url: string; name?: string; type?: string; uploadedAt: string };
 
@@ -238,9 +239,22 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
   };
 
 
-  const companyClients = clients.filter((c) => contactBelongsTo(c, companyId));
-  const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
-  const clientQuotes = quotes.filter((q) => q.companyId === companyId && q.clientId === clientId);
+  const companyClients = withSelected(
+    clients.filter((c) => contactBelongsTo(c, companyId)),
+    editing ? clientId : undefined,
+    clients,
+  );
+  const clientProjects = withSelected(
+    projects.filter((p) => p.companyId === companyId && p.clientId === clientId),
+    editing ? projectId : undefined,
+    projects,
+  );
+  const clientQuotes = withSelected(
+    quotes.filter((q) => q.companyId === companyId && q.clientId === clientId),
+    editing ? quoteId : undefined,
+    quotes,
+  );
+
 
   useReconciledSelection({
     open,
@@ -248,6 +262,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     options: companies,
     getId: (company) => company.id,
     loading: companies.length === 0,
+    preserve: !!editing,
     onChange: setCompanyId,
   });
 
@@ -257,6 +272,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     options: companyClients,
     getId: (client) => client.id,
     loading: clients.length === 0,
+    preserve: !!editing,
     onChange: setClientId,
   });
 
@@ -267,6 +283,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     getId: (quote) => quote.id,
     allowEmpty: true,
     loading: quotes.length === 0,
+    preserve: !!editing,
     onChange: setQuoteId,
   });
 
@@ -277,6 +294,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     getId: (project) => project.id,
     allowEmpty: true,
     loading: projects.length === 0,
+    preserve: !!editing,
     onChange: setProjectId,
   });
 

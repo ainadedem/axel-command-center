@@ -36,6 +36,7 @@ import { Wallet } from "lucide-react";
 import { nextNumber, isNumberTaken } from "@/lib/numbering";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
+import { withSelected } from "@/lib/select-options";
 
 export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage });
 
@@ -518,11 +519,24 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   }, [companyId, issueDate]);
 
   const companyClients = useMemo(
-    () => clients.filter((c: Client) => contactBelongsTo(c, companyId)).sort((a, b) => a.name.localeCompare(b.name)),
-    [clients, companyId],
+    () => withSelected(
+      clients.filter((c: Client) => contactBelongsTo(c, companyId)).sort((a, b) => a.name.localeCompare(b.name)),
+      editing ? clientId : undefined,
+      clients,
+    ),
+    [clients, companyId, clientId, editing],
   );
-  const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
-  const clientPOs = pos.filter((p) => p.companyId === companyId && p.clientId === clientId && p.status !== "cancelled");
+  const clientProjects = withSelected(
+    projects.filter((p) => p.companyId === companyId && p.clientId === clientId),
+    editing ? projectId : undefined,
+    projects,
+  );
+  const clientPOs = withSelected(
+    pos.filter((p) => p.companyId === companyId && p.clientId === clientId && p.status !== "cancelled"),
+    editing ? poId : undefined,
+    pos,
+  );
+
   const selectedClient = clients.find((c) => c.id === clientId);
   const selectedPO = pos.find((p) => p.id === poId);
   const linkedQuote = selectedPO?.quoteId ? quotes.find((q) => q.id === selectedPO.quoteId) : undefined;
@@ -533,6 +547,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     options: companies,
     getId: (company) => company.id,
     loading: companies.length === 0,
+    preserve: !!editing,
     onChange: setCompanyId,
   });
 
@@ -542,6 +557,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     options: companyClients,
     getId: (client) => client.id,
     loading: clients.length === 0,
+    preserve: !!editing,
     onChange: setClientId,
   });
 
@@ -552,6 +568,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     getId: (po) => po.id,
     allowEmpty: true,
     loading: pos.length === 0,
+    preserve: !!editing,
     onChange: setPoId,
   });
 
@@ -562,6 +579,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     getId: (project) => project.id,
     allowEmpty: true,
     loading: projects.length === 0,
+    preserve: !!editing,
     onChange: setProjectId,
   });
 
