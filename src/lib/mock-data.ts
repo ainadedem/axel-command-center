@@ -68,6 +68,8 @@ export interface Company {
   logoMaxWidth?: number;
   /** Crop metadata so the crop can be re-edited or reset. */
   logoCrop?: CompanyLogoCrop;
+  /** Default printed language for this company's invoices and quotes ("en" | "fr"). */
+  defaultDocumentLanguage?: "en" | "fr";
 }
 
 /** Saved logo crop transform + reference to the original uploaded image. */
