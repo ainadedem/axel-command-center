@@ -102,6 +102,11 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
               Show client email
             </label>
             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+              <Checkbox checked={showUnit} onCheckedChange={(v) => setShowUnit(!!v)} />
+              Show unit column
+            </label>
+
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
               <Checkbox checked={showPayment} onCheckedChange={(v) => setShowPayment(!!v)} />
               Show payment details
             </label>
