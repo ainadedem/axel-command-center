@@ -19,11 +19,19 @@ interface AuthState {
   user: User | null;
   profile: Profile | null;
   roles: AppRole[];
+  /** Role granted per company id (from user_company_access). */
+  companyRoles: Record<string, AppRole>;
   loading: boolean;
   isAuthenticated: boolean;
   hasRole: (role: AppRole) => boolean;
+  /** Role that applies inside a given company (global admin roles win). */
+  roleFor: (companyId?: string | null) => AppRole | null;
   /** True when the user is a sales rep with no admin/finance role — sales-only scope. */
   isSalesOnly: boolean;
+  /** True when the user may see money: admins, managers and finance. */
+  canSeeFinance: boolean;
+  /** True for group/super admins and company admins. */
+  isAdmin: boolean;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -33,10 +41,14 @@ const defaultAuthState: AuthState = {
   user: null,
   profile: null,
   roles: [],
+  companyRoles: {},
   loading: true,
   isAuthenticated: false,
   hasRole: () => false,
+  roleFor: () => null,
   isSalesOnly: false,
+  canSeeFinance: false,
+  isAdmin: false,
   signOut: async () => {},
   refresh: async () => {},
 };
@@ -47,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  const [companyRoles, setCompanyRoles] = useState<Record<string, AppRole>>({});
   const [loading, setLoading] = useState(true);
   // Tracks which user the current state belongs to, so repeated SIGNED_IN /
   // INITIAL_SESSION events (fired by the auth client on tab focus) become no-ops.
