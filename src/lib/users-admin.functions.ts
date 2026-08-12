@@ -29,11 +29,18 @@ export const createAppUser = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
 
     // Authorize the caller before touching any privileged client.
-    const [{ data: isSuper }, { data: isGroup }] = await Promise.all([
+    const [superRes, groupRes] = await Promise.all([
       supabase.rpc("has_role", { _user_id: userId, _role: "super_admin" }),
       supabase.rpc("has_role", { _user_id: userId, _role: "group_admin" }),
     ]);
+    // A failed lookup is not the same as "no role" — surface it instead of a
+    // misleading permission message.
+    const lookupError = superRes.error ?? groupRes.error;
+    if (lookupError) throw new Error(`Could not verify your role: ${lookupError.message}`);
+    const isSuper = superRes.data;
+    const isGroup = groupRes.data;
     if (!isSuper && !isGroup) throw new Error("Forbidden: administrators only.");
+
     if (data.platformRole && !isSuper) throw new Error("Only a super admin can grant platform roles.");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
