@@ -72,26 +72,26 @@ export function KpiCard({
           ? "bg-success/10 border-success/40"
           : highlight
             ? "bg-gradient-to-br from-surface-elevated to-surface shadow-[var(--shadow-glow)]"
-            : "bg-[var(--gradient-surface)]";
+            : "bg-card";
 
   return (
     <div className={cn(
-      "group relative rounded-xl border p-5 overflow-hidden hover-lift rise-in",
+      "group relative rounded-2xl border border-border/70 p-5 overflow-hidden shadow-[var(--shadow-card)] hover-lift rise-in",
       toneSurface,
     )}>
       {/* soft cursor-agnostic sheen on hover */}
       <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 [background:radial-gradient(120%_80%_at_100%_0%,color-mix(in_oklab,var(--primary)_12%,transparent),transparent_60%)]" />
       <div className="relative flex items-center justify-between mb-3 gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-medium truncate transition-colors duration-300 group-hover:text-foreground/70">{label}</div>
+          <div className="text-[11px] tracking-[0.02em] text-muted-foreground font-medium truncate transition-colors duration-300 group-hover:text-foreground/70">{label}</div>
           {badge}
         </div>
         {trend && (
           <div className={cn(
-            "text-xs flex items-center gap-0.5 font-medium font-tnum shrink-0 transition-transform duration-300 group-hover:-translate-y-px",
-            trendDir === "up" && "text-success",
-            trendDir === "down" && "text-destructive",
-            trendDir === "flat" && "text-muted-foreground",
+            "text-[11px] flex items-center gap-0.5 font-medium font-tnum shrink-0 rounded-full px-2 py-0.5 transition-transform duration-300 group-hover:-translate-y-px",
+            trendDir === "up" && "text-success bg-success/10",
+            trendDir === "down" && "text-destructive bg-destructive/10",
+            trendDir === "flat" && "text-muted-foreground bg-muted",
           )}>
             {trendDir === "up" && <ArrowUpRight className="h-3 w-3" />}
             {trendDir === "down" && <ArrowDownRight className="h-3 w-3" />}
@@ -100,7 +100,7 @@ export function KpiCard({
         )}
       </div>
       <div className={cn(
-        "relative font-display text-[28px] leading-none font-bold tracking-tight font-tnum",
+        "relative font-display text-metric",
         tone === "danger" && "text-destructive",
         tone === "warning" && "text-amber-500",
       )}>

@@ -382,28 +382,30 @@ function DashboardBody() {
 
                 <defs>
                   <linearGradient id="gIn" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="oklch(0.78 0.14 165)" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="oklch(0.78 0.14 165)" stopOpacity={0} />
+                    <stop offset="0%" stopColor="var(--chart-4)" stopOpacity={0.5} />
+                    <stop offset="100%" stopColor="var(--chart-4)" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="gOut" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="oklch(0.68 0.19 22)" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="oklch(0.68 0.19 22)" stopOpacity={0} />
+                    <stop offset="0%" stopColor="var(--destructive)" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="var(--destructive)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke="var(--border)" vertical={false} />
+                <CartesianGrid stroke="var(--border)" strokeDasharray="2 6" vertical={false} />
                 <XAxis dataKey="date" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} minTickGap={32} />
                 <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
                 <Tooltip
                   contentStyle={{
                     background: "var(--card)",
                     border: "1px solid var(--border)",
-                    borderRadius: 8,
+                    borderRadius: 14,
                     fontSize: 12,
+                    boxShadow: "var(--shadow-elevated)",
+                    padding: "8px 12px",
                   }}
                   labelStyle={{ color: "var(--foreground)" }}
                 />
-                <Area type="monotone" dataKey="income" stroke="oklch(0.78 0.14 165)" strokeWidth={2} fill="url(#gIn)" />
-                <Area type="monotone" dataKey="expense" stroke="oklch(0.68 0.19 22)" strokeWidth={2} fill="url(#gOut)" />
+                <Area type="monotone" dataKey="income" stroke="var(--chart-4)" strokeWidth={1.75} fill="url(#gIn)" />
+                <Area type="monotone" dataKey="expense" stroke="var(--destructive)" strokeWidth={1.75} fill="url(#gOut)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -415,11 +417,11 @@ function DashboardBody() {
           <div className="h-64">
             <ResponsiveContainer>
               <BarChart data={perCompany} margin={{ top: 6, right: 8, left: -16, bottom: 0 }}>
-                <CartesianGrid stroke="var(--border)" vertical={false} />
+                <CartesianGrid stroke="var(--border)" strokeDasharray="2 6" vertical={false} />
                 <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
                 <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} cursor={{ fill: "color-mix(in oklab, var(--primary) 6%, transparent)" }} />
-                <Bar dataKey="profit" radius={[6, 6, 0, 0]} fill="oklch(0.78 0.14 165)" />
+                <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, fontSize: 12, boxShadow: "var(--shadow-elevated)", padding: "8px 12px" }} cursor={{ fill: "color-mix(in oklab, var(--primary) 6%, transparent)" }} />
+                <Bar dataKey="profit" radius={[8, 8, 0, 0]} fill="var(--chart-4)" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -443,12 +445,12 @@ function DashboardBody() {
         <div className="h-64">
           <ResponsiveContainer>
             <BarChart data={salesData} margin={{ top: 6, right: 8, left: -16, bottom: 0 }}>
-              <CartesianGrid stroke="var(--border)" vertical={false} />
+              <CartesianGrid stroke="var(--border)" strokeDasharray="2 6" vertical={false} />
               <XAxis dataKey="date" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
               <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-              <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} cursor={{ fill: "color-mix(in oklab, var(--primary) 6%, transparent)" }} />
-              <Bar dataKey="closed" stackId="s" radius={[0, 0, 0, 0]} fill="oklch(0.78 0.14 165)" name="Closed" />
-              <Bar dataKey="forecast" stackId="s" radius={[6, 6, 0, 0]} fill="oklch(0.72 0.13 220)" fillOpacity={0.55} name="Forecast (weighted)" />
+              <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, fontSize: 12, boxShadow: "var(--shadow-elevated)", padding: "8px 12px" }} cursor={{ fill: "color-mix(in oklab, var(--primary) 6%, transparent)" }} />
+              <Bar dataKey="closed" stackId="s" radius={[0, 0, 0, 0]} fill="var(--chart-4)" name="Closed" />
+              <Bar dataKey="forecast" stackId="s" radius={[8, 8, 0, 0]} fill="var(--chart-2)" fillOpacity={0.55} name="Forecast (weighted)" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -538,16 +540,16 @@ function DashboardBody() {
           <div className="h-56">
             <ResponsiveContainer>
               <BarChart data={axiomForecast6mo} margin={{ top: 6, right: 8, left: -16, bottom: 0 }}>
-                <CartesianGrid stroke="var(--border)" vertical={false} />
+                <CartesianGrid stroke="var(--border)" strokeDasharray="2 6" vertical={false} />
                 <XAxis dataKey="date" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
                 <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
                 <Tooltip
-                  contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
+                  contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, fontSize: 12, boxShadow: "var(--shadow-elevated)", padding: "8px 12px" }}
                   cursor={{ fill: "color-mix(in oklab, var(--primary) 6%, transparent)" }}
                   formatter={(v) => `${Number(v).toFixed(1)} M MGA`}
                 />
-                <Bar dataKey="gross" radius={[4, 4, 0, 0]} fill="oklch(0.72 0.13 220)" fillOpacity={0.3} name="Gross" />
-                <Bar dataKey="weighted" radius={[6, 6, 0, 0]} fill="oklch(0.58 0.21 268)" name="Weighted" />
+                <Bar dataKey="gross" radius={[8, 8, 0, 0]} fill="var(--chart-2)" fillOpacity={0.3} name="Gross" />
+                <Bar dataKey="weighted" radius={[8, 8, 0, 0]} fill="var(--chart-1)" name="Weighted" />
               </BarChart>
             </ResponsiveContainer>
           </div>

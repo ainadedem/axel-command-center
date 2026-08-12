@@ -106,7 +106,7 @@ function summaryHtml(s: ReconciliationSummary) {
   const lines = (s.lines ?? []).filter((l) => l.included);
   const linesHtml = lines.length
     ? `
-    <h3 style="margin:22px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#6B00E0;">Reconciled items (${lines.length})</h3>
+    <h3 style="margin:22px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#2563EB;">Reconciled items (${lines.length})</h3>
     <table style="width:100%;border-collapse:collapse;font-size:10px;">
       <thead>
         <tr style="border-bottom:1px solid #ddd;color:#666;text-align:left;">
@@ -132,7 +132,7 @@ function summaryHtml(s: ReconciliationSummary) {
 
   return `
   <div style="font-family:Helvetica,Arial,sans-serif;color:#111;padding:32px;width:720px;">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #6B00E0;padding-bottom:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #2563EB;padding-bottom:12px;">
       <div>
         <div style="font-size:18px;font-weight:700;">${esc(s.companyName ?? "")}</div>
         <div style="font-size:12px;color:#555;margin-top:2px;">Bank reconciliation summary</div>
@@ -150,7 +150,7 @@ function summaryHtml(s: ReconciliationSummary) {
       <div><span style="color:#888;">Status</span><br/><strong style="color:${statusColor};">${status}</strong></div>
     </div>
 
-    <h3 style="margin:22px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#6B00E0;">Balance reconciliation</h3>
+    <h3 style="margin:22px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#2563EB;">Balance reconciliation</h3>
     <table style="width:100%;border-collapse:collapse;border-top:1px solid #eee;">
       ${row(`Opening balance${s.openingBalanceDate ? ` (as of ${s.openingBalanceDate})` : ""}`, money(s.openingBalance, s.currency))}
       ${s.ledgerBefore !== undefined ? row("Ledger balance before import", money(s.ledgerBefore, s.currency)) : ""}
