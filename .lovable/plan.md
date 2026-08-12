@@ -1,14 +1,20 @@
 # Restyle Axel to the "Zentra" reference look
+# Restyle Axel: reference dashboard look, built on Apple HIG rules
 
-A full visual refresh of the whole app to match the uploaded dashboard reference: soft light canvas, floating white rounded cards, thin geometric type, subtle gradients, and a light multi-hue chart family. Violet is retired as the brand color (per your answer) in favor of the reference blue.
+A full visual refresh of the whole app combining the uploaded dashboard reference (soft light canvas, floating white rounded cards, thin geometric type, subtle gradients, light multi-hue charts) with Apple's Human Interface Guidelines discipline. Violet is retired as the brand color (per your answer) in favor of the reference blue.
 
 ## Direction
 
-- Canvas: warm-neutral light gray (#F2F2F4-ish), app content floating on it as white cards with generous radius and very soft shadows — no heavy borders.
-- Primary: reference blue. Charts get the reference multi-hue family (blue, pink, green, amber) used sparingly.
-- Type: geometric grotesque, thin/light weights for big numbers, small uppercase-ish labels in muted gray. Numbers keep tabular figures.
-- Gradients: soft, low-saturation — the "insight" panel style (peach → blue → violet mesh) reserved for one highlight card per page, plus subtle diagonal hatch/gradient fills in area charts.
-- Density: airier padding, lighter dividers, smaller muted secondary text.
+- Canvas: warm-neutral light gray, content floating as white cards with generous continuous-corner radius and very soft shadows — no heavy borders.
+- Primary: reference blue as the single accent (Apple rule: one tint color drives every interactive element). Charts get the reference multi-hue family (blue, pink, green, amber), used only to encode data.
+- Type: geometric grotesque on an Apple-style type ramp — a small fixed set of sizes/weights (large title, title, headline, body, footnote, caption), thin weights for big figures, muted small caps-ish labels. Tabular figures for all numbers. Minimum 11px, 4.5:1 contrast.
+- Materials: translucent blurred bars (topbar, sidebar, sheets) over the canvas, like Apple's materials — content scrolls under, chrome stays legible.
+- Gradients: soft and low-saturation; the mesh "insight" panel reserved for one highlight card per page, plus gradient/hatch fills in area charts.
+- Layout: 8pt spacing grid, generous margins, consistent 44px minimum hit targets, clear visual hierarchy over decoration.
+- Motion: short, interruptible, physics-feeling transitions that always originate from the element touched; respects reduced-motion. Builds on the motion pass already in place.
+- Controls: Apple-style segmented controls for tabs/filters, pill buttons, switches over checkboxes for settings, destructive actions always red and confirmed, empty states with a single clear next action.
+- Accessibility: full keyboard focus rings, semantic labels, no color-only meaning (icon or text always paired with status color).
+
 
 ## What changes
 
