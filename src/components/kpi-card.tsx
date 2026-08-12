@@ -1,6 +1,44 @@
 import { cn } from "@/lib/utils";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+
+function useCountUp(target: number, enabled: boolean) {
+  const [display, setDisplay] = useState(enabled ? 0 : target);
+  const fromRef = useRef(0);
+
+  useEffect(() => {
+    if (!enabled) {
+      setDisplay(target);
+      return;
+    }
+    if (typeof window === "undefined") return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      setDisplay(target);
+      return;
+    }
+    const from = fromRef.current;
+    const start = performance.now();
+    const duration = 650;
+    let raf = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplay(from + (target - from) * eased);
+      if (t < 1) raf = requestAnimationFrame(tick);
+      else fromRef.current = target;
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, enabled]);
+
+  return display;
+}
+
+function AnimatedNumber({ value }: { value: number }) {
+  const shown = useCountUp(value, true);
+  const decimals = Number.isInteger(value) ? 0 : 2;
+  return <>{shown.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}</>;
+}
 
 export function KpiCard({
   label,
@@ -38,17 +76,19 @@ export function KpiCard({
 
   return (
     <div className={cn(
-      "relative rounded-xl border p-5 overflow-hidden",
+      "group relative rounded-xl border p-5 overflow-hidden hover-lift rise-in",
       toneSurface,
     )}>
-      <div className="flex items-center justify-between mb-3 gap-2">
+      {/* soft cursor-agnostic sheen on hover */}
+      <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 [background:radial-gradient(120%_80%_at_100%_0%,color-mix(in_oklab,var(--primary)_12%,transparent),transparent_60%)]" />
+      <div className="relative flex items-center justify-between mb-3 gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-medium truncate">{label}</div>
+          <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-medium truncate transition-colors duration-300 group-hover:text-foreground/70">{label}</div>
           {badge}
         </div>
         {trend && (
           <div className={cn(
-            "text-xs flex items-center gap-0.5 font-medium font-tnum shrink-0",
+            "text-xs flex items-center gap-0.5 font-medium font-tnum shrink-0 transition-transform duration-300 group-hover:-translate-y-px",
             trendDir === "up" && "text-success",
             trendDir === "down" && "text-destructive",
             trendDir === "flat" && "text-muted-foreground",
@@ -60,15 +100,14 @@ export function KpiCard({
         )}
       </div>
       <div className={cn(
-        "font-display text-[28px] leading-none font-bold tracking-tight font-tnum",
+        "relative font-display text-[28px] leading-none font-bold tracking-tight font-tnum",
         tone === "danger" && "text-destructive",
         tone === "warning" && "text-amber-500",
       )}>
-        {value}
+        {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
       </div>
-      {sub && <div className="text-xs text-muted-foreground mt-2 font-tnum">{sub}</div>}
+      {sub && <div className="relative text-xs text-muted-foreground mt-2 font-tnum">{sub}</div>}
       {children}
     </div>
   );
 }
-
