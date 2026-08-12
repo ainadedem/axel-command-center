@@ -325,6 +325,8 @@ function Topbar() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search transactions, invoices, clients..."
+          aria-label="Search transactions, invoices and clients"
+          type="search"
           className="w-full h-9 pl-9 pr-12 rounded-full bg-secondary border border-border/80 text-sm placeholder:text-muted-foreground/60 transition-[border-color,box-shadow,background-color] duration-200 hover:border-primary/35 focus:outline-none focus:border-primary/60 focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_18%,transparent)]"
         />
         <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
@@ -333,17 +335,18 @@ function Topbar() {
         <FxBadge />
         <button
           onClick={handleNew}
-          className="h-9 px-4 rounded-full text-sm font-medium bg-primary text-primary-foreground hover:opacity-95 hover:-translate-y-px hover:shadow-[var(--shadow-glow)] active:translate-y-0 active:scale-[0.97] transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] flex items-center gap-1.5 group"
+          aria-label={newLabel}
+          className="h-9 px-4 focus-ring tap-target rounded-full text-sm font-medium bg-primary text-primary-foreground hover:opacity-95 hover:-translate-y-px hover:shadow-[var(--shadow-glow)] active:translate-y-0 active:scale-[0.97] transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] flex items-center gap-1.5 group"
         >
           <Plus className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" /> {newLabel}
         </button>
         <div className="relative">
           <button
             onClick={() => setBellOpen((v) => !v)}
-            className="h-9 w-9 grid place-items-center rounded-full hover:bg-secondary hover:text-primary active:scale-90 transition-all duration-200 relative"
+            className="h-9 w-9 grid place-items-center rounded-full focus-ring tap-target hover:bg-secondary hover:text-primary active:scale-90 transition-all duration-200 relative"
             aria-label="Notifications"
           >
-            <Bell className="h-4 w-4" />
+            <Bell className="h-4 w-4" aria-hidden="true" />
           </button>
           {bellOpen && (
             <>
@@ -418,6 +421,9 @@ function FxBadge() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         title={`FX rates · ${source} · updated ${stamp}`}
+        aria-label={`Foreign exchange rates, updated ${stamp}`}
+        aria-haspopup="dialog"
+        aria-expanded={open}
         className="hidden md:flex items-center gap-1.5 h-9 px-3 rounded-full border border-border bg-card hover:bg-surface-elevated hover:border-primary/35 hover:-translate-y-px active:translate-y-0 active:scale-[0.98] transition-all duration-200 text-[11px] font-tnum text-muted-foreground"
       >
         <span className="text-foreground/80">€</span>
@@ -435,8 +441,9 @@ function FxBadge() {
               <button
                 onClick={onRefresh}
                 disabled={busy}
-                className="h-6 w-6 grid place-items-center rounded hover:bg-accent text-muted-foreground disabled:opacity-50"
+                className="h-6 w-6 grid place-items-center rounded focus-ring hover:bg-accent text-muted-foreground disabled:opacity-50"
                 title="Refresh now"
+                aria-label="Refresh exchange rates"
               >
                 <RefreshCw className={cn("h-3.5 w-3.5", busy && "animate-spin")} />
               </button>
