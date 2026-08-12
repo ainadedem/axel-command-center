@@ -381,7 +381,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
           <tr>
             <th>${esc(t.description)}</th>
             <th class="num" style="width: 70px;">${esc(t.quantity)}</th>
-            <th class="num" style="width: 60px;">${esc(t.unit)}</th>
+            ${unitVisible ? `<th class="num" style="width: 60px;">${esc(t.unit)}</th>` : ""}
             <th class="num" style="width: 120px;">${esc(t.unitPrice)}</th>
             <th class="num" style="width: 130px;">${esc(t.lineTotal)}</th>
           </tr>
