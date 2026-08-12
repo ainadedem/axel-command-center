@@ -57,8 +57,10 @@ interface Props {
 export function DocumentPreview({ open, onOpenChange, doc, company, client, project }: Props) {
   const [showStatus, setShowStatus] = useState(true);
   const [showClientEmail, setShowClientEmail] = useState(true);
+  const [showUnit, setShowUnit] = useState(true);
   const [showPayment, setShowPayment] = useState(company?.showPaymentDetails !== false);
   useEffect(() => { setShowPayment(company?.showPaymentDetails !== false); }, [company?.id, company?.showPaymentDetails]);
+
 
   // Logos are stored as private storage refs (`storage:bucket/path`) — resolve
   // them to a signed URL before embedding into the document HTML.
