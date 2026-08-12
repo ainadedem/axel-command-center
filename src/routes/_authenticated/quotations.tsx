@@ -353,6 +353,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   useEffect(() => {
     if (!open) return;
     if (editing) {
+      numberTouched.current = false;
       setNumber(editing.number); setCompanyId(editing.companyId); setClientId(editing.clientId);
       setProjectId(editing.projectId ?? "");
       setIssueDate(editing.issueDate); setValidUntil(editing.validUntil);
