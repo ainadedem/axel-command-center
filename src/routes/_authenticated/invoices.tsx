@@ -361,6 +361,8 @@ function Body() {
                       <td className="px-5 py-3.5 text-right font-tnum font-medium">
                         {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? fmtAmount(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
                       </td>
+                      <td className="px-5 py-3.5 text-xs text-muted-foreground">{ownerName(inv.createdBy)}</td>
+
                       <td className="px-5 py-3.5 text-right">
                         <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
                           <button onClick={() => setPreviewing(inv)} title="Preview & export PDF" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
