@@ -266,6 +266,47 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               </div>
             </div>
           </div>
+          <div className="rounded-lg border border-border p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Logo on documents</Label>
+              <div className="flex items-center gap-2">
+                <Button type="button" size="sm" variant="outline" disabled={!logoUrl} onClick={() => setCropOpen(true)}>Adjust logo</Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => { if (logoCrop?.sourceRef) setLogoUrl(logoCrop.sourceRef); setLogoCrop(undefined); setLogoHeight(52); setLogoMaxWidth(180); }}
+                >
+                  Reset
+                </Button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Height</span><span className="tabular-nums">{logoHeight}px</span></div>
+                <Slider value={[logoHeight]} min={24} max={140} step={1} onValueChange={([v]) => setLogoHeight(v)} className="mt-2" />
+              </div>
+              <div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Max width</span><span className="tabular-nums">{logoMaxWidth}px</span></div>
+                <Slider value={[logoMaxWidth]} min={80} max={360} step={2} onValueChange={([v]) => setLogoMaxWidth(v)} className="mt-2" />
+              </div>
+            </div>
+            <div className="rounded-md bg-white border border-border p-3">
+              {logoPreviewUrl ? (
+                <img src={logoPreviewUrl} alt="Logo preview" style={{ maxHeight: logoHeight, maxWidth: logoMaxWidth, objectFit: "contain" }} />
+              ) : (
+                <p className="text-[11px] text-neutral-500">Upload a logo to preview how it prints.</p>
+              )}
+            </div>
+          </div>
+          <LogoCropDialog
+            open={cropOpen}
+            onOpenChange={setCropOpen}
+            value={logoUrl}
+            crop={logoCrop}
+            aspect={logoMaxWidth / Math.max(1, logoHeight)}
+            onApply={(ref, c) => { setLogoUrl(ref); setLogoCrop(c); }}
+          />
           <div><Label>Legal name (on invoices)</Label><Input value={legalName} onChange={(e) => setLegalName(e.target.value)} placeholder="LOGIA SARL" /></div>
           <div><Label>Registered address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Lot II M 73 ter Antananarivo 101" /></div>
           <div className="grid grid-cols-2 gap-3">
