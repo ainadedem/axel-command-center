@@ -1011,7 +1011,9 @@ const expenseToDb = (e: Expense) => {
     project_id: e.projectId && isUuid(e.projectId) ? e.projectId : null,
     attachment_url: e.attachmentUrl ?? null,
     attachment_name: e.attachmentName ?? null,
+    ...(e.createdBy && isUuid(e.createdBy) ? { created_by: e.createdBy } : {}),
   };
+
 };
 const expenseFromDb = (r: Record<string, unknown>): Expense => ({
   id: r.id as string,
