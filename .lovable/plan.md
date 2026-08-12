@@ -1,38 +1,18 @@
-# Fix: auth loading never finishes after sign-in
+# Hide the "Unité" column on invoices and quotations
 
-## Confirmed cause
+Add a preview-level toggle to remove the unit/quantity-unit column from the printed document.
 
-The persistent screen is the plain **“Loading…”** state from the authenticated route, so the app never reaches the workspace bootstrap.
+## Behaviour
 
-In `src/lib/auth-context.tsx`, the initial session chain returns `loadUserData(...)`. Its final `setLoading(false)` therefore waits for all profile, global-role, and company-access requests to finish. One stalled backend request keeps the entire authenticated app blocked indefinitely.
+- New checkbox "Show unit column" in the document preview toolbar, next to "Show client email" and "Show payment details".
+- Checked by default.
+- When unchecked, the "Unité" / "Unit" header and every line's unit cell disappear from the on-screen preview, the print view, and the exported PDF; the remaining columns take the freed width.
+- Applies to invoices, quotations and purchase orders (same preview component). Not persisted — resets to checked each time the preview opens.
 
-## Changes
+## Technical
 
-1. **Separate session readiness from user-data loading**
-   - Resolve the main auth `loading` state as soon as the initial session lookup completes.
-   - Load profile, roles, and company access independently so those reads cannot hold the route gate open forever.
-
-2. **Make user-data loading bounded and resilient**
-   - Add a timeout around profile/role/access loading.
-   - Handle each read’s error explicitly and preserve safe defaults rather than waiting forever or silently treating failed reads as valid data.
-   - Prevent stale requests from an earlier session from updating the current user’s state.
-
-3. **Avoid premature sales redirects**
-   - Expose a separate access/roles loading state.
-   - Delay role-based route redirection until access resolution finishes, while still allowing the authenticated layout to render.
-
-4. **Add a recoverable auth failure state**
-   - Replace an indefinite auth spinner with an actionable message and retry/sign-out controls if the initial session lookup itself exceeds its timeout.
-
-## Technical scope
-
-- Update `src/lib/auth-context.tsx` to split session initialization from user-data hydration and add bounded request handling.
-- Update `src/routes/_authenticated.tsx` to distinguish session loading, access loading, and auth failure states.
-- Reuse the existing design-system button component for recovery actions.
-
-## Verification
-
-- Sign in and confirm the dashboard opens without remaining on “Loading…”.
-- Simulate a stalled profile/role/access request and confirm the route still resolves to a recoverable state.
-- Confirm a sales user is redirected only after roles load, while an admin retains normal dashboard access.
-- Confirm sign-out and a fresh sign-in clear all prior profile and role state.
+- `src/components/document-preview.tsx` only:
+  - Add `showUnit` state (default `true`) plus a `Checkbox` in the toolbar.
+  - Thread `showUnit` through `buildHTML` / `buildPrintableDocument` args and the `DocumentHtmlArgs` type, alongside `showStatus`, `showPayment`, `showClientEmail`.
+  - Conditionally omit the unit `<th>` (line ~374) and the unit `<td>` (line ~262); adjust the description column width so the table still fills the page.
+- No database, schema, or company-settings changes.
