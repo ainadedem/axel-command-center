@@ -164,11 +164,16 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition cursor-pointer select-none">
-        <span>{section.label}</span>
-        {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+      <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition cursor-pointer select-none group/section">
+        <span className="transition-transform duration-200 group-hover/section:translate-x-0.5">{section.label}</span>
+        <ChevronDown
+          className={cn(
+            "h-3 w-3 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+            open ? "rotate-0" : "-rotate-90",
+          )}
+        />
       </CollapsibleTrigger>
-      <CollapsibleContent>
+      <CollapsibleContent className="overflow-hidden data-[state=open]:animate-[accordion-down_240ms_cubic-bezier(0.22,1,0.36,1)] data-[state=closed]:animate-[accordion-up_200ms_cubic-bezier(0.22,1,0.36,1)]">
         <div className="space-y-0.5 pb-2">
           {section.items.map((item) => {
             const active = pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to));
@@ -178,20 +183,31 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  "group flex items-center gap-3 px-3 py-2 rounded-md text-sm transition relative",
+                  "group flex items-center gap-3 px-3 py-2 rounded-md text-sm relative overflow-hidden transition-[color,background-color,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98]",
                   active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 hover:translate-x-0.5",
                 )}
               >
-                {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-primary" />}
-                <Icon className="h-4 w-4" />
+                <span
+                  className={cn(
+                    "absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-primary origin-center transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+                    active ? "scale-y-100" : "scale-y-0",
+                  )}
+                />
+                <Icon
+                  className={cn(
+                    "h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110",
+                    active && "text-primary",
+                  )}
+                />
                 <span>{item.label}</span>
               </Link>
             );
           })}
         </div>
       </CollapsibleContent>
+
     </Collapsible>
   );
 }
