@@ -269,7 +269,10 @@ export interface Invoice {
   subject?: string;
   /** Which company bank account prints in the payment details block. */
   bankAccountId?: string;
+  /** User id of whoever created this invoice. */
+  createdBy?: string;
 }
+
 
 /* ─── Sales process: Quote → PO → Invoice ───────────────────────────── */
 
