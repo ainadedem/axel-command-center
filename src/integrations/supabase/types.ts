@@ -430,6 +430,7 @@ export type Database = {
           code: string
           color: string | null
           created_at: string
+          default_document_language: string
           email: string | null
           iban: string | null
           id: string
@@ -469,6 +470,7 @@ export type Database = {
           code: string
           color?: string | null
           created_at?: string
+          default_document_language?: string
           email?: string | null
           iban?: string | null
           id?: string
@@ -508,6 +510,7 @@ export type Database = {
           code?: string
           color?: string | null
           created_at?: string
+          default_document_language?: string
           email?: string | null
           iban?: string | null
           id?: string
@@ -678,6 +681,7 @@ export type Database = {
           due_date: string
           id: string
           issue_date: string
+          language: string
           number: string
           paid: number
           paid_date: string | null
@@ -702,6 +706,7 @@ export type Database = {
           due_date: string
           id?: string
           issue_date: string
+          language?: string
           number: string
           paid?: number
           paid_date?: string | null
@@ -726,6 +731,7 @@ export type Database = {
           due_date?: string
           id?: string
           issue_date?: string
+          language?: string
           number?: string
           paid?: number
           paid_date?: string | null
@@ -946,6 +952,7 @@ export type Database = {
           document_url: string | null
           id: string
           issue_date: string
+          language: string
           lines: Json | null
           number: string
           project_id: string | null
@@ -969,6 +976,7 @@ export type Database = {
           document_url?: string | null
           id?: string
           issue_date: string
+          language?: string
           lines?: Json | null
           number: string
           project_id?: string | null
@@ -992,6 +1000,7 @@ export type Database = {
           document_url?: string | null
           id?: string
           issue_date?: string
+          language?: string
           lines?: Json | null
           number?: string
           project_id?: string | null
@@ -1015,6 +1024,7 @@ export type Database = {
           fx_rate: number | null
           id: string
           issue_date: string
+          language: string
           lines: Json | null
           mode: string | null
           notes: string | null
@@ -1043,6 +1053,7 @@ export type Database = {
           fx_rate?: number | null
           id?: string
           issue_date: string
+          language?: string
           lines?: Json | null
           mode?: string | null
           notes?: string | null
@@ -1071,6 +1082,7 @@ export type Database = {
           fx_rate?: number | null
           id?: string
           issue_date?: string
+          language?: string
           lines?: Json | null
           mode?: string | null
           notes?: string | null
