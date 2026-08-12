@@ -390,10 +390,19 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   }, [companyId, issueDate]);
 
   const companyClients = useMemo(
-    () => clients.filter((c) => contactBelongsTo(c, companyId)).sort((a, b) => a.name.localeCompare(b.name)),
-    [clients, companyId],
+    () => withSelected(
+      clients.filter((c) => contactBelongsTo(c, companyId)).sort((a, b) => a.name.localeCompare(b.name)),
+      editing ? clientId : undefined,
+      clients,
+    ),
+    [clients, companyId, clientId, editing],
   );
-  const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
+  const clientProjects = withSelected(
+    projects.filter((p) => p.companyId === companyId && p.clientId === clientId),
+    editing ? projectId : undefined,
+    projects,
+  );
+
 
   useReconciledSelection({
     open,
