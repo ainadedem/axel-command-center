@@ -128,6 +128,7 @@ function Body() {
         sentTo: cl.email,
         pdfUrl: res.pdf_url ?? undefined,
       });
+      logActivity({ docType: "quote", docId: q.id, docNumber: q.number, companyId: q.companyId, action: "sent", summary: `Emailed to ${cl.email}` });
       toast.success(`Quote ${q.number} sent to ${cl.email}`);
     } catch (e) {
       toast.error(`Failed to send quote: ${e instanceof Error ? e.message : String(e)}`);
@@ -168,7 +169,12 @@ function Body() {
       status: "issued",
       lines: q.lines ? q.lines.map((l) => ({ ...l })) : undefined,
     });
-    quotesStore.update(q.id, { status: "accepted" });
+    quotesStore.update(q.id, { status: "accepted", updatedBy: user?.id, updatedAt: new Date().toISOString() });
+    logActivity({
+      docType: "quote", docId: q.id, docNumber: q.number, companyId: q.companyId,
+      action: "status_changed", summary: `From ${q.status} to accepted (converted to PO)`,
+      details: { from: q.status, to: "accepted" },
+    });
   };
 
   const duplicateQuote = async (q: Quote) => {
