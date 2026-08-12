@@ -239,6 +239,19 @@ function getHydrationScope(
   return { mode: "scoped", companyIds: dbId ? [dbId] : [] };
 }
 
+/** A hung backend read must never leave the app on an endless spinner. */
+const BOOTSTRAP_TIMEOUT_MS = 20000;
+
+function withTimeout<T>(promise: PromiseLike<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`Timed out loading ${label}.`)), ms);
+    Promise.resolve(promise).then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (error) => { clearTimeout(timer); reject(error); },
+    );
+  });
+}
+
 type SeedTable = "clients" | "accounts" | "transactions" | "invoices" | "opportunities";
 
 /** Local company ids that have local rows but zero rows in the backend for `table`. */
@@ -258,7 +271,8 @@ async function companiesMissingRows(
   return missing;
 }
 
-async function maybePushSeeds(userId: string, idMap: Array<{ localId: string; dbId: string }>) {
+/** Admin-triggered repair only — never called on sign-in (it used to block the loading screen). */
+export async function maybePushSeeds(userId: string, idMap: Array<{ localId: string; dbId: string }>) {
   // v4 flags: the previous versions gated on a global row count, so a company
   // whose rows were cleared server-side never got re-pushed.
   const seedFlag = `axel.seedPushed.${userId}.v4`;
@@ -356,6 +370,9 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       const key = `${userId ?? "anon"}:${isGroupAdmin}`;
       if (bootstrapKeyRef.current === key) return;
       bootstrapKeyRef.current = key;
+      // Each run owns this flag: leaving it `true` from a previous run made the
+      // cleanup keep the key claimed, so a cancelled run stranded the spinner.
+      bootstrapDoneRef.current = false;
 
       setBootstrapError(null);
       setBootstrapReady(false);
@@ -374,10 +391,14 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const { data, error: accessError } = await supabase
-          .from("user_company_access")
-          .select("company_id, role, companies ( code )")
-          .eq("user_id", userId);
+        const { data, error: accessError } = await withTimeout(
+          supabase
+            .from("user_company_access")
+            .select("company_id, role, companies ( code )")
+            .eq("user_id", userId),
+          BOOTSTRAP_TIMEOUT_MS,
+          "workspace access",
+        );
         if (cancelled) return;
         if (accessError) throw accessError;
 
@@ -422,12 +443,10 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
         if (!isGroupAdmin) restrictLocalStores(merged);
 
-        try {
-          await maybePushSeeds(userId, idMap);
-        } catch (e) {
-          console.warn("[maybePushSeeds]", e);
-        }
-        if (cancelled) return;
+        // No seed push on sign-in: company data already lives in the backend, and a
+        // first login on a new browser used to replay the whole local seed here —
+        // slow for everyone, rejected by RLS for restricted users, and it blocked
+        // the app on the loading screen until it finished.
 
         const currentScope = currentScopeRef.current;
         const nextScope = resolveScopeForHydration(currentScope, isGroupAdmin, nextAccessibleDbCompanyIds, merged, idMap);
@@ -439,11 +458,15 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         }
 
         const hydrationScope = getHydrationScope(nextScope, isGroupAdmin, nextAccessibleDbCompanyIds, idMap);
-        await Promise.all([
-          hydrateContacts(hydrationScope).catch((e) => console.warn("[hydrateContacts]", e)),
-          hydrateFinancials(hydrationScope).catch((e) => console.warn("[hydrateFinancials]", e)),
-          hydrateExtras(hydrationScope).catch((e) => console.warn("[hydrateExtras]", e)),
-        ]);
+        await withTimeout(
+          Promise.all([
+            hydrateContacts(hydrationScope).catch((e) => console.warn("[hydrateContacts]", e)),
+            hydrateFinancials(hydrationScope).catch((e) => console.warn("[hydrateFinancials]", e)),
+            hydrateExtras(hydrationScope).catch((e) => console.warn("[hydrateExtras]", e)),
+          ]),
+          BOOTSTRAP_TIMEOUT_MS,
+          "your workspace data",
+        );
         if (cancelled) return;
 
         if (!isGroupAdmin) restrictLocalStores(merged);
@@ -466,8 +489,8 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     bootstrap();
     return () => {
       cancelled = true;
-      // An aborted run must not keep the key claimed, or nothing ever bootstraps.
-      if (!bootstrapDoneRef.current) bootstrapKeyRef.current = null;
+      // An aborted run must never keep the key claimed, or nothing ever bootstraps.
+      bootstrapKeyRef.current = bootstrapDoneRef.current ? bootstrapKeyRef.current : null;
     };
   }, [authLoading, userId, isGroupAdmin, retryCount]);
 
