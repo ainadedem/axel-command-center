@@ -7,6 +7,7 @@
 //   Logia invoices:  FAC-LOG/01-26/003 → FAC-LOG/01-26/004
 //   Bare prefix:     Q-12345 → Q-12346
 import { invoices, quotes, purchaseOrders, companies, companyCode } from "./mock-data";
+import { dbCompanyId } from "./db-sync";
 import { supabase } from "@/integrations/supabase/client";
 
 export type DocKind = "invoice" | "quote" | "po";
@@ -29,15 +30,30 @@ const cacheKey = (kind: DocKind, companyId: string) => `${kind}:${companyId}`;
 /** Load every existing number for this company/kind, bypassing row visibility. */
 export async function primeNumbering(kind: DocKind, companyId: string): Promise<void> {
   if (!companyId) return;
+  const key = cacheKey(kind, companyId);
+  const resolvedCompanyId = dbCompanyId(companyId);
+  if (!resolvedCompanyId) {
+    remoteNumbers.delete(key);
+    console.warn(`[numbering] Could not resolve company id for ${kind} numbering.`);
+    return;
+  }
   try {
     const { data, error } = await supabase.rpc("document_numbers", {
-      _company_id: companyId,
+      _company_id: resolvedCompanyId,
       _kind: kind,
     });
-    if (error) return;
-    remoteNumbers.set(cacheKey(kind, companyId), (data ?? []) as string[]);
-  } catch {
-    // Numbering falls back to locally visible documents.
+    if (error) {
+      remoteNumbers.delete(key);
+      console.warn(`[numbering] Could not refresh ${kind} numbers: ${error.message}`);
+      return;
+    }
+    remoteNumbers.set(key, (data ?? []) as string[]);
+  } catch (error) {
+    remoteNumbers.delete(key);
+    console.warn(
+      `[numbering] Could not refresh ${kind} numbers:`,
+      error instanceof Error ? error.message : error,
+    );
   }
 }
 
