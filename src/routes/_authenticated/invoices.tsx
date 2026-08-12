@@ -17,6 +17,8 @@ import { format, parseISO, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Fragment, useEffect, useState, useCallback, useMemo } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
+import { useOwnerNames } from "@/hooks/use-owner-names";
+import { useAuth } from "@/lib/auth-context";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -83,6 +85,7 @@ function Body() {
     const d = parseISO(iso);
     return `${d.getFullYear()} Q${Math.floor(d.getMonth() / 3) + 1}`;
   };
+  const { ownerName } = useOwnerNames(baseList.map((i) => i.createdBy));
   const monthOf = (iso: string) => format(parseISO(iso), "MMM yyyy");
   const dayOf = (iso: string) => format(parseISO(iso), "MMM d, yyyy");
 
@@ -102,6 +105,7 @@ function Body() {
     { key: "issuedQuarter", label: "Issued (quarter)", type: "string", accessor: (i) => quarterOf(i.issueDate), noSort: true, noFilter: true },
     { key: "amount", label: "Amount", type: "number", accessor: (i) => i.amount, noGroup: true },
     { key: "balance", label: "Balance", type: "number", accessor: (i) => i.amount - i.paid, noGroup: true },
+    { key: "owner", label: "Owner", type: "enum", accessor: (i) => ownerName(i.createdBy) },
   ];
   const view = useDataView<Invoice>("invoices", fields);
   const groups = view.apply(baseList);
@@ -287,13 +291,14 @@ function Body() {
                   <th className="text-left font-medium px-5 py-3">Status</th>
                   <th className="text-right font-medium px-5 py-3">Amount</th>
                   <th className="text-right font-medium px-5 py-3">Balance</th>
+                  <th className="text-left font-medium px-5 py-3">Owner</th>
                   <th className="px-5 py-3 w-20" />
                 </tr>
               </thead>
               <tbody>
                 {groups.map((g) => (
                   <Fragment key={g.key}>
-                    {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={12} />}
+                    {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={13} />}
                     {g.items.map((inv) => {
                   const co = companies.find((c) => c.id === inv.companyId);
                   const cl = clients.find((c) => c.id === inv.clientId);
@@ -356,6 +361,8 @@ function Body() {
                       <td className="px-5 py-3.5 text-right font-tnum font-medium">
                         {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? fmtAmount(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
                       </td>
+                      <td className="px-5 py-3.5 text-xs text-muted-foreground">{ownerName(inv.createdBy)}</td>
+
                       <td className="px-5 py-3.5 text-right">
                         <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
                           <button onClick={() => setPreviewing(inv)} title="Preview & export PDF" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
@@ -459,6 +466,7 @@ function deriveStatus(amount: number, paid: number, dueDate: string): Invoice["s
 }
 
 function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Invoice | null }) {
+  const { user } = useAuth();
   const companies = useCompanies();
   const clients = useClients();
   const projects = useProjects();
@@ -644,7 +652,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       lines: lines.length ? lines.map((l) => ({ ...l })) : undefined,
     };
     if (editing) invoicesStore.update(editing.id, data);
-    else invoicesStore.add({ id: newId("inv"), ...data });
+    else invoicesStore.add({ id: newId("inv"), ...data, createdBy: user?.id });
     onOpenChange(false);
   };
   const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);

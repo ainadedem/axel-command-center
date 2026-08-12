@@ -14,6 +14,8 @@ import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Fragment, useEffect, useState } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
+import { useOwnerNames } from "@/hooks/use-owner-names";
+import { useAuth } from "@/lib/auth-context";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -58,6 +60,7 @@ function Body() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<PurchaseOrder | null>(null);
   const openCreate = () => { setEditing(null); setOpen(true); };
+  const { ownerName } = useOwnerNames(baseList.map((p) => p.createdBy));
 
   const fields: FieldDef<PurchaseOrder>[] = [
     { key: "number", label: "Number", type: "string", accessor: (p) => p.number, noGroup: true },
@@ -70,6 +73,7 @@ function Body() {
     { key: "issueDate", label: "Issued", type: "date", accessor: (p) => p.issueDate, noGroup: true },
     { key: "amount", label: "Amount", type: "number", accessor: (p) => p.amount, noGroup: true },
     { key: "hasDoc", label: "Has document", type: "boolean", accessor: (p) => !!p.documentUrl },
+    { key: "owner", label: "Owner", type: "enum", accessor: (p) => ownerName(p.createdBy) },
   ];
   const view = useDataView<PurchaseOrder>("purchase-orders", fields);
   const groups = view.apply(baseList);
@@ -98,6 +102,7 @@ function Body() {
                 <th className="text-left font-medium px-5 py-3">Status</th>
                 <th className="text-left font-medium px-5 py-3">Document</th>
                 <th className="text-right font-medium px-5 py-3">Amount</th>
+                <th className="text-left font-medium px-5 py-3">Owner</th>
                 <th className="px-5 py-3 w-20" />
               </tr>
 
@@ -105,7 +110,7 @@ function Body() {
             <tbody>
               {groups.map((g) => (
                 <Fragment key={g.key}>
-                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={11} />}
+                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={12} />}
                   {g.items.map((po) => {
                 const co = companies.find((c) => c.id === po.companyId);
                 const cl = clients.find((c) => c.id === po.clientId);
@@ -135,6 +140,8 @@ function Body() {
 
                     <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(po.amount, po.currency)}</td>
 
+                    <td className="px-5 py-3.5 text-xs text-muted-foreground">{ownerName(po.createdBy)}</td>
+
                     <td className="px-5 py-3.5 text-right">
                       <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
                         {po.documentUrl && (
@@ -161,6 +168,7 @@ function Body() {
 
 
 function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: PurchaseOrder | null }) {
+  const { user } = useAuth();
   const companies = useCompanies();
   const clients = useClients();
   const projects = useProjects();
@@ -318,7 +326,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     const uploadedAt = documentUrl ? (documentUploadedAt ?? new Date().toISOString()) : undefined;
     const data = { number, clientReference: clientReference || undefined, companyId, clientId, projectId: projectId || undefined, quoteId: quoteId || undefined, issueDate, amount: Number(amount) || 0, currency, status, documentUrl, documentName, documentType, documentUploadedAt: uploadedAt, documentHistory: documentHistory.length ? documentHistory : undefined };
     if (editing) purchaseOrdersStore.update(editing.id, data);
-    else purchaseOrdersStore.add({ id: newId("po"), ...data });
+    else purchaseOrdersStore.add({ id: newId("po"), ...data, createdBy: user?.id });
     onOpenChange(false);
   };
   const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);

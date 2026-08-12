@@ -1,3 +1,4 @@
+import { Avatar } from "@/components/avatar-upload";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
@@ -349,17 +350,8 @@ function UsersAccessPage() {
                       <tr key={row.user_id} className="border-t border-border/60 hover:bg-muted/20">
                         <td className="px-4 py-3 sticky left-0 bg-card">
                           <div className="flex items-center gap-3">
-                            {row.avatar_url ? (
-                              <img
-                                src={row.avatar_url}
-                                alt=""
-                                className="h-8 w-8 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="h-8 w-8 rounded-full bg-muted grid place-items-center text-xs font-medium">
-                                {(row.display_name ?? row.email ?? "?").slice(0, 1).toUpperCase()}
-                              </div>
-                            )}
+                            <Avatar src={row.avatar_url ?? undefined} name={row.display_name ?? row.email ?? "?"} size={32} />
+
                             <div className="min-w-0">
                               <div className="font-medium truncate flex items-center gap-2">
                                 {row.display_name ?? "—"}

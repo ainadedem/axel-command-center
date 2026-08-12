@@ -269,7 +269,10 @@ export interface Invoice {
   subject?: string;
   /** Which company bank account prints in the payment details block. */
   bankAccountId?: string;
+  /** User id of whoever created this invoice. */
+  createdBy?: string;
 }
+
 
 /* ─── Sales process: Quote → PO → Invoice ───────────────────────────── */
 
@@ -362,7 +365,10 @@ export interface PurchaseOrder {
   subject?: string;
   /** Which company bank account prints in the payment details block. */
   bankAccountId?: string;
+  /** User id of whoever created this purchase order. */
+  createdBy?: string;
 }
+
 
 
 /** Mirrors the "Status" property of the Notion "Logia Sales CRM" database. */
@@ -479,7 +485,10 @@ export interface Expense {
   /** Receipt / scan (data URL). */
   attachmentUrl?: string;
   attachmentName?: string;
+  /** User id of whoever created this expense. */
+  createdBy?: string;
 }
+
 
 /* ─── Recurring billing schedules ──────────────────────────────────── */
 

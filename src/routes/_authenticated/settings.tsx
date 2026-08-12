@@ -1,4 +1,11 @@
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
+import { AvatarUpload } from "@/components/avatar-upload";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { useAuth } from "@/lib/auth-context";
@@ -19,8 +26,35 @@ function SettingsPage() {
 }
 
 function Body() {
-  const { user, profile, roles, signOut } = useAuth();
+  const { user, profile, roles, signOut, refresh } = useAuth();
   const companies = useCompanies();
+  const [avatar, setAvatar] = useState<string | undefined>(profile?.avatar_url ?? undefined);
+  const [name, setName] = useState(profile?.display_name ?? "");
+  const [saving, setSaving] = useState(false);
+  const hydrated = useRef(false);
+
+  // Hydrate the form once the profile arrives, without clobbering edits in progress.
+  useEffect(() => {
+    if (hydrated.current || !profile) return;
+    hydrated.current = true;
+    setAvatar(profile.avatar_url ?? undefined);
+    setName(profile.display_name ?? "");
+  }, [profile]);
+
+  const dirty = (avatar ?? null) !== (profile?.avatar_url ?? null) || name.trim() !== (profile?.display_name ?? "");
+
+  const saveProfile = async () => {
+    if (!user) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ display_name: name.trim() || null, avatar_url: avatar ?? null })
+      .eq("user_id", user.id);
+    setSaving(false);
+    if (error) { toast.error(`Could not save your profile: ${error.message}`); return; }
+    await refresh();
+    toast.success("Profile updated");
+  };
 
   const cards = [
     { to: "/companies", label: "Companies", desc: `${companies.length} active`, icon: Building2 },
@@ -33,18 +67,43 @@ function Body() {
     <div className="p-8 space-y-6 max-w-5xl">
       <section className="rounded-xl border border-border bg-[var(--gradient-surface)] p-6">
         <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Account</div>
-        <div className="mt-3 grid sm:grid-cols-2 gap-4">
-          <Field label="Name" value={profile?.display_name || "—"} />
-          <Field label="Email" value={user?.email || "—"} />
-          <Field label="Roles" value={roles.length ? roles.join(", ") : "no role"} />
-          <Field label="User ID" value={user?.id?.slice(0, 8) ?? "—"} mono />
+        <div className="mt-4 flex flex-wrap items-start gap-6">
+          <div className="flex flex-col items-center gap-2">
+            <AvatarUpload
+              value={avatar}
+              onChange={setAvatar}
+              name={name || user?.email || undefined}
+              size={84}
+              folder="profiles"
+            />
+            <span className="text-[10px] text-muted-foreground">Profile picture</span>
+          </div>
+          <div className="flex-1 min-w-[240px] grid sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="display-name" className="text-[10px] uppercase tracking-wider text-muted-foreground">Name</Label>
+              <Input
+                id="display-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+                className="mt-1"
+              />
+            </div>
+            <Field label="Email" value={user?.email || "—"} />
+            <Field label="Roles" value={roles.length ? roles.join(", ") : "no role"} />
+            <Field label="User ID" value={user?.id?.slice(0, 8) ?? "—"} mono />
+          </div>
         </div>
-        <div className="mt-5">
+        <div className="mt-5 flex items-center gap-2">
+          <Button size="sm" onClick={saveProfile} disabled={!dirty || saving}>
+            {saving ? "Saving…" : "Save profile"}
+          </Button>
           <Button variant="outline" size="sm" onClick={() => signOut()} className="gap-1.5">
             <LogOut className="h-4 w-4" /> Sign out
           </Button>
         </div>
       </section>
+
 
       <section className="rounded-xl border border-border bg-[var(--gradient-surface)] p-6">
         <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Appearance</div>

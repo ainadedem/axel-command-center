@@ -583,7 +583,9 @@ const invoiceToDb = (inv: Invoice) => {
     cancellation_reason: inv.cancellationReason ?? null,
     subject: inv.subject ?? null,
     bank_account_id: inv.bankAccountId ?? null,
+    ...(inv.createdBy && isUuid(inv.createdBy) ? { created_by: inv.createdBy } : {}),
   };
+
 };
 
 const invoiceFromDb = (r: Record<string, unknown>, lines: QuoteLine[]): Invoice => ({
@@ -608,8 +610,10 @@ const invoiceFromDb = (r: Record<string, unknown>, lines: QuoteLine[]): Invoice 
   cancellationReason: (r.cancellation_reason as string) ?? undefined,
   subject: (r.subject as string) ?? undefined,
   bankAccountId: (r.bank_account_id as string) ?? undefined,
+  createdBy: (r.created_by as string) ?? undefined,
   lines: lines.length ? lines : undefined,
 });
+
 
 export async function upsertInvoice(inv: Invoice): Promise<string | null> {
   const row = invoiceToDb(inv);
@@ -943,7 +947,9 @@ const poToDb = (p: PurchaseOrder) => {
     lines: (p.lines ?? null) as unknown as never,
     subject: p.subject ?? null,
     bank_account_id: p.bankAccountId ?? null,
+    ...(p.createdBy && isUuid(p.createdBy) ? { created_by: p.createdBy } : {}),
   };
+
 };
 const poFromDb = (r: Record<string, unknown>): PurchaseOrder => ({
   id: r.id as string,
@@ -965,7 +971,9 @@ const poFromDb = (r: Record<string, unknown>): PurchaseOrder => ({
   lines: (r.lines as QuoteLine[]) ?? undefined,
   subject: (r.subject as string) ?? undefined,
   bankAccountId: (r.bank_account_id as string) ?? undefined,
+  createdBy: (r.created_by as string) ?? undefined,
 });
+
 export async function upsertPurchaseOrder(p: PurchaseOrder): Promise<string | null> {
   const row = poToDb(p);
   if (!row) return null;
@@ -1003,7 +1011,9 @@ const expenseToDb = (e: Expense) => {
     project_id: e.projectId && isUuid(e.projectId) ? e.projectId : null,
     attachment_url: e.attachmentUrl ?? null,
     attachment_name: e.attachmentName ?? null,
+    ...(e.createdBy && isUuid(e.createdBy) ? { created_by: e.createdBy } : {}),
   };
+
 };
 const expenseFromDb = (r: Record<string, unknown>): Expense => ({
   id: r.id as string,
@@ -1025,7 +1035,9 @@ const expenseFromDb = (r: Record<string, unknown>): Expense => ({
   projectId: (r.project_id as string) ?? undefined,
   attachmentUrl: (r.attachment_url as string) ?? undefined,
   attachmentName: (r.attachment_name as string) ?? undefined,
+  createdBy: (r.created_by as string) ?? undefined,
 });
+
 export async function upsertExpense(e: Expense): Promise<string | null> {
   const row = expenseToDb(e);
   if (!row) return null;

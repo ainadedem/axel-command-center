@@ -7,6 +7,7 @@ import {
   fmtAmount, type Expense, type ExpenseKind, type ExpenseStatus, type Currency,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
+import { useAuth } from "@/lib/auth-context";
 import { inScope, useCompany } from "@/lib/company-context";
 import { useEffect, useMemo, useState } from "react";
 import { format, parseISO, differenceInDays } from "date-fns";
@@ -218,6 +219,7 @@ function ExpenseDialog({
   editing: Expense | null; defaultKind: ExpenseKind; defaultCurrency: Currency;
 }) {
   const { scope } = useCompany();
+  const { user } = useAuth();
   const companies = useCompanies();
   const suppliers = useSuppliers();
   const accounts = useAccounts();
@@ -292,7 +294,7 @@ function ExpenseDialog({
       description: description.trim() || undefined,
     };
     if (editing) expensesStore.update(editing.id, data);
-    else expensesStore.add({ id: newId("exp"), ...data });
+    else expensesStore.add({ id: newId("exp"), ...data, createdBy: user?.id });
     onOpenChange(false);
   };
   const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);

@@ -15,6 +15,7 @@ import { useEffectiveRole } from "@/lib/use-effective-role";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ThemeControls } from "@/components/theme-controls";
+import { useFileUrl } from "@/hooks/use-file-url";
 
 import axelIcon from "@/assets/axel-icon-purple.png";
 
@@ -287,6 +288,7 @@ function Topbar() {
   const searchRef = useRef<HTMLInputElement>(null);
   const name = profile?.display_name || user?.email || "—";
   const initials = name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("").toUpperCase();
+  const avatarUrl = useFileUrl(profile?.avatar_url);
   const role = roles[0]?.replace("_", " ") ?? "no role";
   const newAction = NEW_BUTTON_ROUTES.find((route) => route.match(pathname));
   const newLabel = newAction?.label ?? "New";
@@ -367,9 +369,13 @@ function Topbar() {
             aria-label="Account menu"
             aria-haspopup="menu"
             aria-expanded={menuOpen}
-            className="h-8 w-8 rounded-full bg-gradient-to-br from-chart-2 to-chart-4 grid place-items-center text-xs font-display font-bold text-primary-foreground focus-ring transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-110 active:scale-95"
+            className="h-8 w-8 rounded-full overflow-hidden bg-gradient-to-br from-chart-2 to-chart-4 grid place-items-center text-xs font-display font-bold text-primary-foreground focus-ring transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-110 active:scale-95"
           >
-            {initials || "?"}
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              initials || "?"
+            )}
           </button>
           {menuOpen && (
             <>
