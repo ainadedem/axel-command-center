@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { useEffectiveRole } from "@/lib/use-effective-role";
 import { SALES_ROUTES } from "@/components/app-shell";
 import { CompanyProvider } from "@/lib/company-context";
 // Side-effect import: triggers idempotent data seeds (Logia + Axiom).
@@ -10,10 +11,28 @@ export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
 });
 
+/**
+ * Sales scoping is per company, so this gate lives inside CompanyProvider where
+ * the effective role for the selected company is known.
+ */
+function SalesScopeGate({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate();
+  const location = useRouterState({ select: (state) => state.location });
+  const { isSalesOnly } = useEffectiveRole();
+
+  useEffect(() => {
+    if (!isSalesOnly) return;
+    const allowed = SALES_ROUTES.some((r) => location.pathname === r || location.pathname.startsWith(`${r}/`));
+    if (!allowed) navigate({ to: "/quotations", replace: true });
+  }, [isSalesOnly, location.pathname, navigate]);
+
+  return <>{children}</>;
+}
+
 function AuthenticatedLayout() {
   const navigate = useNavigate();
   const location = useRouterState({ select: (state) => state.location });
-  const { loading, isAuthenticated, isSalesOnly } = useAuth();
+  const { loading, isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (!loading && !isAuthenticated && location.pathname !== "/login") {
@@ -21,12 +40,6 @@ function AuthenticatedLayout() {
       navigate({ to: "/login", search: { redirect: redirectTo } });
     }
   }, [loading, isAuthenticated, location.href, location.pathname, navigate]);
-
-  useEffect(() => {
-    if (loading || !isAuthenticated || !isSalesOnly) return;
-    const allowed = SALES_ROUTES.some((r) => location.pathname === r || location.pathname.startsWith(`${r}/`));
-    if (!allowed) navigate({ to: "/quotations", replace: true });
-  }, [loading, isAuthenticated, isSalesOnly, location.pathname, navigate]);
 
   if (loading) {
     return (
@@ -38,7 +51,9 @@ function AuthenticatedLayout() {
   if (!isAuthenticated) return null;
   return (
     <CompanyProvider>
-      <Outlet />
+      <SalesScopeGate>
+        <Outlet />
+      </SalesScopeGate>
     </CompanyProvider>
   );
 }
