@@ -373,6 +373,8 @@ export interface DocumentHtmlArgs {
   showClientEmail?: boolean;
   /** Resolved (signed) company logo URL — storage refs must be resolved by the caller. */
   logoUrl?: string;
+  /** Per-document multiplier applied to the company's logo size (1 = company default). */
+  logoScale?: number;
 }
 
 export function buildPrintableDocument(args: DocumentHtmlArgs) {
