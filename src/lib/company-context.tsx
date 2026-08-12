@@ -377,10 +377,14 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const { data, error: accessError } = await supabase
-          .from("user_company_access")
-          .select("company_id, role, companies ( code )")
-          .eq("user_id", userId);
+        const { data, error: accessError } = await withTimeout(
+          supabase
+            .from("user_company_access")
+            .select("company_id, role, companies ( code )")
+            .eq("user_id", userId),
+          BOOTSTRAP_TIMEOUT_MS,
+          "workspace access",
+        );
         if (cancelled) return;
         if (accessError) throw accessError;
 
