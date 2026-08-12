@@ -61,16 +61,18 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
   // them to a signed URL before embedding into the document HTML.
   const logoUrl = useFileUrl(company?.logoUrl);
 
+  const [logoScale, setLogoScale] = useState(1);
+
   const html = useMemo(() => {
     if (!doc) return "";
-    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl });
-  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl]);
+    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale });
+  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale]);
 
   const printPdf = () => {
     if (!doc) return;
     const w = window.open("", "_blank", "width=900,height=1100");
     if (!w) return;
-    w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl }));
+    w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale }));
     w.document.close();
     setTimeout(() => { w.focus(); w.print(); }, 250);
   };
@@ -93,6 +95,21 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
               <Checkbox checked={showPayment} onCheckedChange={(v) => setShowPayment(!!v)} />
               Show payment details
             </label>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span>Logo</span>
+              <div className="flex rounded-md border border-border overflow-hidden">
+                {([["S", 0.7], ["M", 1], ["L", 1.5]] as const).map(([label, v]) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => setLogoScale(v)}
+                    className={`px-2 py-0.5 text-[11px] transition ${logoScale === v ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <Button size="sm" variant="outline" onClick={printPdf}><Printer className="h-3.5 w-3.5 mr-1.5" />Print</Button>
             <Button size="sm" onClick={printPdf}><Download className="h-3.5 w-3.5 mr-1.5" />Export PDF</Button>
             <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)}><X className="h-4 w-4" /></Button>
@@ -122,7 +139,7 @@ function headingFor(k: DocKind) {
   return "INVOICE";
 }
 
-function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl }: DocumentHtmlArgs) {
+function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale }: DocumentHtmlArgs) {
   const rawColor = company?.color ?? "#1e293b";
   // Validate against a strict CSS color allowlist to prevent CSS/script injection
   // via the company.color field (it is embedded verbatim in a <style> block below).
@@ -240,8 +257,11 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
     .map((r) => `<div><strong>${esc(r.label)}:</strong> ${esc(r.value)}</div>`).join("");
 
   const logoSrc = logoUrl && !logoUrl.startsWith("storage:") ? logoUrl : undefined;
+  const sizeFactor = logoScale && logoScale > 0 ? logoScale : 1;
+  const logoH = Math.round((company?.logoHeight ?? 52) * sizeFactor);
+  const logoW = Math.round((company?.logoMaxWidth ?? 180) * sizeFactor);
   const logoHtml = logoSrc
-    ? `<img src="${esc(logoSrc)}" alt="${esc(company?.name ?? "")}" style="max-height: 52px; max-width: 180px; object-fit: contain; margin-bottom: 12px;" />`
+    ? `<img src="${esc(logoSrc)}" alt="${esc(company?.name ?? "")}" style="max-height: ${logoH}px; max-width: ${logoW}px; object-fit: contain; margin-bottom: 12px;" />`
     : "";
 
   return `
@@ -370,6 +390,8 @@ export interface DocumentHtmlArgs {
   showClientEmail?: boolean;
   /** Resolved (signed) company logo URL — storage refs must be resolved by the caller. */
   logoUrl?: string;
+  /** Per-document multiplier applied to the company's logo size (1 = company default). */
+  logoScale?: number;
 }
 
 export function buildPrintableDocument(args: DocumentHtmlArgs) {

@@ -151,6 +151,9 @@ function mapCompanyRow(row: Record<string, unknown>, fallbackColorIdx: number): 
     bankAccounts: Array.isArray(row.bank_accounts) ? (row.bank_accounts as Company["bankAccounts"]) : [],
 
     logoUrl: (row.logo_url as string) || undefined,
+    logoHeight: typeof row.logo_height === "number" ? (row.logo_height as number) : undefined,
+    logoMaxWidth: typeof row.logo_max_width === "number" ? (row.logo_max_width as number) : undefined,
+    logoCrop: (row.logo_crop as Company["logoCrop"]) ?? undefined,
   };
 }
 

@@ -20,7 +20,10 @@ import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightS
 import { Checkbox } from "@/components/ui/checkbox";
 import { BankAccountsEditor } from "@/components/bank-accounts-editor";
 import { companyBankAccounts } from "@/lib/payment-details";
-import type { CompanyBankAccount } from "@/lib/mock-data";
+import type { CompanyBankAccount, CompanyLogoCrop } from "@/lib/mock-data";
+import { Slider } from "@/components/ui/slider";
+import { LogoCropDialog } from "@/components/logo-crop-dialog";
+import { useFileUrl } from "@/hooks/use-file-url";
 
 
 export const Route = createFileRoute("/_authenticated/companies")({ component: CompaniesPage });
@@ -145,7 +148,12 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [showPaymentDetails, setShowPaymentDetails] = useState(true);
   const [bankAccounts, setBankAccounts] = useState<CompanyBankAccount[]>([]);
   const [logoUrl, setLogoUrl] = useState<string | undefined>();
+  const [logoHeight, setLogoHeight] = useState(52);
+  const [logoMaxWidth, setLogoMaxWidth] = useState(180);
+  const [logoCrop, setLogoCrop] = useState<CompanyLogoCrop | undefined>();
+  const [cropOpen, setCropOpen] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
+  const logoPreviewUrl = useFileUrl(logoUrl);
 
   useEffect(() => {
     if (!open) return;
@@ -162,6 +170,9 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setShowPaymentDetails(editing.showPaymentDetails !== false);
       setBankAccounts(companyBankAccounts(editing));
       setLogoUrl(editing.logoUrl);
+      setLogoHeight(editing.logoHeight ?? 52);
+      setLogoMaxWidth(editing.logoMaxWidth ?? 180);
+      setLogoCrop(editing.logoCrop);
     } else {
       setName(""); setShortName(""); setCode(""); setColor(PALETTE[0]); setBaseCurrency("MGA");
       setLegalName(""); setAddress(""); setEmail(""); setPhone(""); setWebsite("");
@@ -171,6 +182,9 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setShowPaymentDetails(true);
       setBankAccounts([]);
       setLogoUrl(undefined);
+      setLogoHeight(52);
+      setLogoMaxWidth(180);
+      setLogoCrop(undefined);
     }
     setShowErrors(false);
   }, [open, editing]);
@@ -196,7 +210,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       intlEnabled: Boolean(def?.intlEnabled), mobileEnabled: Boolean(def?.mobileEnabled),
       mobileProvider: def?.mobileProvider, mobileNumber: def?.mobileNumber, mobileName: def?.mobileName,
       showPaymentDetails, bankAccounts: accounts,
-      logoUrl,
+      logoUrl, logoHeight, logoMaxWidth, logoCrop,
     };
     const dbRow = {
       name, code: finalCode, short_name: shortName, color, base_currency: baseCurrency,
@@ -212,6 +226,9 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       show_payment_details: showPaymentDetails,
       bank_accounts: accounts as unknown as never,
       logo_url: logoUrl || null,
+      logo_height: logoHeight,
+      logo_max_width: logoMaxWidth,
+      logo_crop: (logoCrop ?? null) as unknown as never,
     };
     if (editing) {
       companiesStore.update(editing.id, local);
@@ -236,7 +253,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
           <div className="flex items-start gap-4">
             <div>
               <Label>Logo</Label>
-              <div className="mt-2"><AvatarUpload value={logoUrl} onChange={setLogoUrl} name={name || "Logo"} size={72} square /></div>
+              <div className="mt-2"><AvatarUpload value={logoUrl} onChange={(v) => { setLogoUrl(v); setLogoCrop(undefined); }} name={name || "Logo"} size={72} square /></div>
               <p className="text-[10px] text-muted-foreground mt-1">Shown on invoice / PO / quote PDFs.</p>
             </div>
             <div className="flex-1 grid grid-cols-3 gap-3">
@@ -249,6 +266,47 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               </div>
             </div>
           </div>
+          <div className="rounded-lg border border-border p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Logo on documents</Label>
+              <div className="flex items-center gap-2">
+                <Button type="button" size="sm" variant="outline" disabled={!logoUrl} onClick={() => setCropOpen(true)}>Adjust logo</Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => { if (logoCrop?.sourceRef) setLogoUrl(logoCrop.sourceRef); setLogoCrop(undefined); setLogoHeight(52); setLogoMaxWidth(180); }}
+                >
+                  Reset
+                </Button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Height</span><span className="tabular-nums">{logoHeight}px</span></div>
+                <Slider value={[logoHeight]} min={24} max={140} step={1} onValueChange={([v]) => setLogoHeight(v)} className="mt-2" />
+              </div>
+              <div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Max width</span><span className="tabular-nums">{logoMaxWidth}px</span></div>
+                <Slider value={[logoMaxWidth]} min={80} max={360} step={2} onValueChange={([v]) => setLogoMaxWidth(v)} className="mt-2" />
+              </div>
+            </div>
+            <div className="rounded-md bg-white border border-border p-3">
+              {logoPreviewUrl ? (
+                <img src={logoPreviewUrl} alt="Logo preview" style={{ maxHeight: logoHeight, maxWidth: logoMaxWidth, objectFit: "contain" }} />
+              ) : (
+                <p className="text-[11px] text-neutral-500">Upload a logo to preview how it prints.</p>
+              )}
+            </div>
+          </div>
+          <LogoCropDialog
+            open={cropOpen}
+            onOpenChange={setCropOpen}
+            value={logoUrl}
+            crop={logoCrop}
+            aspect={logoMaxWidth / Math.max(1, logoHeight)}
+            onApply={(ref, c) => { setLogoUrl(ref); setLogoCrop(c); }}
+          />
           <div><Label>Legal name (on invoices)</Label><Input value={legalName} onChange={(e) => setLegalName(e.target.value)} placeholder="LOGIA SARL" /></div>
           <div><Label>Registered address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Lot II M 73 ter Antananarivo 101" /></div>
           <div className="grid grid-cols-2 gap-3">
