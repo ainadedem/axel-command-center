@@ -5,7 +5,10 @@ import { useTransactions, useCompanies, toMGA, fmtCompact } from "@/lib/mock-dat
 import { useCompany, inScope } from "@/lib/company-context";
 import { PeriodPicker, defaultPeriod, type Period } from "@/components/period-picker";
 import { exportCsvRows } from "@/lib/export-csv";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import {
+  ChartFrame, ChartTooltip, CHART_SEMANTIC, chartGridProps, chartAxisProps, chartMargin, chartCursor,
+} from "@/components/charts";
 import { parseISO } from "date-fns";
 import { useState, useMemo } from "react";
 import { Download, TrendingUp, TrendingDown, Minus } from "lucide-react";
@@ -126,7 +129,7 @@ function Body() {
           { key: "Charges", label: "Charges", color: CHART_SEMANTIC.expense },
           { key: "Résultat", label: "Résultat", color: CHART_SEMANTIC.forecast },
         ]}
-        formatValue={(v) => `${v.toFixed(1)} M MGA`}
+        formatValue={(v: number) => `${v.toFixed(1)} M MGA`}
         height={320}
       >
         <ResponsiveContainer>
@@ -135,7 +138,7 @@ function Body() {
             <XAxis dataKey="name" {...chartAxisProps} />
             <YAxis {...chartAxisProps} />
             <Tooltip
-              content={<ChartTooltip formatter={(v) => `${Number(v).toFixed(1)} M MGA`} />}
+              content={<ChartTooltip formatter={(v: number) => `${Number(v).toFixed(1)} M MGA`} />}
               cursor={chartCursor}
             />
             <Bar dataKey="Revenus" radius={[8, 8, 0, 0]} fill={CHART_SEMANTIC.income} />
