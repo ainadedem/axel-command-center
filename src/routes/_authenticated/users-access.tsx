@@ -19,9 +19,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useServerFn } from "@tanstack/react-start";
-import { createAppUser } from "@/lib/users-admin.functions";
+import { createAppUser, logRoleChange } from "@/lib/users-admin.functions";
+import { AccessDiagnosticsPanel } from "@/components/access-diagnostics-panel";
 import { Loader2, ShieldAlert, Search, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/_authenticated/users-access")({
   component: UsersAccessRoute,
