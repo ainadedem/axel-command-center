@@ -155,21 +155,25 @@ function titleFor(k?: DocKind) {
   return "Invoice";
 }
 
-function headingFor(k: DocKind) {
-  if (k === "po") return "PURCHASE ORDER";
-  if (k === "quote") return "QUOTATION";
-  return "INVOICE";
+function headingFor(k: DocKind, lang?: DocLanguage) {
+  const t = docLabels(lang);
+  if (k === "po") return t.po;
+  if (k === "quote") return t.quote;
+  return t.invoice;
 }
 
-function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale }: DocumentHtmlArgs) {
+function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale, lang }: DocumentHtmlArgs) {
+  const L = (lang ?? doc.language ?? (company?.defaultDocumentLanguage as DocLanguage) ?? "en") as DocLanguage;
+  const t = docLabels(L);
+  const df = docDateFormat(L);
   const rawColor = company?.color ?? "#1e293b";
   // Validate against a strict CSS color allowlist to prevent CSS/script injection
   // via the company.color field (it is embedded verbatim in a <style> block below).
   const SAFE_COLOR = /^(#[0-9a-fA-F]{3,8}|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)|rgba\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*(0|1|0?\.\d+)\s*\)|oklch\(\s*[\d.%\s]+\)|[a-zA-Z]{3,30})$/;
   const accent = SAFE_COLOR.test(rawColor.trim()) ? rawColor.trim() : "#1e293b";
-  const issued = format(parseISO(doc.issueDate), "MMM d, yyyy");
-  const due = doc.dueDate ? format(parseISO(doc.dueDate), "MMM d, yyyy") : null;
-  const paidOn = doc.paidDate ? format(parseISO(doc.paidDate), "MMM d, yyyy") : null;
+  const issued = format(parseISO(doc.issueDate), df);
+  const due = doc.dueDate ? format(parseISO(doc.dueDate), df) : null;
+  const paidOn = doc.paidDate ? format(parseISO(doc.paidDate), df) : null;
   const subtotalHT = doc.amount ?? 0;
   // Never invent VAT: only show tax when the document actually carries it.
   const vatRate = doc.taxRate ?? 0;
@@ -213,18 +217,18 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
     && (wireLines.length > 0 || mobileLines.length > 0);
   const paymentHtml = paymentVisible
     ? `<div class="paycard">
-        <h2 style="margin-bottom:10px;">Payment Terms &amp; Bank Details</h2>
+        <h2 style="margin-bottom:10px;">${esc(t.paymentTitle)}</h2>
         <div class="paygrid">
           ${wireLines.length ? `<div class="paycol">
-            <div class="paytitle">Bank wire</div>
+            <div class="paytitle">${esc(t.bankWire)}</div>
             ${wireLines.map((l) => `<div>${esc(l)}</div>`).join("")}
           </div>` : ""}
           ${mobileLines.length ? `<div class="paycol">
-            <div class="paytitle"><span class="paybadge">${esc(bank?.mobileProvider ?? "Mobile money")}</span></div>
+            <div class="paytitle"><span class="paybadge">${esc(bank?.mobileProvider ?? t.mobileMoney)}</span></div>
             ${mobileLines.map((l) => `<div>${esc(l)}</div>`).join("")}
           </div>` : ""}
         </div>
-        <div class="payref">Please mention Invoice #${esc(doc.number)} as the transfer reference.</div>
+        <div class="payref">${esc(t.paymentRef(doc.number))}</div>
       </div>`
     : "";
 
@@ -235,7 +239,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
     expired: "#ca8a04",
   };
 
-  const dueLabel = doc.kind === "quote" ? "Valid until" : "Due";
+  const dueLabel = doc.kind === "quote" ? t.validUntil : t.due;
 
   // Line items: either explicit lines, or single-row fallback.
   const linesHtml = doc.lines && doc.lines.length > 0
@@ -265,8 +269,8 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
     : `
       <tr>
         <td>
-          <div style="font-weight: 600;">${esc(project?.name ?? "Professional services")}</div>
-          ${project ? `<div style="color: #64748b; font-size: 10px; margin-top: 2px;">Project · ${esc(project.name)}</div>` : ""}
+          <div style="font-weight: 600;">${esc(project?.name ?? t.services)}</div>
+          ${project ? `<div style="color: #64748b; font-size: 10px; margin-top: 2px;">${esc(t.project)} · ${esc(project.name)}</div>` : ""}
         </td>
         <td class="num">1</td>
         <td class="num">fixed</td>
@@ -334,28 +338,28 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
       <div class="row">
         <div>
           ${logoHtml}
-          <h1>${headingFor(doc.kind)}</h1>
+          <h1>${esc(headingFor(doc.kind, L))}</h1>
           <div style="margin-top: 8px; font-size: 13px; font-weight: 600;">${esc(doc.number)}</div>
-          ${doc.subject ? `<div style="margin-top: 6px; font-size: 12px; color: #0f172a;"><strong>Object:</strong> ${esc(doc.subject)}</div>` : ""}
+          ${doc.subject ? `<div style="margin-top: 6px; font-size: 12px; color: #0f172a;"><strong>${esc(t.object)}:</strong> ${esc(doc.subject)}</div>` : ""}
           ${refsHtml ? `<div style="margin-top: 6px; font-size: 11px; color: #475569;">${refsHtml}</div>` : ""}
         </div>
         <div class="meta">
           ${showStatus ? `<div class="pill">${esc(doc.status)}</div>` : ""}
-          <div style="margin-top: 10px;"><strong>Issued:</strong> ${issued}</div>
+          <div style="margin-top: 10px;"><strong>${esc(t.issued)}:</strong> ${issued}</div>
           ${due ? `<div><strong>${dueLabel}:</strong> ${due}</div>` : ""}
-          ${paidOn ? `<div><strong>Paid:</strong> ${paidOn}</div>` : ""}
-          ${doc.clientReference ? `<div><strong>Client ref:</strong> ${esc(doc.clientReference)}</div>` : ""}
+          ${paidOn ? `<div><strong>${esc(t.paid)}:</strong> ${paidOn}</div>` : ""}
+          ${doc.clientReference ? `<div><strong>${esc(t.clientRef)}:</strong> ${esc(doc.clientReference)}</div>` : ""}
         </div>
       </div>
 
       <div class="grid">
         <div class="party">
-          <h2>From</h2>
+          <h2>${esc(t.from)}</h2>
           ${companyLines.map((l) => `<div>${esc(l)}</div>`).join("")}
           ${companyLegal.length ? `<div class="legal">${companyLegal.map(esc).join(" · ")}</div>` : ""}
         </div>
         <div class="party">
-          <h2>${doc.kind === "po" ? "Issued by" : "Bill to"}</h2>
+          <h2>${esc(doc.kind === "po" ? t.issuedBy : t.billTo)}</h2>
           <div style="font-weight: 700; font-size: 13px;">${esc(client?.name ?? "—")}</div>
           ${[client?.address, showClientEmail === false ? null : client?.email, client?.phone].filter(Boolean).map((l) => `<div>${esc(l as string)}</div>`).join("")}
           ${taxMeta.length ? `<div class="taxmeta">${taxMeta.map((l) => `<div>${esc(l)}</div>`).join("")}</div>` : ""}
@@ -365,38 +369,38 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
       <table>
         <thead>
           <tr>
-            <th>Description</th>
-            <th class="num" style="width: 70px;">Quantity</th>
-            <th class="num" style="width: 60px;">Unit</th>
-            <th class="num" style="width: 120px;">Unit Price HT</th>
-            <th class="num" style="width: 130px;">Total HT</th>
+            <th>${esc(t.description)}</th>
+            <th class="num" style="width: 70px;">${esc(t.quantity)}</th>
+            <th class="num" style="width: 60px;">${esc(t.unit)}</th>
+            <th class="num" style="width: 120px;">${esc(t.unitPrice)}</th>
+            <th class="num" style="width: 130px;">${esc(t.lineTotal)}</th>
           </tr>
         </thead>
         <tbody>${linesHtml}</tbody>
       </table>
 
       <div class="totals">
-        <div class="line"><span>Subtotal HT</span><span>${fmt(subtotalHT, doc.currency)}</span></div>
-        <div class="line"><span>TVA (${Number(vatRate).toFixed(2)}%)</span><span>${fmt(vatAmount, doc.currency)}</span></div>
-        <div class="line grand"><span>Total TTC</span><span>${fmt(totalTTC, doc.currency)}</span></div>
+        <div class="line"><span>${esc(t.subtotal)}</span><span>${fmt(subtotalHT, doc.currency)}</span></div>
+        <div class="line"><span>${esc(t.vat)} (${Number(vatRate).toFixed(2)}%)</span><span>${fmt(vatAmount, doc.currency)}</span></div>
+        <div class="line grand"><span>${esc(t.total)}</span><span>${fmt(totalTTC, doc.currency)}</span></div>
         ${doc.kind === "invoice" || doc.kind === "quote" ? `
-          <div class="arrete">Arrêté à la somme de ${esc(amountInFrench(totalTTC, doc.currency))}.</div>
+          <div class="arrete">${esc(t.amountInWords(amountInFrench(totalTTC, doc.currency)))}</div>
         ` : ""}
         ${doc.kind === "invoice" ? `
-          <div class="line"><span>Paid to date</span><span>${fmt(doc.paid ?? 0, doc.currency)}</span></div>
-          <div class="line grand"><span>Balance due</span><span class="due">${fmt(balance, doc.currency)}</span></div>
+          <div class="line"><span>${esc(t.paidToDate)}</span><span>${fmt(doc.paid ?? 0, doc.currency)}</span></div>
+          <div class="line grand"><span>${esc(t.balanceDue)}</span><span class="due">${fmt(balance, doc.currency)}</span></div>
         ` : ""}
       </div>
 
-      ${doc.notes ? `<div class="notes"><strong>Notes</strong><div style="margin-top: 4px;">${esc(doc.notes)}</div></div>` : ""}
+      ${doc.notes ? `<div class="notes"><strong>${esc(t.notes)}</strong><div style="margin-top: 4px;">${esc(doc.notes)}</div></div>` : ""}
       ${paymentHtml}
 
       <div class="footer">
-        ${doc.kind === "invoice"
-          ? `Thank you for your business. Please reference ${esc(doc.number)} on any payment.`
+        ${esc(doc.kind === "invoice"
+          ? t.footerInvoice(doc.number)
           : doc.kind === "quote"
-          ? `This quotation is valid until ${due ?? "—"}. Accept by issuing a purchase order referencing ${esc(doc.number)}.`
-          : `Please confirm receipt of this purchase order and reference ${esc(doc.number)} on the corresponding invoice.`}
+          ? t.footerQuote(doc.number, due ?? "—")
+          : t.footerPo(doc.number))}
       </div>
     </div>
   `;
@@ -414,6 +418,8 @@ export interface DocumentHtmlArgs {
   logoUrl?: string;
   /** Per-document multiplier applied to the company's logo size (1 = company default). */
   logoScale?: number;
+  /** Printed language; falls back to the document, then the company default, then English. */
+  lang?: DocLanguage;
 }
 
 export function buildPrintableDocument(args: DocumentHtmlArgs) {
