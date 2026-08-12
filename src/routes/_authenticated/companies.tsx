@@ -226,6 +226,9 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       show_payment_details: showPaymentDetails,
       bank_accounts: accounts as unknown as never,
       logo_url: logoUrl || null,
+      logo_height: logoHeight,
+      logo_max_width: logoMaxWidth,
+      logo_crop: (logoCrop ?? null) as unknown as never,
     };
     if (editing) {
       companiesStore.update(editing.id, local);
