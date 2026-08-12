@@ -324,6 +324,15 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const [accessLoading, setAccessLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(true);
   const [bootstrapReady, setBootstrapReady] = useState(false);
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const bootstrapDoneRef = useRef(false);
+  const retryBootstrap = () => {
+    bootstrapKeyRef.current = null;
+    bootstrapDoneRef.current = false;
+    setBootstrapError(null);
+    setRetryCount((n) => n + 1);
+  };
 
   useEffect(() => {
     currentScopeRef.current = scope;
