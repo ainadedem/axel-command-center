@@ -239,6 +239,19 @@ function getHydrationScope(
   return { mode: "scoped", companyIds: dbId ? [dbId] : [] };
 }
 
+/** A hung backend read must never leave the app on an endless spinner. */
+const BOOTSTRAP_TIMEOUT_MS = 20000;
+
+function withTimeout<T>(promise: PromiseLike<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`Timed out loading ${label}.`)), ms);
+    Promise.resolve(promise).then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (error) => { clearTimeout(timer); reject(error); },
+    );
+  });
+}
+
 type SeedTable = "clients" | "accounts" | "transactions" | "invoices" | "opportunities";
 
 /** Local company ids that have local rows but zero rows in the backend for `table`. */
