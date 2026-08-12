@@ -77,34 +77,12 @@ function Body() {
   const [previewing, setPreviewing] = useState<Quote | null>(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const { user } = useAuth();
-  const [owners, setOwners] = useState<Record<string, string>>({});
   const openCreate = () => { setEditing(null); setOpen(true); };
 
   // Resolve quotation owners to readable names (colleagues sharing a company).
-  const ownerIds = useMemo(
-    () => Array.from(new Set(baseList.map((q) => q.createdBy).filter(Boolean) as string[])).sort().join(","),
-    [baseList],
-  );
-  useEffect(() => {
-    const ids = ownerIds ? ownerIds.split(",") : [];
-    if (ids.length === 0) { setOwners({}); return; }
-    let cancelled = false;
-    supabase
-      .from("profiles")
-      .select("user_id, display_name, email")
-      .in("user_id", ids)
-      .then(({ data }) => {
-        if (cancelled) return;
-        const map: Record<string, string> = {};
-        for (const p of (data ?? []) as { user_id: string; display_name: string | null; email: string | null }[]) {
-          map[p.user_id] = p.display_name || p.email || "";
-        }
-        setOwners(map);
-      });
-    return () => { cancelled = true; };
-  }, [ownerIds]);
+  const { ownerName: nameOf } = useOwnerNames(baseList.map((q) => q.createdBy));
+  const ownerName = (q: Quote) => nameOf(q.createdBy);
 
-  const ownerName = (q: Quote) => (q.createdBy ? owners[q.createdBy] || "—" : "—");
 
   const sendToClient = async (q: Quote) => {
     const cl = clients.find((c) => c.id === q.clientId);
