@@ -126,18 +126,18 @@ function Body() {
         <div className="h-80">
           <ResponsiveContainer>
             <BarChart data={chartData} margin={{ top: 6, right: 8, left: -16, bottom: 0 }}>
-              <CartesianGrid stroke="var(--border)" vertical={false} />
+              <CartesianGrid stroke="var(--border)" strokeDasharray="2 6" vertical={false} />
               <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
               <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
               <Tooltip
-                contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
+                contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, fontSize: 12, boxShadow: "var(--shadow-elevated)", padding: "8px 12px" }}
                 cursor={{ fill: "color-mix(in oklab, var(--primary) 6%, transparent)" }}
                 formatter={(v) => `${Number(v).toFixed(1)} M MGA`}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="Revenus" radius={[6, 6, 0, 0]} fill="oklch(0.78 0.14 165)" />
-              <Bar dataKey="Charges" radius={[6, 6, 0, 0]} fill="oklch(0.68 0.19 22)" />
-              <Bar dataKey="Résultat" radius={[6, 6, 0, 0]} fill="oklch(0.72 0.13 220)" />
+              <Bar dataKey="Revenus" radius={[8, 8, 0, 0]} fill="var(--chart-4)" />
+              <Bar dataKey="Charges" radius={[8, 8, 0, 0]} fill="var(--destructive)" />
+              <Bar dataKey="Résultat" radius={[8, 8, 0, 0]} fill="var(--chart-2)" />
             </BarChart>
           </ResponsiveContainer>
         </div>
