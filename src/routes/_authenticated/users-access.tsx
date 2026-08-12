@@ -246,6 +246,7 @@ function UsersAccessPage() {
                     User
                   </th>
                   <th className="text-left font-medium px-4 py-3 min-w-[160px]">Platform</th>
+                  <th className="text-left font-medium px-4 py-3 min-w-[220px]">Effective access</th>
                   {companies.map((c) => (
                     <th key={c.id} className="text-center font-medium px-3 py-3 min-w-[160px]">
                       <div className="flex flex-col items-center gap-1">
