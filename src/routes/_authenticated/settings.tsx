@@ -75,8 +75,11 @@ function Body() {
               name={name || user?.email || undefined}
               size={84}
               folder="profiles"
+              crop
+              outputSize={512}
             />
             <span className="text-[10px] text-muted-foreground">Profile picture</span>
+
           </div>
           <div className="flex-1 min-w-[240px] grid sm:grid-cols-2 gap-4">
             <div>

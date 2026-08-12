@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { Fragment, useEffect, useState, useCallback, useMemo } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { useOwnerNames } from "@/hooks/use-owner-names";
+import { logActivity, diffDocument } from "@/lib/document-activity";
+import { DocumentActivityPanel } from "@/components/document-activity-panel";
 import { useAuth } from "@/lib/auth-context";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -34,7 +36,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { RICH_TEXT_HINT } from "@/lib/rich-text";
 import { RichTextField } from "@/components/rich-text-field";
-import { Wallet } from "lucide-react";
+import { Wallet, History } from "lucide-react";
 import { nextNumber, nextNumberAsync, isNumberTaken } from "@/lib/numbering";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
@@ -73,6 +75,7 @@ function Body() {
   const [paying, setPaying] = useState<Invoice | null>(null);
   const [cancelling, setCancelling] = useState<Invoice | null>(null);
   const [marking, setMarking] = useState<Invoice | null>(null);
+  const [historyOf, setHistoryOf] = useState<Invoice | null>(null);
   const [numMode, setNumMode] = useState<NumberFormatMode>(getNumberFormat());
 
   const toggleMode = useCallback(() => {
@@ -361,10 +364,18 @@ function Body() {
                       <td className="px-5 py-3.5 text-right font-tnum font-medium">
                         {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? fmtAmount(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
                       </td>
-                      <td className="px-5 py-3.5 text-xs text-muted-foreground">{ownerName(inv.createdBy)}</td>
+                      <td className="px-5 py-3.5 text-xs text-muted-foreground">
+                        {ownerName(inv.createdBy)}
+                        {inv.updatedAt && (
+                          <div className="text-[10px] text-muted-foreground/70">
+                            Updated by {ownerName(inv.updatedBy ?? inv.createdBy)} · {format(parseISO(inv.updatedAt), "MMM d, HH:mm")}
+                          </div>
+                        )}
+                      </td>
 
                       <td className="px-5 py-3.5 text-right">
                         <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
+                          <button onClick={() => setHistoryOf(inv)} title="Activity history" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><History className="h-3.5 w-3.5" /></button>
                           <button onClick={() => setPreviewing(inv)} title="Preview & export PDF" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
                           {inv.status !== "paid" && inv.status !== "cancelled" && (
                             <>
@@ -401,6 +412,13 @@ function Body() {
       />
       <RecordPaymentDialog open={!!paying} onOpenChange={(v) => { if (!v) setPaying(null); }} invoice={paying} />
       <CancelInvoiceDialog open={!!cancelling} onOpenChange={(v) => { if (!v) setCancelling(null); }} invoice={cancelling} />
+      <DocumentActivityPanel
+        open={!!historyOf}
+        onOpenChange={(v) => { if (!v) setHistoryOf(null); }}
+        docType="invoice"
+        docId={historyOf?.id}
+        docNumber={historyOf?.number}
+      />
       <MarkPaidDialog open={!!marking} onOpenChange={(v) => { if (!v) setMarking(null); }} invoice={marking} />
     </div>
   );
@@ -421,6 +439,10 @@ function CancelInvoiceDialog({ open, onOpenChange, invoice }: { open: boolean; o
       status: "cancelled",
       cancelledAt: new Date().toISOString(),
       cancellationReason: trimmed,
+    });
+    logActivity({
+      docType: "invoice", docId: invoice.id, docNumber: invoice.number, companyId: invoice.companyId,
+      action: "status_changed", summary: `Cancelled — ${trimmed}`, details: { from: invoice.status, to: "cancelled" },
     });
     onOpenChange(false);
   };
@@ -617,7 +639,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, poId, selectedPO?.id, linkedQuote?.id]);
 
-  const addLine = () => setLines((prev) => [...prev, { id: newId("ql"), description: "", details: "", unit: "fixed", quantity: 1, rate: 0 }]);
+  const addLine = () => setLines((prev) => [...prev, { id: newId("ql"), description: "", details: "", unit: "fixed", quantity: 1, rate: 0, createdBy: user?.id, createdAt: new Date().toISOString() }]);
   const updateLine = (id: string, patch: Partial<QuoteLine>) => setLines((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
   const removeLine = (id: string) => setLines((prev) => prev.filter((l) => l.id !== id));
   const linesTotal = lines.reduce((s, l) => s + (Number(l.quantity) || 0) * (Number(l.rate) || 0), 0);
@@ -651,8 +673,23 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       bankAccountId: bankAccountId || defaultBankAccount(companies.find((c) => c.id === companyId))?.id,
       lines: lines.length ? lines.map((l) => ({ ...l })) : undefined,
     };
-    if (editing) invoicesStore.update(editing.id, data);
-    else invoicesStore.add({ id: newId("inv"), ...data, createdBy: user?.id });
+    if (editing) {
+      invoicesStore.update(editing.id, { ...data, updatedBy: user?.id, updatedAt: new Date().toISOString() });
+      if (editing.status !== finalStatus) {
+        logActivity({
+          docType: "invoice", docId: editing.id, docNumber: number, companyId,
+          action: "status_changed", summary: `From ${editing.status} to ${finalStatus}`,
+          details: { from: editing.status, to: finalStatus },
+        });
+      }
+      const summary = diffDocument(editing as unknown as Record<string, unknown>, data as unknown as Record<string, unknown>);
+      if (summary) logActivity({ docType: "invoice", docId: editing.id, docNumber: number, companyId, action: "updated", summary });
+    } else {
+      invoicesStore.add(
+        { id: newId("inv"), ...data, createdBy: user?.id, updatedBy: user?.id, updatedAt: new Date().toISOString() },
+        { onSynced: (dbId) => logActivity({ docType: "invoice", docId: dbId, docNumber: number, companyId, action: "created", summary: `Invoice ${number} created` }) },
+      );
+    }
     onOpenChange(false);
   };
   const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
@@ -974,6 +1011,10 @@ function MarkPaidDialog({ open, onOpenChange, invoice }: { open: boolean; onOpen
       paid: invoice.amount,
       paidDate: date,
       status: "paid",
+    });
+    logActivity({
+      docType: "invoice", docId: invoice.id, docNumber: invoice.number, companyId: invoice.companyId,
+      action: "payment", summary: `Marked paid on ${date}`, details: { amount: invoice.amount, currency: invoice.currency },
     });
     // Payment transaction (in invoice currency, for ledger consistency)
     if (account && remaining > 0) {

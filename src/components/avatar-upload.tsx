@@ -1,8 +1,10 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Camera, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AVATARS_BUCKET, uploadFile } from "@/lib/storage";
 import { useFileUrl } from "@/hooks/use-file-url";
+import { validateImageFile } from "@/lib/image-resize";
+import { ImageCropDialog } from "@/components/image-crop-dialog";
 
 interface AvatarUploadProps {
   value?: string;
@@ -16,6 +18,10 @@ interface AvatarUploadProps {
   square?: boolean;
   /** Sub-folder inside the avatars bucket (e.g. "clients"). */
   folder?: string;
+  /** Open a crop editor and resize the result before uploading. */
+  crop?: boolean;
+  /** Output size (px) of the cropped image. */
+  outputSize?: number;
   className?: string;
 }
 
@@ -31,19 +37,24 @@ function initialsOf(name?: string): string {
 }
 
 /** Click-to-upload avatar editor. Uploads to the private `avatars` bucket. */
-export function AvatarUpload({ value, onChange, name, size = 64, square, folder = "misc", className }: AvatarUploadProps) {
+export function AvatarUpload({ value, onChange, name, size = 64, square, folder = "misc", crop, outputSize = 512, className }: AvatarUploadProps) {
   const ref = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [cropUrl, setCropUrl] = useState<string | undefined>();
   const src = useFileUrl(value);
+
+  useEffect(() => () => { if (cropUrl) URL.revokeObjectURL(cropUrl); }, [cropUrl]);
 
   const pick = () => ref.current?.click();
   const handleFile = async (file: File) => {
     setError("");
-    if (!file.type.startsWith("image/")) { setError("Images only"); return; }
-    if (file.size > 5 * 1024 * 1024) { setError("Max 5 MB"); return; }
     setBusy(true);
     try {
+      const check = await validateImageFile(file);
+      if (!check.ok) { setError(check.error ?? "Invalid image"); return; }
+      if (crop) { setCropUrl(check.url); return; }
+      if (check.url) URL.revokeObjectURL(check.url);
       onChange(await uploadFile(AVATARS_BUCKET, folder, file));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed");
@@ -51,6 +62,7 @@ export function AvatarUpload({ value, onChange, name, size = 64, square, folder 
       setBusy(false);
     }
   };
+
 
   return (
     <div className={cn("relative inline-block group", className)} style={{ width: size, height: size }}>
@@ -102,7 +114,18 @@ export function AvatarUpload({ value, onChange, name, size = 64, square, folder 
           e.target.value = "";
         }}
       />
+      {crop && (
+        <ImageCropDialog
+          open={!!cropUrl}
+          onOpenChange={(v) => { if (!v) { if (cropUrl) URL.revokeObjectURL(cropUrl); setCropUrl(undefined); } }}
+          sourceUrl={cropUrl}
+          size={outputSize}
+          folder={folder}
+          onApply={(refPath) => onChange(refPath)}
+        />
+      )}
     </div>
+
   );
 }
 

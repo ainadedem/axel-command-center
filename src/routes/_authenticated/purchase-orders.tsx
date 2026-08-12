@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 import { Fragment, useEffect, useState } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { useOwnerNames } from "@/hooks/use-owner-names";
+import { logActivity, diffDocument } from "@/lib/document-activity";
+import { DocumentActivityPanel } from "@/components/document-activity-panel";
 import { useAuth } from "@/lib/auth-context";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -59,6 +61,7 @@ function Body() {
   const baseList = inScope(pos, scope);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<PurchaseOrder | null>(null);
+  const [historyOf, setHistoryOf] = useState<PurchaseOrder | null>(null);
   const openCreate = () => { setEditing(null); setOpen(true); };
   const { ownerName } = useOwnerNames(baseList.map((p) => p.createdBy));
 
@@ -140,7 +143,14 @@ function Body() {
 
                     <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(po.amount, po.currency)}</td>
 
-                    <td className="px-5 py-3.5 text-xs text-muted-foreground">{ownerName(po.createdBy)}</td>
+                    <td className="px-5 py-3.5 text-xs text-muted-foreground">
+                      {ownerName(po.createdBy)}
+                      {po.updatedAt && (
+                        <div className="text-[10px] text-muted-foreground/70">
+                          Updated by {ownerName(po.updatedBy ?? po.createdBy)} · {format(parseISO(po.updatedAt), "MMM d, HH:mm")}
+                        </div>
+                      )}
+                    </td>
 
                     <td className="px-5 py-3.5 text-right">
                       <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
@@ -148,6 +158,7 @@ function Body() {
                           <button type="button" onClick={() => openStoredFile(po.documentUrl)} title="Open client PO document" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
                         )}
 
+                        <button onClick={() => setHistoryOf(po)} title="Activity history" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><History className="h-3.5 w-3.5" /></button>
                         <button onClick={() => { setEditing(po); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
                         <button onClick={() => confirm(`Delete PO ${po.number}?`) && purchaseOrdersStore.remove(po.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
                       </div>
@@ -162,6 +173,13 @@ function Body() {
         </div>
       )}
       <PODialog open={open} onOpenChange={setOpen} editing={editing} />
+      <DocumentActivityPanel
+        open={!!historyOf}
+        onOpenChange={(v) => { if (!v) setHistoryOf(null); }}
+        docType="po"
+        docId={historyOf?.id}
+        docNumber={historyOf?.number}
+      />
     </div>
   );
 }
@@ -325,8 +343,23 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     // Stamp upload time when a document is present but doesn't have one yet (e.g. legacy data).
     const uploadedAt = documentUrl ? (documentUploadedAt ?? new Date().toISOString()) : undefined;
     const data = { number, clientReference: clientReference || undefined, companyId, clientId, projectId: projectId || undefined, quoteId: quoteId || undefined, issueDate, amount: Number(amount) || 0, currency, status, documentUrl, documentName, documentType, documentUploadedAt: uploadedAt, documentHistory: documentHistory.length ? documentHistory : undefined };
-    if (editing) purchaseOrdersStore.update(editing.id, data);
-    else purchaseOrdersStore.add({ id: newId("po"), ...data, createdBy: user?.id });
+    if (editing) {
+      purchaseOrdersStore.update(editing.id, { ...data, updatedBy: user?.id, updatedAt: new Date().toISOString() });
+      if (editing.status !== status) {
+        logActivity({
+          docType: "po", docId: editing.id, docNumber: number, companyId,
+          action: "status_changed", summary: `From ${editing.status} to ${status}`,
+          details: { from: editing.status, to: status },
+        });
+      }
+      const summary = diffDocument(editing as unknown as Record<string, unknown>, data as unknown as Record<string, unknown>);
+      if (summary) logActivity({ docType: "po", docId: editing.id, docNumber: number, companyId, action: "updated", summary });
+    } else {
+      purchaseOrdersStore.add(
+        { id: newId("po"), ...data, createdBy: user?.id, updatedBy: user?.id, updatedAt: new Date().toISOString() },
+        { onSynced: (dbId) => logActivity({ docType: "po", docId: dbId, docNumber: number, companyId, action: "created", summary: `Purchase order ${number} recorded` }) },
+      );
+    }
     onOpenChange(false);
   };
   const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);

@@ -584,6 +584,7 @@ const invoiceToDb = (inv: Invoice) => {
     subject: inv.subject ?? null,
     bank_account_id: inv.bankAccountId ?? null,
     ...(inv.createdBy && isUuid(inv.createdBy) ? { created_by: inv.createdBy } : {}),
+    ...(inv.updatedBy && isUuid(inv.updatedBy) ? { updated_by: inv.updatedBy } : {}),
   };
 
 };
@@ -611,6 +612,8 @@ const invoiceFromDb = (r: Record<string, unknown>, lines: QuoteLine[]): Invoice 
   subject: (r.subject as string) ?? undefined,
   bankAccountId: (r.bank_account_id as string) ?? undefined,
   createdBy: (r.created_by as string) ?? undefined,
+  updatedBy: (r.updated_by as string) ?? undefined,
+  updatedAt: (r.updated_at as string) ?? undefined,
   lines: lines.length ? lines : undefined,
 });
 
@@ -635,6 +638,8 @@ export async function upsertInvoice(inv: Invoice): Promise<string | null> {
         unit: l.unit,
         quantity: l.quantity,
         rate: l.rate,
+        created_by: l.createdBy && isUuid(l.createdBy) ? l.createdBy : null,
+        ...(l.createdAt ? { created_at: l.createdAt } : {}),
       }));
       const { error: lineErr } = await supabase.from("invoice_lines").insert(lineRows);
       if (lineErr) console.warn("[db-sync] upsertInvoice.lines", lineErr.message);
@@ -702,6 +707,8 @@ export async function hydrateFinancials(scope: HydrationScope = { mode: "all" })
       unit: (l.unit as QuoteLine["unit"]) ?? "fixed",
       quantity: Number(l.quantity) || 0,
       rate: Number(l.rate) || 0,
+      createdBy: (l.created_by as string) ?? undefined,
+      createdAt: (l.created_at as string) ?? undefined,
     });
     linesByInv.set(l.invoice_id as string, arr);
   });
@@ -882,6 +889,7 @@ const quoteToDb = (q: Quote) => {
     sent_at: q.sentAt ?? null,
     sent_to: q.sentTo ?? null,
     ...(q.createdBy && isUuid(q.createdBy) ? { created_by: q.createdBy } : {}),
+    ...(q.updatedBy && isUuid(q.updatedBy) ? { updated_by: q.updatedBy } : {}),
   };
 };
 const quoteFromDb = (r: Record<string, unknown>): Quote => ({
@@ -909,6 +917,8 @@ const quoteFromDb = (r: Record<string, unknown>): Quote => ({
   sentAt: (r.sent_at as string) ?? undefined,
   sentTo: (r.sent_to as string) ?? undefined,
   createdBy: (r.created_by as string) ?? undefined,
+  updatedBy: (r.updated_by as string) ?? undefined,
+  updatedAt: (r.updated_at as string) ?? undefined,
 });
 export async function upsertQuote(q: Quote): Promise<string | null> {
   const row = quoteToDb(q);
@@ -948,6 +958,7 @@ const poToDb = (p: PurchaseOrder) => {
     subject: p.subject ?? null,
     bank_account_id: p.bankAccountId ?? null,
     ...(p.createdBy && isUuid(p.createdBy) ? { created_by: p.createdBy } : {}),
+    ...(p.updatedBy && isUuid(p.updatedBy) ? { updated_by: p.updatedBy } : {}),
   };
 
 };
@@ -972,6 +983,8 @@ const poFromDb = (r: Record<string, unknown>): PurchaseOrder => ({
   subject: (r.subject as string) ?? undefined,
   bankAccountId: (r.bank_account_id as string) ?? undefined,
   createdBy: (r.created_by as string) ?? undefined,
+  updatedBy: (r.updated_by as string) ?? undefined,
+  updatedAt: (r.updated_at as string) ?? undefined,
 });
 
 export async function upsertPurchaseOrder(p: PurchaseOrder): Promise<string | null> {

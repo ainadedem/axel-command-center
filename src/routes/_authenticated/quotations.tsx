@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { useOwnerNames } from "@/hooks/use-owner-names";
+import { logActivity, diffDocument } from "@/lib/document-activity";
+import { DocumentActivityPanel } from "@/components/document-activity-panel";
 
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -29,7 +31,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, FileCheck2, Plus, X, Eye, Copy, Send, Loader2, CheckCircle2 } from "lucide-react";
+import { Pencil, Trash2, FileCheck2, Plus, X, Eye, Copy, Send, Loader2, CheckCircle2, History } from "lucide-react";
 import { DocumentPreview, buildPrintableDocument, type DocumentData } from "@/components/document-preview";
 import { resolveFileUrl } from "@/lib/storage";
 import { nextNumber, nextNumberAsync, isNumberTaken, primeNumbering } from "@/lib/numbering";
@@ -78,6 +80,7 @@ function Body() {
   const [editing, setEditing] = useState<Quote | null>(null);
   const [previewing, setPreviewing] = useState<Quote | null>(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [historyOf, setHistoryOf] = useState<Quote | null>(null);
   const { user } = useAuth();
   const openCreate = () => { setEditing(null); setOpen(true); };
 
@@ -125,6 +128,7 @@ function Body() {
         sentTo: cl.email,
         pdfUrl: res.pdf_url ?? undefined,
       });
+      logActivity({ docType: "quote", docId: q.id, docNumber: q.number, companyId: q.companyId, action: "sent", summary: `Emailed to ${cl.email}` });
       toast.success(`Quote ${q.number} sent to ${cl.email}`);
     } catch (e) {
       toast.error(`Failed to send quote: ${e instanceof Error ? e.message : String(e)}`);
@@ -165,7 +169,12 @@ function Body() {
       status: "issued",
       lines: q.lines ? q.lines.map((l) => ({ ...l })) : undefined,
     });
-    quotesStore.update(q.id, { status: "accepted" });
+    quotesStore.update(q.id, { status: "accepted", updatedBy: user?.id, updatedAt: new Date().toISOString() });
+    logActivity({
+      docType: "quote", docId: q.id, docNumber: q.number, companyId: q.companyId,
+      action: "status_changed", summary: `From ${q.status} to accepted (converted to PO)`,
+      details: { from: q.status, to: "accepted" },
+    });
   };
 
   const duplicateQuote = async (q: Quote) => {
@@ -258,11 +267,13 @@ function Body() {
                           <button onClick={() => convertToPO(q)} title="Convert to PO" className="text-[10px] uppercase tracking-wider px-2 py-1 rounded border border-success/30 text-success hover:bg-success/10 flex items-center gap-1"><FileCheck2 className="h-3 w-3" /> To PO</button>
                         )}
                         <div className="opacity-0 group-hover:opacity-100 flex gap-1">
+                          <button onClick={() => setHistoryOf(q)} title="Activity history" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><History className="h-3.5 w-3.5" /></button>
                           <button onClick={() => duplicateQuote(q)} title="Duplicate quote" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Copy className="h-3.5 w-3.5" /></button>
                           <button onClick={() => setPreviewing(q)} title="Preview & export PDF" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
                           <button onClick={() => { setEditing(q); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
                           <button onClick={() => confirm(`Delete quote ${q.number}?`) && quotesStore.remove(q.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
                         </div>
+
                       </div>
                     </td>
                   </tr>
@@ -275,6 +286,13 @@ function Body() {
         </div>
       )}
       <QuoteDialog open={open} onOpenChange={setOpen} editing={editing} />
+      <DocumentActivityPanel
+        open={!!historyOf}
+        onOpenChange={(v) => { if (!v) setHistoryOf(null); }}
+        docType="quote"
+        docId={historyOf?.id}
+        docNumber={historyOf?.number}
+      />
       <DocumentPreview
         open={!!previewing}
         onOpenChange={(v) => { if (!v) setPreviewing(null); }}
@@ -430,11 +448,14 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const { taxAmount, totalAmount } = useMemo(() => computeTotals(Math.round(subtotal), Number(taxRate) || 0), [subtotal, taxRate]);
 
   const addLine = () => {
+    // Row-level ownership: remember who added each line and when.
+    const stamp = { createdBy: user?.id, createdAt: new Date().toISOString() };
     if (mode === "standard") {
       setLines((prev) => [...prev, {
         id: newId("ql"),
         description: "",
         unit: "fixed", quantity: 1, rate: 0,
+        ...stamp,
       }]);
       return;
     }
@@ -445,8 +466,10 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       description: `${cap} — ${levels.find((l) => l.code === lvl)?.title ?? lvl}`,
       capability: cap, level: lvl, unit: "day", quantity: 1,
       rate: getRate(lvl, "day", currency),
+      ...stamp,
     }]);
   };
+
 
   const updateLine = (id: string, patch: Partial<QuoteLine>) => {
     setLines((prev) => prev.map((l) => {
@@ -500,10 +523,29 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       bankAccountId: bankAccountId || defaultBankAccount(companies.find((c) => c.id === companyId))?.id,
       ...fxFields,
     };
-    if (editing) quotesStore.update(editing.id, data);
-    else quotesStore.add({ id: newId("q"), ...data, createdBy: user?.id });
+    if (editing) {
+      quotesStore.update(editing.id, { ...data, updatedBy: user?.id, updatedAt: new Date().toISOString() });
+      const summary = diffDocument(editing as unknown as Record<string, unknown>, data as unknown as Record<string, unknown>);
+      if (editing.status !== status) {
+        logActivity({
+          docType: "quote", docId: editing.id, docNumber: number, companyId,
+          action: "status_changed", summary: `From ${editing.status} to ${status}`,
+          details: { from: editing.status, to: status },
+        });
+      }
+      if (summary) {
+        logActivity({ docType: "quote", docId: editing.id, docNumber: number, companyId, action: "updated", summary });
+      }
+    } else {
+      const id = newId("q");
+      quotesStore.add(
+        { id, ...data, createdBy: user?.id, updatedBy: user?.id, updatedAt: new Date().toISOString() },
+        { onSynced: (dbId) => logActivity({ docType: "quote", docId: dbId, docNumber: number, companyId, action: "created", summary: `Quotation ${number} created` }) },
+      );
+    }
     onOpenChange(false);
   };
+
   const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
   return (

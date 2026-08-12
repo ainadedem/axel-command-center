@@ -37,7 +37,8 @@ export interface CollectionSync<T extends WithId> {
 
 export interface Collection<T extends WithId> {
   items: T[];
-  add: (item: T) => void;
+  /** `onSynced` receives the canonical (DB) id once the remote insert resolves. */
+  add: (item: T, opts?: { onSynced?: (id: string) => void }) => void;
   update: (id: string, patch: Partial<T>) => void;
   remove: (id: string) => void;
   replaceAll: (next: T[]) => void;
@@ -46,6 +47,7 @@ export interface Collection<T extends WithId> {
   /** Register sync hooks (called after each mutation, fire-and-forget). */
   setSync: (sync: CollectionSync<T>) => void;
 }
+
 
 export function createCollection<T extends WithId>(key: string, initial: T[]): Collection<T> {
   const hydrated = load<T>(key, initial);
@@ -71,14 +73,19 @@ export function createCollection<T extends WithId>(key: string, initial: T[]): C
 
   return {
     items,
-    add(item) {
+    add(item, opts) {
       items.push(item);
       emit();
       if (sync.upsert) {
-        sync.upsert(item).then((dbId) => { if (dbId) swapId(item.id, dbId); })
-          .catch((e) => console.warn(`[sync ${key}] upsert`, e));
+        sync.upsert(item).then((dbId) => {
+          if (dbId) swapId(item.id, dbId);
+          opts?.onSynced?.(dbId ?? item.id);
+        }).catch((e) => console.warn(`[sync ${key}] upsert`, e));
+      } else {
+        opts?.onSynced?.(item.id);
       }
     },
+
     update(id, patch) {
       const i = items.findIndex((x) => x.id === id);
       if (i >= 0) {

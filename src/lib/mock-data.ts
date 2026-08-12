@@ -271,6 +271,10 @@ export interface Invoice {
   bankAccountId?: string;
   /** User id of whoever created this invoice. */
   createdBy?: string;
+  /** User id of whoever last edited this invoice. */
+  updatedBy?: string;
+  /** ISO timestamp of the last edit. */
+  updatedAt?: string;
 }
 
 
@@ -290,7 +294,12 @@ export interface QuoteLine {
   quantity: number;
   /** Per-unit price in the quote's currency. */
   rate: number;
+  /** Auth user id of whoever added this line. */
+  createdBy?: string;
+  /** ISO timestamp when this line was added. */
+  createdAt?: string;
 }
+
 export type QuoteMode = "rate-card" | "standard";
 export interface Quote {
   id: string;
@@ -330,6 +339,10 @@ export interface Quote {
   sentTo?: string;
   /** Auth user id of the person who created the quotation. */
   createdBy?: string;
+  /** Auth user id of whoever last edited the quotation. */
+  updatedBy?: string;
+  /** ISO timestamp of the last edit. */
+  updatedAt?: string;
 }
 
 export type POStatus = "draft" | "issued" | "fulfilled" | "cancelled";
@@ -367,6 +380,10 @@ export interface PurchaseOrder {
   bankAccountId?: string;
   /** User id of whoever created this purchase order. */
   createdBy?: string;
+  /** User id of whoever last edited this purchase order. */
+  updatedBy?: string;
+  /** ISO timestamp of the last edit. */
+  updatedAt?: string;
 }
 
 
