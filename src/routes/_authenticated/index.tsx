@@ -536,22 +536,34 @@ function DashboardBody() {
             </div>
           )}
 
-          <div className="h-56">
+          <ChartFrame
+            title="Expected revenue, next 6 months"
+            description="Gross versus stage-weighted (millions MGA)"
+            labelKey="date"
+            data={axiomForecast6mo}
+            series={[
+              { key: "gross", label: "Gross", color: CHART_SEMANTIC.forecast },
+              { key: "weighted", label: "Weighted", color: CHART_SEMANTIC.primary },
+            ]}
+            formatValue={(v) => `${v.toFixed(1)} M MGA`}
+            height={224}
+            className="border-0 bg-transparent p-0 shadow-none"
+          >
             <ResponsiveContainer>
-              <BarChart data={axiomForecast6mo} margin={{ top: 6, right: 8, left: -16, bottom: 0 }}>
-                <CartesianGrid stroke="var(--border)" strokeDasharray="2 6" vertical={false} />
-                <XAxis dataKey="date" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+              <BarChart data={axiomForecast6mo} margin={chartMargin}>
+                <CartesianGrid {...chartGridProps} />
+                <XAxis dataKey="date" {...chartAxisProps} />
+                <YAxis {...chartAxisProps} />
                 <Tooltip
-                  contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, fontSize: 12, boxShadow: "var(--shadow-elevated)", padding: "8px 12px" }}
-                  cursor={{ fill: "color-mix(in oklab, var(--primary) 6%, transparent)" }}
-                  formatter={(v) => `${Number(v).toFixed(1)} M MGA`}
+                  content={<ChartTooltip formatter={(v) => `${Number(v).toFixed(1)} M MGA`} />}
+                  cursor={chartCursor}
                 />
-                <Bar dataKey="gross" radius={[8, 8, 0, 0]} fill="var(--chart-2)" fillOpacity={0.3} name="Gross" />
-                <Bar dataKey="weighted" radius={[8, 8, 0, 0]} fill="var(--chart-1)" name="Weighted" />
+                <Bar dataKey="gross" radius={[8, 8, 0, 0]} fill={CHART_SEMANTIC.forecast} fillOpacity={0.3} name="Gross" />
+                <Bar dataKey="weighted" radius={[8, 8, 0, 0]} fill={CHART_SEMANTIC.primary} name="Weighted" />
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </ChartFrame>
+
         </div>
       )}
 
