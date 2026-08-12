@@ -11,6 +11,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useCompany } from "@/lib/company-context";
 import { useFxRates } from "@/lib/fx";
 import { useAuth } from "@/lib/auth-context";
+import { useEffectiveRole } from "@/lib/use-effective-role";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import axelIcon from "@/assets/axel-icon-purple.png";
