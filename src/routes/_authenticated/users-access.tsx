@@ -319,29 +319,33 @@ function UsersAccessPage() {
                               setPlatformRole(row, v as "none" | "super_admin" | "group_admin")
                             }
                             disabled={
+                              !isSuperAdmin ||
                               busy === row.user_id + ":platform" ||
                               (isSelf && row.platformRole === "super_admin")
                             }
                           >
-                            <SelectTrigger className="h-8 text-xs">
+                            <SelectTrigger
+                              className="h-8 text-xs"
+                              title={isSuperAdmin ? undefined : "Only a super admin can change platform roles."}
+                            >
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                               {PLATFORM_ROLES.map((r) => (
-                                <SelectItem
-                                  key={r.value}
-                                  value={r.value}
-                                  disabled={r.value === "super_admin" && !isSuperAdmin}
-                                >
+                                <SelectItem key={r.value} value={r.value}>
                                   {r.label}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                         </td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground max-w-[280px]">
+                          {effectiveAccess(row)}
+                        </td>
                         {companies.map((c) => {
                           const cellKey = row.user_id + ":" + c.id;
                           const current = row.companyRoles.get(c.id) ?? "none";
+                          const isLegacy = current !== "none" && LEGACY_ROLES.includes(current as CompanyRole);
                           return (
                             <td key={c.id} className="px-3 py-3">
                               <Select
@@ -360,16 +364,22 @@ function UsersAccessPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="none">No access</SelectItem>
-                                  {COMPANY_ROLES.map((r) => (
+                                  {ASSIGNABLE_ROLES.map((r) => (
                                     <SelectItem key={r} value={r}>
                                       {ROLE_LABEL[r]}
                                     </SelectItem>
                                   ))}
+                                  {isLegacy && (
+                                    <SelectItem value={current}>
+                                      {ROLE_LABEL[current as CompanyRole]} (legacy)
+                                    </SelectItem>
+                                  )}
                                 </SelectContent>
                               </Select>
                             </td>
                           );
                         })}
+
                       </tr>
                     );
                   })
