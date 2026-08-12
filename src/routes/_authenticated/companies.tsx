@@ -210,7 +210,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       intlEnabled: Boolean(def?.intlEnabled), mobileEnabled: Boolean(def?.mobileEnabled),
       mobileProvider: def?.mobileProvider, mobileNumber: def?.mobileNumber, mobileName: def?.mobileName,
       showPaymentDetails, bankAccounts: accounts,
-      logoUrl,
+      logoUrl, logoHeight, logoMaxWidth, logoCrop,
     };
     const dbRow = {
       name, code: finalCode, short_name: shortName, color, base_currency: baseCurrency,
