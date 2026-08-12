@@ -442,12 +442,10 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
         if (!isGroupAdmin) restrictLocalStores(merged);
 
-        try {
-          await maybePushSeeds(userId, idMap);
-        } catch (e) {
-          console.warn("[maybePushSeeds]", e);
-        }
-        if (cancelled) return;
+        // No seed push on sign-in: company data already lives in the backend, and a
+        // first login on a new browser used to replay the whole local seed here —
+        // slow for everyone, rejected by RLS for restricted users, and it blocked
+        // the app on the loading screen until it finished.
 
         const currentScope = currentScopeRef.current;
         const nextScope = resolveScopeForHydration(currentScope, isGroupAdmin, nextAccessibleDbCompanyIds, merged, idMap);
@@ -459,11 +457,15 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         }
 
         const hydrationScope = getHydrationScope(nextScope, isGroupAdmin, nextAccessibleDbCompanyIds, idMap);
-        await Promise.all([
-          hydrateContacts(hydrationScope).catch((e) => console.warn("[hydrateContacts]", e)),
-          hydrateFinancials(hydrationScope).catch((e) => console.warn("[hydrateFinancials]", e)),
-          hydrateExtras(hydrationScope).catch((e) => console.warn("[hydrateExtras]", e)),
-        ]);
+        await withTimeout(
+          Promise.all([
+            hydrateContacts(hydrationScope).catch((e) => console.warn("[hydrateContacts]", e)),
+            hydrateFinancials(hydrationScope).catch((e) => console.warn("[hydrateFinancials]", e)),
+            hydrateExtras(hydrationScope).catch((e) => console.warn("[hydrateExtras]", e)),
+          ]),
+          BOOTSTRAP_TIMEOUT_MS,
+          "your workspace data",
+        );
         if (cancelled) return;
 
         if (!isGroupAdmin) restrictLocalStores(merged);
