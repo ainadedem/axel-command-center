@@ -240,8 +240,11 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
     .map((r) => `<div><strong>${esc(r.label)}:</strong> ${esc(r.value)}</div>`).join("");
 
   const logoSrc = logoUrl && !logoUrl.startsWith("storage:") ? logoUrl : undefined;
+  const sizeFactor = logoScale && logoScale > 0 ? logoScale : 1;
+  const logoH = Math.round((company?.logoHeight ?? 52) * sizeFactor);
+  const logoW = Math.round((company?.logoMaxWidth ?? 180) * sizeFactor);
   const logoHtml = logoSrc
-    ? `<img src="${esc(logoSrc)}" alt="${esc(company?.name ?? "")}" style="max-height: 52px; max-width: 180px; object-fit: contain; margin-bottom: 12px;" />`
+    ? `<img src="${esc(logoSrc)}" alt="${esc(company?.name ?? "")}" style="max-height: ${logoH}px; max-width: ${logoW}px; object-fit: contain; margin-bottom: 12px;" />`
     : "";
 
   return `
