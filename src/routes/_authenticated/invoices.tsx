@@ -36,6 +36,7 @@ import { Wallet } from "lucide-react";
 import { nextNumber, isNumberTaken } from "@/lib/numbering";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
+import { withSelected } from "@/lib/select-options";
 
 export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage });
 

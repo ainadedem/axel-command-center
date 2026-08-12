@@ -35,6 +35,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import html2pdf from "html2pdf.js";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
+import { withSelected } from "@/lib/select-options";
 import { useSingleFlightSubmit } from "@/components/form-ux";
 
 export const Route = createFileRoute("/_authenticated/quotations")({ component: QuotationsPage });

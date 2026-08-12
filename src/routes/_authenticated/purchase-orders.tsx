@@ -25,6 +25,7 @@ import { Pencil, Trash2, Upload, FileText, X, History, RefreshCw, Eye, AlertTria
 
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
+import { withSelected } from "@/lib/select-options";
 
 type DocVersion = { url: string; name?: string; type?: string; uploadedAt: string };
 
