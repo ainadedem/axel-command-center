@@ -429,3 +429,232 @@ function UsersAccessPage() {
     </>
   );
 }
+
+function AddUserDialog({
+  open,
+  onOpenChange,
+  companies,
+  isSuperAdmin,
+  onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  companies: DbCompany[];
+  isSuperAdmin: boolean;
+  onCreated: () => Promise<void> | void;
+}) {
+  const createUser = useServerFn(createAppUser);
+  const [email, setEmail] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [mode, setMode] = useState<"invite" | "password">("invite");
+  const [password, setPassword] = useState("");
+  const [platformRole, setPlatformRole] = useState<"none" | "group_admin" | "super_admin">("none");
+  const [roles, setRoles] = useState<Record<string, CompanyRole | "none">>({});
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const reset = () => {
+    setEmail("");
+    setDisplayName("");
+    setMode("invite");
+    setPassword("");
+    setPlatformRole("none");
+    setRoles({});
+    setError(null);
+  };
+
+  const submit = async () => {
+    setError(null);
+    setSaving(true);
+    try {
+      const companyRoles = Object.entries(roles)
+        .filter(([, r]) => r && r !== "none")
+        .map(([companyId, role]) => ({ companyId, role: role as string }));
+      const res = await createUser({
+        data: {
+          email,
+          displayName: displayName.trim() || undefined,
+          mode,
+          password: mode === "password" ? password : undefined,
+          platformRole: platformRole === "none" ? null : platformRole,
+          companyRoles,
+          redirectTo: typeof window !== "undefined" ? `${window.location.origin}/login` : undefined,
+        },
+      });
+      toast.success(res.invited ? `Invitation sent to ${res.email}` : `Account created for ${res.email}`);
+      reset();
+      onOpenChange(false);
+      await onCreated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not create the user.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) reset();
+        onOpenChange(v);
+      }}
+    >
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Add user</DialogTitle>
+          <DialogDescription>
+            Create an account and grant access. Company roles can be changed later from the table.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="new-user-email">Email</Label>
+              <Input
+                id="new-user-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@company.com"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="new-user-name">Full name</Label>
+              <Input
+                id="new-user-name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Optional"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>How to activate</Label>
+              <Select value={mode} onValueChange={(v) => setMode(v as "invite" | "password")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="invite">Send invitation email</SelectItem>
+                  <SelectItem value="password">Set a temporary password</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {mode === "password" ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="new-user-password">Temporary password</Label>
+                <Input
+                  id="new-user-password"
+                  type="text"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                />
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <Label>Platform role</Label>
+                <Select
+                  value={platformRole}
+                  onValueChange={(v) => setPlatformRole(v as typeof platformRole)}
+                  disabled={!isSuperAdmin}
+                >
+                  <SelectTrigger title={isSuperAdmin ? undefined : "Only a super admin can grant platform roles."}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PLATFORM_ROLES.map((r) => (
+                      <SelectItem key={r.value} value={r.value}>
+                        {r.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          {mode === "password" && (
+            <div className="space-y-1.5">
+              <Label>Platform role</Label>
+              <Select
+                value={platformRole}
+                onValueChange={(v) => setPlatformRole(v as typeof platformRole)}
+                disabled={!isSuperAdmin}
+              >
+                <SelectTrigger title={isSuperAdmin ? undefined : "Only a super admin can grant platform roles."}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PLATFORM_ROLES.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label>Company access</Label>
+            {platformRole !== "none" ? (
+              <p className="text-xs text-muted-foreground">
+                Platform admins already have access to every company.
+              </p>
+            ) : (
+              <div className="space-y-2 rounded-md border border-border p-3">
+                {companies.map((c) => (
+                  <div key={c.id} className="flex items-center gap-3">
+                    <span className="text-sm flex-1 truncate">{c.name}</span>
+                    <Select
+                      value={roles[c.id] ?? "none"}
+                      onValueChange={(v) =>
+                        setRoles((prev) => ({ ...prev, [c.id]: v as CompanyRole | "none" }))
+                      }
+                    >
+                      <SelectTrigger className="h-8 w-[160px] text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No access</SelectItem>
+                        {ASSIGNABLE_ROLES.map((r) => (
+                          <SelectItem key={r} value={r}>
+                            {ROLE_LABEL[r]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+                {companies.length === 0 && (
+                  <p className="text-xs text-muted-foreground">No companies yet.</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {error && (
+            <p className="text-sm text-destructive" role="alert">
+              {error}
+            </p>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancel
+          </Button>
+          <Button onClick={submit} disabled={saving || !email.trim()}>
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+            {mode === "invite" ? "Send invitation" : "Create account"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
