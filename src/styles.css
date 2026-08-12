@@ -100,12 +100,23 @@
   --input: oklch(0.935 0.003 285);
   --ring: oklch(0.58 0.204 258 / 0.4);
 
-  /* Chart family — blue, sky, pink, green, amber */
+  /* Chart family — blue, sky, pink, green, amber, teal, indigo, slate */
   --chart-1: oklch(0.58 0.204 258);
   --chart-2: oklch(0.72 0.15 245);
   --chart-3: oklch(0.68 0.19 350);
   --chart-4: oklch(0.7 0.17 152);
   --chart-5: oklch(0.79 0.15 72);
+  --chart-6: oklch(0.7 0.13 195);
+  --chart-7: oklch(0.55 0.16 292);
+  --chart-8: oklch(0.62 0.02 275);
+
+  /* Semantic chart aliases */
+  --chart-income: var(--chart-4);
+  --chart-expense: oklch(0.62 0.2 25);
+  --chart-forecast: var(--chart-2);
+  --chart-neutral: var(--chart-8);
+  --chart-grid: color-mix(in oklab, var(--foreground) 10%, transparent);
+
 
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.36 0.01 275);
