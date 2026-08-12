@@ -96,9 +96,12 @@ interface Ctx {
   isGroupAdmin: boolean;
   roleFor: (companyId: string) => CompanyRole | undefined;
   hasCompanyRole: (companyId: string, allowed: CompanyRole[]) => boolean;
+  /** Effective role inside the currently selected scope (group admins act as company admin). */
+  currentRole: CompanyRole | undefined;
+
 }
 
-const CompanyCtx = createContext<Ctx | null>(null);
+export const CompanyCtx = createContext<Ctx | null>(null);
 
 const STORAGE_KEY = "axel.companyScope";
 
@@ -537,15 +540,35 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       scope.id === "group"
         ? "Group Â· All companies"
         : accessibleCompanies.find((company) => company.id === scope.companyId)?.name ?? "â€”";
+    // `roleByCompanyId` is keyed by the backend company id, while the rest of the
+    // app addresses companies by their local id — translate before looking up.
+    const dbIdFor = (localId: string) => companyIdMapEntries.find((e) => e.localId === localId)?.dbId;
+    const rawRoleFor = (localCompanyId: string): CompanyRole | undefined => {
+      const dbId = dbIdFor(localCompanyId);
+      return (dbId ? roleByCompanyId.get(dbId) : undefined) ?? roleByCompanyId.get(localCompanyId);
+    };
     const roleFor = (companyId: string): CompanyRole | undefined => {
       if (isGroupAdmin) return "company_admin";
-      return roleByCompanyId.get(companyId);
+      return rawRoleFor(companyId);
     };
     const hasCompanyRole = (companyId: string, allowed: CompanyRole[]): boolean => {
       if (isGroupAdmin) return true;
-      const role = roleByCompanyId.get(companyId);
+      const role = rawRoleFor(companyId);
       return !!role && allowed.includes(role);
     };
+
+    // Effective role inside the active scope. In group scope a non group-admin
+    // keeps the strongest role they hold across the companies they can see.
+    const RANK: CompanyRole[] = ["viewer", "sales", "project_manager", "manager", "finance", "company_admin"];
+    let currentRole: CompanyRole | undefined;
+    if (isGroupAdmin) currentRole = "company_admin";
+    else if (scope.id === "company") currentRole = rawRoleFor(scope.companyId);
+    else {
+      for (const company of accessibleCompanies) {
+        const role = rawRoleFor(company.id);
+        if (role && (!currentRole || RANK.indexOf(role) > RANK.indexOf(currentRole))) currentRole = role;
+      }
+    }
 
     return {
       scope,
@@ -561,9 +584,11 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       isGroupAdmin,
       roleFor,
       hasCompanyRole,
+      currentRole,
     };
 
-  }, [scope, accessibleCompanies, accessLoading, dataLoading, bootstrapReady, bootstrapError, isGroupAdmin, roleByCompanyId]);
+  }, [scope, accessibleCompanies, accessLoading, dataLoading, bootstrapReady, bootstrapError, isGroupAdmin, roleByCompanyId, companyIdMapEntries]);
+
 
   return <CompanyCtx.Provider value={value}>{children}</CompanyCtx.Provider>;
 }

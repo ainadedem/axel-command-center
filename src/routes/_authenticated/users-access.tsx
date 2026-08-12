@@ -52,9 +52,17 @@ const ROLE_LABEL: Record<CompanyRole, string> = {
   viewer: "Viewer",
 };
 
+/**
+ * Only these roles are understood end-to-end (UI gates + database policies).
+ * `manager` / `project_manager` remain readable for legacy rows but are no
+ * longer offered, because they grant less than their label implies.
+ */
+const ASSIGNABLE_ROLES: CompanyRole[] = ["company_admin", "finance", "sales", "viewer"];
+const LEGACY_ROLES: CompanyRole[] = COMPANY_ROLES.filter((r) => !ASSIGNABLE_ROLES.includes(r));
+
 function UsersAccessPage() {
   const { isGroupAdmin } = useCompany();
-  const { user: currentUser, roles: currentRoles } = useAuth();
+  const { user: currentUser, roles: currentRoles, refresh } = useAuth();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Row[]>([]);
   const [companies, setCompanies] = useState<DbCompany[]>([]);
@@ -62,6 +70,7 @@ function UsersAccessPage() {
   const [busy, setBusy] = useState<string | null>(null);
 
   const isSuperAdmin = currentRoles.includes("super_admin");
+
 
   const load = async () => {
     setLoading(true);
@@ -110,39 +119,41 @@ function UsersAccessPage() {
     );
   }, [rows, q]);
 
+  /** Reload from the database and refresh our own session when we changed ourselves. */
+  const afterWrite = async (targetUserId: string) => {
+    await load();
+    if (targetUserId === currentUser?.id) await refresh();
+  };
+
   const setPlatformRole = async (row: Row, value: "none" | "super_admin" | "group_admin") => {
-    if (value === "super_admin" && !isSuperAdmin) {
-      toast.error("Only a super admin can grant super-admin.");
-      return;
-    }
-    if (row.platformRole === "super_admin" && !isSuperAdmin) {
-      toast.error("Only a super admin can change another super admin.");
+    if (!isSuperAdmin) {
+      toast.error("Only a super admin can change platform roles.");
       return;
     }
     setBusy(row.user_id + ":platform");
-    const { error: delErr } = await supabase.from("user_roles").delete().eq("user_id", row.user_id);
-    if (delErr) {
-      setBusy(null);
-      toast.error(`Could not update role: ${delErr.message}`);
-      return;
-    }
+    // Non-destructive: grant first, then drop the previous role. A refused insert
+    // must never leave the user with no role at all.
     if (value !== "none") {
       const { error: insErr } = await supabase
         .from("user_roles")
-        .insert({ user_id: row.user_id, role: value });
+        .upsert({ user_id: row.user_id, role: value }, { onConflict: "user_id,role" });
       if (insErr) {
         setBusy(null);
         toast.error(`Could not set role: ${insErr.message}`);
         return;
       }
     }
-    setBusy(null);
+    const stale = supabase.from("user_roles").delete().eq("user_id", row.user_id);
+    const { error: delErr } = value === "none" ? await stale : await stale.neq("role", value);
+    if (delErr) {
+      setBusy(null);
+      toast.error(`Role saved, but the previous one could not be removed: ${delErr.message}`);
+      await afterWrite(row.user_id);
+      return;
+    }
     toast.success("Platform role updated");
-    setRows((prev) =>
-      prev.map((r) =>
-        r.user_id === row.user_id ? { ...r, platformRole: value === "none" ? null : value } : r,
-      ),
-    );
+    await afterWrite(row.user_id);
+    setBusy(null);
   };
 
   const setCompanyRole = async (row: Row, companyId: string, value: CompanyRole | "none") => {
@@ -171,17 +182,21 @@ function UsersAccessPage() {
         return;
       }
     }
+    toast.success(value === "none" ? "Access revoked" : `Set to ${ROLE_LABEL[value]}`);
+    await afterWrite(row.user_id);
     setBusy(null);
-    setRows((prev) =>
-      prev.map((r) => {
-        if (r.user_id !== row.user_id) return r;
-        const next = new Map(r.companyRoles);
-        if (value === "none") next.delete(companyId);
-        else next.set(companyId, value);
-        return { ...r, companyRoles: next };
-      }),
-    );
   };
+
+  const effectiveAccess = (row: Row): string => {
+    if (row.platformRole === "super_admin") return "All companies · super admin";
+    if (row.platformRole === "group_admin") return "All companies · group admin";
+    if (row.companyRoles.size === 0) return "No access";
+    return companies
+      .filter((c) => row.companyRoles.has(c.id))
+      .map((c) => `${c.short_name ?? c.code ?? c.name}: ${ROLE_LABEL[row.companyRoles.get(c.id)!]}`)
+      .join(" · ");
+  };
+
 
   if (!isGroupAdmin) {
     return (
@@ -231,6 +246,7 @@ function UsersAccessPage() {
                     User
                   </th>
                   <th className="text-left font-medium px-4 py-3 min-w-[160px]">Platform</th>
+                  <th className="text-left font-medium px-4 py-3 min-w-[220px]">Effective access</th>
                   {companies.map((c) => (
                     <th key={c.id} className="text-center font-medium px-3 py-3 min-w-[160px]">
                       <div className="flex flex-col items-center gap-1">
@@ -249,14 +265,14 @@ function UsersAccessPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={2 + companies.length} className="px-4 py-10 text-center">
+                    <td colSpan={3 + companies.length} className="px-4 py-10 text-center">
                       <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={2 + companies.length}
+                      colSpan={3 + companies.length}
                       className="px-4 py-10 text-center text-muted-foreground"
                     >
                       No users found.
@@ -304,29 +320,33 @@ function UsersAccessPage() {
                               setPlatformRole(row, v as "none" | "super_admin" | "group_admin")
                             }
                             disabled={
+                              !isSuperAdmin ||
                               busy === row.user_id + ":platform" ||
                               (isSelf && row.platformRole === "super_admin")
                             }
                           >
-                            <SelectTrigger className="h-8 text-xs">
+                            <SelectTrigger
+                              className="h-8 text-xs"
+                              title={isSuperAdmin ? undefined : "Only a super admin can change platform roles."}
+                            >
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                               {PLATFORM_ROLES.map((r) => (
-                                <SelectItem
-                                  key={r.value}
-                                  value={r.value}
-                                  disabled={r.value === "super_admin" && !isSuperAdmin}
-                                >
+                                <SelectItem key={r.value} value={r.value}>
                                   {r.label}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                         </td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground max-w-[280px]">
+                          {effectiveAccess(row)}
+                        </td>
                         {companies.map((c) => {
                           const cellKey = row.user_id + ":" + c.id;
                           const current = row.companyRoles.get(c.id) ?? "none";
+                          const isLegacy = current !== "none" && LEGACY_ROLES.includes(current as CompanyRole);
                           return (
                             <td key={c.id} className="px-3 py-3">
                               <Select
@@ -345,16 +365,22 @@ function UsersAccessPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="none">No access</SelectItem>
-                                  {COMPANY_ROLES.map((r) => (
+                                  {ASSIGNABLE_ROLES.map((r) => (
                                     <SelectItem key={r} value={r}>
                                       {ROLE_LABEL[r]}
                                     </SelectItem>
                                   ))}
+                                  {isLegacy && (
+                                    <SelectItem value={current}>
+                                      {ROLE_LABEL[current as CompanyRole]} (legacy)
+                                    </SelectItem>
+                                  )}
                                 </SelectContent>
                               </Select>
                             </td>
                           );
                         })}
+
                       </tr>
                     );
                   })
