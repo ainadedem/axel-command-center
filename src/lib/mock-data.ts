@@ -365,7 +365,10 @@ export interface PurchaseOrder {
   subject?: string;
   /** Which company bank account prints in the payment details block. */
   bankAccountId?: string;
+  /** User id of whoever created this purchase order. */
+  createdBy?: string;
 }
+
 
 
 /** Mirrors the "Status" property of the Notion "Logia Sales CRM" database. */
