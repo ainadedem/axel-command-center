@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { Fragment, useEffect, useState, useCallback, useMemo } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { useOwnerNames } from "@/hooks/use-owner-names";
+import { logActivity, diffDocument } from "@/lib/document-activity";
+import { DocumentActivityPanel } from "@/components/document-activity-panel";
 import { useAuth } from "@/lib/auth-context";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -422,6 +424,10 @@ function CancelInvoiceDialog({ open, onOpenChange, invoice }: { open: boolean; o
       cancelledAt: new Date().toISOString(),
       cancellationReason: trimmed,
     });
+    logActivity({
+      docType: "invoice", docId: invoice.id, docNumber: invoice.number, companyId: invoice.companyId,
+      action: "status_changed", summary: `Cancelled — ${trimmed}`, details: { from: invoice.status, to: "cancelled" },
+    });
     onOpenChange(false);
   };
   const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
@@ -617,7 +623,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, poId, selectedPO?.id, linkedQuote?.id]);
 
-  const addLine = () => setLines((prev) => [...prev, { id: newId("ql"), description: "", details: "", unit: "fixed", quantity: 1, rate: 0 }]);
+  const addLine = () => setLines((prev) => [...prev, { id: newId("ql"), description: "", details: "", unit: "fixed", quantity: 1, rate: 0, createdBy: user?.id, createdAt: new Date().toISOString() }]);
   const updateLine = (id: string, patch: Partial<QuoteLine>) => setLines((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
   const removeLine = (id: string) => setLines((prev) => prev.filter((l) => l.id !== id));
   const linesTotal = lines.reduce((s, l) => s + (Number(l.quantity) || 0) * (Number(l.rate) || 0), 0);
@@ -651,8 +657,23 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       bankAccountId: bankAccountId || defaultBankAccount(companies.find((c) => c.id === companyId))?.id,
       lines: lines.length ? lines.map((l) => ({ ...l })) : undefined,
     };
-    if (editing) invoicesStore.update(editing.id, data);
-    else invoicesStore.add({ id: newId("inv"), ...data, createdBy: user?.id });
+    if (editing) {
+      invoicesStore.update(editing.id, { ...data, updatedBy: user?.id, updatedAt: new Date().toISOString() });
+      if (editing.status !== finalStatus) {
+        logActivity({
+          docType: "invoice", docId: editing.id, docNumber: number, companyId,
+          action: "status_changed", summary: `From ${editing.status} to ${finalStatus}`,
+          details: { from: editing.status, to: finalStatus },
+        });
+      }
+      const summary = diffDocument(editing as unknown as Record<string, unknown>, data as unknown as Record<string, unknown>);
+      if (summary) logActivity({ docType: "invoice", docId: editing.id, docNumber: number, companyId, action: "updated", summary });
+    } else {
+      invoicesStore.add(
+        { id: newId("inv"), ...data, createdBy: user?.id, updatedBy: user?.id, updatedAt: new Date().toISOString() },
+        { onSynced: (dbId) => logActivity({ docType: "invoice", docId: dbId, docNumber: number, companyId, action: "created", summary: `Invoice ${number} created` }) },
+      );
+    }
     onOpenChange(false);
   };
   const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
@@ -974,6 +995,10 @@ function MarkPaidDialog({ open, onOpenChange, invoice }: { open: boolean; onOpen
       paid: invoice.amount,
       paidDate: date,
       status: "paid",
+    });
+    logActivity({
+      docType: "invoice", docId: invoice.id, docNumber: invoice.number, companyId: invoice.companyId,
+      action: "payment", summary: `Marked paid on ${date}`, details: { amount: invoice.amount, currency: invoice.currency },
     });
     // Payment transaction (in invoice currency, for ledger consistency)
     if (account && remaining > 0) {
