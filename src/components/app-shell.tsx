@@ -14,6 +14,8 @@ import { useAuth } from "@/lib/auth-context";
 import { useEffectiveRole } from "@/lib/use-effective-role";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ThemeControls } from "@/components/theme-controls";
+
 import axelIcon from "@/assets/axel-icon-purple.png";
 
 interface NavItem {
