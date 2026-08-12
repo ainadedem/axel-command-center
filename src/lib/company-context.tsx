@@ -356,6 +356,9 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       const key = `${userId ?? "anon"}:${isGroupAdmin}`;
       if (bootstrapKeyRef.current === key) return;
       bootstrapKeyRef.current = key;
+      // Each run owns this flag: leaving it `true` from a previous run made the
+      // cleanup keep the key claimed, so a cancelled run stranded the spinner.
+      bootstrapDoneRef.current = false;
 
       setBootstrapError(null);
       setBootstrapReady(false);
