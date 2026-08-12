@@ -45,28 +45,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+  // Tracks which user the current state belongs to, so repeated SIGNED_IN /
+  // INITIAL_SESSION events (fired by the auth client on tab focus) become no-ops.
+  const currentUserIdRef = useRef<string | null>(null);
 
   const loadUserData = async (uid: string) => {
     const [{ data: prof }, { data: roleRows }] = await Promise.all([
       supabase.from("profiles").select("user_id, display_name, email, avatar_url").eq("user_id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
-    setProfile(prof ?? null);
-    setRoles(((roleRows ?? []) as { role: AppRole }[]).map((r) => r.role));
+    setProfile((prev) => {
+      const next = prof ?? null;
+      if (prev && next && prev.user_id === next.user_id && prev.display_name === next.display_name
+        && prev.email === next.email && prev.avatar_url === next.avatar_url) return prev;
+      return next;
+    });
+    setRoles((prev) => {
+      const next = ((roleRows ?? []) as { role: AppRole }[]).map((r) => r.role);
+      const same = prev.length === next.length && prev.every((r, i) => r === next[i]);
+      return same ? prev : next;
+    });
   };
 
   useEffect(() => {
     // Set up listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
-      setSession(s);
-
       if (event === "SIGNED_OUT" || !s?.user) {
+        currentUserIdRef.current = null;
+        setSession(s ?? null);
         setProfile(null);
         setRoles([]);
         return;
       }
 
+      // Token refreshes and re-announcements of the same session (tab focus)
+      // must not churn state — that re-renders the app and resets open forms.
       if (event === "TOKEN_REFRESHED") return;
+      if (currentUserIdRef.current === s.user.id) return;
+
+      currentUserIdRef.current = s.user.id;
+      setSession(s);
 
       if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "USER_UPDATED") {
         // defer to avoid deadlock
@@ -77,10 +95,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth
       .getSession()
       .then(({ data: { session: s } }) => {
+        if (s?.user && currentUserIdRef.current === s.user.id) return;
+        currentUserIdRef.current = s?.user?.id ?? null;
         setSession(s);
         if (s?.user) return loadUserData(s.user.id);
       })
       .catch(() => {
+        currentUserIdRef.current = null;
         setSession(null);
         setProfile(null);
         setRoles([]);
@@ -90,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const value: AuthState = {
+  const value = useMemo<AuthState>(() => ({
     session,
     user: session?.user ?? null,
     profile,
@@ -103,10 +124,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       !roles.some((r) => r === "super_admin" || r === "group_admin" || r === "company_admin" || r === "finance"),
     signOut: async () => { await supabase.auth.signOut(); },
     refresh: async () => { if (session?.user) await loadUserData(session.user.id); },
-  };
+  }), [session, profile, roles, loading]);
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
+
 
 export const useAuth = () => {
   return useContext(AuthCtx);
