@@ -8,6 +8,7 @@ import { formatRib, resolveBankAccount } from "@/lib/payment-details";
 import { amountInFrench } from "@/lib/amount-words";
 import { renderRichText } from "@/lib/rich-text";
 import { useFileUrl } from "@/hooks/use-file-url";
+import { docLabels, docDateFormat, DOC_LANGUAGES, type DocLanguage } from "@/lib/doc-i18n";
 
 import {
   fmt, type Company, type Client, type Project, type Currency, type QuoteLine,
@@ -40,6 +41,8 @@ export interface DocumentData {
   totalAmount?: number;
   /** Which company bank account to print in the payment details block. */
   bankAccountId?: string;
+  /** Printed language of the document ("en" | "fr"). */
+  language?: DocLanguage;
 }
 
 interface Props {
@@ -62,17 +65,21 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
   const logoUrl = useFileUrl(company?.logoUrl);
 
   const [logoScale, setLogoScale] = useState(1);
+  const [lang, setLang] = useState<DocLanguage>(doc?.language ?? (company?.defaultDocumentLanguage as DocLanguage) ?? "en");
+  useEffect(() => {
+    setLang(doc?.language ?? (company?.defaultDocumentLanguage as DocLanguage) ?? "en");
+  }, [doc?.number, doc?.language, company?.id, company?.defaultDocumentLanguage]);
 
   const html = useMemo(() => {
     if (!doc) return "";
-    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale });
-  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale]);
+    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale, lang });
+  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale, lang]);
 
   const printPdf = () => {
     if (!doc) return;
     const w = window.open("", "_blank", "width=900,height=1100");
     if (!w) return;
-    w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale }));
+    w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale, lang }));
     w.document.close();
     setTimeout(() => { w.focus(); w.print(); }, 250);
   };
@@ -95,6 +102,21 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
               <Checkbox checked={showPayment} onCheckedChange={(v) => setShowPayment(!!v)} />
               Show payment details
             </label>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span>Language</span>
+              <div className="flex rounded-md border border-border overflow-hidden">
+                {DOC_LANGUAGES.map((l) => (
+                  <button
+                    key={l.value}
+                    type="button"
+                    onClick={() => setLang(l.value)}
+                    className={`px-2 py-0.5 text-[11px] transition ${lang === l.value ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                  >
+                    {l.value.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <span>Logo</span>
               <div className="flex rounded-md border border-border overflow-hidden">
