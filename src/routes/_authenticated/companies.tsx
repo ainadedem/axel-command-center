@@ -170,6 +170,9 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setShowPaymentDetails(editing.showPaymentDetails !== false);
       setBankAccounts(companyBankAccounts(editing));
       setLogoUrl(editing.logoUrl);
+      setLogoHeight(editing.logoHeight ?? 52);
+      setLogoMaxWidth(editing.logoMaxWidth ?? 180);
+      setLogoCrop(editing.logoCrop);
     } else {
       setName(""); setShortName(""); setCode(""); setColor(PALETTE[0]); setBaseCurrency("MGA");
       setLegalName(""); setAddress(""); setEmail(""); setPhone(""); setWebsite("");
@@ -179,6 +182,9 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setShowPaymentDetails(true);
       setBankAccounts([]);
       setLogoUrl(undefined);
+      setLogoHeight(52);
+      setLogoMaxWidth(180);
+      setLogoCrop(undefined);
     }
     setShowErrors(false);
   }, [open, editing]);
