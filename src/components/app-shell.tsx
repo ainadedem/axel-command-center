@@ -2,7 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Building2, Wallet, ArrowLeftRight, FileText,
   Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus, Truck,
-  ChevronDown, ChevronRight, Check, LogOut, Target, UserCog, Handshake,
+  ChevronDown, Check, LogOut, Target, UserCog, Handshake,
   BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList, RefreshCw,
   Sparkles, CreditCard, Repeat, Wallet2, ExternalLink, Info,
 } from "lucide-react";
@@ -106,7 +106,7 @@ function CompanySwitcher() {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-sidebar-accent/40 hover:bg-sidebar-accent border border-sidebar-border text-sm transition"
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-sidebar-accent/40 hover:bg-sidebar-accent border border-sidebar-border hover:border-primary/30 text-sm transition-all duration-200 active:scale-[0.98] group/ws"
       >
         <div className="h-7 w-7 rounded-md bg-gradient-to-br from-primary to-chart-2 grid place-items-center text-[10px] font-display font-bold text-primary-foreground">
           {scope.id === "group" ? "GR" : companies.find((c) => c.id === scope.companyId)?.shortName}
@@ -120,12 +120,12 @@ function CompanySwitcher() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute z-50 mt-2 w-full rounded-lg border border-border bg-popover shadow-2xl overflow-hidden">
+          <div className="absolute z-50 mt-2 w-full rounded-lg border border-border bg-popover shadow-2xl overflow-hidden origin-top animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
             {isGroupAdmin && (
               <>
                 <button
                   onClick={() => { setScope({ id: "group" }); setOpen(false); }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-accent text-sm"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-accent hover:pl-4 text-sm transition-all duration-200"
                 >
                   <div className="h-6 w-6 rounded bg-gradient-to-br from-primary to-chart-2 grid place-items-center text-[9px] font-bold text-primary-foreground">GR</div>
                   <span className="flex-1 text-left">Group · All companies</span>
@@ -164,11 +164,16 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition cursor-pointer select-none">
-        <span>{section.label}</span>
-        {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+      <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition cursor-pointer select-none group/section">
+        <span className="transition-transform duration-200 group-hover/section:translate-x-0.5">{section.label}</span>
+        <ChevronDown
+          className={cn(
+            "h-3 w-3 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+            open ? "rotate-0" : "-rotate-90",
+          )}
+        />
       </CollapsibleTrigger>
-      <CollapsibleContent>
+      <CollapsibleContent className="overflow-hidden data-[state=open]:animate-[accordion-down_240ms_cubic-bezier(0.22,1,0.36,1)] data-[state=closed]:animate-[accordion-up_200ms_cubic-bezier(0.22,1,0.36,1)]">
         <div className="space-y-0.5 pb-2">
           {section.items.map((item) => {
             const active = pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to));
@@ -178,20 +183,31 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  "group flex items-center gap-3 px-3 py-2 rounded-md text-sm transition relative",
+                  "group flex items-center gap-3 px-3 py-2 rounded-md text-sm relative overflow-hidden transition-[color,background-color,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98]",
                   active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 hover:translate-x-0.5",
                 )}
               >
-                {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-primary" />}
-                <Icon className="h-4 w-4" />
+                <span
+                  className={cn(
+                    "absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-primary origin-center transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+                    active ? "scale-y-100" : "scale-y-0",
+                  )}
+                />
+                <Icon
+                  className={cn(
+                    "h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110",
+                    active && "text-primary",
+                  )}
+                />
                 <span>{item.label}</span>
               </Link>
             );
           })}
         </div>
       </CollapsibleContent>
+
     </Collapsible>
   );
 }
@@ -226,8 +242,8 @@ function Sidebar() {
         ))}
       </nav>
       <div className="p-3 border-t border-sidebar-border">
-        <Link to="/settings" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50">
-          <Settings className="h-4 w-4" /> Settings
+        <Link to="/settings" className="group flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200 active:scale-[0.98]">
+          <Settings className="h-4 w-4 transition-transform duration-500 group-hover:rotate-90" /> Settings
         </Link>
       </div>
     </aside>
@@ -307,7 +323,7 @@ function Topbar() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search transactions, invoices, clients..."
-          className="w-full h-9 pl-9 pr-12 rounded-md bg-surface border border-border text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full h-9 pl-9 pr-12 rounded-md bg-surface border border-border text-sm placeholder:text-muted-foreground/60 transition-[border-color,box-shadow,background-color] duration-200 hover:border-primary/35 focus:outline-none focus:border-primary/60 focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_18%,transparent)]"
         />
         <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
       </form>
@@ -315,14 +331,14 @@ function Topbar() {
         <FxBadge />
         <button
           onClick={handleNew}
-          className="h-9 px-3 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition flex items-center gap-1.5"
+          className="h-9 px-3 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:opacity-95 hover:-translate-y-px hover:shadow-[var(--shadow-glow)] active:translate-y-0 active:scale-[0.97] transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] flex items-center gap-1.5 group"
         >
-          <Plus className="h-4 w-4" /> {newLabel}
+          <Plus className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" /> {newLabel}
         </button>
         <div className="relative">
           <button
             onClick={() => setBellOpen((v) => !v)}
-            className="h-9 w-9 grid place-items-center rounded-md hover:bg-surface relative"
+            className="h-9 w-9 grid place-items-center rounded-md hover:bg-surface hover:text-primary active:scale-90 transition-all duration-200 relative"
             aria-label="Notifications"
           >
             <Bell className="h-4 w-4" />
@@ -330,7 +346,7 @@ function Topbar() {
           {bellOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setBellOpen(false)} />
-              <div className="absolute right-0 mt-2 w-72 rounded-lg border border-border bg-popover shadow-2xl z-50 overflow-hidden">
+              <div className="absolute right-0 mt-2 w-72 rounded-lg border border-border bg-popover shadow-2xl z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
                 <div className="px-3 py-2.5 border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground">Notifications</div>
                 <div className="p-6 text-center text-sm text-muted-foreground">You're all caught up.</div>
               </div>
@@ -340,14 +356,14 @@ function Topbar() {
         <div className="relative">
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="h-8 w-8 rounded-full bg-gradient-to-br from-chart-2 to-chart-4 grid place-items-center text-xs font-display font-bold"
+            className="h-8 w-8 rounded-full bg-gradient-to-br from-chart-2 to-chart-4 grid place-items-center text-xs font-display font-bold transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-110 active:scale-95"
           >
             {initials || "?"}
           </button>
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-              <div className="absolute right-0 mt-2 w-60 rounded-lg border border-border bg-popover shadow-2xl z-50 overflow-hidden">
+              <div className="absolute right-0 mt-2 w-60 rounded-lg border border-border bg-popover shadow-2xl z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
                 <div className="px-3 py-3 border-b border-border">
                   <div className="text-sm font-medium truncate">{name}</div>
                   <div className="text-[11px] text-muted-foreground truncate">{user?.email}</div>
@@ -355,7 +371,7 @@ function Topbar() {
                 </div>
                 <button
                   onClick={() => { setMenuOpen(false); navigate({ to: "/settings" }); }}
-                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-accent"
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-accent hover:pl-4 transition-all duration-200"
                 >
                   <Settings className="h-4 w-4" /> Settings
                 </button>
@@ -391,7 +407,7 @@ function FxBadge() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         title={`FX rates · ${source} · updated ${stamp}`}
-        className="hidden md:flex items-center gap-1.5 h-9 px-2.5 rounded-md border border-border bg-surface hover:bg-surface-elevated text-[11px] font-tnum text-muted-foreground"
+        className="hidden md:flex items-center gap-1.5 h-9 px-2.5 rounded-md border border-border bg-surface hover:bg-surface-elevated hover:border-primary/35 hover:-translate-y-px active:translate-y-0 active:scale-[0.98] transition-all duration-200 text-[11px] font-tnum text-muted-foreground"
       >
         <span className="text-foreground/80">€</span>
         <span>{rates.EUR.toLocaleString()}</span>
@@ -402,7 +418,7 @@ function FxBadge() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 mt-2 w-64 rounded-lg border border-border bg-popover shadow-2xl z-50 overflow-hidden">
+          <div className="absolute right-0 mt-2 w-64 rounded-lg border border-border bg-popover shadow-2xl z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
             <div className="px-3 py-2.5 border-b border-border flex items-center justify-between">
               <div className="text-[11px] uppercase tracking-wider text-muted-foreground">FX rates (per MGA)</div>
               <button
@@ -475,6 +491,7 @@ function AppShellError({ message, onRetry }: { message: string; onRetry: () => v
 
 function AppShellFrame({ children }: { children: ReactNode }) {
   const { bootstrapReady, bootstrapError, retryBootstrap } = useCompany();
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
 
   if (bootstrapError) return <AppShellError message={bootstrapError} onRetry={retryBootstrap} />;
   if (!bootstrapReady) return <AppShellLoading />;
@@ -487,17 +504,18 @@ function AppShellFrame({ children }: { children: ReactNode }) {
         <Topbar />
         <main className="flex-1 overflow-y-auto">
           <div className="absolute inset-0 pointer-events-none [background:var(--gradient-glow)] opacity-60" />
-          <div className="relative">{children}</div>
+          <div key={pathname} className="relative rise-in">{children}</div>
         </main>
         <footer className="shrink-0 border-t border-border bg-background/70 backdrop-blur px-6 py-3 flex items-center justify-between text-[11px] text-muted-foreground">
           <span>© {new Date().getFullYear()} AXEL by WeAxiom</span>
           <div className="flex items-center gap-4">
-            <Link to="/about" className="hover:text-foreground transition">About</Link>
-            <a href="https://axel.weaxiom.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition flex items-center gap-1">
-              Help <ExternalLink className="h-3 w-3" />
+            <Link to="/about" className="hover:text-foreground transition underline-grow">About</Link>
+            <a href="https://axel.weaxiom.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition flex items-center gap-1 group">
+              Help <ExternalLink className="h-3 w-3 icon-nudge group-hover:translate-x-0.5" />
             </a>
           </div>
         </footer>
+
       </div>
     </div>
   );
