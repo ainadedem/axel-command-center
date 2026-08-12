@@ -435,6 +435,9 @@ export type Database = {
           id: string
           intl_enabled: boolean
           legal_name: string | null
+          logo_crop: Json | null
+          logo_height: number
+          logo_max_width: number
           logo_url: string | null
           mobile_enabled: boolean
           mobile_name: string | null
@@ -471,6 +474,9 @@ export type Database = {
           id?: string
           intl_enabled?: boolean
           legal_name?: string | null
+          logo_crop?: Json | null
+          logo_height?: number
+          logo_max_width?: number
           logo_url?: string | null
           mobile_enabled?: boolean
           mobile_name?: string | null
@@ -507,6 +513,9 @@ export type Database = {
           id?: string
           intl_enabled?: boolean
           legal_name?: string | null
+          logo_crop?: Json | null
+          logo_height?: number
+          logo_max_width?: number
           logo_url?: string | null
           mobile_enabled?: boolean
           mobile_name?: string | null
