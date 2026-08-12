@@ -947,7 +947,9 @@ const poToDb = (p: PurchaseOrder) => {
     lines: (p.lines ?? null) as unknown as never,
     subject: p.subject ?? null,
     bank_account_id: p.bankAccountId ?? null,
+    ...(p.createdBy && isUuid(p.createdBy) ? { created_by: p.createdBy } : {}),
   };
+
 };
 const poFromDb = (r: Record<string, unknown>): PurchaseOrder => ({
   id: r.id as string,
