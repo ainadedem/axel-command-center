@@ -358,103 +358,99 @@ function DashboardBody() {
 
       {/* Charts row */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <div className="xl:col-span-2 rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
-          <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-            <div>
-              <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Cash flow · {cashViewLabel}</div>
-              <div className="font-display text-lg font-semibold mt-1">All currencies, MGA equivalent (M)</div>
-            </div>
-            <div className="flex items-center gap-3 text-xs">
-              <Tabs value={cashView} onValueChange={(v) => setCashView(v as "daily" | "monthly" | "yearly")}>
-                <TabsList className="h-8">
-                  <TabsTrigger value="daily" className="text-xs px-2.5 py-1">Daily</TabsTrigger>
-                  <TabsTrigger value="monthly" className="text-xs px-2.5 py-1">Monthly</TabsTrigger>
-                  <TabsTrigger value="yearly" className="text-xs px-2.5 py-1">Yearly</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary" />Income</span>
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-destructive" />Expense</span>
-            </div>
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer>
-              <AreaChart data={cashFlowData} margin={{ top: 6, right: 8, left: -16, bottom: 0 }}>
+        <ChartFrame
+          className="xl:col-span-2"
+          title={`Cash flow · ${cashViewLabel}`}
+          description="All currencies, MGA equivalent (millions)"
+          labelKey="date"
+          data={cashFlowData}
+          series={[
+            { key: "income", label: "Income", color: CHART_SEMANTIC.income },
+            { key: "expense", label: "Expense", color: CHART_SEMANTIC.expense },
+          ]}
+          height={256}
+          actions={
+            <Tabs value={cashView} onValueChange={(v) => setCashView(v as "daily" | "monthly" | "yearly")}>
+              <TabsList className="h-8">
+                <TabsTrigger value="daily" className="text-xs px-2.5 py-1">Daily</TabsTrigger>
+                <TabsTrigger value="monthly" className="text-xs px-2.5 py-1">Monthly</TabsTrigger>
+                <TabsTrigger value="yearly" className="text-xs px-2.5 py-1">Yearly</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          }
+        >
+          <ResponsiveContainer>
+            <AreaChart data={cashFlowData} margin={chartMargin}>
+              <defs>
+                <linearGradient id="gIn" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={CHART_SEMANTIC.income} stopOpacity={0.5} />
+                  <stop offset="100%" stopColor={CHART_SEMANTIC.income} stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="gOut" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={CHART_SEMANTIC.expense} stopOpacity={0.35} />
+                  <stop offset="100%" stopColor={CHART_SEMANTIC.expense} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid {...chartGridProps} />
+              <XAxis dataKey="date" {...chartAxisProps} minTickGap={32} />
+              <YAxis {...chartAxisProps} />
+              <Tooltip content={<ChartTooltip />} cursor={chartCursor} />
+              <Area type="monotone" name="Income" dataKey="income" stroke={CHART_SEMANTIC.income} strokeWidth={1.75} fill="url(#gIn)" />
+              <Area type="monotone" name="Expense" dataKey="expense" stroke={CHART_SEMANTIC.expense} strokeWidth={1.75} fill="url(#gOut)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartFrame>
 
-                <defs>
-                  <linearGradient id="gIn" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--chart-4)" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="var(--chart-4)" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="gOut" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--destructive)" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="var(--destructive)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke="var(--border)" strokeDasharray="2 6" vertical={false} />
-                <XAxis dataKey="date" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} minTickGap={32} />
-                <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    background: "var(--card)",
-                    border: "1px solid var(--border)",
-                    borderRadius: 14,
-                    fontSize: 12,
-                    boxShadow: "var(--shadow-elevated)",
-                    padding: "8px 12px",
-                  }}
-                  labelStyle={{ color: "var(--foreground)" }}
-                />
-                <Area type="monotone" dataKey="income" stroke="var(--chart-4)" strokeWidth={1.75} fill="url(#gIn)" />
-                <Area type="monotone" dataKey="expense" stroke="var(--destructive)" strokeWidth={1.75} fill="url(#gOut)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
-          <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Profit by company</div>
-          <div className="font-display text-lg font-semibold mt-1 mb-4">30-day net (M MGA)</div>
-          <div className="h-64">
-            <ResponsiveContainer>
-              <BarChart data={perCompany} margin={{ top: 6, right: 8, left: -16, bottom: 0 }}>
-                <CartesianGrid stroke="var(--border)" strokeDasharray="2 6" vertical={false} />
-                <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, fontSize: 12, boxShadow: "var(--shadow-elevated)", padding: "8px 12px" }} cursor={{ fill: "color-mix(in oklab, var(--primary) 6%, transparent)" }} />
-                <Bar dataKey="profit" radius={[8, 8, 0, 0]} fill="var(--chart-4)" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <ChartFrame
+          title="Profit by company"
+          description="30-day net (millions MGA)"
+          labelKey="name"
+          data={perCompany}
+          series={[{ key: "profit", label: "Net profit", color: CHART_SEMANTIC.income }]}
+          height={256}
+        >
+          <ResponsiveContainer>
+            <BarChart data={perCompany} margin={chartMargin}>
+              <CartesianGrid {...chartGridProps} />
+              <XAxis dataKey="name" {...chartAxisProps} />
+              <YAxis {...chartAxisProps} />
+              <Tooltip content={<ChartTooltip />} cursor={chartCursor} />
+              <Bar dataKey="profit" name="Net profit" radius={[8, 8, 0, 0]} fill={CHART_SEMANTIC.income} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartFrame>
       </div>
 
       {/* Sales (closed) + forecast */}
-      <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
-        <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-          <div>
-            <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Sales — closed & forecast</div>
-            <div className="font-display text-lg font-semibold mt-1">Last 12 months closed · next 3 months weighted (M MGA)</div>
+      <ChartFrame
+        title="Sales — closed & forecast"
+        description="Last 12 months closed · next 3 months weighted (millions MGA)"
+        labelKey="date"
+        data={salesData}
+        series={[
+          { key: "closed", label: "Closed", color: CHART_SEMANTIC.income },
+          { key: "forecast", label: "Forecast (weighted)", color: CHART_SEMANTIC.forecast },
+        ]}
+        height={256}
+        actions={
+          <div className="flex items-center gap-4 text-caption text-muted-foreground">
+            <span>Closed 12mo <span className="font-tnum text-foreground">{fmtCompact(totalClosed12mo * 1_000_000, "MGA")}</span></span>
+            <span>Forecast 3mo <span className="font-tnum text-foreground">{fmtCompact(totalForecast3mo * 1_000_000, "MGA")}</span></span>
           </div>
-          <div className="flex items-center gap-4 text-xs">
-            <span className="text-muted-foreground">Closed 12mo <span className="font-tnum text-foreground">{fmtCompact(totalClosed12mo * 1_000_000, "MGA")}</span></span>
-            <span className="text-muted-foreground">Forecast 3mo <span className="font-tnum text-foreground">{fmtCompact(totalForecast3mo * 1_000_000, "MGA")}</span></span>
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary" />Closed</span>
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-chart-2/70 border border-dashed" />Forecast</span>
-          </div>
-        </div>
-        <div className="h-64">
-          <ResponsiveContainer>
-            <BarChart data={salesData} margin={{ top: 6, right: 8, left: -16, bottom: 0 }}>
-              <CartesianGrid stroke="var(--border)" strokeDasharray="2 6" vertical={false} />
-              <XAxis dataKey="date" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-              <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, fontSize: 12, boxShadow: "var(--shadow-elevated)", padding: "8px 12px" }} cursor={{ fill: "color-mix(in oklab, var(--primary) 6%, transparent)" }} />
-              <Bar dataKey="closed" stackId="s" radius={[0, 0, 0, 0]} fill="var(--chart-4)" name="Closed" />
-              <Bar dataKey="forecast" stackId="s" radius={[8, 8, 0, 0]} fill="var(--chart-2)" fillOpacity={0.55} name="Forecast (weighted)" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+        }
+      >
+        <ResponsiveContainer>
+          <BarChart data={salesData} margin={chartMargin}>
+            <CartesianGrid {...chartGridProps} />
+            <XAxis dataKey="date" {...chartAxisProps} />
+            <YAxis {...chartAxisProps} />
+            <Tooltip content={<ChartTooltip />} cursor={chartCursor} />
+            <Bar dataKey="closed" stackId="s" fill={CHART_SEMANTIC.income} name="Closed" />
+            <Bar dataKey="forecast" stackId="s" radius={[8, 8, 0, 0]} fill={CHART_SEMANTIC.forecast} fillOpacity={0.55} name="Forecast (weighted)" />
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartFrame>
+
 
       {/* Axiom pipeline — future expected revenue */}
       {axiomCompanyIds.size > 0 && (
