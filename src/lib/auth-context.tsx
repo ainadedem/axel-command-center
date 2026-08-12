@@ -107,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(s ?? null);
         setProfile(null);
         setRoles([]);
+        setCompanyRoles({});
         return;
       }
 
@@ -137,6 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(null);
         setProfile(null);
         setRoles([]);
+        setCompanyRoles({});
       })
       .finally(() => setLoading(false));
 
