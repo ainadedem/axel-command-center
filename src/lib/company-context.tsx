@@ -271,7 +271,8 @@ async function companiesMissingRows(
   return missing;
 }
 
-async function maybePushSeeds(userId: string, idMap: Array<{ localId: string; dbId: string }>) {
+/** Admin-triggered repair only — never called on sign-in (it used to block the loading screen). */
+export async function maybePushSeeds(userId: string, idMap: Array<{ localId: string; dbId: string }>) {
   // v4 flags: the previous versions gated on a global row count, so a company
   // whose rows were cleared server-side never got re-pushed.
   const seedFlag = `axel.seedPushed.${userId}.v4`;
