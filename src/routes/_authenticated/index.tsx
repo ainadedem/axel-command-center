@@ -12,6 +12,9 @@ import {
   AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid,
   BarChart, Bar,
 } from "recharts";
+import {
+  ChartFrame, ChartTooltip, CHART_SEMANTIC, chartGridProps, chartAxisProps, chartMargin, chartCursor,
+} from "@/components/charts";
 import { format, subDays, subMonths, startOfMonth, endOfMonth, startOfYear, parseISO } from "date-fns";
 import { useState, useMemo } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
