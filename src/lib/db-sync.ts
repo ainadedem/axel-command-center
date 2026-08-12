@@ -1035,7 +1035,9 @@ const expenseFromDb = (r: Record<string, unknown>): Expense => ({
   projectId: (r.project_id as string) ?? undefined,
   attachmentUrl: (r.attachment_url as string) ?? undefined,
   attachmentName: (r.attachment_name as string) ?? undefined,
+  createdBy: (r.created_by as string) ?? undefined,
 });
+
 export async function upsertExpense(e: Expense): Promise<string | null> {
   const row = expenseToDb(e);
   if (!row) return null;
