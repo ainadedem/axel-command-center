@@ -48,6 +48,13 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-chart-7: var(--chart-7);
+  --color-chart-8: var(--chart-8);
+  --color-chart-income: var(--chart-income);
+  --color-chart-expense: var(--chart-expense);
+  --color-chart-forecast: var(--chart-forecast);
+
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -100,12 +107,23 @@
   --input: oklch(0.935 0.003 285);
   --ring: oklch(0.58 0.204 258 / 0.4);
 
-  /* Chart family — blue, sky, pink, green, amber */
+  /* Chart family — blue, sky, pink, green, amber, teal, indigo, slate */
   --chart-1: oklch(0.58 0.204 258);
   --chart-2: oklch(0.72 0.15 245);
   --chart-3: oklch(0.68 0.19 350);
   --chart-4: oklch(0.7 0.17 152);
   --chart-5: oklch(0.79 0.15 72);
+  --chart-6: oklch(0.7 0.13 195);
+  --chart-7: oklch(0.55 0.16 292);
+  --chart-8: oklch(0.62 0.02 275);
+
+  /* Semantic chart aliases */
+  --chart-income: var(--chart-4);
+  --chart-expense: oklch(0.62 0.2 25);
+  --chart-forecast: var(--chart-2);
+  --chart-neutral: var(--chart-8);
+  --chart-grid: color-mix(in oklab, var(--foreground) 10%, transparent);
+
 
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.36 0.01 275);
@@ -162,8 +180,32 @@
   --muted-foreground: oklch(0.7 0.008 275);
   --material-thin: oklch(0.22 0.006 275 / 0.72);
   --material-regular: oklch(0.22 0.006 275 / 0.88);
+  --shadow-soft: 0 1px 2px oklch(0 0 0 / 0.4), 0 6px 16px -10px oklch(0 0 0 / 0.55);
+  --shadow-elevated: 0 1px 3px oklch(0 0 0 / 0.45), 0 18px 44px -20px oklch(0 0 0 / 0.7);
   --shadow-card: 0 0 0 0.5px oklch(1 0 0 / 0.06), 0 10px 26px -18px oklch(0 0 0 / 0.6);
+
+  /* Charts: lower chroma, higher lightness so series stay legible on dark */
+  --chart-1: oklch(0.7 0.16 258);
+  --chart-2: oklch(0.78 0.12 240);
+  --chart-3: oklch(0.74 0.15 350);
+  --chart-4: oklch(0.76 0.14 152);
+  --chart-5: oklch(0.84 0.13 78);
+  --chart-6: oklch(0.78 0.11 195);
+  --chart-7: oklch(0.68 0.13 292);
+  --chart-8: oklch(0.72 0.02 275);
+  --chart-expense: oklch(0.7 0.16 25);
+  --chart-grid: color-mix(in oklab, var(--foreground) 14%, transparent);
+
+  --ring: oklch(0.7 0.16 258 / 0.6);
+  --destructive: oklch(0.66 0.19 25);
+  --success: oklch(0.74 0.15 152);
+  --warning: oklch(0.83 0.14 76);
+  --warning-foreground: oklch(0.18 0.02 60);
+
+  --gradient-surface: linear-gradient(180deg, oklch(0.225 0.006 275) 0%, oklch(0.2 0.006 275) 100%);
+  --gradient-glow: radial-gradient(ellipse at top, oklch(0.66 0.18 256 / 0.14), transparent 62%);
 }
+
 
 
 /* Fonts loaded via <link> in src/routes/__root.tsx */
@@ -420,4 +462,82 @@
   font-size: 0.6875rem;
   line-height: 1.35;
   letter-spacing: 0.01em;
+}
+
+/* ---------- Accessibility & interaction primitives ---------- */
+
+/* One focus recipe for the whole app. */
+@utility focus-ring {
+  outline: none;
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: inherit;
+  }
+}
+
+@utility skip-link {
+  position: absolute;
+  left: 1rem;
+  top: 0.5rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-elevated);
+  transition: transform var(--dur-base) var(--ease-out-soft);
+  &:focus-visible {
+    transform: translateY(0);
+    outline: 2px solid var(--foreground);
+    outline-offset: 2px;
+  }
+}
+
+/* Elevation ladder: rest -> hover -> active */
+@utility elevate {
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--dur-slow) var(--ease-out-soft),
+              transform var(--dur-slow) var(--ease-out-soft),
+              border-color var(--dur-base) var(--ease-out-soft);
+  &:hover {
+    box-shadow: var(--shadow-elevated);
+    transform: translateY(-2px);
+  }
+  &:active {
+    box-shadow: var(--shadow-soft);
+    transform: translateY(0);
+  }
+}
+
+/* Minimum comfortable tap target on touch devices. */
+@utility tap-target {
+  @media (pointer: coarse) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      scroll-behavior: auto !important;
+    }
+    .rise-in, .stagger-in > *, .shimmer::after {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    .hover-lift:hover, .elevate:hover, .press-scale:active, .icon-nudge:hover {
+      transform: none !important;
+    }
+  }
 }

@@ -5,7 +5,10 @@ import { useTransactions, useCompanies, toMGA, fmtCompact } from "@/lib/mock-dat
 import { useCompany, inScope } from "@/lib/company-context";
 import { PeriodPicker, defaultPeriod, type Period } from "@/components/period-picker";
 import { exportCsvRows } from "@/lib/export-csv";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import {
+  ChartFrame, ChartTooltip, CHART_SEMANTIC, chartGridProps, chartAxisProps, chartMargin, chartCursor,
+} from "@/components/charts";
 import { parseISO } from "date-fns";
 import { useState, useMemo } from "react";
 import { Download, TrendingUp, TrendingDown, Minus } from "lucide-react";
@@ -116,32 +119,35 @@ function Body() {
       </div>
 
       {/* P&L by company */}
-      <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
-        <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-          <div>
-            <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">P&L · par société</div>
-            <div className="font-display text-lg font-semibold mt-1">{period.label} (M MGA)</div>
-          </div>
-        </div>
-        <div className="h-80">
-          <ResponsiveContainer>
-            <BarChart data={chartData} margin={{ top: 6, right: 8, left: -16, bottom: 0 }}>
-              <CartesianGrid stroke="var(--border)" strokeDasharray="2 6" vertical={false} />
-              <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-              <Tooltip
-                contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, fontSize: 12, boxShadow: "var(--shadow-elevated)", padding: "8px 12px" }}
-                cursor={{ fill: "color-mix(in oklab, var(--primary) 6%, transparent)" }}
-                formatter={(v) => `${Number(v).toFixed(1)} M MGA`}
-              />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="Revenus" radius={[8, 8, 0, 0]} fill="var(--chart-4)" />
-              <Bar dataKey="Charges" radius={[8, 8, 0, 0]} fill="var(--destructive)" />
-              <Bar dataKey="Résultat" radius={[8, 8, 0, 0]} fill="var(--chart-2)" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      <ChartFrame
+        title="P&L · par société"
+        description={`${period.label} (M MGA)`}
+        labelKey="name"
+        data={chartData}
+        series={[
+          { key: "Revenus", label: "Revenus", color: CHART_SEMANTIC.income },
+          { key: "Charges", label: "Charges", color: CHART_SEMANTIC.expense },
+          { key: "Résultat", label: "Résultat", color: CHART_SEMANTIC.forecast },
+        ]}
+        formatValue={(v: number) => `${v.toFixed(1)} M MGA`}
+        height={320}
+      >
+        <ResponsiveContainer>
+          <BarChart data={chartData} margin={chartMargin}>
+            <CartesianGrid {...chartGridProps} />
+            <XAxis dataKey="name" {...chartAxisProps} />
+            <YAxis {...chartAxisProps} />
+            <Tooltip
+              content={<ChartTooltip formatter={(v: number) => `${Number(v).toFixed(1)} M MGA`} />}
+              cursor={chartCursor}
+            />
+            <Bar dataKey="Revenus" radius={[8, 8, 0, 0]} fill={CHART_SEMANTIC.income} />
+            <Bar dataKey="Charges" radius={[8, 8, 0, 0]} fill={CHART_SEMANTIC.expense} />
+            <Bar dataKey="Résultat" radius={[8, 8, 0, 0]} fill={CHART_SEMANTIC.forecast} />
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartFrame>
+
 
       {/* Detail table */}
       <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">

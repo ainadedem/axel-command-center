@@ -14,6 +14,8 @@ import { useAuth } from "@/lib/auth-context";
 import { useEffectiveRole } from "@/lib/use-effective-role";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ThemeControls } from "@/components/theme-controls";
+
 import axelIcon from "@/assets/axel-icon-purple.png";
 
 interface NavItem {
@@ -164,9 +166,10 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/80 hover:text-foreground transition cursor-pointer select-none group/section">
+      <CollapsibleTrigger aria-label={`${section.label} section`} className="w-full focus-ring rounded-full flex items-center justify-between px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/80 hover:text-foreground transition cursor-pointer select-none group/section">
         <span className="transition-transform duration-200 group-hover/section:translate-x-0.5">{section.label}</span>
         <ChevronDown
+          aria-hidden="true"
           className={cn(
             "h-3 w-3 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
             open ? "rotate-0" : "-rotate-90",
@@ -182,8 +185,9 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
               <Link
                 key={item.to}
                 to={item.to}
+                aria-current={active ? "page" : undefined}
                 className={cn(
-                  "group flex items-center gap-3 px-3 py-2 rounded-full text-sm relative overflow-hidden transition-[color,background-color,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98]",
+                  "group focus-ring flex items-center gap-3 px-3 py-2 rounded-full text-sm relative overflow-hidden transition-[color,background-color,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98]",
                   active
                     ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                     : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 hover:translate-x-0.5",
@@ -200,6 +204,7 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
                     "h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110",
                     active && "text-primary",
                   )}
+                  aria-hidden="true"
                 />
                 <span>{item.label}</span>
               </Link>
@@ -236,13 +241,13 @@ function Sidebar() {
       <div className="px-3 pb-3">
         <CompanySwitcher />
       </div>
-      <nav className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
+      <nav aria-label="Main" className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
         {visibleSections.map((section) => (
           <SidebarSection key={section.label} section={section} pathname={pathname} />
         ))}
       </nav>
       <div className="p-3 border-t border-sidebar-border">
-        <Link to="/settings" className="group flex items-center gap-3 px-3 py-2 rounded-full text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200 active:scale-[0.98]">
+        <Link to="/settings" className="group focus-ring flex items-center gap-3 px-3 py-2 rounded-full text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200 active:scale-[0.98]">
           <Settings className="h-4 w-4 transition-transform duration-500 group-hover:rotate-90" /> Settings
         </Link>
       </div>
@@ -323,6 +328,8 @@ function Topbar() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search transactions, invoices, clients..."
+          aria-label="Search transactions, invoices and clients"
+          type="search"
           className="w-full h-9 pl-9 pr-12 rounded-full bg-secondary border border-border/80 text-sm placeholder:text-muted-foreground/60 transition-[border-color,box-shadow,background-color] duration-200 hover:border-primary/35 focus:outline-none focus:border-primary/60 focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_18%,transparent)]"
         />
         <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
@@ -331,17 +338,18 @@ function Topbar() {
         <FxBadge />
         <button
           onClick={handleNew}
-          className="h-9 px-4 rounded-full text-sm font-medium bg-primary text-primary-foreground hover:opacity-95 hover:-translate-y-px hover:shadow-[var(--shadow-glow)] active:translate-y-0 active:scale-[0.97] transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] flex items-center gap-1.5 group"
+          aria-label={newLabel}
+          className="h-9 px-4 focus-ring tap-target rounded-full text-sm font-medium bg-primary text-primary-foreground hover:opacity-95 hover:-translate-y-px hover:shadow-[var(--shadow-glow)] active:translate-y-0 active:scale-[0.97] transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] flex items-center gap-1.5 group"
         >
           <Plus className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" /> {newLabel}
         </button>
         <div className="relative">
           <button
             onClick={() => setBellOpen((v) => !v)}
-            className="h-9 w-9 grid place-items-center rounded-full hover:bg-secondary hover:text-primary active:scale-90 transition-all duration-200 relative"
+            className="h-9 w-9 grid place-items-center rounded-full focus-ring tap-target hover:bg-secondary hover:text-primary active:scale-90 transition-all duration-200 relative"
             aria-label="Notifications"
           >
-            <Bell className="h-4 w-4" />
+            <Bell className="h-4 w-4" aria-hidden="true" />
           </button>
           {bellOpen && (
             <>
@@ -356,35 +364,44 @@ function Topbar() {
         <div className="relative">
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="h-8 w-8 rounded-full bg-gradient-to-br from-chart-2 to-chart-4 grid place-items-center text-xs font-display font-bold transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-110 active:scale-95"
+            aria-label="Account menu"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            className="h-8 w-8 rounded-full bg-gradient-to-br from-chart-2 to-chart-4 grid place-items-center text-xs font-display font-bold text-primary-foreground focus-ring transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-110 active:scale-95"
           >
             {initials || "?"}
           </button>
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-              <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-border bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
+              <div role="menu" aria-label="Account" className="absolute right-0 mt-2 w-72 rounded-2xl border border-border bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
                 <div className="px-3 py-3 border-b border-border">
                   <div className="text-sm font-medium truncate">{name}</div>
                   <div className="text-[11px] text-muted-foreground truncate">{user?.email}</div>
                   <div className="text-[10px] uppercase tracking-wider text-primary mt-1">{role}</div>
                 </div>
+                <div className="px-3 py-3 border-b border-border">
+                  <ThemeControls />
+                </div>
                 <button
+                  role="menuitem"
                   onClick={() => { setMenuOpen(false); navigate({ to: "/settings" }); }}
-                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-accent hover:pl-4 transition-all duration-200"
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-accent hover:pl-4 focus-ring transition-all duration-200"
                 >
-                  <Settings className="h-4 w-4" /> Settings
+                  <Settings className="h-4 w-4" aria-hidden="true" /> Settings
                 </button>
                 <button
+                  role="menuitem"
                   onClick={async () => { await signOut(); navigate({ to: "/login", search: { redirect: "/" } }); }}
-                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-accent"
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-accent focus-ring"
                 >
-                  <LogOut className="h-4 w-4" /> Sign out
+                  <LogOut className="h-4 w-4" aria-hidden="true" /> Sign out
                 </button>
               </div>
             </>
           )}
         </div>
+
       </div>
     </header>
   );
@@ -407,6 +424,9 @@ function FxBadge() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         title={`FX rates · ${source} · updated ${stamp}`}
+        aria-label={`Foreign exchange rates, updated ${stamp}`}
+        aria-haspopup="dialog"
+        aria-expanded={open}
         className="hidden md:flex items-center gap-1.5 h-9 px-3 rounded-full border border-border bg-card hover:bg-surface-elevated hover:border-primary/35 hover:-translate-y-px active:translate-y-0 active:scale-[0.98] transition-all duration-200 text-[11px] font-tnum text-muted-foreground"
       >
         <span className="text-foreground/80">€</span>
@@ -424,8 +444,9 @@ function FxBadge() {
               <button
                 onClick={onRefresh}
                 disabled={busy}
-                className="h-6 w-6 grid place-items-center rounded hover:bg-accent text-muted-foreground disabled:opacity-50"
+                className="h-6 w-6 grid place-items-center rounded focus-ring hover:bg-accent text-muted-foreground disabled:opacity-50"
                 title="Refresh now"
+                aria-label="Refresh exchange rates"
               >
                 <RefreshCw className={cn("h-3.5 w-3.5", busy && "animate-spin")} />
               </button>
@@ -498,15 +519,17 @@ function AppShellFrame({ children }: { children: ReactNode }) {
 
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-0 lg:p-3">
-      <div className="min-h-screen lg:min-h-[calc(100vh-1.5rem)] flex overflow-hidden rounded-none lg:rounded-[28px] border border-border/70 bg-card shadow-[var(--shadow-elevated)]">
+    <div className="min-h-dvh bg-background text-foreground p-0 lg:p-3">
+      <a href="#main-content" className="skip-link">Skip to content</a>
+      <div className="min-h-dvh lg:min-h-[calc(100dvh-1.5rem)] flex overflow-hidden rounded-none lg:rounded-[28px] border border-border/70 bg-card shadow-[var(--shadow-elevated)]">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar />
-        <main className="relative flex-1 overflow-y-auto">
+        <main id="main-content" tabIndex={-1} className="relative flex-1 overflow-y-auto focus:outline-none">
           <div className="absolute inset-0 pointer-events-none [background:var(--gradient-glow)] opacity-60" />
           <div key={pathname} className="relative rise-in">{children}</div>
         </main>
+
 
         <footer className="shrink-0 border-t border-border/70 material-bar px-6 py-3 flex items-center justify-between text-[11px] text-muted-foreground">
           <span>© {new Date().getFullYear()} AXEL by WeAxiom</span>
