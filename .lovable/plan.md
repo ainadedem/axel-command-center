@@ -1,23 +1,24 @@
-# Continuous quotation numbering across months
+# Stop edit dialogs from resetting company, client and project
 
-Quotation (and invoice) sequences must never restart when the month changes. Only the month/year part of the reference changes; the counter keeps climbing.
+Editing a quotation or invoice sometimes snaps the Company, Client and Project selects back to the first available option. The cause is the auto-reconcile logic that runs on every options-list change.
 
-## Intended behaviour
+## What is happening
 
-- Logia quotes: `DEV/LOG/MM-YY/NNN`, invoices: `INV/LOG/MM-YY/NNN`.
-- Example: last quote `DEV/LOG/08-26/532` -> first September quote is `DEV/LOG/09-26/533`, not `/001`.
-- The counter is per company and per document kind, shared across all months and years.
-- Duplicates stay blocked; if a suggested number is taken, the next free one is proposed.
-- Numbers stay editable by hand.
+Each dialog runs `useReconciledSelection` for company, client and project. When the saved value is not found in the currently loaded option list, the hook rewrites the selection to the first option. During background hydration the lists are rebuilt (partially at first, and clients are filtered by `contactBelongsTo`), so a saved client that is momentarily absent — or attached to the company through a legacy link — gets replaced. The project then clears because its parent changed, and the company can shift the same way.
 
-## What changes
+## Fix
 
-- In `src/lib/numbering.ts`, compute the next sequence from the sequence segment of existing numbers only (the group after the final `/`), ignoring the `MM-YY` digits so a month rollover can never lower the counter.
-- Match numbers of the same document kind for the company regardless of prefix, so historical `FAC-LOG/...` invoices and `QUO-...` quotes still count toward the highest sequence.
-- Widen the sequence padding automatically once the counter passes 999 (`532` -> `999` -> `1000`), instead of truncating.
-- Keep the existing collision loop, but make it bump the sequence segment only, never the month/year.
-- Companies without a fixed house format (Axiom `INV-26-0001`, `QUO-26-0001`) keep today's inferred behaviour.
+- In edit mode, never auto-switch a selection. Keep the value stored on the document even when it is not in the loaded list; only clear it if the user changes it.
+- Render the saved company/client/project as an option in its select when it is missing from the list, so the field still shows the correct name instead of an empty control.
+- Keep the reconcile-to-first behaviour only for brand-new documents, where there is no saved value to protect.
+- Do not reconcile while the underlying lists are still loading or incomplete (extend the current `loading` guard beyond "array is empty").
+
+## Scope
+
+- `src/hooks/use-reconciled-selection.ts`: add a mode that preserves the current value instead of falling back to the first option.
+- `src/routes/_authenticated/quotations.tsx`, `invoices.tsx`, `purchase-orders.tsx`: use preserve mode when `editing` is set, and include the saved record's company/client/project in the select options when missing.
+- Other pages using the hook (projects, expenses, billing, payroll, transactions) stay unchanged.
 
 ## Verification
 
-Confirm from the current data that the next Logia quote suggestion is `DEV/LOG/08-26/533` today and `DEV/LOG/09-26/533` for a September issue date, and that the next Logia invoice continues from the highest existing invoice sequence rather than restarting.
+Open an existing Logia quotation and an existing invoice, leave the dialog open through a background refresh, and confirm the company, client and project stay exactly as saved and save unchanged.
