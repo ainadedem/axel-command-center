@@ -8,7 +8,19 @@ import { useCompany, COMPANY_ROLES, type CompanyRole } from "@/lib/company-conte
 type DbCompany = { id: string; name: string; short_name: string | null; code: string | null; color: string | null };
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Loader2, ShieldAlert, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useServerFn } from "@tanstack/react-start";
+import { createAppUser } from "@/lib/users-admin.functions";
+import { Loader2, ShieldAlert, Search, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/users-access")({
