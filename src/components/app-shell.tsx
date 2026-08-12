@@ -356,35 +356,44 @@ function Topbar() {
         <div className="relative">
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="h-8 w-8 rounded-full bg-gradient-to-br from-chart-2 to-chart-4 grid place-items-center text-xs font-display font-bold transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-110 active:scale-95"
+            aria-label="Account menu"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            className="h-8 w-8 rounded-full bg-gradient-to-br from-chart-2 to-chart-4 grid place-items-center text-xs font-display font-bold text-primary-foreground focus-ring transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-110 active:scale-95"
           >
             {initials || "?"}
           </button>
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-              <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-border bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
+              <div role="menu" aria-label="Account" className="absolute right-0 mt-2 w-72 rounded-2xl border border-border bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
                 <div className="px-3 py-3 border-b border-border">
                   <div className="text-sm font-medium truncate">{name}</div>
                   <div className="text-[11px] text-muted-foreground truncate">{user?.email}</div>
                   <div className="text-[10px] uppercase tracking-wider text-primary mt-1">{role}</div>
                 </div>
+                <div className="px-3 py-3 border-b border-border">
+                  <ThemeControls />
+                </div>
                 <button
+                  role="menuitem"
                   onClick={() => { setMenuOpen(false); navigate({ to: "/settings" }); }}
-                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-accent hover:pl-4 transition-all duration-200"
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-accent hover:pl-4 focus-ring transition-all duration-200"
                 >
-                  <Settings className="h-4 w-4" /> Settings
+                  <Settings className="h-4 w-4" aria-hidden="true" /> Settings
                 </button>
                 <button
+                  role="menuitem"
                   onClick={async () => { await signOut(); navigate({ to: "/login", search: { redirect: "/" } }); }}
-                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-accent"
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-accent focus-ring"
                 >
-                  <LogOut className="h-4 w-4" /> Sign out
+                  <LogOut className="h-4 w-4" aria-hidden="true" /> Sign out
                 </button>
               </div>
             </>
           )}
         </div>
+
       </div>
     </header>
   );
