@@ -170,7 +170,9 @@ function headingFor(k: DocKind, lang?: DocLanguage) {
   return t.invoice;
 }
 
-function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale, lang }: DocumentHtmlArgs) {
+function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang }: DocumentHtmlArgs) {
+  const unitVisible = showUnit !== false;
+
   const L = (lang ?? doc.language ?? (company?.defaultDocumentLanguage as DocLanguage) ?? "en") as DocLanguage;
   const t = docLabels(L);
   const df = docDateFormat(L);
