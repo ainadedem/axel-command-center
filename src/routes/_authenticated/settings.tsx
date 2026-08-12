@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useCompanies } from "@/lib/mock-data";
 import { Building2, Users, Wallet, BookText, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeControls } from "@/components/theme-controls";
 
 export const Route = createFileRoute("/_authenticated/settings")({ component: SettingsPage });
 
@@ -45,6 +46,16 @@ function Body() {
         </div>
       </section>
 
+      <section className="rounded-xl border border-border bg-[var(--gradient-surface)] p-6">
+        <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Appearance</div>
+        <p className="text-caption text-muted-foreground mt-1">
+          Theme and text size follow your device by default and are remembered on this browser.
+        </p>
+        <div className="mt-4 max-w-md">
+          <ThemeControls />
+        </div>
+      </section>
+
       <section>
         <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">Workspace</div>
         <div className="grid sm:grid-cols-2 gap-3">
@@ -54,7 +65,7 @@ function Body() {
               <Link
                 key={c.to}
                 to={c.to}
-                className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 hover:border-primary/50 transition group"
+                className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 hover:border-primary/50 elevate focus-ring group"
               >
                 <div className="flex items-center gap-3">
                   <div className="h-9 w-9 rounded-md bg-primary/10 grid place-items-center">
