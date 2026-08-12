@@ -95,6 +95,21 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
               <Checkbox checked={showPayment} onCheckedChange={(v) => setShowPayment(!!v)} />
               Show payment details
             </label>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span>Logo</span>
+              <div className="flex rounded-md border border-border overflow-hidden">
+                {([["S", 0.7], ["M", 1], ["L", 1.5]] as const).map(([label, v]) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => setLogoScale(v)}
+                    className={`px-2 py-0.5 text-[11px] transition ${logoScale === v ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <Button size="sm" variant="outline" onClick={printPdf}><Printer className="h-3.5 w-3.5 mr-1.5" />Print</Button>
             <Button size="sm" onClick={printPdf}><Download className="h-3.5 w-3.5 mr-1.5" />Export PDF</Button>
             <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)}><X className="h-4 w-4" /></Button>
