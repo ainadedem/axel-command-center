@@ -556,10 +556,13 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       accessLoading,
       dataLoading,
       bootstrapReady,
+      bootstrapError,
+      retryBootstrap,
       isGroupAdmin,
       roleFor,
       hasCompanyRole,
     };
+
   }, [scope, accessibleCompanies, accessLoading, dataLoading, bootstrapReady, isGroupAdmin, roleByCompanyId]);
 
   return <CompanyCtx.Provider value={value}>{children}</CompanyCtx.Provider>;
