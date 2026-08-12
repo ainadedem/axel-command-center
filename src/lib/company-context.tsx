@@ -96,6 +96,9 @@ interface Ctx {
   isGroupAdmin: boolean;
   roleFor: (companyId: string) => CompanyRole | undefined;
   hasCompanyRole: (companyId: string, allowed: CompanyRole[]) => boolean;
+  /** Effective role inside the currently selected scope (group admins act as company admin). */
+  currentRole: CompanyRole | undefined;
+
 }
 
 const CompanyCtx = createContext<Ctx | null>(null);
