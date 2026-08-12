@@ -62,6 +62,22 @@ export interface Company {
 
   /** Logo data URL or remote URL printed in the header. */
   logoUrl?: string;
+  /** Printed logo height in px (document header). */
+  logoHeight?: number;
+  /** Printed logo max width in px (document header). */
+  logoMaxWidth?: number;
+  /** Crop metadata so the crop can be re-edited or reset. */
+  logoCrop?: CompanyLogoCrop;
+}
+
+/** Saved logo crop transform + reference to the original uploaded image. */
+export interface CompanyLogoCrop {
+  /** Original (uncropped) logo reference, so "reset" and re-cropping work. */
+  sourceRef?: string;
+  zoom: number;
+  offsetX: number;
+  offsetY: number;
+  aspect: number;
 }
 
 /** One selectable bank account (payment details block) of a company. */
