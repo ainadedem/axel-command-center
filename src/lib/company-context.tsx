@@ -90,6 +90,9 @@ interface Ctx {
   accessLoading: boolean;
   dataLoading: boolean;
   bootstrapReady: boolean;
+  /** Set when loading workspace access/data failed; the UI shows a retry instead of a spinner. */
+  bootstrapError: string | null;
+  retryBootstrap: () => void;
   isGroupAdmin: boolean;
   roleFor: (companyId: string) => CompanyRole | undefined;
   hasCompanyRole: (companyId: string, allowed: CompanyRole[]) => boolean;
