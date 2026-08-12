@@ -265,14 +265,14 @@ function UsersAccessPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={2 + companies.length} className="px-4 py-10 text-center">
+                    <td colSpan={3 + companies.length} className="px-4 py-10 text-center">
                       <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={2 + companies.length}
+                      colSpan={3 + companies.length}
                       className="px-4 py-10 text-center text-muted-foreground"
                     >
                       No users found.
