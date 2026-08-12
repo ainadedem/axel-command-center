@@ -519,11 +519,24 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   }, [companyId, issueDate]);
 
   const companyClients = useMemo(
-    () => clients.filter((c: Client) => contactBelongsTo(c, companyId)).sort((a, b) => a.name.localeCompare(b.name)),
-    [clients, companyId],
+    () => withSelected(
+      clients.filter((c: Client) => contactBelongsTo(c, companyId)).sort((a, b) => a.name.localeCompare(b.name)),
+      editing ? clientId : undefined,
+      clients,
+    ),
+    [clients, companyId, clientId, editing],
   );
-  const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
-  const clientPOs = pos.filter((p) => p.companyId === companyId && p.clientId === clientId && p.status !== "cancelled");
+  const clientProjects = withSelected(
+    projects.filter((p) => p.companyId === companyId && p.clientId === clientId),
+    editing ? projectId : undefined,
+    projects,
+  );
+  const clientPOs = withSelected(
+    pos.filter((p) => p.companyId === companyId && p.clientId === clientId && p.status !== "cancelled"),
+    editing ? poId : undefined,
+    pos,
+  );
+
   const selectedClient = clients.find((c) => c.id === clientId);
   const selectedPO = pos.find((p) => p.id === poId);
   const linkedQuote = selectedPO?.quoteId ? quotes.find((q) => q.id === selectedPO.quoteId) : undefined;
