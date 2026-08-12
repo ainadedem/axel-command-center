@@ -610,8 +610,10 @@ const invoiceFromDb = (r: Record<string, unknown>, lines: QuoteLine[]): Invoice 
   cancellationReason: (r.cancellation_reason as string) ?? undefined,
   subject: (r.subject as string) ?? undefined,
   bankAccountId: (r.bank_account_id as string) ?? undefined,
+  createdBy: (r.created_by as string) ?? undefined,
   lines: lines.length ? lines : undefined,
 });
+
 
 export async function upsertInvoice(inv: Invoice): Promise<string | null> {
   const row = invoiceToDb(inv);
