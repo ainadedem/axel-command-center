@@ -288,6 +288,9 @@ function UsersAccessPage() {
           </Button>
         </div>
 
+        <AccessDiagnosticsPanel companies={companies} />
+
+
         <AddUserDialog
           open={addOpen}
           onOpenChange={setAddOpen}
