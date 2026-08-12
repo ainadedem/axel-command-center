@@ -583,7 +583,9 @@ const invoiceToDb = (inv: Invoice) => {
     cancellation_reason: inv.cancellationReason ?? null,
     subject: inv.subject ?? null,
     bank_account_id: inv.bankAccountId ?? null,
+    ...(inv.createdBy && isUuid(inv.createdBy) ? { created_by: inv.createdBy } : {}),
   };
+
 };
 
 const invoiceFromDb = (r: Record<string, unknown>, lines: QuoteLine[]): Invoice => ({
