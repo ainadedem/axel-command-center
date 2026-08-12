@@ -143,20 +143,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const value = useMemo<AuthState>(() => ({
-    session,
-    user: session?.user ?? null,
-    profile,
-    roles,
-    loading,
-    isAuthenticated: !!session,
-    hasRole: (r) => roles.includes(r),
-    isSalesOnly:
-      roles.includes("sales") &&
-      !roles.some((r) => r === "super_admin" || r === "group_admin" || r === "company_admin" || r === "finance"),
-    signOut: async () => { await supabase.auth.signOut(); },
-    refresh: async () => { if (session?.user) await loadUserData(session.user.id); },
-  }), [session, profile, roles, loading]);
+  const value = useMemo<AuthState>(() => {
+    const isGlobalAdmin = roles.includes("super_admin") || roles.includes("group_admin");
+    const financeRoles: AppRole[] = ["super_admin", "group_admin", "company_admin", "manager", "finance"];
+    const canSeeFinance = roles.some((r) => financeRoles.includes(r));
+    return {
+      session,
+      user: session?.user ?? null,
+      profile,
+      roles,
+      companyRoles,
+      loading,
+      isAuthenticated: !!session,
+      hasRole: (r) => roles.includes(r),
+      roleFor: (companyId) => {
+        if (isGlobalAdmin) return roles.includes("super_admin") ? "super_admin" : "group_admin";
+        if (!companyId) return roles[0] ?? null;
+        return companyRoles[companyId] ?? null;
+      },
+      // A signed-in user with no role at all is treated as sales-scoped, never as an admin.
+      isSalesOnly: !canSeeFinance,
+      canSeeFinance,
+      isAdmin: isGlobalAdmin || roles.includes("company_admin"),
+      signOut: async () => { await supabase.auth.signOut(); },
+      refresh: async () => { if (session?.user) await loadUserData(session.user.id); },
+    };
+  }, [session, profile, roles, companyRoles, loading]);
+
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
