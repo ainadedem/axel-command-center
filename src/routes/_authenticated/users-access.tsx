@@ -191,6 +191,16 @@ function UsersAccessPage() {
 
   const setCompanyRole = async (row: Row, companyId: string, value: CompanyRole | "none") => {
     setBusy(row.user_id + ":" + companyId);
+    const logEntry = (success: boolean, errorMessage?: string) =>
+      recordRoleChange({
+        action: value === "none" ? "revoke_company_role" : "assign_company_role",
+        targetUserId: row.user_id,
+        targetEmail: row.email,
+        companyId,
+        requestedRole: value === "none" ? null : value,
+        success,
+        errorMessage: errorMessage ?? null,
+      });
     if (value === "none") {
       const { error } = await supabase
         .from("user_company_access")
@@ -199,6 +209,7 @@ function UsersAccessPage() {
         .eq("company_id", companyId);
       if (error) {
         setBusy(null);
+        void logEntry(false, error.message);
         toast.error(`Could not revoke access: ${error.message}`);
         return;
       }
@@ -211,11 +222,14 @@ function UsersAccessPage() {
         );
       if (error) {
         setBusy(null);
+        void logEntry(false, error.message);
         toast.error(`Could not set role: ${error.message}`);
         return;
       }
     }
+    void logEntry(true);
     toast.success(value === "none" ? "Access revoked" : `Set to ${ROLE_LABEL[value]}`);
+
     await afterWrite(row.user_id);
     setBusy(null);
   };
