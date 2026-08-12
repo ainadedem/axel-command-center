@@ -166,9 +166,10 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/80 hover:text-foreground transition cursor-pointer select-none group/section">
+      <CollapsibleTrigger aria-label={`${section.label} section`} className="w-full focus-ring rounded-full flex items-center justify-between px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/80 hover:text-foreground transition cursor-pointer select-none group/section">
         <span className="transition-transform duration-200 group-hover/section:translate-x-0.5">{section.label}</span>
         <ChevronDown
+          aria-hidden="true"
           className={cn(
             "h-3 w-3 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
             open ? "rotate-0" : "-rotate-90",
@@ -184,8 +185,9 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
               <Link
                 key={item.to}
                 to={item.to}
+                aria-current={active ? "page" : undefined}
                 className={cn(
-                  "group flex items-center gap-3 px-3 py-2 rounded-full text-sm relative overflow-hidden transition-[color,background-color,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98]",
+                  "group focus-ring flex items-center gap-3 px-3 py-2 rounded-full text-sm relative overflow-hidden transition-[color,background-color,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98]",
                   active
                     ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                     : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 hover:translate-x-0.5",
@@ -202,6 +204,7 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
                     "h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110",
                     active && "text-primary",
                   )}
+                  aria-hidden="true"
                 />
                 <span>{item.label}</span>
               </Link>
@@ -238,13 +241,13 @@ function Sidebar() {
       <div className="px-3 pb-3">
         <CompanySwitcher />
       </div>
-      <nav className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
+      <nav aria-label="Main" className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
         {visibleSections.map((section) => (
           <SidebarSection key={section.label} section={section} pathname={pathname} />
         ))}
       </nav>
       <div className="p-3 border-t border-sidebar-border">
-        <Link to="/settings" className="group flex items-center gap-3 px-3 py-2 rounded-full text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200 active:scale-[0.98]">
+        <Link to="/settings" className="group focus-ring flex items-center gap-3 px-3 py-2 rounded-full text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200 active:scale-[0.98]">
           <Settings className="h-4 w-4 transition-transform duration-500 group-hover:rotate-90" /> Settings
         </Link>
       </div>
