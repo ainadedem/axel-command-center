@@ -363,7 +363,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setTaxRate(editing.taxRate ?? 0);
     } else {
       const cid = companies[0]?.id ?? "";
-      setNumber(cid ? nextNumber("quote", cid, today) : ""); setCompanyId(cid); setClientId("");
+      numberTouched.current = false; setNumber(cid ? nextNumber("quote", cid, today) : ""); setCompanyId(cid); setClientId("");
       setProjectId(""); setIssueDate(today); setValidUntil(addDays(new Date(), 30).toISOString().slice(0, 10));
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
       setMode("rate-card");
@@ -390,13 +390,16 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     // Sales users only see their own quotations, so the next number is resolved
     // against every quotation of the company, not just the visible ones.
     void nextNumberAsync("quote", companyId, issueDate).then((n) => {
-      if (!cancelled) setNumber(n);
+      // Never clobber a number the user typed by hand.
+      if (!cancelled && !numberTouched.current) setNumber(n);
     });
     return () => {
       cancelled = true;
     };
+    // Re-resolved on every open: the synchronous fallback only knows the rows
+    // this user can see, which is a subset for sales-scoped accounts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyId, issueDate]);
+  }, [open, editing?.id, companyId, issueDate]);
 
   const companyClients = useMemo(
     () => withSelected(

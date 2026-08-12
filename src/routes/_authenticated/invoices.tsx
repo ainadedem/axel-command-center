@@ -529,7 +529,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setLines((editing.lines ?? []).map((l) => ({ ...l })));
     } else {
       const cid = companies[0]?.id ?? "";
-      setNumber(cid ? nextNumber("invoice", cid, today) : ""); setCompanyId(cid); setClientId("");
+      numberTouched.current = false; setNumber(cid ? nextNumber("invoice", cid, today) : ""); setCompanyId(cid); setClientId("");
       setProjectId(""); setPoId(""); setPoWaived(false); setPoWaiverReason(""); setSubject(""); setBankAccountId("");
 
       setIssueDate(today); setDueDate(today); setAmount("0"); setPaid("0");
@@ -546,13 +546,16 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     if (!open || editing || !companyId) return;
     let cancelled = false;
     void nextNumberAsync("invoice", companyId, issueDate).then((n) => {
-      if (!cancelled) setNumber(n);
+      // Never clobber a number the user typed by hand.
+      if (!cancelled && !numberTouched.current) setNumber(n);
     });
     return () => {
       cancelled = true;
     };
+    // Re-resolved on every open: the synchronous fallback only knows the rows
+    // this user can see, which is a subset for sales-scoped accounts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyId, issueDate]);
+  }, [open, editing?.id, companyId, issueDate]);
 
   const companyClients = useMemo(
     () => withSelected(
