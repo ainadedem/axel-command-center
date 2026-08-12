@@ -15,7 +15,7 @@ import { inScope, useCompany } from "@/lib/company-context";
 import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Fragment, useEffect, useState, useCallback, useMemo } from "react";
+import { Fragment, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { useOwnerNames } from "@/hooks/use-owner-names";
 import { logActivity, diffDocument } from "@/lib/document-activity";
@@ -496,6 +496,8 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const quotes = useQuotes();
   const today = new Date().toISOString().slice(0, 10);
   const [number, setNumber] = useState("");
+  // True once the user edits the number by hand, so async resolution stops overriding it.
+  const numberTouched = useRef(false);
   const [companyId, setCompanyId] = useState("");
   const [clientId, setClientId] = useState("");
   const [projectId, setProjectId] = useState<string>("");
@@ -517,7 +519,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   useEffect(() => {
     if (!open) return;
     if (editing) {
-      setNumber(editing.number); setCompanyId(editing.companyId); setClientId(editing.clientId);
+      numberTouched.current = false; setNumber(editing.number); setCompanyId(editing.companyId); setClientId(editing.clientId);
       setProjectId(editing.projectId ?? ""); setPoId(editing.poId ?? "");
       setPoWaived(Boolean(editing.poWaived)); setPoWaiverReason(editing.poWaiverReason ?? "");
       setSubject(editing.subject ?? "");
@@ -529,7 +531,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setLines((editing.lines ?? []).map((l) => ({ ...l })));
     } else {
       const cid = companies[0]?.id ?? "";
-      setNumber(cid ? nextNumber("invoice", cid, today) : ""); setCompanyId(cid); setClientId("");
+      numberTouched.current = false; setNumber(cid ? nextNumber("invoice", cid, today) : ""); setCompanyId(cid); setClientId("");
       setProjectId(""); setPoId(""); setPoWaived(false); setPoWaiverReason(""); setSubject(""); setBankAccountId("");
 
       setIssueDate(today); setDueDate(today); setAmount("0"); setPaid("0");
@@ -546,13 +548,16 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     if (!open || editing || !companyId) return;
     let cancelled = false;
     void nextNumberAsync("invoice", companyId, issueDate).then((n) => {
-      if (!cancelled) setNumber(n);
+      // Never clobber a number the user typed by hand.
+      if (!cancelled && !numberTouched.current) setNumber(n);
     });
     return () => {
       cancelled = true;
     };
+    // Re-resolved on every open: the synchronous fallback only knows the rows
+    // this user can see, which is a subset for sales-scoped accounts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyId, issueDate]);
+  }, [open, editing?.id, companyId, issueDate]);
 
   const companyClients = useMemo(
     () => withSelected(
@@ -707,7 +712,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label><RequiredLabel>Number</RequiredLabel></Label>
-              <Input value={number} onChange={(e) => setNumber(e.target.value)} className={invalidFieldClassName((showErrors && !number.trim()) || duplicateNumber)} aria-invalid={(showErrors && !number.trim()) || duplicateNumber} />
+              <Input value={number} onChange={(e) => { numberTouched.current = true; setNumber(e.target.value); }} className={invalidFieldClassName((showErrors && !number.trim()) || duplicateNumber)} aria-invalid={(showErrors && !number.trim()) || duplicateNumber} />
               {duplicateNumber && <p className="text-[11px] text-destructive mt-1">This number is already used by another invoice.</p>}
             </div>
             <div>
