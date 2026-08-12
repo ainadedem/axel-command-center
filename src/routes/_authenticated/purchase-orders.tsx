@@ -239,9 +239,22 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
   };
 
 
-  const companyClients = clients.filter((c) => contactBelongsTo(c, companyId));
-  const clientProjects = projects.filter((p) => p.companyId === companyId && p.clientId === clientId);
-  const clientQuotes = quotes.filter((q) => q.companyId === companyId && q.clientId === clientId);
+  const companyClients = withSelected(
+    clients.filter((c) => contactBelongsTo(c, companyId)),
+    editing ? clientId : undefined,
+    clients,
+  );
+  const clientProjects = withSelected(
+    projects.filter((p) => p.companyId === companyId && p.clientId === clientId),
+    editing ? projectId : undefined,
+    projects,
+  );
+  const clientQuotes = withSelected(
+    quotes.filter((q) => q.companyId === companyId && q.clientId === clientId),
+    editing ? quoteId : undefined,
+    quotes,
+  );
+
 
   useReconciledSelection({
     open,
