@@ -1511,6 +1511,51 @@ export type Database = {
           },
         ]
       }
+      user_admin_audit: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_user_id: string | null
+          company_id: string | null
+          created_at: string
+          details: Json | null
+          error_message: string | null
+          id: string
+          requested_role: string | null
+          success: boolean
+          target_email: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_user_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          details?: Json | null
+          error_message?: string | null
+          id?: string
+          requested_role?: string | null
+          success?: boolean
+          target_email?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_user_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          details?: Json | null
+          error_message?: string | null
+          id?: string
+          requested_role?: string | null
+          success?: boolean
+          target_email?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       user_company_access: {
         Row: {
           company_id: string
