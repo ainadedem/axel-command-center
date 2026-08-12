@@ -269,7 +269,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
                 : meta ? `<div class="sub">${esc(meta)}</div>` : ""}
             </td>
             <td class="num">${qty.toLocaleString()}</td>
-            <td class="num">${esc(l.unit)}</td>
+            ${unitVisible ? `<td class="num">${esc(l.unit)}</td>` : ""}
             <td class="num">${fmt(rate, doc.currency)}</td>
             <td class="num">${fmt(total, doc.currency)}</td>
           </tr>
