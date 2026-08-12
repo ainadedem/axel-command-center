@@ -1,3 +1,4 @@
+import { Avatar } from "@/components/avatar-upload";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
