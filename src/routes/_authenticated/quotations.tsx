@@ -31,7 +31,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, FileCheck2, Plus, X, Eye, Copy, Send, Loader2, CheckCircle2 } from "lucide-react";
+import { Pencil, Trash2, FileCheck2, Plus, X, Eye, Copy, Send, Loader2, CheckCircle2, History } from "lucide-react";
 import { DocumentPreview, buildPrintableDocument, type DocumentData } from "@/components/document-preview";
 import { resolveFileUrl } from "@/lib/storage";
 import { nextNumber, nextNumberAsync, isNumberTaken, primeNumbering } from "@/lib/numbering";
@@ -80,6 +80,7 @@ function Body() {
   const [editing, setEditing] = useState<Quote | null>(null);
   const [previewing, setPreviewing] = useState<Quote | null>(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [historyOf, setHistoryOf] = useState<Quote | null>(null);
   const { user } = useAuth();
   const openCreate = () => { setEditing(null); setOpen(true); };
 
@@ -279,6 +280,13 @@ function Body() {
         </div>
       )}
       <QuoteDialog open={open} onOpenChange={setOpen} editing={editing} />
+      <DocumentActivityPanel
+        open={!!historyOf}
+        onOpenChange={(v) => { if (!v) setHistoryOf(null); }}
+        docType="quote"
+        docId={historyOf?.id}
+        docNumber={historyOf?.number}
+      />
       <DocumentPreview
         open={!!previewing}
         onOpenChange={(v) => { if (!v) setPreviewing(null); }}
