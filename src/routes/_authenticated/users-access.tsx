@@ -83,6 +83,11 @@ function UsersAccessPage() {
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const audit = useServerFn(logRoleChange);
+  /** Audit is best-effort: it must never block or fail the role change itself. */
+  const recordRoleChange = (entry: Parameters<typeof audit>[0]["data"]) =>
+    audit({ data: entry }).catch(() => undefined);
+
 
   const isSuperAdmin = currentRoles.includes("super_admin");
 
