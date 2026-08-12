@@ -248,6 +248,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     options: companies,
     getId: (company) => company.id,
     loading: companies.length === 0,
+    preserve: !!editing,
     onChange: setCompanyId,
   });
 
@@ -257,6 +258,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     options: companyClients,
     getId: (client) => client.id,
     loading: clients.length === 0,
+    preserve: !!editing,
     onChange: setClientId,
   });
 
@@ -267,6 +269,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     getId: (quote) => quote.id,
     allowEmpty: true,
     loading: quotes.length === 0,
+    preserve: !!editing,
     onChange: setQuoteId,
   });
 
@@ -277,6 +280,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     getId: (project) => project.id,
     allowEmpty: true,
     loading: projects.length === 0,
+    preserve: !!editing,
     onChange: setProjectId,
   });
 
