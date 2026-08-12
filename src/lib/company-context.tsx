@@ -325,11 +325,19 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     currentScopeRef.current = scope;
   }, [scope]);
 
+  const bootstrapKeyRef = useRef<string | null>(null);
+
   useEffect(() => {
     let cancelled = false;
 
     async function bootstrap() {
       if (authLoading) return;
+      // Never re-bootstrap for the same identity (e.g. auth re-announced on tab focus):
+      // reloading everything would wipe in-progress edits.
+      const key = `${userId ?? "anon"}:${isGroupAdmin}`;
+      if (bootstrapKeyRef.current === key) return;
+      bootstrapKeyRef.current = key;
+
 
       setBootstrapReady(false);
       setAccessLoading(true);
