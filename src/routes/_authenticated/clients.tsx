@@ -10,6 +10,7 @@ import {
 import { upsertClient, deleteClientDb } from "@/lib/db-sync";
 import { useCompany } from "@/lib/company-context";
 import { useAuth } from "@/lib/auth-context";
+import { useEffectiveRole } from "@/lib/use-effective-role";
 
 import { newId } from "@/lib/data-store";
 import { useEffect, useMemo, useState } from "react";
@@ -165,7 +166,7 @@ function ClientsPage() {
   };
 
   const openCreate = () => { setEditing(null); setOpen(true); };
-  const { isSalesOnly: salesOnly } = useAuth();
+  const { isSalesOnly: salesOnly } = useEffectiveRole();
 
   return (
     <AppShell>
@@ -299,7 +300,7 @@ function ClientCard({
   onEdit: (cl: Client) => void;
   onPromote: (cl: Client) => void;
 }) {
-  const { isSalesOnly: salesOnly } = useAuth();
+  const { isSalesOnly: salesOnly } = useEffectiveRole();
   const linkedIds = contactCompanyIds(cl);
   const co = companies.find((c) => c.id === cl.companyId);
   const cliProjects = projects.filter((p) => p.clientId === cl.id);
@@ -398,7 +399,7 @@ function ClientListView({
   group: string;
   grouped: { key: string; label: string; items: Client[] }[];
 }) {
-  const { isSalesOnly: salesOnly } = useAuth();
+  const { isSalesOnly: salesOnly } = useEffectiveRole();
   const renderRow = (cl: Client) => {
     const co = companies.find((c) => c.id === cl.companyId);
     const cliProjects = projects.filter((p) => p.clientId === cl.id);

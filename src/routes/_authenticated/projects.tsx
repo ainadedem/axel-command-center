@@ -21,6 +21,7 @@ import { ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { useAuth } from "@/lib/auth-context";
+import { useEffectiveRole } from "@/lib/use-effective-role";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { cn } from "@/lib/utils";
 import { KpiCard } from "@/components/kpi-card";
@@ -48,7 +49,7 @@ function Body() {
   const transactions = useTransactions();
   const baseList = inScope(projects, scope);
   const [open, setOpen] = useState(false);
-  const { isSalesOnly: salesOnly } = useAuth();
+  const { isSalesOnly: salesOnly } = useEffectiveRole();
   const [editing, setEditing] = useState<Project | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [mainTab, setMainTab] = useState<"projects" | "clients">("projects");
