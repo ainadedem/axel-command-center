@@ -342,7 +342,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       if (bootstrapKeyRef.current === key) return;
       bootstrapKeyRef.current = key;
 
-
+      setBootstrapError(null);
       setBootstrapReady(false);
       setAccessLoading(true);
       setDataLoading(true);
@@ -358,79 +358,103 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const { data } = await supabase
-        .from("user_company_access")
-        .select("company_id, role, companies ( code )")
-        .eq("user_id", userId);
-      if (cancelled) return;
+      try {
+        const { data, error: accessError } = await supabase
+          .from("user_company_access")
+          .select("company_id, role, companies ( code )")
+          .eq("user_id", userId);
+        if (cancelled) return;
+        if (accessError) throw accessError;
 
-      const rows = (data ?? []) as Array<{
-        company_id: string;
-        role: CompanyRole;
-        companies: { code: string } | null;
-      }>;
-      const nextRoles = new Map<string, CompanyRole>();
-      for (const row of rows) nextRoles.set(row.company_id, row.role);
-      setRoleByCompanyId(nextRoles);
+        const rows = (data ?? []) as Array<{
+          company_id: string;
+          role: CompanyRole;
+          companies: { code: string } | null;
+        }>;
+        const nextRoles = new Map<string, CompanyRole>();
+        for (const row of rows) nextRoles.set(row.company_id, row.role);
+        setRoleByCompanyId(nextRoles);
 
-      const accessibleDbCompanyIds = isGroupAdmin ? null : rows.map((row) => row.company_id);
-      const nextAccessibleDbCompanyIds = accessibleDbCompanyIds ?? [];
-      setAccessibleDbCompanyIds(nextAccessibleDbCompanyIds);
-      setAllowedCodes(
-        isGroupAdmin
-          ? null
-          : rows.map((row) => row.companies?.code).filter((code): code is string => !!code),
-      );
-      setAccessLoading(false);
+        const accessibleDbCompanyIds = isGroupAdmin ? null : rows.map((row) => row.company_id);
+        const nextAccessibleDbCompanyIds = accessibleDbCompanyIds ?? [];
+        setAccessibleDbCompanyIds(nextAccessibleDbCompanyIds);
+        setAllowedCodes(
+          isGroupAdmin
+            ? null
+            : rows.map((row) => row.companies?.code).filter((code): code is string => !!code),
+        );
+        setAccessLoading(false);
 
-      let companyRows: Record<string, unknown>[] = [];
-      if (isGroupAdmin) {
-        const { data: allRows, error } = await supabase.from("companies").select("*");
-        if (cancelled || error) return;
-        companyRows = (allRows ?? []) as Record<string, unknown>[];
-      } else if ((accessibleDbCompanyIds ?? []).length > 0) {
-        const { data: scopedRows, error } = await supabase.from("companies").select("*").in("id", accessibleDbCompanyIds!);
-        if (cancelled || error) return;
-        companyRows = (scopedRows ?? []) as Record<string, unknown>[];
+        // A failing companies read must not strand the app on a spinner: fall back
+        // to whatever is already in the local store and carry on.
+        let companyRows: Record<string, unknown>[] = [];
+        if (isGroupAdmin) {
+          const { data: allRows, error } = await supabase.from("companies").select("*");
+          if (cancelled) return;
+          if (error) console.warn("[bootstrap] companies", error);
+          else companyRows = (allRows ?? []) as Record<string, unknown>[];
+        } else if ((accessibleDbCompanyIds ?? []).length > 0) {
+          const { data: scopedRows, error } = await supabase.from("companies").select("*").in("id", accessibleDbCompanyIds!);
+          if (cancelled) return;
+          if (error) console.warn("[bootstrap] companies", error);
+          else companyRows = (scopedRows ?? []) as Record<string, unknown>[];
+        }
+
+        const { merged, idMap } = mergeCompanies(companyRows);
+        companiesStore.replaceAll(merged);
+        setCompanyIdMap(idMap);
+        setCompanyIdMapEntries(idMap);
+
+        if (!isGroupAdmin) restrictLocalStores(merged);
+
+        try {
+          await maybePushSeeds(userId, idMap);
+        } catch (e) {
+          console.warn("[maybePushSeeds]", e);
+        }
+        if (cancelled) return;
+
+        const currentScope = currentScopeRef.current;
+        const nextScope = resolveScopeForHydration(currentScope, isGroupAdmin, nextAccessibleDbCompanyIds, merged, idMap);
+        if (
+          nextScope.id !== currentScope.id ||
+          (nextScope.id === "company" && currentScope.id === "company" && nextScope.companyId !== currentScope.companyId)
+        ) {
+          setScopeState(nextScope);
+        }
+
+        const hydrationScope = getHydrationScope(nextScope, isGroupAdmin, nextAccessibleDbCompanyIds, idMap);
+        await Promise.all([
+          hydrateContacts(hydrationScope).catch((e) => console.warn("[hydrateContacts]", e)),
+          hydrateFinancials(hydrationScope).catch((e) => console.warn("[hydrateFinancials]", e)),
+          hydrateExtras(hydrationScope).catch((e) => console.warn("[hydrateExtras]", e)),
+        ]);
+        if (cancelled) return;
+
+        if (!isGroupAdmin) restrictLocalStores(merged);
+      } catch (e) {
+        console.error("[CompanyProvider bootstrap]", e);
+        if (cancelled) return;
+        // Release the key so a retry (or a later auth change) can run again.
+        bootstrapKeyRef.current = null;
+        setBootstrapError(e instanceof Error ? e.message : "Could not load your workspace.");
+      } finally {
+        if (!cancelled) {
+          setAccessLoading(false);
+          setDataLoading(false);
+          setBootstrapReady(true);
+        }
       }
-
-      const { merged, idMap } = mergeCompanies(companyRows);
-      companiesStore.replaceAll(merged);
-      setCompanyIdMap(idMap);
-      setCompanyIdMapEntries(idMap);
-
-      if (!isGroupAdmin) restrictLocalStores(merged);
-
-      await maybePushSeeds(userId, idMap);
-      if (cancelled) return;
-
-      const currentScope = currentScopeRef.current;
-      const nextScope = resolveScopeForHydration(currentScope, isGroupAdmin, nextAccessibleDbCompanyIds, merged, idMap);
-      if (
-        nextScope.id !== currentScope.id ||
-        (nextScope.id === "company" && currentScope.id === "company" && nextScope.companyId !== currentScope.companyId)
-      ) {
-        setScopeState(nextScope);
-      }
-
-      const hydrationScope = getHydrationScope(nextScope, isGroupAdmin, nextAccessibleDbCompanyIds, idMap);
-      await Promise.all([
-        hydrateContacts(hydrationScope).catch((e) => console.warn("[hydrateContacts]", e)),
-        hydrateFinancials(hydrationScope).catch((e) => console.warn("[hydrateFinancials]", e)),
-        hydrateExtras(hydrationScope).catch((e) => console.warn("[hydrateExtras]", e)),
-      ]);
-      if (cancelled) return;
-
-      if (!isGroupAdmin) restrictLocalStores(merged);
-      setDataLoading(false);
-      setBootstrapReady(true);
     }
 
     bootstrap();
     return () => {
       cancelled = true;
+      // An aborted run must not keep the key claimed, or nothing ever bootstraps.
+      if (!bootstrapDoneRef.current) bootstrapKeyRef.current = null;
     };
-  }, [authLoading, userId, isGroupAdmin]);
+  }, [authLoading, userId, isGroupAdmin, retryCount]);
+
 
   const accessibleCompanies = useMemo(() => {
     if (allowedCodes === null) return allCompanies;
