@@ -30,7 +30,7 @@ import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, FileCheck2, Plus, X, Eye, Copy, Send, Loader2, CheckCircle2 } from "lucide-react";
 import { DocumentPreview, buildPrintableDocument, type DocumentData } from "@/components/document-preview";
 import { resolveFileUrl } from "@/lib/storage";
-import { nextNumber, isNumberTaken } from "@/lib/numbering";
+import { nextNumber, nextNumberAsync, isNumberTaken, primeNumbering } from "@/lib/numbering";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import html2pdf from "html2pdf.js";
@@ -170,7 +170,8 @@ function Body() {
   const groups = view.apply(baseList);
   const list = groups.flatMap((g) => g.items);
 
-  const convertToPO = (q: Quote) => {
+  const convertToPO = async (q: Quote) => {
+    await primeNumbering("po", q.companyId);
     purchaseOrdersStore.add({
       id: newId("po"),
       number: nextNumber("po", q.companyId),
@@ -187,7 +188,8 @@ function Body() {
     quotesStore.update(q.id, { status: "accepted" });
   };
 
-  const duplicateQuote = (q: Quote) => {
+  const duplicateQuote = async (q: Quote) => {
+    await primeNumbering("quote", q.companyId);
     quotesStore.add({
       id: newId("q"),
       number: nextNumber("quote", q.companyId),
@@ -386,7 +388,15 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
 
   useEffect(() => {
     if (!open || editing || !companyId) return;
-    setNumber(nextNumber("quote", companyId, issueDate));
+    let cancelled = false;
+    // Sales users only see their own quotations, so the next number is resolved
+    // against every quotation of the company, not just the visible ones.
+    void nextNumberAsync("quote", companyId, issueDate).then((n) => {
+      if (!cancelled) setNumber(n);
+    });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId, issueDate]);
 

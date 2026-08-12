@@ -8,7 +8,7 @@ import {
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
-import { nextNumber } from "@/lib/numbering";
+import { nextNumber, primeNumbering } from "@/lib/numbering";
 import { useEffect, useMemo, useState } from "react";
 import { format, parseISO, addMonths, differenceInDays } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -63,8 +63,9 @@ function Body() {
     recurringBillingsStore.update(b.id, { active: !b.active });
   };
 
-  const generateNow = (b: RecurringBilling) => {
+  const generateNow = async (b: RecurringBilling) => {
     const issueDate = b.nextRunDate;
+    await primeNumbering("invoice", b.companyId);
     const terms = b.paymentTermsDays ?? 30;
     const dueDate = format(new Date(parseISO(issueDate).getTime() + terms * 86400000), "yyyy-MM-dd");
     const inv: Invoice = {
