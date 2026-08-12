@@ -153,12 +153,22 @@ function UsersAccessPage() {
     setBusy(row.user_id + ":platform");
     // Non-destructive: grant first, then drop the previous role. A refused insert
     // must never leave the user with no role at all.
+    const logEntry = (success: boolean, errorMessage?: string) =>
+      recordRoleChange({
+        action: value === "none" ? "revoke_platform_role" : "assign_platform_role",
+        targetUserId: row.user_id,
+        targetEmail: row.email,
+        requestedRole: value === "none" ? null : value,
+        success,
+        errorMessage: errorMessage ?? null,
+      });
     if (value !== "none") {
       const { error: insErr } = await supabase
         .from("user_roles")
         .upsert({ user_id: row.user_id, role: value }, { onConflict: "user_id,role" });
       if (insErr) {
         setBusy(null);
+        void logEntry(false, insErr.message);
         toast.error(`Could not set role: ${insErr.message}`);
         return;
       }
@@ -167,14 +177,17 @@ function UsersAccessPage() {
     const { error: delErr } = value === "none" ? await stale : await stale.neq("role", value);
     if (delErr) {
       setBusy(null);
+      void logEntry(false, `Stale role not removed: ${delErr.message}`);
       toast.error(`Role saved, but the previous one could not be removed: ${delErr.message}`);
       await afterWrite(row.user_id);
       return;
     }
+    void logEntry(true);
     toast.success("Platform role updated");
     await afterWrite(row.user_id);
     setBusy(null);
   };
+
 
   const setCompanyRole = async (row: Row, companyId: string, value: CompanyRole | "none") => {
     setBusy(row.user_id + ":" + companyId);
