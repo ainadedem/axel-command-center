@@ -2,7 +2,10 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState, type R
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "super_admin" | "group_admin" | "company_admin" | "finance" | "sales" | "viewer";
+export type AppRole = "super_admin" | "group_admin" | "company_admin" | "manager" | "project_manager" | "finance" | "sales" | "viewer";
+
+const APP_ROLES: AppRole[] = ["super_admin", "group_admin", "company_admin", "manager", "project_manager", "finance", "sales", "viewer"];
+const isAppRole = (r: string): r is AppRole => (APP_ROLES as string[]).includes(r);
 
 export interface Profile {
   user_id: string;
