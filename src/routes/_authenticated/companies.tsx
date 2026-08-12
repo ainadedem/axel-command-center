@@ -150,6 +150,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [logoUrl, setLogoUrl] = useState<string | undefined>();
   const [logoHeight, setLogoHeight] = useState(52);
   const [logoMaxWidth, setLogoMaxWidth] = useState(180);
+  const [docLanguage, setDocLanguage] = useState<"en" | "fr">("en");
   const [logoCrop, setLogoCrop] = useState<CompanyLogoCrop | undefined>();
   const [cropOpen, setCropOpen] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
@@ -172,6 +173,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setLogoUrl(editing.logoUrl);
       setLogoHeight(editing.logoHeight ?? 52);
       setLogoMaxWidth(editing.logoMaxWidth ?? 180);
+      setDocLanguage(editing.defaultDocumentLanguage ?? "en");
       setLogoCrop(editing.logoCrop);
     } else {
       setName(""); setShortName(""); setCode(""); setColor(PALETTE[0]); setBaseCurrency("MGA");
@@ -211,6 +213,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       mobileProvider: def?.mobileProvider, mobileNumber: def?.mobileNumber, mobileName: def?.mobileName,
       showPaymentDetails, bankAccounts: accounts,
       logoUrl, logoHeight, logoMaxWidth, logoCrop,
+      defaultDocumentLanguage: docLanguage,
     };
     const dbRow = {
       name, code: finalCode, short_name: shortName, color, base_currency: baseCurrency,
@@ -229,6 +232,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       logo_height: logoHeight,
       logo_max_width: logoMaxWidth,
       logo_crop: (logoCrop ?? null) as unknown as never,
+      default_document_language: docLanguage,
     };
     if (editing) {
       companiesStore.update(editing.id, local);
@@ -289,6 +293,21 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               <div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Max width</span><span className="tabular-nums">{logoMaxWidth}px</span></div>
                 <Slider value={[logoMaxWidth]} min={80} max={360} step={2} onValueChange={([v]) => setLogoMaxWidth(v)} className="mt-2" />
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground mb-2">Document language</div>
+                <div className="flex rounded-md border border-border overflow-hidden w-fit">
+                  {(["en", "fr"] as const).map((l) => (
+                    <button
+                      key={l}
+                      type="button"
+                      onClick={() => setDocLanguage(l)}
+                      className={`px-3 py-1 text-xs transition ${docLanguage === l ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                    >
+                      {l === "en" ? "English" : "Français"}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
             <div className="rounded-md bg-white border border-border p-3">
