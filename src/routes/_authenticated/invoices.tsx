@@ -36,7 +36,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { RICH_TEXT_HINT } from "@/lib/rich-text";
 import { RichTextField } from "@/components/rich-text-field";
-import { Wallet } from "lucide-react";
+import { Wallet, History } from "lucide-react";
 import { nextNumber, nextNumberAsync, isNumberTaken } from "@/lib/numbering";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
