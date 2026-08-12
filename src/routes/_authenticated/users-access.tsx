@@ -80,6 +80,7 @@ function UsersAccessPage() {
   const [companies, setCompanies] = useState<DbCompany[]>([]);
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
   const isSuperAdmin = currentRoles.includes("super_admin");
 
