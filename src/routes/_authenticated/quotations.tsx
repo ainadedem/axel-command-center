@@ -15,7 +15,7 @@ import { inScope, useCompany } from "@/lib/company-context";
 import { useAuth } from "@/lib/auth-context";
 import { format, parseISO, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState, useRef } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { useOwnerNames } from "@/hooks/use-owner-names";
 import { logActivity, diffDocument } from "@/lib/document-activity";
@@ -334,6 +334,8 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const projects = useProjects();
   const today = new Date().toISOString().slice(0, 10);
   const [number, setNumber] = useState("");
+  // True once the user edits the number by hand, so async resolution stops overriding it.
+  const numberTouched = useRef(false);
   const [companyId, setCompanyId] = useState("");
   const [clientId, setClientId] = useState("");
   const [projectId, setProjectId] = useState<string>("");
@@ -559,7 +561,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Number</Label>
-              <Input value={number} onChange={(e) => setNumber(e.target.value)} aria-invalid={duplicateNumber} />
+              <Input value={number} onChange={(e) => { numberTouched.current = true; setNumber(e.target.value); }} aria-invalid={duplicateNumber} />
               {duplicateNumber && <p className="text-[11px] text-destructive mt-1">This number is already used by another quote.</p>}
             </div>
             <div>

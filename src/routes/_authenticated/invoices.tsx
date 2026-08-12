@@ -15,7 +15,7 @@ import { inScope, useCompany } from "@/lib/company-context";
 import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Fragment, useEffect, useState, useCallback, useMemo } from "react";
+import { Fragment, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { useOwnerNames } from "@/hooks/use-owner-names";
 import { logActivity, diffDocument } from "@/lib/document-activity";
@@ -496,6 +496,8 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const quotes = useQuotes();
   const today = new Date().toISOString().slice(0, 10);
   const [number, setNumber] = useState("");
+  // True once the user edits the number by hand, so async resolution stops overriding it.
+  const numberTouched = useRef(false);
   const [companyId, setCompanyId] = useState("");
   const [clientId, setClientId] = useState("");
   const [projectId, setProjectId] = useState<string>("");
@@ -710,7 +712,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label><RequiredLabel>Number</RequiredLabel></Label>
-              <Input value={number} onChange={(e) => setNumber(e.target.value)} className={invalidFieldClassName((showErrors && !number.trim()) || duplicateNumber)} aria-invalid={(showErrors && !number.trim()) || duplicateNumber} />
+              <Input value={number} onChange={(e) => { numberTouched.current = true; setNumber(e.target.value); }} className={invalidFieldClassName((showErrors && !number.trim()) || duplicateNumber)} aria-invalid={(showErrors && !number.trim()) || duplicateNumber} />
               {duplicateNumber && <p className="text-[11px] text-destructive mt-1">This number is already used by another invoice.</p>}
             </div>
             <div>
