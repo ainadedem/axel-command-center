@@ -579,12 +579,13 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
     setShowErrors(false);
   }, [open, editing, companies, scope]);
 
-  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  // Billing email is optional; only a malformed entry is rejected.
+  const emailValid = !email.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const missing = {
     name: !name.trim(),
     company: !companyId,
     address: !address.trim(),
-    email: !email.trim() || !emailValid,
+    email: !emailValid,
   };
 
   const submit = async () => {
@@ -737,9 +738,9 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label><RequiredLabel>Billing email</RequiredLabel></Label>
+              <Label>Billing email</Label>
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="billing@client.com" className={invalidFieldClassName(showErrors && missing.email)} aria-invalid={showErrors && missing.email} />
-              {showErrors && missing.email && <p className="text-[11px] text-destructive mt-1">Enter a valid billing email address.</p>}
+              {showErrors && missing.email && <p className="text-[11px] text-destructive mt-1">Enter a valid email address.</p>}
             </div>
             <div><Label>Phone</Label><Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
           </div>
