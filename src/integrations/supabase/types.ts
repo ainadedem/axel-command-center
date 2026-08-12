@@ -548,6 +548,7 @@ export type Database = {
           category: string | null
           company_id: string
           created_at: string
+          created_by: string | null
           currency: string
           description: string | null
           due_date: string | null
@@ -571,6 +572,7 @@ export type Database = {
           category?: string | null
           company_id: string
           created_at?: string
+          created_by?: string | null
           currency?: string
           description?: string | null
           due_date?: string | null
@@ -594,6 +596,7 @@ export type Database = {
           category?: string | null
           company_id?: string
           created_at?: string
+          created_by?: string | null
           currency?: string
           description?: string | null
           due_date?: string | null
@@ -677,6 +680,7 @@ export type Database = {
           client_id: string | null
           company_id: string
           created_at: string
+          created_by: string | null
           currency: string
           due_date: string
           id: string
@@ -702,6 +706,7 @@ export type Database = {
           client_id?: string | null
           company_id: string
           created_at?: string
+          created_by?: string | null
           currency?: string
           due_date: string
           id?: string
@@ -727,6 +732,7 @@ export type Database = {
           client_id?: string | null
           company_id?: string
           created_at?: string
+          created_by?: string | null
           currency?: string
           due_date?: string
           id?: string
@@ -944,6 +950,7 @@ export type Database = {
           client_reference: string | null
           company_id: string
           created_at: string
+          created_by: string | null
           currency: string
           document_history: Json | null
           document_name: string | null
@@ -968,6 +975,7 @@ export type Database = {
           client_reference?: string | null
           company_id: string
           created_at?: string
+          created_by?: string | null
           currency?: string
           document_history?: Json | null
           document_name?: string | null
@@ -992,6 +1000,7 @@ export type Database = {
           client_reference?: string | null
           company_id?: string
           created_at?: string
+          created_by?: string | null
           currency?: string
           document_history?: Json | null
           document_name?: string | null
