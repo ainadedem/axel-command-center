@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { useOwnerNames } from "@/hooks/use-owner-names";
+import { logActivity, diffDocument } from "@/lib/document-activity";
+import { DocumentActivityPanel } from "@/components/document-activity-panel";
 
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -430,11 +432,14 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const { taxAmount, totalAmount } = useMemo(() => computeTotals(Math.round(subtotal), Number(taxRate) || 0), [subtotal, taxRate]);
 
   const addLine = () => {
+    // Row-level ownership: remember who added each line and when.
+    const stamp = { createdBy: user?.id, createdAt: new Date().toISOString() };
     if (mode === "standard") {
       setLines((prev) => [...prev, {
         id: newId("ql"),
         description: "",
         unit: "fixed", quantity: 1, rate: 0,
+        ...stamp,
       }]);
       return;
     }
@@ -445,8 +450,10 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       description: `${cap} — ${levels.find((l) => l.code === lvl)?.title ?? lvl}`,
       capability: cap, level: lvl, unit: "day", quantity: 1,
       rate: getRate(lvl, "day", currency),
+      ...stamp,
     }]);
   };
+
 
   const updateLine = (id: string, patch: Partial<QuoteLine>) => {
     setLines((prev) => prev.map((l) => {
@@ -500,10 +507,29 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       bankAccountId: bankAccountId || defaultBankAccount(companies.find((c) => c.id === companyId))?.id,
       ...fxFields,
     };
-    if (editing) quotesStore.update(editing.id, data);
-    else quotesStore.add({ id: newId("q"), ...data, createdBy: user?.id });
+    if (editing) {
+      quotesStore.update(editing.id, { ...data, updatedBy: user?.id, updatedAt: new Date().toISOString() });
+      const summary = diffDocument(editing as unknown as Record<string, unknown>, data as unknown as Record<string, unknown>);
+      if (editing.status !== status) {
+        logActivity({
+          docType: "quote", docId: editing.id, docNumber: number, companyId,
+          action: "status_changed", summary: `From ${editing.status} to ${status}`,
+          details: { from: editing.status, to: status },
+        });
+      }
+      if (summary) {
+        logActivity({ docType: "quote", docId: editing.id, docNumber: number, companyId, action: "updated", summary });
+      }
+    } else {
+      const id = newId("q");
+      quotesStore.add(
+        { id, ...data, createdBy: user?.id, updatedBy: user?.id, updatedAt: new Date().toISOString() },
+        { onSynced: (dbId) => logActivity({ docType: "quote", docId: dbId, docNumber: number, companyId, action: "created", summary: `Quotation ${number} created` }) },
+      );
+    }
     onOpenChange(false);
   };
+
   const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
   return (

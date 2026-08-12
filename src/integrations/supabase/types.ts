@@ -538,6 +538,45 @@ export type Database = {
         }
         Relationships: []
       }
+      document_activity: {
+        Row: {
+          action: string
+          actor_id: string | null
+          company_id: string
+          created_at: string
+          details: Json
+          doc_id: string
+          doc_number: string | null
+          doc_type: string
+          id: string
+          summary: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          company_id: string
+          created_at?: string
+          details?: Json
+          doc_id: string
+          doc_number?: string | null
+          doc_type: string
+          id?: string
+          summary?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          company_id?: string
+          created_at?: string
+          details?: Json
+          doc_id?: string
+          doc_number?: string | null
+          doc_type?: string
+          id?: string
+          summary?: string | null
+        }
+        Relationships: []
+      }
       expenses: {
         Row: {
           account: string | null
@@ -625,6 +664,7 @@ export type Database = {
         Row: {
           capability: string | null
           created_at: string
+          created_by: string | null
           description: string | null
           details: string | null
           id: string
@@ -638,6 +678,7 @@ export type Database = {
         Insert: {
           capability?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           details?: string | null
           id?: string
@@ -651,6 +692,7 @@ export type Database = {
         Update: {
           capability?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           details?: string | null
           id?: string
@@ -697,6 +739,7 @@ export type Database = {
           status: string
           subject: string | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           amount?: number
@@ -723,6 +766,7 @@ export type Database = {
           status?: string
           subject?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           amount?: number
@@ -749,6 +793,7 @@ export type Database = {
           status?: string
           subject?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -967,6 +1012,7 @@ export type Database = {
           status: string
           subject: string | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           amount?: number
@@ -992,6 +1038,7 @@ export type Database = {
           status?: string
           subject?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           amount?: number
@@ -1017,6 +1064,7 @@ export type Database = {
           status?: string
           subject?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -1048,6 +1096,7 @@ export type Database = {
           tax_rate: number
           total_amount: number
           updated_at: string
+          updated_by: string | null
           valid_until: string
         }
         Insert: {
@@ -1077,6 +1126,7 @@ export type Database = {
           tax_rate?: number
           total_amount?: number
           updated_at?: string
+          updated_by?: string | null
           valid_until: string
         }
         Update: {
@@ -1106,6 +1156,7 @@ export type Database = {
           tax_rate?: number
           total_amount?: number
           updated_at?: string
+          updated_by?: string | null
           valid_until?: string
         }
         Relationships: []
