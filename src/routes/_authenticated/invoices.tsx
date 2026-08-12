@@ -75,6 +75,7 @@ function Body() {
   const [paying, setPaying] = useState<Invoice | null>(null);
   const [cancelling, setCancelling] = useState<Invoice | null>(null);
   const [marking, setMarking] = useState<Invoice | null>(null);
+  const [historyOf, setHistoryOf] = useState<Invoice | null>(null);
   const [numMode, setNumMode] = useState<NumberFormatMode>(getNumberFormat());
 
   const toggleMode = useCallback(() => {
@@ -363,10 +364,18 @@ function Body() {
                       <td className="px-5 py-3.5 text-right font-tnum font-medium">
                         {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? fmtAmount(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
                       </td>
-                      <td className="px-5 py-3.5 text-xs text-muted-foreground">{ownerName(inv.createdBy)}</td>
+                      <td className="px-5 py-3.5 text-xs text-muted-foreground">
+                        {ownerName(inv.createdBy)}
+                        {inv.updatedAt && (
+                          <div className="text-[10px] text-muted-foreground/70">
+                            Updated by {ownerName(inv.updatedBy ?? inv.createdBy)} · {format(parseISO(inv.updatedAt), "MMM d, HH:mm")}
+                          </div>
+                        )}
+                      </td>
 
                       <td className="px-5 py-3.5 text-right">
                         <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
+                          <button onClick={() => setHistoryOf(inv)} title="Activity history" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><History className="h-3.5 w-3.5" /></button>
                           <button onClick={() => setPreviewing(inv)} title="Preview & export PDF" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
                           {inv.status !== "paid" && inv.status !== "cancelled" && (
                             <>
@@ -403,6 +412,13 @@ function Body() {
       />
       <RecordPaymentDialog open={!!paying} onOpenChange={(v) => { if (!v) setPaying(null); }} invoice={paying} />
       <CancelInvoiceDialog open={!!cancelling} onOpenChange={(v) => { if (!v) setCancelling(null); }} invoice={cancelling} />
+      <DocumentActivityPanel
+        open={!!historyOf}
+        onOpenChange={(v) => { if (!v) setHistoryOf(null); }}
+        docType="invoice"
+        docId={historyOf?.id}
+        docNumber={historyOf?.number}
+      />
       <MarkPaidDialog open={!!marking} onOpenChange={(v) => { if (!v) setMarking(null); }} invoice={marking} />
     </div>
   );
