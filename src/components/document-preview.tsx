@@ -61,16 +61,18 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
   // them to a signed URL before embedding into the document HTML.
   const logoUrl = useFileUrl(company?.logoUrl);
 
+  const [logoScale, setLogoScale] = useState(1);
+
   const html = useMemo(() => {
     if (!doc) return "";
-    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl });
-  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl]);
+    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale });
+  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale]);
 
   const printPdf = () => {
     if (!doc) return;
     const w = window.open("", "_blank", "width=900,height=1100");
     if (!w) return;
-    w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl }));
+    w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, logoUrl, logoScale }));
     w.document.close();
     setTimeout(() => { w.focus(); w.print(); }, 250);
   };
