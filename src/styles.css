@@ -173,8 +173,32 @@
   --muted-foreground: oklch(0.7 0.008 275);
   --material-thin: oklch(0.22 0.006 275 / 0.72);
   --material-regular: oklch(0.22 0.006 275 / 0.88);
+  --shadow-soft: 0 1px 2px oklch(0 0 0 / 0.4), 0 6px 16px -10px oklch(0 0 0 / 0.55);
+  --shadow-elevated: 0 1px 3px oklch(0 0 0 / 0.45), 0 18px 44px -20px oklch(0 0 0 / 0.7);
   --shadow-card: 0 0 0 0.5px oklch(1 0 0 / 0.06), 0 10px 26px -18px oklch(0 0 0 / 0.6);
+
+  /* Charts: lower chroma, higher lightness so series stay legible on dark */
+  --chart-1: oklch(0.7 0.16 258);
+  --chart-2: oklch(0.78 0.12 240);
+  --chart-3: oklch(0.74 0.15 350);
+  --chart-4: oklch(0.76 0.14 152);
+  --chart-5: oklch(0.84 0.13 78);
+  --chart-6: oklch(0.78 0.11 195);
+  --chart-7: oklch(0.68 0.13 292);
+  --chart-8: oklch(0.72 0.02 275);
+  --chart-expense: oklch(0.7 0.16 25);
+  --chart-grid: color-mix(in oklab, var(--foreground) 14%, transparent);
+
+  --ring: oklch(0.7 0.16 258 / 0.6);
+  --destructive: oklch(0.66 0.19 25);
+  --success: oklch(0.74 0.15 152);
+  --warning: oklch(0.83 0.14 76);
+  --warning-foreground: oklch(0.18 0.02 60);
+
+  --gradient-surface: linear-gradient(180deg, oklch(0.225 0.006 275) 0%, oklch(0.2 0.006 275) 100%);
+  --gradient-glow: radial-gradient(ellipse at top, oklch(0.66 0.18 256 / 0.14), transparent 62%);
 }
+
 
 
 /* Fonts loaded via <link> in src/routes/__root.tsx */
