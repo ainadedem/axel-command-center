@@ -135,11 +135,21 @@ function TeamPage() {
       <PageHeader title="Team" description="Everyone in the organization - the source of truth for people." />
       <div className="p-8 space-y-5">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <CrudToolbar count={total} label="people" onCreate={openCreate} />
+          {isAdmin ? (
+            <CrudToolbar count={total} label="people" onCreate={openCreate} />
+          ) : (
+            <div className="text-xs text-muted-foreground font-tnum">{total} people</div>
+          )}
           <DataToolbar view={view} items={team} />
         </div>
         {team.length === 0 ? (
-          <EmptyState label="team members" onCreate={openCreate} />
+          isAdmin ? (
+            <EmptyState label="team members" onCreate={openCreate} />
+          ) : (
+            <div className="rounded-xl border border-dashed border-border bg-surface/40 p-12 text-center text-sm text-muted-foreground">
+              No team members yet. Ask an administrator to add people.
+            </div>
+          )
         ) : total === 0 ? (
           <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-8 text-center text-sm text-muted-foreground">
             No people match the current filters.
