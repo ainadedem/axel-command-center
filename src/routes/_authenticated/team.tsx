@@ -175,7 +175,7 @@ function TeamPage() {
         )}
       </div>
 
-      <TeamDialog open={open} onOpenChange={setOpen} editing={editing} />
+      {isAdmin && <TeamDialog open={open} onOpenChange={setOpen} editing={editing} />}
     </AppShell>
   );
 }
