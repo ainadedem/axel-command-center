@@ -18,7 +18,7 @@ import {
   useInvoices, usePurchaseOrders, useExpenses, useClients, useCompanies,
   usePvrRecords, useInvoiceEscalations,
   invoiceEscalationsStore, fmtAmount,
-  type Invoice, type InvoiceEscalation,
+  type Invoice, type InvoiceEscalation, type PurchaseOrder, type PvrRecord,
 } from "@/lib/mock-data";
 import {
   SOPS, evaluateCompliance, agingDays, dueStage, ESCALATION_STAGES, STAGE_ACTIONS,
