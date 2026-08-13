@@ -158,8 +158,14 @@ export const logRoleChange = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: LogRoleChangeInput) => input)
   .handler(async ({ data, context }) => {
-    const { writeAudit } = await import("./users-admin.server");
-    const { userId, claims } = context as any;
+    const { writeAudit, diagnose } = await import("./users-admin.server");
+    const { userId, claims, supabase } = context as any;
+    // Only platform admins may write to the audit trail — otherwise any signed-in
+    // user could plant fabricated role-change records.
+    const diag = await diagnose({ supabase, userId, claims });
+    if (!diag.canCreateUsers) {
+      return { ok: false as const, error: "Only platform administrators can write audit entries." };
+    }
     await writeAudit({
       actorUserId: userId,
       actorEmail: claims?.email ?? null,
@@ -171,5 +177,6 @@ export const logRoleChange = createServerFn({ method: "POST" })
       success: data.success,
       errorMessage: data.errorMessage ?? null,
     });
-    return { ok: true };
+    return { ok: true as const };
   });
+
