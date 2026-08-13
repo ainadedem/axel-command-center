@@ -4,7 +4,7 @@ import {
   Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus, Truck,
   ChevronDown, Check, LogOut, Target, UserCog, Handshake,
   BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList, RefreshCw,
-  Sparkles, CreditCard, Repeat, Wallet2, ExternalLink, Info,
+  Sparkles, CreditCard, Repeat, Wallet2, ExternalLink, Info, ShieldCheck,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
