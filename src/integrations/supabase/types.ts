@@ -591,13 +591,17 @@ export type Database = {
           currency: string
           description: string | null
           due_date: string | null
+          funding_invoice_id: string | null
           id: string
           issue_date: string
           kind: string
+          medical_claim: boolean
           number: string | null
           paid: number
           payee: string | null
+          payment_cycle: string | null
           project_id: string | null
+          reimbursable_pct: number | null
           status: string
           supplier_id: string | null
           updated_at: string
@@ -615,13 +619,17 @@ export type Database = {
           currency?: string
           description?: string | null
           due_date?: string | null
+          funding_invoice_id?: string | null
           id?: string
           issue_date: string
           kind?: string
+          medical_claim?: boolean
           number?: string | null
           paid?: number
           payee?: string | null
+          payment_cycle?: string | null
           project_id?: string | null
+          reimbursable_pct?: number | null
           status?: string
           supplier_id?: string | null
           updated_at?: string
@@ -639,13 +647,17 @@ export type Database = {
           currency?: string
           description?: string | null
           due_date?: string | null
+          funding_invoice_id?: string | null
           id?: string
           issue_date?: string
           kind?: string
+          medical_claim?: boolean
           number?: string | null
           paid?: number
           payee?: string | null
+          payment_cycle?: string | null
           project_id?: string | null
+          reimbursable_pct?: number | null
           status?: string
           supplier_id?: string | null
           updated_at?: string
@@ -656,6 +668,56 @@ export type Database = {
             columns: ["account_id"]
             isOneToOne: false
             referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_escalations: {
+        Row: {
+          action: string
+          company_id: string
+          created_at: string
+          id: string
+          invoice_id: string
+          notes: string | null
+          performed_at: string
+          performed_by: string | null
+          performed_by_name: string | null
+          stage: number
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          company_id: string
+          created_at?: string
+          id?: string
+          invoice_id: string
+          notes?: string | null
+          performed_at?: string
+          performed_by?: string | null
+          performed_by_name?: string | null
+          stage: number
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          notes?: string | null
+          performed_at?: string
+          performed_by?: string | null
+          performed_by_name?: string | null
+          stage?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_escalations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -724,8 +786,14 @@ export type Database = {
           created_at: string
           created_by: string | null
           currency: string
+          dating_note: string | null
           due_date: string
+          handover_by: string | null
+          handover_proof_name: string | null
+          handover_proof_url: string | null
+          handover_stamped_at: string | null
           id: string
+          ingestion_date: string | null
           issue_date: string
           language: string
           number: string
@@ -751,8 +819,14 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           currency?: string
+          dating_note?: string | null
           due_date: string
+          handover_by?: string | null
+          handover_proof_name?: string | null
+          handover_proof_url?: string | null
+          handover_stamped_at?: string | null
           id?: string
+          ingestion_date?: string | null
           issue_date: string
           language?: string
           number: string
@@ -778,8 +852,14 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           currency?: string
+          dating_note?: string | null
           due_date?: string
+          handover_by?: string | null
+          handover_proof_name?: string | null
+          handover_proof_url?: string | null
+          handover_stamped_at?: string | null
           id?: string
+          ingestion_date?: string | null
           issue_date?: string
           language?: string
           number?: string
@@ -991,6 +1071,7 @@ export type Database = {
         Row: {
           amount: number
           bank_account_id: string | null
+          buying_entity: string | null
           client_id: string | null
           client_reference: string | null
           company_id: string
@@ -1017,6 +1098,7 @@ export type Database = {
         Insert: {
           amount?: number
           bank_account_id?: string | null
+          buying_entity?: string | null
           client_id?: string | null
           client_reference?: string | null
           company_id: string
@@ -1043,6 +1125,7 @@ export type Database = {
         Update: {
           amount?: number
           bank_account_id?: string | null
+          buying_entity?: string | null
           client_id?: string | null
           client_reference?: string | null
           company_id?: string
@@ -1067,6 +1150,71 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      pvr_records: {
+        Row: {
+          company_id: string
+          completion_pct: number
+          created_at: string
+          created_by: string | null
+          document_name: string | null
+          document_url: string | null
+          id: string
+          invoice_id: string | null
+          notes: string | null
+          project_id: string | null
+          quote_id: string | null
+          reference: string | null
+          scm_coordinator: string | null
+          signed_by: string | null
+          signed_date: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          completion_pct?: number
+          created_at?: string
+          created_by?: string | null
+          document_name?: string | null
+          document_url?: string | null
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          project_id?: string | null
+          quote_id?: string | null
+          reference?: string | null
+          scm_coordinator?: string | null
+          signed_by?: string | null
+          signed_date: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          completion_pct?: number
+          created_at?: string
+          created_by?: string | null
+          document_name?: string | null
+          document_url?: string | null
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          project_id?: string | null
+          quote_id?: string | null
+          reference?: string | null
+          scm_coordinator?: string | null
+          signed_by?: string | null
+          signed_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pvr_records_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quotes: {
         Row: {
