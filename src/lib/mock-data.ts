@@ -730,6 +730,50 @@ export const recurringBillingsStore = createCollection<RecurringBilling>("recurr
 export const salaryRegisterStore = createCollection<SalaryRegisterEntry>("salary-register", []);
 export const payrollRunsStore = createCollection<PayrollRun>("payroll-runs", []);
 
+/* ─── SOP-OPS-FIN-002: PVR records & collection escalations ─────────── */
+
+/** Procès-Verbal de Réception / Job Completion Certificate. */
+export interface PvrRecord {
+  id: string;
+  companyId: string;
+  /** Invoice the PVR backs (optional until factoring). */
+  invoiceId?: string;
+  projectId?: string;
+  quoteId?: string;
+  /** Matching quote / invoice identifier, e.g. "DEV/LOG/520". */
+  reference?: string;
+  /** Date the client signed the PVR. */
+  signedDate: string;
+  /** Realized service percentage — must declare 100% to be compliant. */
+  completionPct: number;
+  /** Client-side team leads who signed off. */
+  signedBy?: string;
+  /** Client SCM coordinator who validated the delivery. */
+  scmCoordinator?: string;
+  documentUrl?: string;
+  documentName?: string;
+  notes?: string;
+  createdBy?: string;
+  createdAt?: string;
+}
+
+/** One recorded step of the AR escalation ladder (day 15 / 30 / 45 / 60). */
+export interface InvoiceEscalation {
+  id: string;
+  companyId: string;
+  invoiceId: string;
+  /** 15 | 30 | 45 | 60 */
+  stage: number;
+  action: string;
+  notes?: string;
+  performedAt: string;
+  performedBy?: string;
+  performedByName?: string;
+}
+
+export const pvrRecordsStore = createCollection<PvrRecord>("pvr-records", []);
+export const invoiceEscalationsStore = createCollection<InvoiceEscalation>("invoice-escalations", []);
+
 /* ─── Live array exports (backward compatibility) ───────────────────── */
 
 export const companies = companiesStore.items;
