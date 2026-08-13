@@ -1031,6 +1031,7 @@ const poFromDb = (r: Record<string, unknown>): PurchaseOrder => ({
   subject: (r.subject as string) ?? undefined,
   bankAccountId: (r.bank_account_id as string) ?? undefined,
   createdBy: (r.created_by as string) ?? undefined,
+  buyingEntity: (r.buying_entity as string) ?? undefined,
   updatedBy: (r.updated_by as string) ?? undefined,
   updatedAt: (r.updated_at as string) ?? undefined,
 });
