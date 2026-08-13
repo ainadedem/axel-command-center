@@ -815,6 +815,8 @@ export const useExpenses = () => useCollection(expensesStore);
 export const useRecurringBillings = () => useCollection(recurringBillingsStore);
 export const useSalaryRegister = () => useCollection(salaryRegisterStore);
 export const usePayrollRuns = () => useCollection(payrollRunsStore);
+export const usePvrRecords = () => useCollection(pvrRecordsStore);
+export const useInvoiceEscalations = () => useCollection(invoiceEscalationsStore);
 
 /** Convenience: list of sales-team people (with team name) filtered by role. */
 export function useSalesPeople(role: "acquisition" | "closer"): { id: string; teamMemberId: string; name: string }[] {
