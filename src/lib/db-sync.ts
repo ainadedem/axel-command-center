@@ -1059,8 +1059,13 @@ const expenseToDb = (e: Expense) => {
     project_id: e.projectId && isUuid(e.projectId) ? e.projectId : null,
     attachment_url: e.attachmentUrl ?? null,
     attachment_name: e.attachmentName ?? null,
+    payment_cycle: e.paymentCycle ?? null,
+    funding_invoice_id: e.fundingInvoiceId && isUuid(e.fundingInvoiceId) ? e.fundingInvoiceId : null,
+    medical_claim: e.medicalClaim ?? false,
+    reimbursable_pct: e.reimbursablePct ?? null,
     ...(e.createdBy && isUuid(e.createdBy) ? { created_by: e.createdBy } : {}),
   };
+
 
 };
 const expenseFromDb = (r: Record<string, unknown>): Expense => ({
