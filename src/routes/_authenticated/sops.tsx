@@ -24,7 +24,7 @@ import {
   SOPS, evaluateCompliance, agingDays, dueStage, ESCALATION_STAGES, STAGE_ACTIONS,
   type Violation, type SopDoc,
 } from "@/lib/sop";
-import { weeklySummary } from "@/lib/sop-summary";
+import { weeklySummary, type WeeklySummary } from "@/lib/sop-summary";
 import { WeeklySummaryCard } from "@/components/weekly-summary-card";
 import { FollowUpDraftDialog } from "@/components/followup-draft-dialog";
 import { GuidedTour, useTourSeen, type TourStep } from "@/components/guided-tour";
