@@ -260,6 +260,8 @@ function ComplianceTab({ violations, summary }: { violations: Violation[]; summa
 
   return (
     <div className="space-y-4">
+      <WeeklySummaryCard summary={summary} ownerName={(id) => (id === "unassigned" ? "Unassigned" : ownerName(id))} />
+
       <div className="flex flex-wrap items-center gap-2">
         <Select value={severity} onValueChange={(v) => setSeverity(v as typeof severity)}>
           <SelectTrigger className="w-40" aria-label="Filter by severity"><SelectValue /></SelectTrigger>
