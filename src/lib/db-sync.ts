@@ -618,6 +618,12 @@ const invoiceToDb = (inv: Invoice) => {
     cancellation_reason: inv.cancellationReason ?? null,
     subject: inv.subject ?? null,
     bank_account_id: inv.bankAccountId ?? null,
+    ingestion_date: inv.ingestionDate ?? null,
+    handover_proof_url: inv.handoverProofUrl ?? null,
+    handover_proof_name: inv.handoverProofName ?? null,
+    handover_stamped_at: inv.handoverStampedAt ?? null,
+    handover_by: inv.handoverBy ?? null,
+    dating_note: inv.datingNote ?? null,
     ...(inv.createdBy && isUuid(inv.createdBy) ? { created_by: inv.createdBy } : {}),
     ...(inv.updatedBy && isUuid(inv.updatedBy) ? { updated_by: inv.updatedBy } : {}),
   };
