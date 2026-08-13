@@ -9,7 +9,7 @@ import {
 import { useAuth } from "./auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  setCompanyIdMap, hydrateContacts, pushLocalSeed,
+  setCompanyIdMap, setWritableCompanies, hydrateContacts, pushLocalSeed,
   registerFinancialSync, hydrateFinancials, pushLocalFinancialSeed,
   registerExtraSync, hydrateExtras, pushLocalExtrasSeed, type HydrationScope,
 } from "./db-sync";
