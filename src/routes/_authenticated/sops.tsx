@@ -441,6 +441,15 @@ function EscalationsTab({
       </div>
 
       <LogEscalationDialog target={logging} onClose={() => setLogging(null)} />
+      <FollowUpDraftDialog
+        target={drafting}
+        onClose={() => setDrafting(null)}
+        clients={clients}
+        companies={companies}
+        purchaseOrders={purchaseOrders}
+        pvrs={pvrs}
+        senderName={profile?.displayName}
+      />
     </div>
   );
 }
