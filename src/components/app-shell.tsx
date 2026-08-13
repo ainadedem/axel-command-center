@@ -88,6 +88,13 @@ const sections: NavSection[] = [
     ],
   },
   {
+    label: "Operations",
+    items: [
+      { to: "/sops", label: "SOPs & Compliance", icon: ShieldCheck },
+    ],
+  },
+  {
+
     label: "Administration",
     items: [
       { to: "/companies", label: "Companies", icon: Building2 },
