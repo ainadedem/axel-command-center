@@ -524,7 +524,27 @@ export interface Expense {
   attachmentName?: string;
   /** User id of whoever created this expense. */
   createdBy?: string;
+
+  /* ── SOP-OPS-FIN-002 §6: outflow controls ── */
+  /** Which disbursement rule governs this payout. */
+  paymentCycle?: PaymentCycle;
+  /** Back-to-back rule: the client invoice whose collection funds this payout. */
+  fundingInvoiceId?: string;
+  /** Verified consultant medical expense claim. */
+  medicalClaim?: boolean;
+  /** Reimbursable share (corporate tier, default 80%). */
+  reimbursablePct?: number;
 }
+
+/**
+ * SOP-OPS-FIN-002 §6 disbursement rules.
+ * - `thursday` — independent creative consultants / digital talent retainers.
+ * - `back_to_back` — talent micro-contracts paid only after client collection.
+ * - `medical` — reimbursable medical overhead, 30-day batch window.
+ * - `overhead` — fixed monthly subscription lines, cleared before the 31st.
+ */
+export type PaymentCycle = "thursday" | "back_to_back" | "medical" | "overhead" | "standard";
+
 
 
 /* ─── Recurring billing schedules ──────────────────────────────────── */
