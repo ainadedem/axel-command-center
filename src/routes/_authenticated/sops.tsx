@@ -332,9 +332,19 @@ function ComplianceTab({ violations, summary }: { violations: Violation[]; summa
 
 /* ─── AR escalations tab ────────────────────────────────────────────── */
 
-function EscalationsTab({ invoices, escalations }: { invoices: Invoice[]; escalations: InvoiceEscalation[] }) {
+function EscalationsTab({
+  invoices, escalations, purchaseOrders, pvrs,
+}: {
+  invoices: Invoice[];
+  escalations: InvoiceEscalation[];
+  purchaseOrders: PurchaseOrder[];
+  pvrs: PvrRecord[];
+}) {
   const clients = useClients();
+  const companies = useCompanies();
+  const { profile } = useAuth() as { profile?: { displayName?: string } | null };
   const [logging, setLogging] = useState<{ invoice: Invoice; stage: number } | null>(null);
+  const [drafting, setDrafting] = useState<{ invoice: Invoice; stage: number } | null>(null);
 
   const rows = useMemo(() => {
     return invoices
