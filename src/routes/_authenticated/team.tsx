@@ -20,12 +20,15 @@ import { Pencil, Trash2, Users } from "lucide-react";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCompany } from "@/lib/company-context";
+import { useEffectiveRole } from "@/lib/use-effective-role";
 
 export const Route = createFileRoute("/_authenticated/team")({ component: TeamPage });
 
 function TeamPage() {
   const allTeam = useTeamMembers();
   const { scope, accessibleCompanies } = useCompany();
+  // Everyone with company access can see their people; only admins may change them.
+  const { isAdmin } = useEffectiveRole();
   const team = scope.id === "group"
     ? allTeam
     : allTeam.filter((m) => m.companyId === undefined || m.companyId === scope.companyId);
@@ -103,8 +106,12 @@ function TeamPage() {
           )}
         </div>
         <div className="col-span-1 flex justify-end gap-0.5 opacity-0 group-hover:opacity-100">
-          <button onClick={() => { setEditing(m); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-          <button onClick={() => remove(m)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+          {isAdmin && (
+            <>
+              <button onClick={() => { setEditing(m); setOpen(true); }} aria-label={`Edit ${m.name}`} className="h-7 w-7 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
+              <button onClick={() => remove(m)} aria-label={`Remove ${m.name}`} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+            </>
+          )}
         </div>
       </div>
     );
@@ -128,11 +135,21 @@ function TeamPage() {
       <PageHeader title="Team" description="Everyone in the organization - the source of truth for people." />
       <div className="p-8 space-y-5">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <CrudToolbar count={total} label="people" onCreate={openCreate} />
+          {isAdmin ? (
+            <CrudToolbar count={total} label="people" onCreate={openCreate} />
+          ) : (
+            <div className="text-xs text-muted-foreground font-tnum">{total} people</div>
+          )}
           <DataToolbar view={view} items={team} />
         </div>
         {team.length === 0 ? (
-          <EmptyState label="team members" onCreate={openCreate} />
+          isAdmin ? (
+            <EmptyState label="team members" onCreate={openCreate} />
+          ) : (
+            <div className="rounded-xl border border-dashed border-border bg-surface/40 p-12 text-center text-sm text-muted-foreground">
+              No team members yet. Ask an administrator to add people.
+            </div>
+          )
         ) : total === 0 ? (
           <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-8 text-center text-sm text-muted-foreground">
             No people match the current filters.
@@ -158,7 +175,7 @@ function TeamPage() {
         )}
       </div>
 
-      <TeamDialog open={open} onOpenChange={setOpen} editing={editing} />
+      {isAdmin && <TeamDialog open={open} onOpenChange={setOpen} editing={editing} />}
     </AppShell>
   );
 }
