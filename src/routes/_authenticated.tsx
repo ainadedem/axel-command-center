@@ -18,13 +18,15 @@ export const Route = createFileRoute("/_authenticated")({
 function SalesScopeGate({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const location = useRouterState({ select: (state) => state.location });
-  const { isSalesOnly } = useEffectiveRole();
+  const { isSalesOnly, roleResolved } = useEffectiveRole();
 
   useEffect(() => {
-    if (!isSalesOnly) return;
+    // Wait for company access to load: before it does every non-platform user
+    // looks sales-only and would be bounced away from the page they opened.
+    if (!roleResolved || !isSalesOnly) return;
     const allowed = SALES_ROUTES.some((r) => location.pathname === r || location.pathname.startsWith(`${r}/`));
     if (!allowed) navigate({ to: "/quotations", replace: true });
-  }, [isSalesOnly, location.pathname, navigate]);
+  }, [isSalesOnly, roleResolved, location.pathname, navigate]);
 
   return <>{children}</>;
 }

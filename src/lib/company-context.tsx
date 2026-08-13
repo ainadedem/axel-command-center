@@ -9,7 +9,7 @@ import {
 import { useAuth } from "./auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  setCompanyIdMap, hydrateContacts, pushLocalSeed,
+  setCompanyIdMap, setWritableCompanies, hydrateContacts, pushLocalSeed,
   registerFinancialSync, hydrateFinancials, pushLocalFinancialSeed,
   registerExtraSync, hydrateExtras, pushLocalExtrasSeed, type HydrationScope,
 } from "./db-sync";
@@ -420,6 +420,14 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         const nextRoles = new Map<string, CompanyRole>();
         for (const row of rows) nextRoles.set(row.company_id, row.role);
         setRoleByCompanyId(nextRoles);
+        // Only these roles may write financial data (mirrors the database rules).
+        setWritableCompanies(
+          isGroupAdmin
+            ? null
+            : rows
+                .filter((row) => row.role === "company_admin" || row.role === "manager" || row.role === "finance")
+                .map((row) => row.company_id),
+        );
 
         const accessibleDbCompanyIds = isGroupAdmin ? null : rows.map((row) => row.company_id);
         const nextAccessibleDbCompanyIds = accessibleDbCompanyIds ?? [];
