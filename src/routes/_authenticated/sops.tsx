@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
@@ -18,13 +18,52 @@ import {
   useInvoices, usePurchaseOrders, useExpenses, useClients, useCompanies,
   usePvrRecords, useInvoiceEscalations,
   invoiceEscalationsStore, fmtAmount,
-  type Invoice, type InvoiceEscalation,
+  type Invoice, type InvoiceEscalation, type PurchaseOrder, type PvrRecord,
 } from "@/lib/mock-data";
 import {
   SOPS, evaluateCompliance, agingDays, dueStage, ESCALATION_STAGES, STAGE_ACTIONS,
   type Violation, type SopDoc,
 } from "@/lib/sop";
-import { ShieldCheck, AlertTriangle, Download, BookText, CheckCircle2, Clock } from "lucide-react";
+import { weeklySummary, type WeeklySummary } from "@/lib/sop-summary";
+import { WeeklySummaryCard } from "@/components/weekly-summary-card";
+import { FollowUpDraftDialog } from "@/components/followup-draft-dialog";
+import { GuidedTour, useTourSeen, type TourStep } from "@/components/guided-tour";
+import { useOwnerNames } from "@/hooks/use-owner-names";
+import { useEffectiveRole } from "@/lib/use-effective-role";
+import { seedDemoWorkspace, removeDemoWorkspace } from "@/lib/sop-demo.functions";
+import { toast } from "sonner";
+import {
+  ShieldCheck, AlertTriangle, Download, BookText, CheckCircle2, Clock,
+  PlayCircle, Trash2, Mail, HelpCircle, Loader2,
+} from "lucide-react";
+
+const TOUR_STEPS: TourStep[] = [
+  {
+    selector: '[data-tour="kpis"]',
+    title: "Your compliance health",
+    body: "Four numbers, refreshed live: how many documents pass, how many red flags need action today, how many yellow warnings can wait, and how much was checked.",
+  },
+  {
+    selector: '[data-tour="weekly-summary"]',
+    title: "This week at a glance",
+    body: "The weekly card compares today with last week, buckets overdue money by age, and names who has open items — bring it to the Monday review.",
+  },
+  {
+    selector: '[data-tour="tabs"]',
+    title: "Three views",
+    body: "Compliance is the checklist of everything that's missing. AR escalations is the chase list. SOP library is the written procedure behind both.",
+  },
+  {
+    selector: '[data-tour="violations"]',
+    title: "The checklist",
+    body: "Each row is one gap on one document, in plain language, with the money at risk. Filter by severity or rule, then export to a spreadsheet.",
+  },
+  {
+    selector: '[data-tour="demo"]',
+    title: "Try it safely",
+    body: "Load demo data to create a clearly labelled sample company with invoices that trigger every rule — then remove it in one click when you're done.",
+  },
+];
 
 export const Route = createFileRoute("/_authenticated/sops")({
   component: SopsPage,
@@ -54,6 +93,9 @@ type Tab = "dashboard" | "escalations" | "library";
 function Body() {
   const { scope } = useCompany();
   const [tab, setTab] = useState<Tab>("dashboard");
+  const { isGroupAdmin } = useEffectiveRole();
+  const [tourSeen, markTourSeen] = useTourSeen("sops-tour-v1");
+  const [tourOpen, setTourOpen] = useState(false);
 
   const invoices = inScope(useInvoices(), scope);
   const purchaseOrders = inScope(usePurchaseOrders(), scope);
@@ -61,10 +103,22 @@ function Body() {
   const pvrs = inScope(usePvrRecords(), scope);
   const escalations = inScope(useInvoiceEscalations(), scope);
 
-  const violations = useMemo(
-    () => evaluateCompliance({ invoices, purchaseOrders, expenses, pvrs, escalations }),
+  const input = useMemo(
+    () => ({ invoices, purchaseOrders, expenses, pvrs, escalations }),
     [invoices, purchaseOrders, expenses, pvrs, escalations],
   );
+  const violations = useMemo(() => evaluateCompliance(input), [input]);
+  const summary = useMemo(() => weeklySummary(input, violations), [input, violations]);
+
+  // Offer the walkthrough once, automatically, the first time the page opens.
+  useEffect(() => {
+    if (!tourSeen) setTourOpen(true);
+  }, [tourSeen]);
+
+  const closeTour = () => {
+    setTourOpen(false);
+    markTourSeen();
+  };
 
   const critical = violations.filter((v) => v.severity === "critical").length;
   const warnings = violations.length - critical;
@@ -74,14 +128,21 @@ function Body() {
 
   return (
     <div className="p-8 space-y-5">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button variant="ghost" size="sm" onClick={() => setTourOpen(true)}>
+          <HelpCircle className="h-3.5 w-3.5 mr-1.5" /> 60-second walkthrough
+        </Button>
+        {isGroupAdmin && <DemoControls />}
+      </div>
+
+      <div data-tour="kpis" className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <Kpi label="Compliance rate" value={`${rate}%`} accent={rate >= 90 ? "text-success" : rate >= 70 ? "text-warning" : "text-destructive"} />
         <Kpi label="Critical violations" value={String(critical)} mono accent={critical > 0 ? "text-destructive" : undefined} />
         <Kpi label="Warnings" value={String(warnings)} mono accent={warnings > 0 ? "text-warning" : undefined} />
         <Kpi label="Records checked" value={String(checked)} mono />
       </div>
 
-      <div className="flex items-center gap-1 rounded-xl border border-border bg-[var(--gradient-surface)] p-1 w-fit">
+      <div data-tour="tabs" className="flex items-center gap-1 rounded-xl border border-border bg-[var(--gradient-surface)] p-1 w-fit">
         {([
           ["dashboard", "Compliance", ShieldCheck],
           ["escalations", "AR escalations", Clock],
@@ -101,9 +162,54 @@ function Body() {
         ))}
       </div>
 
-      {tab === "dashboard" && <ComplianceTab violations={violations} />}
-      {tab === "escalations" && <EscalationsTab invoices={invoices} escalations={escalations} />}
+      {tab === "dashboard" && <ComplianceTab violations={violations} summary={summary} />}
+      {tab === "escalations" && (
+        <EscalationsTab invoices={invoices} escalations={escalations} purchaseOrders={purchaseOrders} pvrs={pvrs} />
+      )}
       {tab === "library" && <LibraryTab />}
+
+      <GuidedTour steps={TOUR_STEPS} open={tourOpen} onClose={closeTour} />
+    </div>
+  );
+}
+
+/** Demo workspace controls — platform admins only. */
+function DemoControls() {
+  const companies = useCompanies();
+  const hasDemo = companies.some((c) => c.isDemo);
+  const [busy, setBusy] = useState<"seed" | "remove" | null>(null);
+
+  const run = async (mode: "seed" | "remove") => {
+    setBusy(mode);
+    try {
+      if (mode === "seed") {
+        const res = await seedDemoWorkspace();
+        toast.success(`Demo workspace ready — ${res.invoices} sample invoices loaded.`);
+      } else {
+        await removeDemoWorkspace();
+        toast.success("Demo workspace removed.");
+      }
+      // The workspace list and all stores hydrate at bootstrap, so reload once.
+      window.setTimeout(() => window.location.reload(), 600);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <div data-tour="demo" className="flex items-center gap-2">
+      <Button variant="outline" size="sm" disabled={busy !== null} onClick={() => run("seed")}>
+        {busy === "seed" ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <PlayCircle className="h-3.5 w-3.5 mr-1.5" />}
+        {hasDemo ? "Reload demo data" : "Load demo data"}
+      </Button>
+      {hasDemo && (
+        <Button variant="ghost" size="sm" disabled={busy !== null} onClick={() => run("remove")}>
+          {busy === "remove" ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5 mr-1.5" />}
+          Remove demo
+        </Button>
+      )}
     </div>
   );
 }
@@ -119,8 +225,9 @@ function Kpi({ label, value, accent, mono }: { label: string; value: string; acc
 
 /* ─── Compliance tab ────────────────────────────────────────────────── */
 
-function ComplianceTab({ violations }: { violations: Violation[] }) {
+function ComplianceTab({ violations, summary }: { violations: Violation[]; summary: WeeklySummary }) {
   const companies = useCompanies();
+  const { ownerName } = useOwnerNames(summary.owners.map((o) => o.ownerId));
   const [severity, setSeverity] = useState<"all" | "critical" | "warning">("all");
   const [rule, setRule] = useState("all");
 
@@ -153,6 +260,8 @@ function ComplianceTab({ violations }: { violations: Violation[] }) {
 
   return (
     <div className="space-y-4">
+      <WeeklySummaryCard summary={summary} ownerName={(id) => (id === "unassigned" ? "Unassigned" : ownerName(id))} />
+
       <div className="flex flex-wrap items-center gap-2">
         <Select value={severity} onValueChange={(v) => setSeverity(v as typeof severity)}>
           <SelectTrigger className="w-40" aria-label="Filter by severity"><SelectValue /></SelectTrigger>
@@ -223,9 +332,19 @@ function ComplianceTab({ violations }: { violations: Violation[] }) {
 
 /* ─── AR escalations tab ────────────────────────────────────────────── */
 
-function EscalationsTab({ invoices, escalations }: { invoices: Invoice[]; escalations: InvoiceEscalation[] }) {
+function EscalationsTab({
+  invoices, escalations, purchaseOrders, pvrs,
+}: {
+  invoices: Invoice[];
+  escalations: InvoiceEscalation[];
+  purchaseOrders: PurchaseOrder[];
+  pvrs: PvrRecord[];
+}) {
   const clients = useClients();
+  const companies = useCompanies();
+  const { profile } = useAuth() as { profile?: { displayName?: string } | null };
   const [logging, setLogging] = useState<{ invoice: Invoice; stage: number } | null>(null);
+  const [drafting, setDrafting] = useState<{ invoice: Invoice; stage: number } | null>(null);
 
   const rows = useMemo(() => {
     return invoices
@@ -280,6 +399,15 @@ function EscalationsTab({ invoices, escalations }: { invoices: Invoice[]; escala
                     </button>
                   );
                 })}
+                {stage >= 30 && (
+                  <button
+                    onClick={() => setDrafting({ invoice: inv, stage })}
+                    title={`Draft the day ${stage} follow-up message`}
+                    className="text-[10px] px-2 py-0.5 rounded border border-primary/40 text-primary bg-primary/10 hover:bg-primary/20 uppercase tracking-wider transition-all press-scale inline-flex items-center gap-1"
+                  >
+                    <Mail className="h-3 w-3" /> Draft
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -313,6 +441,15 @@ function EscalationsTab({ invoices, escalations }: { invoices: Invoice[]; escala
       </div>
 
       <LogEscalationDialog target={logging} onClose={() => setLogging(null)} />
+      <FollowUpDraftDialog
+        target={drafting}
+        onClose={() => setDrafting(null)}
+        clients={clients}
+        companies={companies}
+        purchaseOrders={purchaseOrders}
+        pvrs={pvrs}
+        senderName={profile?.displayName}
+      />
     </div>
   );
 }

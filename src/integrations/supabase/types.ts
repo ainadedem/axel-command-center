@@ -67,6 +67,47 @@ export type Database = {
           },
         ]
       }
+      ar_alert_log: {
+        Row: {
+          company_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          invoice_id: string
+          recipients: string[]
+          sent_at: string
+          stage: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          invoice_id: string
+          recipients?: string[]
+          sent_at?: string
+          stage: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          invoice_id?: string
+          recipients?: string[]
+          sent_at?: string
+          stage?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ar_alert_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       axel_chat_messages: {
         Row: {
           created_at: string
@@ -435,6 +476,7 @@ export type Database = {
           iban: string | null
           id: string
           intl_enabled: boolean
+          is_demo: boolean
           legal_name: string | null
           logo_crop: Json | null
           logo_height: number
@@ -475,6 +517,7 @@ export type Database = {
           iban?: string | null
           id?: string
           intl_enabled?: boolean
+          is_demo?: boolean
           legal_name?: string | null
           logo_crop?: Json | null
           logo_height?: number
@@ -515,6 +558,7 @@ export type Database = {
           iban?: string | null
           id?: string
           intl_enabled?: boolean
+          is_demo?: boolean
           legal_name?: string | null
           logo_crop?: Json | null
           logo_height?: number
@@ -898,6 +942,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_prefs: {
+        Row: {
+          ar_alerts_enabled: boolean
+          created_at: string
+          id: string
+          stages: number[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ar_alerts_enabled?: boolean
+          created_at?: string
+          id?: string
+          stages?: number[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ar_alerts_enabled?: boolean
+          created_at?: string
+          id?: string
+          stages?: number[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       opportunities: {
         Row: {

@@ -13,6 +13,7 @@ import { useCompanies } from "@/lib/mock-data";
 import { Building2, Users, Wallet, BookText, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeControls } from "@/components/theme-controls";
+import { NotificationPrefsCard } from "@/components/notification-prefs-card";
 
 export const Route = createFileRoute("/_authenticated/settings")({ component: SettingsPage });
 
@@ -117,6 +118,8 @@ function Body() {
           <ThemeControls />
         </div>
       </section>
+
+      <NotificationPrefsCard />
 
       <section>
         <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">Workspace</div>

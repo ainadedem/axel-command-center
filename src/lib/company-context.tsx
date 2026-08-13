@@ -171,6 +171,7 @@ function mapCompanyRow(row: Record<string, unknown>, fallbackColorIdx: number): 
     logoMaxWidth: typeof row.logo_max_width === "number" ? (row.logo_max_width as number) : undefined,
     logoCrop: (row.logo_crop as Company["logoCrop"]) ?? undefined,
     defaultDocumentLanguage: row.default_document_language === "fr" ? "fr" : row.default_document_language === "en" ? "en" : undefined,
+    isDemo: row.is_demo === true,
   };
 }
 

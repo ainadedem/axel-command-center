@@ -70,6 +70,8 @@ export interface Company {
   logoCrop?: CompanyLogoCrop;
   /** Default printed language for this company's invoices and quotes ("en" | "fr"). */
   defaultDocumentLanguage?: "en" | "fr";
+  /** Demonstration workspace: sample data, removable in one click. */
+  isDemo?: boolean;
 }
 
 /** Saved logo crop transform + reference to the original uploaded image. */

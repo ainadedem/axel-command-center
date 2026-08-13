@@ -44,6 +44,7 @@ import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/about'
 import { Route as AuthenticatedAxelIndexRouteImport } from './routes/_authenticated/axel.index'
 import { Route as AuthenticatedAxelThreadIdRouteImport } from './routes/_authenticated/axel.$threadId'
+import { Route as ApiPublicHooksArEscalationAlertsRouteImport } from './routes/api/public/hooks/ar-escalation-alerts'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -225,6 +226,12 @@ const AuthenticatedAxelThreadIdRoute =
     path: '/$threadId',
     getParentRoute: () => AuthenticatedAxelRoute,
   } as any)
+const ApiPublicHooksArEscalationAlertsRoute =
+  ApiPublicHooksArEscalationAlertsRouteImport.update({
+    id: '/api/public/hooks/ar-escalation-alerts',
+    path: '/api/public/hooks/ar-escalation-alerts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -261,6 +268,7 @@ export interface FileRoutesByFullPath {
   '/api/axel-chat': typeof ApiAxelChatRoute
   '/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
   '/axel/': typeof AuthenticatedAxelIndexRoute
+  '/api/public/hooks/ar-escalation-alerts': typeof ApiPublicHooksArEscalationAlertsRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -296,6 +304,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
   '/axel': typeof AuthenticatedAxelIndexRoute
+  '/api/public/hooks/ar-escalation-alerts': typeof ApiPublicHooksArEscalationAlertsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -334,6 +343,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
   '/_authenticated/axel/': typeof AuthenticatedAxelIndexRoute
+  '/api/public/hooks/ar-escalation-alerts': typeof ApiPublicHooksArEscalationAlertsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -372,6 +382,7 @@ export interface FileRouteTypes {
     | '/api/axel-chat'
     | '/axel/$threadId'
     | '/axel/'
+    | '/api/public/hooks/ar-escalation-alerts'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -407,6 +418,7 @@ export interface FileRouteTypes {
     | '/'
     | '/axel/$threadId'
     | '/axel'
+    | '/api/public/hooks/ar-escalation-alerts'
   id:
     | '__root__'
     | '/_authenticated'
@@ -444,6 +456,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/axel/$threadId'
     | '/_authenticated/axel/'
+    | '/api/public/hooks/ar-escalation-alerts'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -451,6 +464,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiAxelChatRoute: typeof ApiAxelChatRoute
+  ApiPublicHooksArEscalationAlertsRoute: typeof ApiPublicHooksArEscalationAlertsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -700,6 +714,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAxelThreadIdRouteImport
       parentRoute: typeof AuthenticatedAxelRoute
     }
+    '/api/public/hooks/ar-escalation-alerts': {
+      id: '/api/public/hooks/ar-escalation-alerts'
+      path: '/api/public/hooks/ar-escalation-alerts'
+      fullPath: '/api/public/hooks/ar-escalation-alerts'
+      preLoaderRoute: typeof ApiPublicHooksArEscalationAlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -789,6 +810,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiAxelChatRoute: ApiAxelChatRoute,
+  ApiPublicHooksArEscalationAlertsRoute: ApiPublicHooksArEscalationAlertsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
