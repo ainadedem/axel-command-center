@@ -578,8 +578,11 @@ const transactionFromDb = (r: Record<string, unknown>): Transaction => ({
 export async function upsertTransaction(t: Transaction): Promise<string | null> {
   const row = transactionToDb(t);
   if (!row) return null;
+  // Skip companies the user cannot write to (local seed replay), so genuine
+  // save failures are the only thing that reaches the user.
+  if (!canWriteCompany(row.company_id)) return null;
   const { data, error } = await supabase.from("transactions").upsert(row).select("id").single();
-  if (error) { console.warn("[db-sync] upsertTransaction", error.message); return null; }
+  if (error) { reportWriteError("upsertTransaction", error.message); return null; }
   return data.id;
 }
 export async function deleteTransactionDb(id: string) {
