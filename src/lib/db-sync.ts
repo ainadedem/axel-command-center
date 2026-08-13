@@ -15,6 +15,8 @@ import {
   expensesStore, recurringBillingsStore,
   teamMembersStore, salesMembersStore,
   salaryRegisterStore, payrollRunsStore,
+  pvrRecordsStore, invoiceEscalationsStore,
+  type PvrRecord, type InvoiceEscalation,
   type Client, type Supplier, type Project,
   type Account, type Category, type Budget,
   type Transaction, type Invoice, type QuoteLine,
