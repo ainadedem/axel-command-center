@@ -37,12 +37,16 @@ export function useEffectiveRole(): EffectiveRole {
       isAdmin: true,
       canSeeFinance: true,
       isSalesOnly: false,
+      roleResolved: true,
     };
   }
 
   const scoped: CompanyRole | undefined = company?.currentRole;
   const role = (scoped ?? null) as AppRole | null;
   const canSeeFinance = !!role && FINANCE_ROLES.includes(role);
+  // Company access loads asynchronously: until it lands, every non-platform user
+  // looks role-less, which must not be mistaken for "sales only".
+  const roleResolved = !company || (company.bootstrapReady && !company.accessLoading);
 
   return {
     role,
@@ -50,5 +54,6 @@ export function useEffectiveRole(): EffectiveRole {
     isAdmin: role === "company_admin",
     canSeeFinance,
     isSalesOnly: !canSeeFinance,
+    roleResolved,
   };
 }
