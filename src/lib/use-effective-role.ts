@@ -12,6 +12,8 @@ export type EffectiveRole = {
   canSeeFinance: boolean;
   /** Sales-scoped: no finance visibility in the active scope. */
   isSalesOnly: boolean;
+  /** False while company access is still loading — never act on `isSalesOnly` yet. */
+  roleResolved: boolean;
 };
 
 const FINANCE_ROLES: AppRole[] = ["super_admin", "group_admin", "company_admin", "manager", "finance"];
