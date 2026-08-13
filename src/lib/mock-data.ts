@@ -275,7 +275,21 @@ export interface Invoice {
   updatedBy?: string;
   /** ISO timestamp of the last edit. */
   updatedAt?: string;
+
+  /* ── SOP-OPS-FIN-002: dating control & handover archive ── */
+  /** Business day the invoice actually entered the client's processing system. */
+  ingestionDate?: string;
+  /** Stamped receiving-desk scan (Alarobia handover rule). */
+  handoverProofUrl?: string;
+  handoverProofName?: string;
+  /** ISO timestamp the hard copy was stamped by the receiving desk. */
+  handoverStampedAt?: string;
+  /** Who physically delivered the hard copy. */
+  handoverBy?: string;
+  /** Justification when the issue date differs from the ingestion date. */
+  datingNote?: string;
 }
+
 
 
 /* ─── Sales process: Quote → PO → Invoice ───────────────────────────── */
