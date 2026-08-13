@@ -1004,6 +1004,7 @@ const poToDb = (p: PurchaseOrder) => {
     lines: (p.lines ?? null) as unknown as never,
     subject: p.subject ?? null,
     bank_account_id: p.bankAccountId ?? null,
+    buying_entity: p.buyingEntity ?? null,
     ...(p.createdBy && isUuid(p.createdBy) ? { created_by: p.createdBy } : {}),
     ...(p.updatedBy && isUuid(p.updatedBy) ? { updated_by: p.updatedBy } : {}),
   };
