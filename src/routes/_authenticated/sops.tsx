@@ -399,6 +399,15 @@ function EscalationsTab({
                     </button>
                   );
                 })}
+                {stage >= 30 && (
+                  <button
+                    onClick={() => setDrafting({ invoice: inv, stage })}
+                    title={`Draft the day ${stage} follow-up message`}
+                    className="text-[10px] px-2 py-0.5 rounded border border-primary/40 text-primary bg-primary/10 hover:bg-primary/20 uppercase tracking-wider transition-all press-scale inline-flex items-center gap-1"
+                  >
+                    <Mail className="h-3 w-3" /> Draft
+                  </button>
+                )}
               </div>
             </div>
           ))}
