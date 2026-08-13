@@ -20,12 +20,15 @@ import { Pencil, Trash2, Users } from "lucide-react";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCompany } from "@/lib/company-context";
+import { useEffectiveRole } from "@/lib/use-effective-role";
 
 export const Route = createFileRoute("/_authenticated/team")({ component: TeamPage });
 
 function TeamPage() {
   const allTeam = useTeamMembers();
   const { scope, accessibleCompanies } = useCompany();
+  // Everyone with company access can see their people; only admins may change them.
+  const { isAdmin } = useEffectiveRole();
   const team = scope.id === "group"
     ? allTeam
     : allTeam.filter((m) => m.companyId === undefined || m.companyId === scope.companyId);
