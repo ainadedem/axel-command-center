@@ -58,8 +58,18 @@ function restrictLocalStores(allowedCompanies: Company[]) {
   keepCompanyScoped(recurringBillingsStore, allowedCompanyIds);
   keepCompanyScoped(salaryRegisterStore, allowedCompanyIds);
   keepCompanyScoped(payrollRunsStore, allowedCompanyIds);
-  if (teamMembersStore.items.length) teamMembersStore.replaceAll([]);
-  if (salesMembersStore.items.length) salesMembersStore.replaceAll([]);
+
+  // People are company-scoped, not wiped: a member is kept when they belong to
+  // an accessible company or are marked "All companies" (companyId === undefined).
+  // Clearing the store here used to leave every company Team page empty.
+  const visibleMembers = teamMembersStore.items.filter(
+    (m) => m.companyId === undefined || (typeof m.companyId === "string" && allowedCompanyIds.has(m.companyId)),
+  );
+  if (visibleMembers.length !== teamMembersStore.items.length) teamMembersStore.replaceAll(visibleMembers);
+
+  const visibleMemberIds = new Set(visibleMembers.map((m) => m.id));
+  const visibleSales = salesMembersStore.items.filter((s) => visibleMemberIds.has(s.teamMemberId));
+  if (visibleSales.length !== salesMembersStore.items.length) salesMembersStore.replaceAll(visibleSales);
 }
 
 type Scope = { id: "group" } | { id: "company"; companyId: string };
