@@ -44,6 +44,38 @@ export function setCompanyIdMap(entries: Array<{ localId: string; dbId: string }
 
 const toDbCompanyId = (localId: string) => companyDbIdByLocal.get(localId);
 
+/**
+ * Company db ids the signed-in user is allowed to write to. `null` means
+ * unrestricted (platform admin, or access not resolved yet). Local demo seeds
+ * used to replay into the backend for every user and got rejected row by row
+ * by row-level security, so writes to companies outside this set are skipped.
+ */
+let writableCompanyDbIds: Set<string> | null = null;
+
+export function setWritableCompanies(dbIds: string[] | null) {
+  writableCompanyDbIds = dbIds ? new Set(dbIds) : null;
+}
+
+export const canWriteCompany = (dbCompanyId: string) =>
+  !writableCompanyDbIds || writableCompanyDbIds.has(dbCompanyId);
+
+let lastWriteErrorAt = 0;
+/** Surface save failures instead of swallowing them (throttled for bulk imports). */
+function reportWriteError(what: string, message: string) {
+  console.warn(`[db-sync] ${what}`, message);
+  if (typeof window === "undefined") return;
+  const now = Date.now();
+  if (now - lastWriteErrorAt < 4000) return;
+  lastWriteErrorAt = now;
+  void import("sonner").then(({ toast }) =>
+    toast.error("Could not save to the backend", {
+      description: message.includes("row-level security")
+        ? "You do not have permission to save data for this company."
+        : message,
+    }),
+  );
+}
+
 /** Public lookup: local company id (or uuid) → DB uuid, when known. */
 export const dbCompanyId = (localId: string): string | undefined =>
   companyDbIdByLocal.get(localId) ?? (companyLocalIdByDb.has(localId) ? localId : undefined);
