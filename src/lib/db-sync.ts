@@ -1089,6 +1089,10 @@ const expenseFromDb = (r: Record<string, unknown>): Expense => ({
   attachmentUrl: (r.attachment_url as string) ?? undefined,
   attachmentName: (r.attachment_name as string) ?? undefined,
   createdBy: (r.created_by as string) ?? undefined,
+  paymentCycle: (r.payment_cycle as Expense["paymentCycle"]) ?? undefined,
+  fundingInvoiceId: (r.funding_invoice_id as string) ?? undefined,
+  medicalClaim: Boolean(r.medical_claim),
+  reimbursablePct: r.reimbursable_pct == null ? undefined : Number(r.reimbursable_pct),
 });
 
 export async function upsertExpense(e: Expense): Promise<string | null> {
