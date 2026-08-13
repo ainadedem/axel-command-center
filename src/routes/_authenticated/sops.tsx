@@ -225,8 +225,9 @@ function Kpi({ label, value, accent, mono }: { label: string; value: string; acc
 
 /* ─── Compliance tab ────────────────────────────────────────────────── */
 
-function ComplianceTab({ violations }: { violations: Violation[] }) {
+function ComplianceTab({ violations, summary }: { violations: Violation[]; summary: WeeklySummary }) {
   const companies = useCompanies();
+  const { ownerName } = useOwnerNames(summary.owners.map((o) => o.ownerId));
   const [severity, setSeverity] = useState<"all" | "critical" | "warning">("all");
   const [rule, setRule] = useState("all");
 
