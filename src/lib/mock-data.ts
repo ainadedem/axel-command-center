@@ -398,7 +398,13 @@ export interface PurchaseOrder {
   updatedBy?: string;
   /** ISO timestamp of the last edit. */
   updatedAt?: string;
+  /**
+   * SOP-OPS-FIN-002 §2: buying legal entity on the client side, e.g.
+   * "Airtel Madagascar S.A." vs "Airtel Mobile Commerce Madagascar S.A.".
+   */
+  buyingEntity?: string;
 }
+
 
 
 
