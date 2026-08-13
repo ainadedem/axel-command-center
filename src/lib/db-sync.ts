@@ -15,6 +15,8 @@ import {
   expensesStore, recurringBillingsStore,
   teamMembersStore, salesMembersStore,
   salaryRegisterStore, payrollRunsStore,
+  pvrRecordsStore, invoiceEscalationsStore,
+  type PvrRecord, type InvoiceEscalation,
   type Client, type Supplier, type Project,
   type Account, type Category, type Budget,
   type Transaction, type Invoice, type QuoteLine,
@@ -618,6 +620,12 @@ const invoiceToDb = (inv: Invoice) => {
     cancellation_reason: inv.cancellationReason ?? null,
     subject: inv.subject ?? null,
     bank_account_id: inv.bankAccountId ?? null,
+    ingestion_date: inv.ingestionDate ?? null,
+    handover_proof_url: inv.handoverProofUrl ?? null,
+    handover_proof_name: inv.handoverProofName ?? null,
+    handover_stamped_at: inv.handoverStampedAt ?? null,
+    handover_by: inv.handoverBy ?? null,
+    dating_note: inv.datingNote ?? null,
     ...(inv.createdBy && isUuid(inv.createdBy) ? { created_by: inv.createdBy } : {}),
     ...(inv.updatedBy && isUuid(inv.updatedBy) ? { updated_by: inv.updatedBy } : {}),
   };
@@ -646,6 +654,12 @@ const invoiceFromDb = (r: Record<string, unknown>, lines: QuoteLine[]): Invoice 
   cancellationReason: (r.cancellation_reason as string) ?? undefined,
   subject: (r.subject as string) ?? undefined,
   bankAccountId: (r.bank_account_id as string) ?? undefined,
+  ingestionDate: (r.ingestion_date as string) ?? undefined,
+  handoverProofUrl: (r.handover_proof_url as string) ?? undefined,
+  handoverProofName: (r.handover_proof_name as string) ?? undefined,
+  handoverStampedAt: (r.handover_stamped_at as string) ?? undefined,
+  handoverBy: (r.handover_by as string) ?? undefined,
+  datingNote: (r.dating_note as string) ?? undefined,
   createdBy: (r.created_by as string) ?? undefined,
   updatedBy: (r.updated_by as string) ?? undefined,
   updatedAt: (r.updated_at as string) ?? undefined,
@@ -992,6 +1006,7 @@ const poToDb = (p: PurchaseOrder) => {
     lines: (p.lines ?? null) as unknown as never,
     subject: p.subject ?? null,
     bank_account_id: p.bankAccountId ?? null,
+    buying_entity: p.buyingEntity ?? null,
     ...(p.createdBy && isUuid(p.createdBy) ? { created_by: p.createdBy } : {}),
     ...(p.updatedBy && isUuid(p.updatedBy) ? { updated_by: p.updatedBy } : {}),
   };
@@ -1018,6 +1033,7 @@ const poFromDb = (r: Record<string, unknown>): PurchaseOrder => ({
   subject: (r.subject as string) ?? undefined,
   bankAccountId: (r.bank_account_id as string) ?? undefined,
   createdBy: (r.created_by as string) ?? undefined,
+  buyingEntity: (r.buying_entity as string) ?? undefined,
   updatedBy: (r.updated_by as string) ?? undefined,
   updatedAt: (r.updated_at as string) ?? undefined,
 });
@@ -1059,8 +1075,13 @@ const expenseToDb = (e: Expense) => {
     project_id: e.projectId && isUuid(e.projectId) ? e.projectId : null,
     attachment_url: e.attachmentUrl ?? null,
     attachment_name: e.attachmentName ?? null,
+    payment_cycle: e.paymentCycle ?? null,
+    funding_invoice_id: e.fundingInvoiceId && isUuid(e.fundingInvoiceId) ? e.fundingInvoiceId : null,
+    medical_claim: e.medicalClaim ?? false,
+    reimbursable_pct: e.reimbursablePct ?? null,
     ...(e.createdBy && isUuid(e.createdBy) ? { created_by: e.createdBy } : {}),
   };
+
 
 };
 const expenseFromDb = (r: Record<string, unknown>): Expense => ({
@@ -1084,6 +1105,10 @@ const expenseFromDb = (r: Record<string, unknown>): Expense => ({
   attachmentUrl: (r.attachment_url as string) ?? undefined,
   attachmentName: (r.attachment_name as string) ?? undefined,
   createdBy: (r.created_by as string) ?? undefined,
+  paymentCycle: (r.payment_cycle as Expense["paymentCycle"]) ?? undefined,
+  fundingInvoiceId: (r.funding_invoice_id as string) ?? undefined,
+  medicalClaim: Boolean(r.medical_claim),
+  reimbursablePct: r.reimbursable_pct == null ? undefined : Number(r.reimbursable_pct),
 });
 
 export async function upsertExpense(e: Expense): Promise<string | null> {
@@ -1293,6 +1318,99 @@ export async function deletePayrollRunDb(id: string) {
   if (error) console.warn("[db-sync] deletePayrollRun", error.message);
 }
 
+/* ───────── SOP COMPLIANCE: PVR RECORDS ───────── */
+const pvrToDb = (p: PvrRecord) => {
+  const dbCompany = toDbCompanyId(p.companyId);
+  if (!dbCompany) return null;
+  return {
+    id: isUuid(p.id) ? p.id : undefined,
+    company_id: dbCompany,
+    invoice_id: p.invoiceId && isUuid(p.invoiceId) ? p.invoiceId : null,
+    project_id: p.projectId && isUuid(p.projectId) ? p.projectId : null,
+    quote_id: p.quoteId && isUuid(p.quoteId) ? p.quoteId : null,
+    reference: p.reference ?? null,
+    signed_date: p.signedDate,
+    completion_pct: p.completionPct,
+    signed_by: p.signedBy ?? null,
+    scm_coordinator: p.scmCoordinator ?? null,
+    document_url: p.documentUrl ?? null,
+    document_name: p.documentName ?? null,
+    notes: p.notes ?? null,
+    ...(p.createdBy && isUuid(p.createdBy) ? { created_by: p.createdBy } : {}),
+  };
+};
+const pvrFromDb = (r: Record<string, unknown>): PvrRecord => ({
+  id: r.id as string,
+  companyId: toLocalCompanyId(r.company_id as string),
+  invoiceId: (r.invoice_id as string) ?? undefined,
+  projectId: (r.project_id as string) ?? undefined,
+  quoteId: (r.quote_id as string) ?? undefined,
+  reference: (r.reference as string) ?? undefined,
+  signedDate: (r.signed_date as string) ?? "",
+  completionPct: Number(r.completion_pct) || 0,
+  signedBy: (r.signed_by as string) ?? undefined,
+  scmCoordinator: (r.scm_coordinator as string) ?? undefined,
+  documentUrl: (r.document_url as string) ?? undefined,
+  documentName: (r.document_name as string) ?? undefined,
+  notes: (r.notes as string) ?? undefined,
+  createdBy: (r.created_by as string) ?? undefined,
+  createdAt: (r.created_at as string) ?? undefined,
+});
+export async function upsertPvrRecord(p: PvrRecord): Promise<string | null> {
+  const row = pvrToDb(p);
+  if (!row) return null;
+  if (!canWriteCompany(row.company_id)) return null;
+  const { data, error } = await supabase.from("pvr_records").upsert(row).select("id").single();
+  if (error) { reportWriteError("upsertPvrRecord", error.message); return null; }
+  return data.id;
+}
+export async function deletePvrRecordDb(id: string) {
+  if (!isUuid(id)) return;
+  const { error } = await supabase.from("pvr_records").delete().eq("id", id);
+  if (error) reportWriteError("deletePvrRecord", error.message);
+}
+
+/* ───────── SOP COMPLIANCE: AR ESCALATIONS ───────── */
+const escToDb = (e: InvoiceEscalation) => {
+  const dbCompany = toDbCompanyId(e.companyId);
+  if (!dbCompany || !isUuid(e.invoiceId)) return null;
+  return {
+    id: isUuid(e.id) ? e.id : undefined,
+    company_id: dbCompany,
+    invoice_id: e.invoiceId,
+    stage: e.stage,
+    action: e.action,
+    notes: e.notes ?? null,
+    performed_at: e.performedAt,
+    performed_by_name: e.performedByName ?? null,
+    ...(e.performedBy && isUuid(e.performedBy) ? { performed_by: e.performedBy } : {}),
+  };
+};
+const escFromDb = (r: Record<string, unknown>): InvoiceEscalation => ({
+  id: r.id as string,
+  companyId: toLocalCompanyId(r.company_id as string),
+  invoiceId: (r.invoice_id as string) ?? "",
+  stage: Number(r.stage) || 0,
+  action: (r.action as string) ?? "",
+  notes: (r.notes as string) ?? undefined,
+  performedAt: (r.performed_at as string) ?? "",
+  performedBy: (r.performed_by as string) ?? undefined,
+  performedByName: (r.performed_by_name as string) ?? undefined,
+});
+export async function upsertInvoiceEscalation(e: InvoiceEscalation): Promise<string | null> {
+  const row = escToDb(e);
+  if (!row) return null;
+  if (!canWriteCompany(row.company_id)) return null;
+  const { data, error } = await supabase.from("invoice_escalations").upsert(row).select("id").single();
+  if (error) { reportWriteError("upsertInvoiceEscalation", error.message); return null; }
+  return data.id;
+}
+export async function deleteInvoiceEscalationDb(id: string) {
+  if (!isUuid(id)) return;
+  const { error } = await supabase.from("invoice_escalations").delete().eq("id", id);
+  if (error) reportWriteError("deleteInvoiceEscalation", error.message);
+}
+
 /* ───────── REGISTER + HYDRATE + SEED for extras ───────── */
 export function registerExtraSync() {
   opportunitiesStore.setSync({ upsert: upsertOpportunity, remove: deleteOpportunityDb });
@@ -1304,10 +1422,12 @@ export function registerExtraSync() {
   salesMembersStore.setSync({ upsert: upsertSalesMember, remove: deleteSalesMemberDb });
   salaryRegisterStore.setSync({ upsert: upsertSalaryRegister, remove: deleteSalaryRegisterDb });
   payrollRunsStore.setSync({ upsert: upsertPayrollRun, remove: deletePayrollRunDb });
+  pvrRecordsStore.setSync({ upsert: upsertPvrRecord, remove: deletePvrRecordDb });
+  invoiceEscalationsStore.setSync({ upsert: upsertInvoiceEscalation, remove: deleteInvoiceEscalationDb });
 }
 
 export async function hydrateExtras(scope: HydrationScope = { mode: "all" }) {
-  const [ops, qts, pos, exps, rbs, srs, prs] = await Promise.all([
+  const [ops, qts, pos, exps, rbs, srs, prs, pvrs, escs] = await Promise.all([
     fetchScopedRows("opportunities", scope),
     fetchScopedRows("quotes", scope),
     fetchScopedRows("purchase_orders", scope),
@@ -1315,7 +1435,12 @@ export async function hydrateExtras(scope: HydrationScope = { mode: "all" }) {
     fetchScopedRows("recurring_billings", scope),
     fetchScopedRows("salary_register", scope),
     fetchScopedRows("payroll_runs", scope),
+    fetchScopedRows("pvr_records", scope),
+    fetchScopedRows("invoice_escalations", scope),
   ]);
+  pvrRecordsStore.replaceAll(pvrs.map((r) => pvrFromDb(r)));
+  invoiceEscalationsStore.replaceAll(escs.map((r) => escFromDb(r)));
+
   opportunitiesStore.replaceAll(ops.map((r) => opportunityFromDb(r)));
   quotesStore.replaceAll(qts.map((r) => quoteFromDb(r)));
   purchaseOrdersStore.replaceAll(pos.map((r) => poFromDb(r)));

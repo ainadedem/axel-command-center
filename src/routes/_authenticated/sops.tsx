@@ -1,0 +1,435 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { format, parseISO } from "date-fns";
+import { AppShell } from "@/components/app-shell";
+import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { inScope, useCompany } from "@/lib/company-context";
+import { newId } from "@/lib/data-store";
+import { useAuth } from "@/lib/auth-context";
+import { exportCsvRows } from "@/lib/export-csv";
+import {
+  useInvoices, usePurchaseOrders, useExpenses, useClients, useCompanies,
+  usePvrRecords, useInvoiceEscalations,
+  invoiceEscalationsStore, fmtAmount,
+  type Invoice, type InvoiceEscalation,
+} from "@/lib/mock-data";
+import {
+  SOPS, evaluateCompliance, agingDays, dueStage, ESCALATION_STAGES, STAGE_ACTIONS,
+  type Violation, type SopDoc,
+} from "@/lib/sop";
+import { ShieldCheck, AlertTriangle, Download, BookText, CheckCircle2, Clock } from "lucide-react";
+
+export const Route = createFileRoute("/_authenticated/sops")({
+  component: SopsPage,
+  head: () => ({
+    meta: [
+      { title: "SOPs & Compliance — Axel" },
+      { name: "description", content: "Standard operating procedures and live compliance monitoring for invoicing, receivables and payables." },
+      { property: "og:title", content: "SOPs & Compliance — Axel" },
+      { property: "og:description", content: "Standard operating procedures and live compliance monitoring for invoicing, receivables and payables." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+});
+
+function SopsPage() {
+  return (
+    <AppShell>
+      <PageHeader title="SOPs & Compliance" description="Operating procedures and the live checks that enforce them." />
+      <Body />
+    </AppShell>
+  );
+}
+
+type Tab = "dashboard" | "escalations" | "library";
+
+function Body() {
+  const { scope } = useCompany();
+  const [tab, setTab] = useState<Tab>("dashboard");
+
+  const invoices = inScope(useInvoices(), scope);
+  const purchaseOrders = inScope(usePurchaseOrders(), scope);
+  const expenses = inScope(useExpenses(), scope);
+  const pvrs = inScope(usePvrRecords(), scope);
+  const escalations = inScope(useInvoiceEscalations(), scope);
+
+  const violations = useMemo(
+    () => evaluateCompliance({ invoices, purchaseOrders, expenses, pvrs, escalations }),
+    [invoices, purchaseOrders, expenses, pvrs, escalations],
+  );
+
+  const critical = violations.filter((v) => v.severity === "critical").length;
+  const warnings = violations.length - critical;
+  const checked = invoices.length + purchaseOrders.length + expenses.length;
+  const flagged = new Set(violations.map((v) => v.entityId)).size;
+  const rate = checked === 0 ? 100 : Math.round(((checked - flagged) / checked) * 100);
+
+  return (
+    <div className="p-8 space-y-5">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <Kpi label="Compliance rate" value={`${rate}%`} accent={rate >= 90 ? "text-success" : rate >= 70 ? "text-warning" : "text-destructive"} />
+        <Kpi label="Critical violations" value={String(critical)} mono accent={critical > 0 ? "text-destructive" : undefined} />
+        <Kpi label="Warnings" value={String(warnings)} mono accent={warnings > 0 ? "text-warning" : undefined} />
+        <Kpi label="Records checked" value={String(checked)} mono />
+      </div>
+
+      <div className="flex items-center gap-1 rounded-xl border border-border bg-[var(--gradient-surface)] p-1 w-fit">
+        {([
+          ["dashboard", "Compliance", ShieldCheck],
+          ["escalations", "AR escalations", Clock],
+          ["library", "SOP library", BookText],
+        ] as const).map(([id, label, Icon]) => (
+          <button
+            key={id}
+            onClick={() => setTab(id)}
+            className={cn(
+              "px-3.5 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-all",
+              tab === id ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated",
+            )}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "dashboard" && <ComplianceTab violations={violations} />}
+      {tab === "escalations" && <EscalationsTab invoices={invoices} escalations={escalations} />}
+      {tab === "library" && <LibraryTab />}
+    </div>
+  );
+}
+
+function Kpi({ label, value, accent, mono }: { label: string; value: string; accent?: string; mono?: boolean }) {
+  return (
+    <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={cn("mt-1 text-xl font-display font-semibold", mono && "font-tnum", accent)}>{value}</div>
+    </div>
+  );
+}
+
+/* ─── Compliance tab ────────────────────────────────────────────────── */
+
+function ComplianceTab({ violations }: { violations: Violation[] }) {
+  const companies = useCompanies();
+  const [severity, setSeverity] = useState<"all" | "critical" | "warning">("all");
+  const [rule, setRule] = useState("all");
+
+  const rules = useMemo(() => {
+    const m = new Map<string, string>();
+    violations.forEach((v) => m.set(v.ruleId, v.ruleLabel));
+    return [...m.entries()];
+  }, [violations]);
+
+  const list = violations.filter(
+    (v) => (severity === "all" || v.severity === severity) && (rule === "all" || v.ruleId === rule),
+  );
+
+  const exportAll = () => {
+    exportCsvRows(
+      `sop-compliance-${format(new Date(), "yyyy-MM-dd")}.csv`,
+      ["Severity", "Rule", "Type", "Reference", "Company", "Amount", "Currency", "Detail"],
+      list.map((v) => [
+        v.severity,
+        v.ruleLabel,
+        v.entity,
+        v.reference,
+        companies.find((c) => c.id === v.companyId)?.shortName ?? "",
+        v.amount ?? "",
+        v.currency ?? "",
+        v.detail,
+      ]),
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Select value={severity} onValueChange={(v) => setSeverity(v as typeof severity)}>
+          <SelectTrigger className="w-40" aria-label="Filter by severity"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All severities</SelectItem>
+            <SelectItem value="critical">Critical only</SelectItem>
+            <SelectItem value="warning">Warnings only</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={rule} onValueChange={setRule}>
+          <SelectTrigger className="w-64" aria-label="Filter by rule"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All rules</SelectItem>
+            {rules.map(([id, label]) => <SelectItem key={id} value={id}>{label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <div className="flex-1" />
+        <Button variant="outline" size="sm" onClick={exportAll} disabled={list.length === 0}>
+          <Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV
+        </Button>
+      </div>
+
+      {list.length === 0 ? (
+        <div className="rounded-xl border border-success/30 bg-success/5 p-10 text-center">
+          <CheckCircle2 className="h-8 w-8 mx-auto text-success" />
+          <div className="mt-3 font-display text-lg font-semibold">All checks pass</div>
+          <p className="text-sm text-muted-foreground mt-1">No SOP violations in the current workspace.</p>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
+          <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+            <div className="col-span-2">Rule</div>
+            <div className="col-span-2">Reference</div>
+            <div className="col-span-1">Company</div>
+            <div className="col-span-4">Detail</div>
+            <div className="col-span-2 text-right">Exposure</div>
+            <div className="col-span-1 text-right">Severity</div>
+          </div>
+          {list.map((v, idx) => (
+            <div key={`${v.ruleId}-${v.entityId}-${idx}`} className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated/60 transition">
+              <div className="col-span-2 text-sm font-medium truncate">{v.ruleLabel}</div>
+              <div className="col-span-2 text-sm font-tnum truncate">{v.reference}</div>
+              <div className="col-span-1 text-[11px] font-mono text-muted-foreground truncate">
+                {companies.find((c) => c.id === v.companyId)?.shortName ?? "—"}
+              </div>
+              <div className="col-span-4 text-xs text-muted-foreground">{v.detail}</div>
+              <div className="col-span-2 text-right text-sm font-tnum">
+                {v.amount != null && v.currency ? fmtAmount(v.amount, v.currency as never) : "—"}
+              </div>
+              <div className="col-span-1 flex justify-end">
+                <span className={cn(
+                  "text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider border inline-flex items-center gap-1",
+                  v.severity === "critical"
+                    ? "border-destructive/40 text-destructive bg-destructive/10"
+                    : "border-warning/40 text-warning bg-warning/10",
+                )}>
+                  <AlertTriangle className="h-3 w-3" />
+                  {v.severity}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── AR escalations tab ────────────────────────────────────────────── */
+
+function EscalationsTab({ invoices, escalations }: { invoices: Invoice[]; escalations: InvoiceEscalation[] }) {
+  const clients = useClients();
+  const [logging, setLogging] = useState<{ invoice: Invoice; stage: number } | null>(null);
+
+  const rows = useMemo(() => {
+    return invoices
+      .filter((i) => i.status !== "cancelled" && i.status !== "draft" && i.amount - i.paid > 0.5)
+      .map((i) => {
+        const done = new Set(escalations.filter((e) => e.invoiceId === i.id).map((e) => e.stage));
+        return { inv: i, days: agingDays(i), stage: dueStage(i), done };
+      })
+      .filter((r) => r.stage > 0)
+      .sort((a, b) => b.days - a.days);
+  }, [invoices, escalations]);
+
+  return (
+    <div className="space-y-4">
+      {rows.length === 0 ? (
+        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-10 text-center text-sm text-muted-foreground">
+          No open invoice has reached day 15 yet.
+        </div>
+      ) : (
+        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
+          <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+            <div className="col-span-2">Invoice</div>
+            <div className="col-span-3">Client</div>
+            <div className="col-span-2 text-right">Balance</div>
+            <div className="col-span-1 text-right">Age</div>
+            <div className="col-span-4">Ladder</div>
+          </div>
+          {rows.map(({ inv, days, stage, done }) => (
+            <div key={inv.id} className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated/60 transition">
+              <div className="col-span-2 text-sm font-tnum truncate">{inv.number}</div>
+              <div className="col-span-3 text-sm truncate">{clients.find((c) => c.id === inv.clientId)?.name ?? "—"}</div>
+              <div className="col-span-2 text-right text-sm font-tnum">{fmtAmount(inv.amount - inv.paid, inv.currency)}</div>
+              <div className={cn("col-span-1 text-right text-sm font-tnum", days >= 60 ? "text-destructive" : days >= 30 ? "text-warning" : "")}>{days}d</div>
+              <div className="col-span-4 flex flex-wrap gap-1">
+                {ESCALATION_STAGES.map((s) => {
+                  const isDone = done.has(s);
+                  const isDue = s <= stage;
+                  return (
+                    <button
+                      key={s}
+                      disabled={isDone || !isDue}
+                      onClick={() => setLogging({ invoice: inv, stage: s })}
+                      title={isDone ? "Logged" : isDue ? `Log day ${s} action` : `Due at day ${s}`}
+                      className={cn(
+                        "text-[10px] px-2 py-0.5 rounded border uppercase tracking-wider transition-all",
+                        isDone && "border-success/40 text-success bg-success/10",
+                        !isDone && isDue && "border-destructive/40 text-destructive bg-destructive/10 hover:bg-destructive/20 press-scale",
+                        !isDue && "border-border text-muted-foreground opacity-60",
+                      )}
+                    >
+                      D{s}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
+        <div className="px-4 py-2.5 text-sm font-medium border-b border-border">Logged actions</div>
+        {escalations.length === 0 ? (
+          <div className="px-4 py-6 text-sm text-muted-foreground">Nothing logged yet.</div>
+        ) : (
+          [...escalations]
+            .sort((a, b) => b.performedAt.localeCompare(a.performedAt))
+            .slice(0, 40)
+            .map((e) => (
+              <div key={e.id} className="px-4 py-2.5 border-b border-border/40 last:border-0 flex items-start gap-3">
+                <span className="text-[10px] px-1.5 py-0.5 rounded border border-primary/30 text-primary bg-primary/10 uppercase tracking-wider shrink-0">D{e.stage}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm truncate">
+                    {invoices.find((i) => i.id === e.invoiceId)?.number ?? "—"} — {e.action}
+                  </div>
+                  {e.notes && <div className="text-xs text-muted-foreground">{e.notes}</div>}
+                </div>
+                <div className="text-[11px] text-muted-foreground shrink-0">
+                  {format(parseISO(e.performedAt), "MMM d, yyyy")}
+                  {e.performedByName ? ` · ${e.performedByName}` : ""}
+                </div>
+              </div>
+            ))
+        )}
+      </div>
+
+      <LogEscalationDialog target={logging} onClose={() => setLogging(null)} />
+    </div>
+  );
+}
+
+function LogEscalationDialog({ target, onClose }: { target: { invoice: Invoice; stage: number } | null; onClose: () => void }) {
+  const { user, profile } = useAuth() as { user?: { id?: string } | null; profile?: { displayName?: string; display_name?: string } | null };
+  const [action, setAction] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const stage = target?.stage ?? 0;
+  const preset = STAGE_ACTIONS[stage] ?? "";
+
+  const submit = () => {
+    if (!target) return;
+    invoiceEscalationsStore.add({
+      id: newId("esc"),
+      companyId: target.invoice.companyId,
+      invoiceId: target.invoice.id,
+      stage: target.stage,
+      action: action.trim() || preset,
+      notes: notes.trim() || undefined,
+      performedAt: new Date().toISOString(),
+      performedBy: user?.id,
+      performedByName: profile?.displayName ?? profile?.display_name ?? undefined,
+    });
+    setAction("");
+    setNotes("");
+    onClose();
+  };
+
+  return (
+    <Dialog open={!!target} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Log day {stage} action — {target?.invoice.number}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="esc-action">Action taken</Label>
+            <Input id="esc-action" value={action} onChange={(e) => setAction(e.target.value)} placeholder={preset} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="esc-notes">Notes</Label>
+            <Textarea id="esc-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Who was contacted, response received, next step…" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={submit}>Log action</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ─── SOP library tab ───────────────────────────────────────────────── */
+
+function LibraryTab() {
+  const [openId, setOpenId] = useState(SOPS[0]?.id ?? "");
+  const doc = SOPS.find((s) => s.id === openId) ?? SOPS[0];
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
+      <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden h-fit">
+        {SOPS.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setOpenId(s.id)}
+            className={cn(
+              "w-full text-left px-4 py-3 border-b border-border/40 last:border-0 transition-colors",
+              s.id === openId ? "bg-primary/10" : "hover:bg-surface-elevated/60",
+            )}
+          >
+            <div className="text-[10px] font-mono text-muted-foreground">{s.code}</div>
+            <div className="text-sm font-medium">{s.title}</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5">v{s.version} · {s.effectiveDate}</div>
+          </button>
+        ))}
+      </div>
+      {doc && <SopBody doc={doc} />}
+    </div>
+  );
+}
+
+function SopBody({ doc }: { doc: SopDoc }) {
+  return (
+    <article className="rounded-xl border border-border bg-[var(--gradient-surface)] p-6 space-y-5">
+      <header className="space-y-2 pb-4 border-b border-border/60">
+        <div className="text-[11px] font-mono text-muted-foreground">{doc.code} · v{doc.version} · effective {doc.effectiveDate}</div>
+        <h2 className="font-display text-2xl font-bold tracking-tight">{doc.title}</h2>
+        <div className="text-sm text-muted-foreground">Owner: {doc.owner}</div>
+      </header>
+      <section className="space-y-1">
+        <h3 className="text-xs uppercase tracking-wider text-muted-foreground">Purpose</h3>
+        <p className="text-sm leading-relaxed">{doc.purpose}</p>
+      </section>
+      <section className="space-y-1">
+        <h3 className="text-xs uppercase tracking-wider text-muted-foreground">Scope</h3>
+        <p className="text-sm leading-relaxed">{doc.scope}</p>
+      </section>
+      {doc.sections.map((s) => (
+        <section key={s.heading} className="space-y-2">
+          <h3 className="font-display text-base font-semibold">{s.heading}</h3>
+          <div className="space-y-1.5">
+            {s.body.map((line, i) =>
+              line.startsWith("- ") ? (
+                <div key={i} className="flex gap-2 text-sm leading-relaxed">
+                  <span className="text-primary mt-1.5 h-1 w-1 rounded-full bg-primary shrink-0" aria-hidden />
+                  <span>{line.slice(2)}</span>
+                </div>
+              ) : (
+                <p key={i} className="text-sm leading-relaxed text-muted-foreground">{line}</p>
+              ),
+            )}
+          </div>
+        </section>
+      ))}
+    </article>
+  );
+}

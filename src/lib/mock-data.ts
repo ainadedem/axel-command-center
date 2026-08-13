@@ -275,7 +275,21 @@ export interface Invoice {
   updatedBy?: string;
   /** ISO timestamp of the last edit. */
   updatedAt?: string;
+
+  /* ── SOP-OPS-FIN-002: dating control & handover archive ── */
+  /** Business day the invoice actually entered the client's processing system. */
+  ingestionDate?: string;
+  /** Stamped receiving-desk scan (Alarobia handover rule). */
+  handoverProofUrl?: string;
+  handoverProofName?: string;
+  /** ISO timestamp the hard copy was stamped by the receiving desk. */
+  handoverStampedAt?: string;
+  /** Who physically delivered the hard copy. */
+  handoverBy?: string;
+  /** Justification when the issue date differs from the ingestion date. */
+  datingNote?: string;
 }
+
 
 
 /* ─── Sales process: Quote → PO → Invoice ───────────────────────────── */
@@ -384,7 +398,13 @@ export interface PurchaseOrder {
   updatedBy?: string;
   /** ISO timestamp of the last edit. */
   updatedAt?: string;
+  /**
+   * SOP-OPS-FIN-002 §2: buying legal entity on the client side, e.g.
+   * "Airtel Madagascar S.A." vs "Airtel Mobile Commerce Madagascar S.A.".
+   */
+  buyingEntity?: string;
 }
+
 
 
 
@@ -504,7 +524,27 @@ export interface Expense {
   attachmentName?: string;
   /** User id of whoever created this expense. */
   createdBy?: string;
+
+  /* ── SOP-OPS-FIN-002 §6: outflow controls ── */
+  /** Which disbursement rule governs this payout. */
+  paymentCycle?: PaymentCycle;
+  /** Back-to-back rule: the client invoice whose collection funds this payout. */
+  fundingInvoiceId?: string;
+  /** Verified consultant medical expense claim. */
+  medicalClaim?: boolean;
+  /** Reimbursable share (corporate tier, default 80%). */
+  reimbursablePct?: number;
 }
+
+/**
+ * SOP-OPS-FIN-002 §6 disbursement rules.
+ * - `thursday` — independent creative consultants / digital talent retainers.
+ * - `back_to_back` — talent micro-contracts paid only after client collection.
+ * - `medical` — reimbursable medical overhead, 30-day batch window.
+ * - `overhead` — fixed monthly subscription lines, cleared before the 31st.
+ */
+export type PaymentCycle = "thursday" | "back_to_back" | "medical" | "overhead" | "standard";
+
 
 
 /* ─── Recurring billing schedules ──────────────────────────────────── */
@@ -690,6 +730,50 @@ export const recurringBillingsStore = createCollection<RecurringBilling>("recurr
 export const salaryRegisterStore = createCollection<SalaryRegisterEntry>("salary-register", []);
 export const payrollRunsStore = createCollection<PayrollRun>("payroll-runs", []);
 
+/* ─── SOP-OPS-FIN-002: PVR records & collection escalations ─────────── */
+
+/** Procès-Verbal de Réception / Job Completion Certificate. */
+export interface PvrRecord {
+  id: string;
+  companyId: string;
+  /** Invoice the PVR backs (optional until factoring). */
+  invoiceId?: string;
+  projectId?: string;
+  quoteId?: string;
+  /** Matching quote / invoice identifier, e.g. "DEV/LOG/520". */
+  reference?: string;
+  /** Date the client signed the PVR. */
+  signedDate: string;
+  /** Realized service percentage — must declare 100% to be compliant. */
+  completionPct: number;
+  /** Client-side team leads who signed off. */
+  signedBy?: string;
+  /** Client SCM coordinator who validated the delivery. */
+  scmCoordinator?: string;
+  documentUrl?: string;
+  documentName?: string;
+  notes?: string;
+  createdBy?: string;
+  createdAt?: string;
+}
+
+/** One recorded step of the AR escalation ladder (day 15 / 30 / 45 / 60). */
+export interface InvoiceEscalation {
+  id: string;
+  companyId: string;
+  invoiceId: string;
+  /** 15 | 30 | 45 | 60 */
+  stage: number;
+  action: string;
+  notes?: string;
+  performedAt: string;
+  performedBy?: string;
+  performedByName?: string;
+}
+
+export const pvrRecordsStore = createCollection<PvrRecord>("pvr-records", []);
+export const invoiceEscalationsStore = createCollection<InvoiceEscalation>("invoice-escalations", []);
+
 /* ─── Live array exports (backward compatibility) ───────────────────── */
 
 export const companies = companiesStore.items;
@@ -731,6 +815,8 @@ export const useExpenses = () => useCollection(expensesStore);
 export const useRecurringBillings = () => useCollection(recurringBillingsStore);
 export const useSalaryRegister = () => useCollection(salaryRegisterStore);
 export const usePayrollRuns = () => useCollection(payrollRunsStore);
+export const usePvrRecords = () => useCollection(pvrRecordsStore);
+export const useInvoiceEscalations = () => useCollection(invoiceEscalationsStore);
 
 /** Convenience: list of sales-team people (with team name) filtered by role. */
 export function useSalesPeople(role: "acquisition" | "closer"): { id: string; teamMemberId: string; name: string }[] {
