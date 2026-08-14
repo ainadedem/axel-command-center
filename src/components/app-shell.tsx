@@ -411,9 +411,11 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
         <button
           onClick={handleNew}
           aria-label={newLabel}
-          className="h-9 px-4 focus-ring tap-target rounded-full text-sm font-medium bg-primary text-primary-foreground hover:opacity-95 hover:-translate-y-px hover:shadow-[var(--shadow-glow)] active:translate-y-0 active:scale-[0.97] transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] flex items-center gap-1.5 group"
+          title={newLabel}
+          className="h-9 w-9 sm:w-auto sm:px-4 focus-ring tap-target rounded-full text-sm font-medium bg-primary text-primary-foreground hover:opacity-95 hover:-translate-y-px hover:shadow-[var(--shadow-glow)] active:translate-y-0 active:scale-[0.97] transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] flex items-center justify-center gap-1.5 group"
         >
-          <Plus className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" /> {newLabel}
+          <Plus className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:rotate-90" />
+          <span className="hidden sm:inline">{newLabel}</span>
         </button>
         <div className="relative">
           <button
