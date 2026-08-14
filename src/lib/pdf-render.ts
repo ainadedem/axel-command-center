@@ -14,6 +14,8 @@
  * throws a real error instead of silently producing an empty document.
  */
 
+import { EXPORT_FONT_FACES, getInlineFontCss } from "@/lib/export-fonts";
+
 export type PageOrientation = "portrait" | "landscape";
 
 /** A4 at 96dpi — the same unit the on-screen preview sheet uses. */
@@ -29,6 +31,11 @@ export type RenderOptions = {
    * Page breaks snap to the nearest boundary above the natural cut.
    */
   avoidBreakSelector?: string;
+  /**
+   * Hard ceiling for web-font fetching / loading. When it elapses the export
+   * continues with the system fallback stack instead of hanging.
+   */
+  fontTimeoutMs?: number;
 };
 
 /** Bottom edges (in canvas px) of elements that must not be split. */
@@ -103,9 +110,13 @@ export async function renderHtmlToPdfBlob(html: string, opts: RenderOptions = {}
     doc.write(html);
     doc.close();
 
+    // Inline the cached web fonts so repeated exports skip the network and
+    // always rasterize with the exact same faces.
+    await injectCachedFonts(doc, opts.fontTimeoutMs ?? 4000);
+
     // Let layout settle, then wait for images + fonts inside the frame.
     await nextFrame(win);
-    await Promise.all([waitForImages(doc), waitForFonts(doc)]);
+    await Promise.all([waitForImages(doc), waitForFonts(doc, opts.fontTimeoutMs ?? 4000)]);
     await nextFrame(win);
 
     const body = doc.body;
@@ -270,20 +281,26 @@ async function waitForImages(doc: Document) {
  * Inter body). Faces must resolve before the snapshot or the PDF silently
  * falls back to Helvetica.
  */
-const PDF_FONT_FACES = [
-  '400 12px "Inter"',
-  '500 12px "Inter"',
-  '600 12px "Inter"',
-  '700 12px "Inter"',
-  '600 12px "Plus Jakarta Sans"',
-  '700 12px "Plus Jakarta Sans"',
-  '800 28px "Plus Jakarta Sans"',
-];
+const PDF_FONT_FACES = EXPORT_FONT_FACES;
 
-async function waitForFonts(doc: Document): Promise<void> {
+/** Injects the session-cached `@font-face` payloads into the export frame. */
+async function injectCachedFonts(doc: Document, timeoutMs: number): Promise<void> {
+  try {
+    const css = await getInlineFontCss(timeoutMs);
+    if (!css) return;
+    const style = doc.createElement("style");
+    style.setAttribute("data-export-fonts", "inline");
+    style.textContent = css;
+    doc.head?.appendChild(style);
+  } catch {
+    /* fall back to the <link> tag already present in the document */
+  }
+}
+
+async function waitForFonts(doc: Document, timeoutMs = 4000): Promise<void> {
   const fonts = (doc as Document & { fonts?: FontFaceSet }).fonts;
   if (!fonts) return;
-  const timeout = new Promise<void>((resolve) => setTimeout(resolve, 5000));
+  const timeout = new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
   const load = (async () => {
     await Promise.all(PDF_FONT_FACES.map((f) => fonts.load(f).catch(() => undefined)));
     await fonts.ready;

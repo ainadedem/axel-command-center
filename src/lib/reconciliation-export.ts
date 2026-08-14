@@ -1,5 +1,6 @@
 import { downloadHtmlAsPdf } from "@/lib/pdf-render";
 import { exportCsvRows } from "@/lib/export-csv";
+import { EXPORT_FONT_LINKS, EXPORT_TYPOGRAPHY_CSS } from "@/lib/export-fonts";
 
 export interface ReconciliationLine {
   date: string;
@@ -175,9 +176,8 @@ function summaryHtml(s: ReconciliationSummary) {
 
 export async function exportReconciliationPdf(s: ReconciliationSummary) {
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>${reconciliationFileBase(s)}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<style>@page{size:A4;margin:0}html,body{margin:0;padding:0;background:#fff;font-family:'Inter',system-ui,sans-serif}</style>
+${EXPORT_FONT_LINKS}
+<style>${EXPORT_TYPOGRAPHY_CSS}@page{size:A4;margin:0}html,body{margin:0;padding:0;background:#fff;font-family:'Inter',system-ui,sans-serif}</style>
 </head><body>${summaryHtml(s)}</body></html>`;
   await downloadHtmlAsPdf(html, `${reconciliationFileBase(s)}.pdf`, { orientation: "portrait" });
 }
