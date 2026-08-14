@@ -737,15 +737,23 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
       </div>
 
       <table>
+        <colgroup>
+          <col style="width: ${w.desc.toFixed(3)}%;" />
+          <col style="width: ${w.qty.toFixed(3)}%;" />
+          ${unitVisible ? `<col style="width: ${w.unit.toFixed(3)}%;" />` : ""}
+          <col style="width: ${w.rate.toFixed(3)}%;" />
+          <col style="width: ${w.total.toFixed(3)}%;" />
+        </colgroup>
         <thead>
           <tr>
             <th>${esc(t.description)}</th>
-            <th class="num" style="width: 70px;">${esc(t.quantity)}</th>
-            ${unitVisible ? `<th class="num" style="width: 60px;">${esc(t.unit)}</th>` : ""}
-            <th class="num" style="width: 120px;">${esc(t.unitPrice)}</th>
-            <th class="num" style="width: 130px;">${esc(t.lineTotal)}</th>
+            <th class="num">${esc(t.quantity)}</th>
+            ${unitVisible ? `<th class="num">${esc(t.unit)}</th>` : ""}
+            <th class="num">${esc(t.unitPrice)}</th>
+            <th class="num">${esc(t.lineTotal)}</th>
           </tr>
         </thead>
+
         <tbody>${linesHtml}</tbody>
       </table>
 
