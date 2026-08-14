@@ -5,6 +5,7 @@
  */
 import { exportCsvRows } from "@/lib/export-csv";
 import { renderHtmlToPdfBlob, saveBlob, printHtmlFallback } from "@/lib/pdf-render";
+import { EXPORT_FONT_LINKS, EXPORT_TYPOGRAPHY_CSS, EXPORT_HEADING_FONT, EXPORT_BODY_FONT } from "@/lib/export-fonts";
 
 export type ExportColumn = {
   key: string;
@@ -27,7 +28,8 @@ export function exportTableCsv(filename: string, columns: ExportColumn[], rows: 
   );
 }
 
-function tableHtml(title: string, subtitle: string, columns: ExportColumn[], rows: ExportRow[]) {
+/** Exported for the typography regression check. */
+export function tableHtml(title: string, subtitle: string, columns: ExportColumn[], rows: ExportRow[]) {
   // Numeric (right-aligned) columns get a floor so full amounts never collide
   // with the neighbouring column when the on-screen width is tight.
   const raw = columns.map((c) => (c.align === "right" ? Math.max(c.width, 130) : c.width));
@@ -47,18 +49,17 @@ function tableHtml(title: string, subtitle: string, columns: ExportColumn[], row
     )
     .join("");
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+${EXPORT_FONT_LINKS}
 <style>
+  ${EXPORT_TYPOGRAPHY_CSS}
   @page { size: A4 landscape; margin: 0; }
   html, body { margin:0; padding:0; background:#ffffff; }
-  .sheet { font-family: 'Inter', system-ui, sans-serif; color:#1F1F1F; padding:12mm 10mm; box-sizing:border-box;
+  .sheet { font-family: ${EXPORT_BODY_FONT}; color:#1F1F1F; padding:12mm 10mm; box-sizing:border-box;
     width:297mm; min-height:210mm; background:#ffffff; }
-  .sheet h1 { font-family:'Plus Jakarta Sans', system-ui, sans-serif; font-size:16pt; margin:0 0 2mm; letter-spacing:-0.01em; }
+  .sheet h1 { font-family: ${EXPORT_HEADING_FONT}; font-size:16pt; margin:0 0 2mm; letter-spacing:-0.01em; }
   .sheet .sub { font-size:8pt; color:#5F6368; margin:0 0 6mm; }
   .sheet table { width:100%; border-collapse:collapse; table-layout:fixed; }
-  .sheet th { font-family:'Plus Jakarta Sans', system-ui, sans-serif; font-size:7.5pt; text-transform:uppercase; letter-spacing:0.06em;
+  .sheet th { font-family: ${EXPORT_HEADING_FONT}; font-size:7.5pt; text-transform:uppercase; letter-spacing:0.06em;
     color:#5F6368; border-bottom:1px solid #C9CCD1; padding:2.5mm 2mm; }
   .sheet td { font-size:8pt; padding:2.2mm 2mm; border-bottom:1px solid #E8EAED; word-wrap:break-word; overflow-wrap:anywhere; }
   .sheet tr { page-break-inside: avoid; }

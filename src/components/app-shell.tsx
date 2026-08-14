@@ -24,6 +24,7 @@ import { useFileUrl } from "@/hooks/use-file-url";
 
 import { AxelWordmark, AxelBraceMark } from "@/components/axel-wordmark";
 import { AXEL_AI_ENABLED } from "@/lib/features";
+import { prewarmExportFonts } from "@/lib/export-fonts";
 
 
 interface NavItem {
@@ -382,6 +383,12 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
       toast.error(`Could not redo: ${e instanceof Error ? e.message : "unknown error"}`);
     }
   };
+
+  // Warm the export font cache once so the first PDF is as fast as the next.
+  useEffect(() => {
+    const id = window.setTimeout(prewarmExportFonts, 1500);
+    return () => window.clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     const isTyping = (el: EventTarget | null) => {
