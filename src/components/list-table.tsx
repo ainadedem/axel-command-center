@@ -1,5 +1,5 @@
 import type { ReactNode, CSSProperties } from "react";
-import { Columns3, RotateCcw } from "lucide-react";
+import { Columns3, RotateCcw, MoveHorizontal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -176,7 +176,7 @@ export function RowAction({
 
 
 /** Toolbar control that switches optional columns on and off. */
-export function ColumnPicker({ prefs, className }: { prefs: ColumnPrefs; className?: string }) {
+export function ColumnPicker({ prefs, className, onResetWidths }: { prefs: ColumnPrefs; className?: string; onResetWidths?: () => void }) {
   const hidden = prefs.columns.filter((c) => !prefs.on(c.key)).length;
   return (
     <DropdownMenu>
