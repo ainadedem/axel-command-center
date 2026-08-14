@@ -55,6 +55,7 @@ const statusStyles: Record<string, string> = {
 };
 
 function InvoicesPage() {
+  useFocusRow(Route.useSearch().focus);
   return (
     <AppShell>
       <PageHeader title="Invoices" description="What's owed and when it lands." />
@@ -314,7 +315,7 @@ function Body() {
                     ? differenceInDays(parseISO(inv.paidDate), parseISO(inv.dueDate))
                     : null;
                   return (
-                    <tr key={inv.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
+                    <tr key={inv.id} data-focus-id={inv.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
                       <td className="px-5 py-3.5 font-tnum text-xs text-muted-foreground">{inv.number}</td>
                       <td className="px-5 py-3.5 font-medium">{cl?.name ?? "—"}</td>
                       <td className="px-5 py-3.5 text-xs">
