@@ -201,25 +201,21 @@ function SidebarSection({ section, pathname, onNavigate }: { section: NavSection
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "group focus-ring flex items-center gap-3 px-3 py-2 rounded-md text-sm relative overflow-hidden transition-[color,background-color,transform] duration-200 ease-in-out active:scale-[0.98]",
+                  "group focus-ring flex items-center gap-3 pl-4 pr-4 py-2.5 rounded-full text-sm relative transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
                   active
-                    ? "bg-[color-mix(in_oklab,var(--primary)_12%,transparent)] text-primary font-semibold"
-                    : "text-sidebar-foreground hover:text-primary hover:bg-[color-mix(in_oklab,var(--primary)_8%,transparent)]",
+                    ? "bg-[var(--primary-container)] text-[var(--on-primary-container)] font-medium"
+                    : "text-sidebar-foreground hover:text-foreground hover:bg-[var(--surface-container)]",
                 )}
               >
-                <span
-                  className={cn(
-                    "absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-primary origin-center transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
-                    active ? "scale-y-100" : "scale-y-0",
-                  )}
-                />
                 <Icon
                   className={cn(
-                    "h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110",
-                    active && "text-primary",
+                    "h-[18px] w-[18px] transition-colors duration-150",
+                    active ? "text-[var(--on-primary-container)]" : "text-muted-foreground",
                   )}
+                  strokeWidth={1.75}
                   aria-hidden="true"
                 />
+
                 <span>{item.label}</span>
               </Link>
             );
