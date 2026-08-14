@@ -89,8 +89,8 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl p-0 gap-0 max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between border-b border-border px-5 py-3">
+      <DialogContent className="max-w-4xl p-0 gap-0 max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="shrink-0 flex flex-wrap items-center justify-between gap-y-2 border-b border-border px-5 py-3">
           <div className="text-sm font-medium">{titleFor(doc?.kind)} preview · {doc?.number}</div>
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
