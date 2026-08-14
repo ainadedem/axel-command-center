@@ -225,11 +225,21 @@ function Kpi({ label, value, accent, mono }: { label: string; value: string; acc
 
 /* ─── Compliance tab ────────────────────────────────────────────────── */
 
+/** Route + highlight target for the record a violation belongs to. */
+function docTarget(v: Violation): { to: string; label: string } | null {
+  if (v.entity === "invoice") return { to: "/invoices", label: "Open invoice" };
+  if (v.entity === "purchase_order") return { to: "/purchase-orders", label: "Open purchase order" };
+  if (v.entity === "expense") return { to: "/expenses", label: "Open expense" };
+  return null;
+}
+
 function ComplianceTab({ violations, summary }: { violations: Violation[]; summary: WeeklySummary }) {
   const companies = useCompanies();
+  const clients = useClients();
   const { ownerName } = useOwnerNames(summary.owners.map((o) => o.ownerId));
   const [severity, setSeverity] = useState<"all" | "critical" | "warning">("all");
   const [rule, setRule] = useState("all");
+
 
   const rules = useMemo(() => {
     const m = new Map<string, string>();
