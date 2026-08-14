@@ -111,7 +111,48 @@ export function useDocumentActivity(docType: DocType, docId?: string) {
   return { entries, loading, reload: load };
 }
 
-type Diffable = Record<string, unknown>;
+/** Where a stamp sits on the page (percent of the A4 sheet) + its size factor. */
+export type StampPlacement = { x?: number; y?: number; scale?: number };
+
+const pct = (v?: number) => (v == null ? "default corner" : `${Math.round(v)}%`);
+
+/** Readable summary of a stamp placement change, used in the timeline. */
+export function describePlacement(before: StampPlacement, after: StampPlacement): string {
+  if (after.x == null && after.y == null) return "Stamp reset to the company default position";
+  const moved = Math.round(before.x ?? -1) !== Math.round(after.x ?? -1) ||
+    Math.round(before.y ?? -1) !== Math.round(after.y ?? -1);
+  const resized = (before.scale ?? 1) !== (after.scale ?? 1);
+  const parts: string[] = [];
+  if (moved) parts.push(`moved from ${pct(before.x)}/${pct(before.y)} to ${pct(after.x)}/${pct(after.y)}`);
+  if (resized) parts.push(`resized from ${Math.round((before.scale ?? 1) * 100)}% to ${Math.round((after.scale ?? 1) * 100)}%`);
+  return parts.length ? `Stamp ${parts.join(" and ")}` : "Stamp placement saved";
+}
+
+/** Records a stamp placement / visibility change on a document. */
+export function logStampChange(input: {
+  docType: DocType;
+  docId: string;
+  docNumber?: string;
+  companyId: string;
+  summary: string;
+  details?: Record<string, unknown>;
+}) {
+  void logActivity({ ...input, action: "stamp_changed" });
+}
+
+/** Records a change of the person whose signature is printed. */
+export function logSignerChange(input: {
+  docType: DocType;
+  docId: string;
+  docNumber?: string;
+  companyId: string;
+  summary: string;
+  details?: Record<string, unknown>;
+}) {
+  void logActivity({ ...input, action: "signer_changed" });
+}
+
+
 
 const LABELS: Record<string, string> = {
   number: "number",
