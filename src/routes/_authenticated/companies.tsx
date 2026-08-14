@@ -181,6 +181,11 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setLogoMaxWidth(editing.logoMaxWidth ?? 180);
       setDocLanguage(editing.defaultDocumentLanguage ?? "en");
       setLogoCrop(editing.logoCrop);
+      setStampUrl(editing.stampUrl);
+      setStampPosition(editing.stampPosition ?? "bottom-right");
+      setStampWidth(editing.stampWidth ?? 140);
+      setStampOpacity(editing.stampOpacity ?? 1);
+      setShowStamp(editing.showStamp === true);
     } else {
       setName(""); setShortName(""); setCode(""); setColor(PALETTE[0]); setBaseCurrency("MGA");
       setLegalName(""); setAddress(""); setEmail(""); setPhone(""); setWebsite("");
@@ -193,6 +198,11 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setLogoHeight(52);
       setLogoMaxWidth(180);
       setLogoCrop(undefined);
+      setStampUrl(undefined);
+      setStampPosition("bottom-right");
+      setStampWidth(140);
+      setStampOpacity(1);
+      setShowStamp(false);
     }
     setShowErrors(false);
   }, [open, editing]);
