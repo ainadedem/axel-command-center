@@ -576,6 +576,39 @@ function headingFor(k: DocKind, lang?: DocLanguage) {
   return t.invoice;
 }
 
+/** Signature (per user) + company stamp block printed above the footer. */
+function signBlockHtml({
+  company, showStamp, stampUrl, showSignature, signatureUrl, signerName, lang,
+}: {
+  company?: Company; showStamp?: boolean; stampUrl?: string;
+  showSignature?: boolean; signatureUrl?: string; signerName?: string; lang: DocLanguage;
+}) {
+  const stampOn = (showStamp ?? company?.showStamp === true) && !!stampUrl;
+  const signOn = showSignature !== false && (!!signatureUrl || !!signerName);
+  if (!stampOn && !signOn) return "";
+
+  const stampWidth = Math.round(company?.stampWidth ?? 140);
+  const opacity = Math.min(1, Math.max(0.1, company?.stampOpacity ?? 1));
+  const position = company?.stampPosition ?? "bottom-right";
+  const align = position === "bottom-left" ? "flex-start" : position === "center" ? "center" : "flex-end";
+
+  const stampImg = stampOn
+    ? `<img src="${esc(stampUrl)}" alt="" style="width:${stampWidth}px;max-width:45%;opacity:${opacity};object-fit:contain;" />`
+    : "";
+  const signBlock = signOn
+    ? `<div style="min-width:180px;text-align:${position === "bottom-left" ? "left" : "right"};">
+        ${signatureUrl ? `<img src="${esc(signatureUrl)}" alt="" style="height:52px;max-width:200px;object-fit:contain;" />` : `<div style="height:52px;"></div>`}
+        <div style="border-top:1px solid #cbd5e1;margin-top:4px;padding-top:4px;font-size:10px;color:#475569;">
+          ${esc(lang === "fr" ? "Signature" : "Signature")}${signerName ? ` — ${esc(signerName)}` : ""}
+        </div>
+      </div>`
+    : "";
+
+  const inner = position === "bottom-left" ? `${stampImg}${signBlock}` : `${signBlock}${stampImg}`;
+  return `<div class="signblock" style="margin-top:28px;display:flex;gap:24px;align-items:flex-end;justify-content:${align};">${inner}</div>`;
+}
+
+
 function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName }: DocumentHtmlArgs) {
   const unitVisible = showUnit !== false;
   const w = normalizeCols(cols, unitVisible);
