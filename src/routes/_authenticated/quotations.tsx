@@ -406,12 +406,14 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setSubject(editing.subject ?? "");
       setBankAccountId(editing.bankAccountId ?? "");
       setTaxRate(editing.taxRate ?? 0);
+      setAssignedTo(editing.assignedTo ?? []);
     } else {
       const cid = companies[0]?.id ?? "";
       numberTouched.current = false; setNumber(cid ? nextNumber("quote", cid, today) : ""); setCompanyId(cid); setClientId("");
       setProjectId(""); setIssueDate(today); setValidUntil(addDays(new Date(), 30).toISOString().slice(0, 10));
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
       setMode("rate-card");
+      setAssignedTo([]);
       setLines([]); setNotes(""); setSubject(""); setBankAccountId(""); setTaxRate(defaultTaxRate(companies[0], today));
     }
     // Only re-initialise when the dialog opens (or switches record) — background
