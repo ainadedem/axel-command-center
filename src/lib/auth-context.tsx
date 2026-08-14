@@ -12,6 +12,8 @@ export interface Profile {
   display_name: string | null;
   email: string | null;
   avatar_url: string | null;
+  /** Personal signature image, printed on documents this user creates/edits. */
+  signature_url?: string | null;
 }
 
 interface AuthState {
