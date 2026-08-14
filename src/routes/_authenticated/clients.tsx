@@ -678,8 +678,8 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
-        <DialogHeader><DialogTitle>{editing ? "Edit client" : "New client"}</DialogTitle></DialogHeader>
-        <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-1">
+        <DialogHeader><DialogTitle>{editing ? (readOnly ? "Client details" : "Edit client") : "New client"}</DialogTitle></DialogHeader>
+        <fieldset disabled={readOnly} className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-1 disabled:opacity-100">
           <FormErrorBanner show={showErrors} />
           <div className="flex items-start gap-4">
             <AvatarUpload value={avatarUrl} onChange={setAvatarUrl} name={name} size={72} />
