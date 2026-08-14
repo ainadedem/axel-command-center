@@ -576,7 +576,7 @@ function headingFor(k: DocKind, lang?: DocLanguage) {
   return t.invoice;
 }
 
-function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale }: DocumentHtmlArgs) {
+function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName }: DocumentHtmlArgs) {
   const unitVisible = showUnit !== false;
   const w = normalizeCols(cols, unitVisible);
   const s = clamp(scale ?? 1, 0.5, 1.4);
