@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { focusSearch, useFocusRow, focusRowById } from "@/hooks/use-focus-row";
+import { focusSearch, useFocusRow, useJumpToRecord } from "@/hooks/use-focus-row";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -154,7 +154,9 @@ function Body() {
               status: computeStatus(e),
             }))
         }
-        onJump={(item) => focusRowById(item.id)}
+        drawerBucket={urlBucket}
+        onDrawerBucketChange={setDrawerBucket}
+        onJump={(item) => jumpTo(item.id, bucket)}
       />
 
 
