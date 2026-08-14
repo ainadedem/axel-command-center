@@ -1050,9 +1050,10 @@ const poToDb = (p: PurchaseOrder) => {
   return {
     id: isUuid(p.id) ? p.id : undefined,
     company_id: dbCompany,
-    client_id: p.clientId && isUuid(p.clientId) ? p.clientId : null,
-    project_id: p.projectId && isUuid(p.projectId) ? p.projectId : null,
-    quote_id: p.quoteId && isUuid(p.quoteId) ? p.quoteId : null,
+    ...link("client_id", p.clientId),
+    ...link("project_id", p.projectId),
+    ...link("quote_id", p.quoteId),
+
     number: p.number,
     client_reference: p.clientReference ?? null,
     issue_date: p.issueDate,
