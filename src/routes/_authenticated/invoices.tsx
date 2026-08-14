@@ -540,6 +540,28 @@ function Body() {
             </div>
           )}
 
+          {hasAgingChart && (
+            <ChartFrame
+              title="Receivables aging"
+              description="Open balance by days past due (MGA) — follows the current filters"
+              labelKey="bucket"
+              data={agingChartData}
+              series={[{ key: "amount", label: "Open balance", color: CHART_SEMANTIC.expense }]}
+              formatValue={(v) => fmtAmount(v, "MGA")}
+              height={240}
+            >
+              <ResponsiveContainer>
+                <BarChart data={agingChartData} margin={chartMargin}>
+                  <CartesianGrid {...chartGridProps} />
+                  <XAxis dataKey="bucket" {...chartAxisProps} />
+                  <YAxis {...chartAxisProps} />
+                  <Tooltip content={<ChartTooltip formatter={(v: number) => fmtAmount(v, "MGA")} />} cursor={chartCursor} />
+                  <Bar dataKey="amount" name="Open balance" radius={[8, 8, 0, 0]} fill={CHART_SEMANTIC.expense} />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartFrame>
+          )}
+
           <ListTableShell scrollX announcement={tp.announcement}>
             <ListTable style={{ minWidth: tableMinWidth }}>
               <thead>
