@@ -194,9 +194,11 @@ export function evaluateCompliance(input: ComplianceInput, today = new Date()): 
       entityId: inv.id,
       reference: inv.number,
       companyId: inv.companyId,
+      clientId: inv.clientId,
       amount: inv.amount - inv.paid,
       currency: inv.currency,
     };
+
 
     // §1 PO gating
     if (!inv.poId) {
@@ -303,8 +305,10 @@ export function evaluateCompliance(input: ComplianceInput, today = new Date()): 
       entityId: po.id,
       reference: po.number,
       companyId: po.companyId,
+      clientId: po.clientId,
       amount: po.amount,
       currency: po.currency,
+
       detail: "Purchase order has no buying legal entity recorded.",
     });
   }
