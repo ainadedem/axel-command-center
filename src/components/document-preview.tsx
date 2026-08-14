@@ -89,10 +89,10 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl p-0 gap-0 max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between border-b border-border px-5 py-3">
+      <DialogContent className="max-w-4xl p-0 gap-0 max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="shrink-0 flex flex-wrap items-center justify-between gap-y-2 border-b border-border px-5 py-3">
           <div className="text-sm font-medium">{titleFor(doc?.kind)} preview · {doc?.number}</div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 gap-y-2">
             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
               <Checkbox checked={showStatus} onCheckedChange={(v) => setShowStatus(!!v)} />
               Show status
@@ -145,9 +145,9 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
             <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)}><X className="h-4 w-4" /></Button>
           </div>
         </div>
-        <div className="overflow-y-auto bg-neutral-200 dark:bg-neutral-900 p-6 flex justify-center">
+        <div className="flex-1 min-h-0 overflow-auto overscroll-contain bg-neutral-200 dark:bg-neutral-900 p-6">
           <div
-            className="bg-white text-neutral-900 shadow-xl"
+            className="bg-white text-neutral-900 shadow-xl mx-auto"
             style={{ width: "210mm", minHeight: "297mm", padding: "22mm" }}
             dangerouslySetInnerHTML={{ __html: html }}
           />
