@@ -83,6 +83,14 @@ interface Props {
 
 
 const MM = 96 / 25.4;
+
+const EXPORT_LABEL: Record<ExportStage, string> = {
+  preparing: "Preparing…",
+  rendering: "Rendering…",
+  saving: "Saving…",
+  done: "Done",
+};
+
 const SHEET_W = 210 * MM;
 const SHEET_H = 297 * MM;
 const MIN_ZOOM = 0.35;
