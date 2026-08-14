@@ -149,6 +149,7 @@ export async function renderHtmlToPdfBlob(html: string, opts: RenderOptions = {}
       opts.avoidBreakSelector ? collectBoundaries(doc, opts.avoidBreakSelector, pxRatio) : [],
     );
 
+    let pageIndex = 0;
     for (let i = 0; i < cuts.length; i++) {
       const sliceTop = cuts[i]!;
       const sliceHeight = (cuts[i + 1] ?? usableHeight) - sliceTop;
@@ -163,8 +164,13 @@ export async function renderHtmlToPdfBlob(html: string, opts: RenderOptions = {}
       ctx.fillRect(0, 0, slice.width, slice.height);
       ctx.drawImage(canvas, 0, sliceTop, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
 
+      // A slice with no ink is padding at the end of the document — skip it
+      // rather than emitting an empty trailing page.
+      if (pageIndex > 0 && isBlankCanvas(slice)) continue;
+
       const imgHeightMm = (sliceHeight / canvas.width) * mm.w;
-      if (i > 0) pdf.addPage("a4", orientation);
+      if (pageIndex > 0) pdf.addPage("a4", orientation);
+      pageIndex++;
       pdf.addImage(
         slice.toDataURL("image/jpeg", 0.95),
         "JPEG",
