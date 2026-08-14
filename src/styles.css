@@ -937,3 +937,32 @@ tr:focus-within .row-actions-inner {
     transform: none !important;
   }
 }
+
+/* ---------------------------------------------------------------
+   Skeleton shimmer used by premium loading states (aging drawer, cards).
+   --------------------------------------------------------------- */
+.skeleton-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    color-mix(in oklab, var(--muted) 55%, var(--card)) 50%,
+    var(--muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer {
+    animation: none;
+    background-image: none;
+    background-color: var(--muted);
+  }
+}
