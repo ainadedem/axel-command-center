@@ -570,3 +570,90 @@
     }
   }
 }
+
+/* ---------------------------------------------------------------
+   Mobile data tables — rows become readable cards below `md`.
+   --------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .stacked-table {
+    overflow-x: visible;
+  }
+  .stacked-table > table {
+    display: block;
+    width: 100%;
+    min-width: 0 !important;
+    font-size: 0.8125rem;
+  }
+  .stacked-table thead {
+    display: none;
+  }
+  .stacked-table tbody {
+    display: block;
+  }
+  .stacked-table tbody > tr {
+    display: block;
+    background: var(--card);
+    border: 1px solid var(--border) !important;
+    border-radius: 12px;
+    margin: 0.625rem;
+    padding: 0.25rem 0 0.375rem;
+    box-shadow: var(--shadow-soft);
+  }
+  .stacked-table tbody > tr > td {
+    display: grid;
+    grid-template-columns: minmax(0, 7.5rem) minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: start;
+    width: auto;
+    text-align: left !important;
+    border: 0 !important;
+    padding: 0.375rem 0.875rem !important;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .stacked-table tbody > tr > td::before {
+    content: attr(data-label);
+    font-size: 10px;
+    line-height: 1.5;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+    padding-top: 0.15rem;
+  }
+  .stacked-table tbody > tr > td[data-label-empty] {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 0.25rem !important;
+  }
+  .stacked-table tbody > tr > td[data-label-empty]::before {
+    content: none;
+  }
+  .stacked-table tbody > tr[data-stack-full] {
+    background: transparent;
+    border: 0 !important;
+    box-shadow: none;
+    padding: 0;
+    margin: 0.875rem 0.625rem 0.25rem;
+  }
+  .stacked-table tbody > tr[data-stack-full] > td {
+    display: block;
+    padding: 0 !important;
+  }
+  .stacked-table tbody > tr[data-stack-full] > td::before {
+    content: none;
+  }
+  /* Keep numeric ledgers tabular but anchor the label column. */
+  .sticky-first-col table :is(thead, tbody) tr > :first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--card);
+  }
+}
+
+/* Row actions are hover-revealed on desktop; always visible on touch. */
+@media (hover: none) {
+  [class*="group-hover:opacity-100"] {
+    opacity: 1 !important;
+  }
+}
