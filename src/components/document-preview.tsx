@@ -107,6 +107,9 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   // ---- Zoom / fit ---------------------------------------------------------
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const sheetRef = useRef<HTMLDivElement | null>(null);
+  const [sheetH, setSheetH] = useState(SHEET_H);
+
   const [zoom, setZoom] = useState(1);
   const [mode, setMode] = useState<ZoomMode>("fit");
   const zoomRef = useRef(zoom);
