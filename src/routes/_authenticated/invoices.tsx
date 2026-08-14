@@ -1048,12 +1048,14 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                           <button type="button" onClick={() => removeLine(l.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><X className="h-3.5 w-3.5" /></button>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                   <tfoot>
                     {totals.lineDiscount > 0 && (
                       <tr className="border-t border-border bg-surface-elevated/30">
-                        <td colSpan={5} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Line discounts</td>
+                        <td colSpan={6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Line discounts</td>
+
                         <td className="px-2 py-2 text-right font-tnum text-muted-foreground">−{fmtAmount(totals.lineDiscount, currency)}</td>
                         <td />
                       </tr>
