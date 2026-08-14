@@ -546,9 +546,19 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
                   value={signerId ?? ""}
                   onChange={(e) => {
                     const v = e.target.value || undefined;
+                    const prev = signers.find((u) => u.userId === signerId)?.name ?? "nobody";
+                    const next = signers.find((u) => u.userId === v)?.name ?? "nobody";
                     setSignerId(v);
                     onDocChange?.({ signerId: v, stampDirty: false });
+                    if (audit && doc && v !== signerId) {
+                      logSignerChange({
+                        ...audit, docNumber: doc.number,
+                        summary: `Signer changed from ${prev} to ${next}`,
+                        details: { before: signerId ?? null, after: v ?? null },
+                      });
+                    }
                   }}
+
                   className="rounded-md border border-border bg-background px-2 py-1 text-[11px] focus-ring"
                   aria-label="Document signer"
                 >
