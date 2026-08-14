@@ -493,6 +493,11 @@ export type Database = {
           rib_key: string | null
           short_name: string | null
           show_payment_details: boolean
+          show_stamp: boolean
+          stamp_opacity: number
+          stamp_position: string
+          stamp_url: string | null
+          stamp_width: number
           stat: string | null
           tax_id: string | null
           updated_at: string
@@ -534,6 +539,11 @@ export type Database = {
           rib_key?: string | null
           short_name?: string | null
           show_payment_details?: boolean
+          show_stamp?: boolean
+          stamp_opacity?: number
+          stamp_position?: string
+          stamp_url?: string | null
+          stamp_width?: number
           stat?: string | null
           tax_id?: string | null
           updated_at?: string
@@ -575,6 +585,11 @@ export type Database = {
           rib_key?: string | null
           short_name?: string | null
           show_payment_details?: boolean
+          show_stamp?: boolean
+          stamp_opacity?: number
+          stamp_position?: string
+          stamp_url?: string | null
+          stamp_width?: number
           stat?: string | null
           tax_id?: string | null
           updated_at?: string
@@ -1070,6 +1085,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           id: string
+          signature_url: string | null
           updated_at: string
           user_id: string
         }
@@ -1079,6 +1095,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          signature_url?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1088,6 +1105,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          signature_url?: string | null
           updated_at?: string
           user_id?: string
         }
