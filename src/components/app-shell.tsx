@@ -591,6 +591,9 @@ function AppShellError({ message, onRetry }: { message: string; onRetry: () => v
 function AppShellFrame({ children }: { children: ReactNode }) {
   const { bootstrapReady, bootstrapError, retryBootstrap } = useCompany();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const [navOpen, setNavOpen] = useState(false);
+
+  useEffect(() => { setNavOpen(false); }, [pathname]);
 
   if (bootstrapError) return <AppShellError message={bootstrapError} onRetry={retryBootstrap} />;
   if (!bootstrapReady) return <AppShellLoading />;
@@ -599,10 +602,11 @@ function AppShellFrame({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-dvh bg-background text-foreground p-0 lg:p-3">
       <a href="#main-content" className="skip-link">Skip to content</a>
+      <MobileNav open={navOpen} onClose={() => setNavOpen(false)} />
       <div className="min-h-dvh lg:min-h-[calc(100dvh-1.5rem)] flex overflow-hidden rounded-none lg:rounded-[28px] border border-border/70 bg-card shadow-[var(--shadow-elevated)]">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
-        <Topbar />
+        <Topbar onOpenNav={() => setNavOpen(true)} />
         <main id="main-content" tabIndex={-1} className="relative flex-1 overflow-y-auto focus:outline-none">
           <div className="absolute inset-0 pointer-events-none [background:var(--gradient-glow)] opacity-60" />
           <div key={pathname} className="relative rise-in">{children}</div>
