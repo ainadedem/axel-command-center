@@ -219,6 +219,7 @@ function Body() {
                 <th className="text-left font-medium px-5 py-3">Project</th>
                 <th className="text-left font-medium px-5 py-3">Company</th>
                 <th className="text-left font-medium px-5 py-3">Owner</th>
+                <th className="text-left font-medium px-5 py-3">Follow-up</th>
                 <th className="text-left font-medium px-5 py-3">Issued</th>
                 <th className="text-left font-medium px-5 py-3">Valid until</th>
                 <th className="text-left font-medium px-5 py-3">Status</th>
