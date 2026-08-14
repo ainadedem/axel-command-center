@@ -487,7 +487,7 @@ function ClientListView({
 
   return (
     <div className="rounded-xl border border-border bg-surface-elevated overflow-hidden">
-      <div className="grid grid-cols-[1fr_120px_100px_100px_40px] md:grid-cols-[1fr_140px_120px_120px_40px] gap-3 px-4 py-2 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border bg-background/50">
+      <div className="hidden sm:grid grid-cols-[1fr_120px_100px_100px_40px] md:grid-cols-[1fr_140px_120px_120px_40px] gap-3 px-4 py-2 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border bg-background/50">
         <div>Client</div>
         <div className="text-right">Revenue</div>
         <div className="text-right">Outstanding</div>
