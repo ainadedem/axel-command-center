@@ -87,6 +87,18 @@ const toLocalCompanyId = (dbId: string) => companyLocalIdByDb.get(dbId) ?? dbId;
 const isUuid = (v: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
+/**
+ * Relation column for an upsert.
+ * - empty value → explicit `null` (the user really cleared the link)
+ * - real backend id → written through
+ * - legacy/local id we cannot resolve → key omitted, so an upsert never blanks
+ *   a link that already exists in the backend. Writing `null` here is what
+ *   wiped client/project on documents replayed from local seeds.
+ */
+const link = (key: string, value?: string | null): Record<string, string | null> =>
+  value ? (isUuid(value) ? { [key]: value } : {}) : { [key]: null };
+
+
 async function fetchScopedRows(table: string, scope: HydrationScope) {
   if (scope.mode === "scoped" && scope.companyIds.length === 0) return [] as Record<string, unknown>[];
   let query = (supabase.from as (t: string) => ReturnType<typeof supabase.from>)(table).select("*");
