@@ -867,6 +867,11 @@ export type Database = {
           po_waiver_reason: string | null
           project_id: string | null
           quote_id: string | null
+          signer_id: string | null
+          stamp_dirty: boolean
+          stamp_scale: number | null
+          stamp_x: number | null
+          stamp_y: number | null
           status: string
           subject: string | null
           updated_at: string
@@ -901,6 +906,11 @@ export type Database = {
           po_waiver_reason?: string | null
           project_id?: string | null
           quote_id?: string | null
+          signer_id?: string | null
+          stamp_dirty?: boolean
+          stamp_scale?: number | null
+          stamp_x?: number | null
+          stamp_y?: number | null
           status?: string
           subject?: string | null
           updated_at?: string
@@ -935,6 +945,11 @@ export type Database = {
           po_waiver_reason?: string | null
           project_id?: string | null
           quote_id?: string | null
+          signer_id?: string | null
+          stamp_dirty?: boolean
+          stamp_scale?: number | null
+          stamp_x?: number | null
+          stamp_y?: number | null
           status?: string
           subject?: string | null
           updated_at?: string
@@ -1185,6 +1200,11 @@ export type Database = {
           number: string
           project_id: string | null
           quote_id: string | null
+          signer_id: string | null
+          stamp_dirty: boolean
+          stamp_scale: number | null
+          stamp_x: number | null
+          stamp_y: number | null
           status: string
           subject: string | null
           updated_at: string
@@ -1212,6 +1232,11 @@ export type Database = {
           number: string
           project_id?: string | null
           quote_id?: string | null
+          signer_id?: string | null
+          stamp_dirty?: boolean
+          stamp_scale?: number | null
+          stamp_x?: number | null
+          stamp_y?: number | null
           status?: string
           subject?: string | null
           updated_at?: string
@@ -1239,6 +1264,11 @@ export type Database = {
           number?: string
           project_id?: string | null
           quote_id?: string | null
+          signer_id?: string | null
+          stamp_dirty?: boolean
+          stamp_scale?: number | null
+          stamp_x?: number | null
+          stamp_y?: number | null
           status?: string
           subject?: string | null
           updated_at?: string
@@ -1387,6 +1417,11 @@ export type Database = {
           project_id: string | null
           sent_at: string | null
           sent_to: string | null
+          signer_id: string | null
+          stamp_dirty: boolean
+          stamp_scale: number | null
+          stamp_x: number | null
+          stamp_y: number | null
           status: string
           subject: string | null
           tax_amount: number
@@ -1420,6 +1455,11 @@ export type Database = {
           project_id?: string | null
           sent_at?: string | null
           sent_to?: string | null
+          signer_id?: string | null
+          stamp_dirty?: boolean
+          stamp_scale?: number | null
+          stamp_x?: number | null
+          stamp_y?: number | null
           status?: string
           subject?: string | null
           tax_amount?: number
@@ -1453,6 +1493,11 @@ export type Database = {
           project_id?: string | null
           sent_at?: string | null
           sent_to?: string | null
+          signer_id?: string | null
+          stamp_dirty?: boolean
+          stamp_scale?: number | null
+          stamp_x?: number | null
+          stamp_y?: number | null
           status?: string
           subject?: string | null
           tax_amount?: number
