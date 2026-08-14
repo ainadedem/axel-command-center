@@ -1287,9 +1287,61 @@ export type Database = {
           },
         ]
       }
+      quote_followups: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          happened_at: string
+          id: string
+          kind: string
+          note: string
+          quote_id: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          happened_at?: string
+          id?: string
+          kind?: string
+          note?: string
+          quote_id: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          happened_at?: string
+          id?: string
+          kind?: string
+          note?: string
+          quote_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_followups_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_followups_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quotes: {
         Row: {
           amount: number
+          assigned_to: string[]
           bank_account_id: string | null
           client_id: string | null
           company_id: string
@@ -1303,6 +1355,7 @@ export type Database = {
           language: string
           lines: Json | null
           mode: string | null
+          next_follow_up_at: string | null
           notes: string | null
           number: string
           pdf_url: string | null
@@ -1320,6 +1373,7 @@ export type Database = {
         }
         Insert: {
           amount?: number
+          assigned_to?: string[]
           bank_account_id?: string | null
           client_id?: string | null
           company_id: string
@@ -1333,6 +1387,7 @@ export type Database = {
           language?: string
           lines?: Json | null
           mode?: string | null
+          next_follow_up_at?: string | null
           notes?: string | null
           number: string
           pdf_url?: string | null
@@ -1350,6 +1405,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          assigned_to?: string[]
           bank_account_id?: string | null
           client_id?: string | null
           company_id?: string
@@ -1363,6 +1419,7 @@ export type Database = {
           language?: string
           lines?: Json | null
           mode?: string | null
+          next_follow_up_at?: string | null
           notes?: string | null
           number?: string
           pdf_url?: string | null
@@ -1893,6 +1950,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_touch_quote: { Args: { _quote_id: string }; Returns: boolean }
       document_numbers: {
         Args: { _company_id: string; _kind: string }
         Returns: string[]

@@ -15,8 +15,9 @@ import {
   expensesStore, recurringBillingsStore,
   teamMembersStore, salesMembersStore,
   salaryRegisterStore, payrollRunsStore,
-  pvrRecordsStore, invoiceEscalationsStore,
-  type PvrRecord, type InvoiceEscalation,
+  pvrRecordsStore, invoiceEscalationsStore, quoteFollowupsStore,
+  type PvrRecord, type InvoiceEscalation, type QuoteFollowup,
+
   type Client, type Supplier, type Project,
   type Account, type Category, type Budget,
   type Transaction, type Invoice, type QuoteLine,
@@ -937,6 +938,8 @@ const quoteToDb = (q: Quote) => {
     pdf_url: q.pdfUrl ?? null,
     sent_at: q.sentAt ?? null,
     sent_to: q.sentTo ?? null,
+    assigned_to: (q.assignedTo ?? []).filter((id) => isUuid(id)).slice(0, 3),
+    next_follow_up_at: q.nextFollowUpAt ?? null,
     ...(q.createdBy && isUuid(q.createdBy) ? { created_by: q.createdBy } : {}),
     ...(q.updatedBy && isUuid(q.updatedBy) ? { updated_by: q.updatedBy } : {}),
   };
@@ -968,7 +971,45 @@ const quoteFromDb = (r: Record<string, unknown>): Quote => ({
   createdBy: (r.created_by as string) ?? undefined,
   updatedBy: (r.updated_by as string) ?? undefined,
   updatedAt: (r.updated_at as string) ?? undefined,
+  assignedTo: ((r.assigned_to as string[]) ?? []).filter(Boolean),
+  nextFollowUpAt: (r.next_follow_up_at as string) ?? undefined,
 });
+
+/* ───────── QUOTE FOLLOW-UPS ───────── */
+const followupToDb = (f: QuoteFollowup) => {
+  const dbCompany = toDbCompanyId(f.companyId);
+  if (!dbCompany || !isUuid(f.quoteId)) return null;
+  return {
+    id: isUuid(f.id) ? f.id : undefined,
+    company_id: dbCompany,
+    quote_id: f.quoteId,
+    kind: f.kind,
+    note: f.note ?? "",
+    happened_at: f.happenedAt,
+  };
+};
+const followupFromDb = (r: Record<string, unknown>): QuoteFollowup => ({
+  id: r.id as string,
+  companyId: toLocalCompanyId(r.company_id as string),
+  quoteId: (r.quote_id as string) ?? "",
+  kind: (r.kind as QuoteFollowup["kind"]) ?? "note",
+  note: (r.note as string) ?? "",
+  happenedAt: (r.happened_at as string) ?? "",
+  createdBy: (r.created_by as string) ?? undefined,
+});
+export async function upsertQuoteFollowup(f: QuoteFollowup): Promise<string | null> {
+  const row = followupToDb(f);
+  if (!row) return null;
+  const { data, error } = await supabase.from("quote_followups").upsert(row).select("id").single();
+  if (error) { reportWriteError("upsertQuoteFollowup", error.message); return null; }
+  return data.id as string;
+}
+export async function deleteQuoteFollowupDb(id: string) {
+  if (!isUuid(id)) return;
+  const { error } = await supabase.from("quote_followups").delete().eq("id", id);
+  if (error) reportWriteError("deleteQuoteFollowup", error.message);
+}
+
 export async function upsertQuote(q: Quote): Promise<string | null> {
   const row = quoteToDb(q);
   if (!row) return null;
@@ -1455,10 +1496,11 @@ export function registerExtraSync() {
   payrollRunsStore.setSync({ upsert: upsertPayrollRun, remove: deletePayrollRunDb });
   pvrRecordsStore.setSync({ upsert: upsertPvrRecord, remove: deletePvrRecordDb });
   invoiceEscalationsStore.setSync({ upsert: upsertInvoiceEscalation, remove: deleteInvoiceEscalationDb });
+  quoteFollowupsStore.setSync({ upsert: upsertQuoteFollowup, remove: deleteQuoteFollowupDb });
 }
 
 export async function hydrateExtras(scope: HydrationScope = { mode: "all" }) {
-  const [ops, qts, pos, exps, rbs, srs, prs, pvrs, escs] = await Promise.all([
+  const [ops, qts, pos, exps, rbs, srs, prs, pvrs, escs, qfs] = await Promise.all([
     fetchScopedRows("opportunities", scope),
     fetchScopedRows("quotes", scope),
     fetchScopedRows("purchase_orders", scope),
@@ -1468,9 +1510,12 @@ export async function hydrateExtras(scope: HydrationScope = { mode: "all" }) {
     fetchScopedRows("payroll_runs", scope),
     fetchScopedRows("pvr_records", scope),
     fetchScopedRows("invoice_escalations", scope),
+    fetchScopedRows("quote_followups", scope),
   ]);
   pvrRecordsStore.replaceAll(pvrs.map((r) => pvrFromDb(r)));
   invoiceEscalationsStore.replaceAll(escs.map((r) => escFromDb(r)));
+  quoteFollowupsStore.replaceAll(qfs.map((r) => followupFromDb(r)));
+
 
   opportunitiesStore.replaceAll(ops.map((r) => opportunityFromDb(r)));
   quotesStore.replaceAll(qts.map((r) => quoteFromDb(r)));

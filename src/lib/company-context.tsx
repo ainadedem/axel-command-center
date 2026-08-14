@@ -4,6 +4,7 @@ import {
   transactionsStore, invoicesStore, opportunitiesStore, quotesStore, purchaseOrdersStore,
   expensesStore, recurringBillingsStore, salaryRegisterStore, payrollRunsStore,
   clientsStore, suppliersStore, projectsStore, teamMembersStore, salesMembersStore,
+  quoteFollowupsStore,
   contactCompanyIds, type Company,
 } from "./mock-data";
 import { useAuth } from "./auth-context";
@@ -54,6 +55,7 @@ function restrictLocalStores(allowedCompanies: Company[]) {
   keepCompanyScoped(opportunitiesStore, allowedCompanyIds);
   keepCompanyScoped(quotesStore, allowedCompanyIds);
   keepCompanyScoped(purchaseOrdersStore, allowedCompanyIds);
+  keepCompanyScoped(quoteFollowupsStore, allowedCompanyIds);
   keepCompanyScoped(expensesStore, allowedCompanyIds);
   keepCompanyScoped(recurringBillingsStore, allowedCompanyIds);
   keepCompanyScoped(salaryRegisterStore, allowedCompanyIds);
