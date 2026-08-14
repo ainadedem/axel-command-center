@@ -1,4 +1,4 @@
-import html2pdf from "html2pdf.js";
+import { downloadHtmlAsPdf } from "@/lib/pdf-render";
 import { exportCsvRows } from "@/lib/export-csv";
 
 export interface ReconciliationLine {
@@ -174,27 +174,10 @@ function summaryHtml(s: ReconciliationSummary) {
 }
 
 export async function exportReconciliationPdf(s: ReconciliationSummary) {
-  const holder = document.createElement("div");
-  holder.style.position = "fixed";
-  holder.style.left = "-10000px";
-  holder.style.top = "0";
-  holder.style.background = "#fff";
-  holder.innerHTML = summaryHtml(s);
-  document.body.appendChild(holder);
-  try {
-    await (html2pdf as unknown as () => {
-      set: (o: unknown) => { from: (el: HTMLElement) => { save: () => Promise<void> } };
-    })()
-      .set({
-        margin: 0,
-        filename: `${reconciliationFileBase(s)}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, backgroundColor: "#ffffff" },
-        jsPDF: { unit: "pt", format: "a4", orientation: "portrait" },
-      })
-      .from(holder.firstElementChild as HTMLElement)
-      .save();
-  } finally {
-    document.body.removeChild(holder);
-  }
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${reconciliationFileBase(s)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>@page{size:A4;margin:0}html,body{margin:0;padding:0;background:#fff;font-family:'Inter',system-ui,sans-serif}</style>
+</head><body>${summaryHtml(s)}</body></html>`;
+  await downloadHtmlAsPdf(html, `${reconciliationFileBase(s)}.pdf`, { orientation: "portrait" });
 }
