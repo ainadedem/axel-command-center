@@ -241,6 +241,20 @@ function Body() {
                     <td className="px-5 py-3.5 text-xs">{proj ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}</td>
                     <td className="px-5 py-3.5">{co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}</td>
                     <td className="px-5 py-3.5 text-xs text-muted-foreground">{ownerName(q)}</td>
+                    <td className="px-5 py-3.5">
+                      <button
+                        onClick={() => setFollowingUp(q)}
+                        title="Assigned sales & follow-ups"
+                        className="flex items-center gap-2 rounded px-1 py-0.5 hover:bg-surface-elevated transition"
+                      >
+                        <AssigneeStack companyId={q.companyId} ids={q.assignedTo ?? []} />
+                        {q.nextFollowUpAt && (
+                          <span className={cn("text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full border font-tnum", followUpToneClass[followUpTone(q.nextFollowUpAt)])}>
+                            {format(parseISO(q.nextFollowUpAt), "MMM d")}
+                          </span>
+                        )}
+                      </button>
+                    </td>
                     <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">{format(parseISO(q.issueDate), "MMM d, yyyy")}</td>
                     <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">{format(parseISO(q.validUntil), "MMM d, yyyy")}</td>
                     <td className="px-5 py-3.5">
