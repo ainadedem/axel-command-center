@@ -142,7 +142,7 @@ function Body() {
         tilesTitle="Payables aging — days past due"
         description="Open balance by days past due — follows the current tab. Click a bar to filter."
         itemsInBucket={(key) =>
-          filtered
+          tabFiltered
             .filter((e) => computeStatus(e) !== "paid" && e.amount - e.paid > 0 && inBucket(e.dueDate, key))
             .sort((a, b) => (a.dueDate ?? "").localeCompare(b.dueDate ?? ""))
             .map((e) => ({
