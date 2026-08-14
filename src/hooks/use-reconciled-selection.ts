@@ -33,7 +33,11 @@ export function useReconciledSelection<T>({
   useEffect(() => {
     if (!open) return;
     if (loading) return;
-    if (preserve && currentValue) return;
+    // Edit mode is a hard lock: never auto-switch a saved document's company,
+    // client or project — not even when the value is momentarily empty or
+    // absent from a still-hydrating options list.
+    if (preserve) return;
+
 
     const ids = options.map(getId).filter(Boolean);
     const hasCurrent = !!currentValue && ids.includes(currentValue);
