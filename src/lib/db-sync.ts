@@ -1298,6 +1298,7 @@ const tmFromDb = (r: Record<string, unknown>): TeamMember => ({
   jobTitle: (r.job_title as string) ?? undefined,
   department: (r.department as string) ?? undefined,
   avatarUrl: (r.avatar_url as string) ?? undefined,
+  userId: (r.user_id as string) ?? undefined,
 });
 
 export async function upsertTeamMember(t: TeamMember): Promise<string | null> {
@@ -1316,11 +1317,13 @@ const smToDb = (s: SalesMember) => ({
   id: isUuid(s.id) ? s.id : undefined,
   team_member_id: isUuid(s.teamMemberId) ? s.teamMemberId : s.teamMemberId,
   role: s.role,
+  source: s.source ?? "manual",
 });
 const smFromDb = (r: Record<string, unknown>): SalesMember => ({
   id: r.id as string,
   teamMemberId: r.team_member_id as string,
   role: (r.role as SalesMember["role"]) ?? "closer",
+  source: (r.source as SalesMember["source"]) ?? "manual",
 });
 export async function upsertSalesMember(s: SalesMember): Promise<string | null> {
   if (!isUuid(s.teamMemberId)) return null; // requires UUID FK
