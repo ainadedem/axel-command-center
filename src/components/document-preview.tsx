@@ -355,8 +355,9 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
           </div>
         )}
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto overscroll-contain bg-neutral-200 dark:bg-neutral-900 p-6">
-          <div className="mx-auto" style={{ width: SHEET_W * zoom, height: SHEET_H * zoom }}>
+          <div className="mx-auto" style={{ width: SHEET_W * zoom, height: sheetH * zoom }}>
             <div
+              ref={sheetRef}
               className="bg-white text-neutral-900 shadow-xl"
               style={{
                 width: "210mm", minHeight: "297mm", padding: "22mm",
@@ -364,6 +365,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
               }}
               dangerouslySetInnerHTML={{ __html: html }}
             />
+
           </div>
         </div>
       </DialogContent>
