@@ -12,6 +12,7 @@ import {
   contactBelongsTo,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
+import { docTotals, lineNet } from "@/lib/discounts";
 import { inScope, useCompany } from "@/lib/company-context";
 import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
 import { format, parseISO, differenceInDays } from "date-fns";
@@ -567,6 +568,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [currency, setCurrency] = useState<Currency>("EUR");
   const [status, setStatus] = useState<Invoice["status"]>("draft");
   const [lines, setLines] = useState<QuoteLine[]>([]);
+  const [discountPct, setDiscountPct] = useState<number>(0);
   const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
@@ -582,6 +584,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setAmount(String(editing.amount)); setPaid(String(editing.paid));
       setCurrency(editing.currency); setStatus(editing.status);
       setLines((editing.lines ?? []).map((l) => ({ ...l })));
+      setDiscountPct(editing.discountPct ?? 0);
     } else {
       const cid = companies[0]?.id ?? "";
       numberTouched.current = false; setNumber(cid ? nextNumber("invoice", cid, today) : ""); setCompanyId(cid); setClientId("");
@@ -589,7 +592,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
 
       setIssueDate(today); setDueDate(today); setAmount("0"); setPaid("0");
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
-      setLines([]);
+      setLines([]); setDiscountPct(0);
     }
     setShowErrors(false);
     // Only re-initialise when the dialog opens (or switches record).
@@ -700,7 +703,8 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const addLine = () => setLines((prev) => [...prev, { id: newId("ql"), description: "", details: "", unit: "fixed", quantity: 1, rate: 0, createdBy: user?.id, createdAt: new Date().toISOString() }]);
   const updateLine = (id: string, patch: Partial<QuoteLine>) => setLines((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
   const removeLine = (id: string) => setLines((prev) => prev.filter((l) => l.id !== id));
-  const linesTotal = lines.reduce((s, l) => s + (Number(l.quantity) || 0) * (Number(l.rate) || 0), 0);
+  const totals = docTotals(lines, Number(discountPct) || 0, 0);
+  const linesTotal = totals.subtotal;
 
   const processOk = Boolean(poId) || poWaived;
   const blocked = !processOk && status !== "draft";
@@ -730,6 +734,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       subject: subject.trim() || undefined,
       bankAccountId: bankAccountId || defaultBankAccount(companies.find((c) => c.id === companyId))?.id,
       lines: lines.length ? lines.map((l) => ({ ...l })) : undefined,
+      discountPct: (Number(discountPct) || 0) || undefined,
     };
     if (editing) {
       invoicesStore.update(editing.id, { ...data, updatedBy: user?.id, updatedAt: new Date().toISOString() });
@@ -873,6 +878,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                       <th className="text-left font-medium px-2 py-2 w-20">Unit</th>
                       <th className="text-right font-medium px-2 py-2 w-16">Qty</th>
                       <th className="text-right font-medium px-2 py-2 w-24">Price</th>
+                      <th className="text-right font-medium px-2 py-2 w-20">Disc %</th>
                       <th className="text-right font-medium px-2 py-2 w-24">Amount</th>
                       <th className="w-8" />
                     </tr>
@@ -896,7 +902,18 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                         </td>
                         <td className="px-2 py-1.5"><Input type="number" className="h-8 text-xs text-right" value={l.quantity} onChange={(e) => updateLine(l.id, { quantity: Number(e.target.value) })} /></td>
                         <td className="px-2 py-1.5"><Input type="number" className="h-8 text-xs text-right" value={l.rate} onChange={(e) => updateLine(l.id, { rate: Number(e.target.value) })} /></td>
-                        <td className="px-2 py-1.5 text-right font-tnum">{fmtAmount((Number(l.quantity) || 0) * (Number(l.rate) || 0), currency)}</td>
+                        <td className="px-2 py-1.5">
+                          <div className="relative">
+                            <Input
+                              type="number" min={0} max={100} step={0.5}
+                              className="h-8 text-xs text-right pr-6"
+                              value={l.discountPct ?? 0}
+                              onChange={(e) => updateLine(l.id, { discountPct: Number(e.target.value) })}
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">%</span>
+                          </div>
+                        </td>
+                        <td className="px-2 py-1.5 text-right font-tnum">{fmtAmount(lineNet(l), currency)}</td>
                         <td className="px-2 py-1.5">
                           <button type="button" onClick={() => removeLine(l.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><X className="h-3.5 w-3.5" /></button>
                         </td>
@@ -904,8 +921,33 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                     ))}
                   </tbody>
                   <tfoot>
+                    {totals.lineDiscount > 0 && (
+                      <tr className="border-t border-border bg-surface-elevated/30">
+                        <td colSpan={5} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Line discounts</td>
+                        <td className="px-2 py-2 text-right font-tnum text-muted-foreground">−{fmtAmount(totals.lineDiscount, currency)}</td>
+                        <td />
+                      </tr>
+                    )}
                     <tr className="border-t border-border bg-surface-elevated/30">
-                      <td colSpan={4} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Lines total</td>
+                      <td colSpan={5} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
+                        <div className="inline-flex items-center gap-2 justify-end">
+                          <span>Global discount</span>
+                          <div className="relative">
+                            <Input
+                              type="number" min={0} max={100} step={0.5}
+                              className="h-7 w-20 text-xs text-right pr-6"
+                              value={discountPct}
+                              onChange={(e) => setDiscountPct(Number(e.target.value))}
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">%</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-2 py-2 text-right font-tnum text-muted-foreground">{totals.globalDiscount > 0 ? `−${fmtAmount(totals.globalDiscount, currency)}` : fmtAmount(0, currency)}</td>
+                      <td />
+                    </tr>
+                    <tr className="border-t border-border bg-surface-elevated/30">
+                      <td colSpan={5} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Lines total</td>
                       <td className="px-2 py-2 text-right font-tnum">{fmtAmount(linesTotal, currency)}</td>
                       <td />
                     </tr>
