@@ -113,26 +113,32 @@ export function ListTd({
   );
 }
 
-/** Second tier of a record: a padded, full-width action bar. */
+/** Header cell above the leading actions column. */
+export function ListActionsTh({ width = "8.5rem", className }: { width?: string; className?: string }) {
+  return (
+    <th scope="col" style={{ width }} className={cn("px-2 py-3 select-none", className)}>
+      <span className="sr-only">Actions</span>
+    </th>
+  );
+}
+
+/**
+ * Leading cell of a record holding its icon-only actions.
+ * Buttons stay invisible until the row is hovered or focused.
+ */
 export function ListRowActions({
-  colSpan,
   children,
   className,
 }: {
-  colSpan: number;
+  /** Kept for call-site compatibility; the actions no longer span the row. */
+  colSpan?: number;
   children: ReactNode;
   className?: string;
 }) {
   return (
-    <tr data-row-actions className={cn("border-b border-border/40 last:border-0", className)}>
-      <td colSpan={colSpan} className="px-4 pb-0 pt-0">
-        <div className="row-actions-grid">
-          <div className="row-actions-inner">
-            <div className="flex flex-wrap items-center gap-1.5 pb-3 pt-0.5">{children}</div>
-          </div>
-        </div>
-      </td>
-    </tr>
+    <td className={cn("row-actions-cell px-2 py-2 align-middle whitespace-nowrap", className)}>
+      <div className="row-actions-inner">{children}</div>
+    </td>
   );
 }
 
@@ -167,11 +173,11 @@ export function RowAction({
       title={title ?? label}
       aria-label={label}
       className={cn(
-        "row-action inline-flex items-center h-8 px-2.5 rounded-full border-0 bg-transparent",
-        "text-[11px] font-medium text-foreground/70",
+        "row-action inline-flex items-center justify-center h-7 w-7 rounded-full border-0 bg-transparent",
+        "text-foreground/70",
         // Same motion contract as the sidebar nav items.
-        "transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
-        "hover:bg-[var(--surface-container)] hover:text-foreground",
+        "transition-[color,background-color,transform] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
+        "hover:bg-[var(--surface-container)] hover:text-foreground active:scale-95",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
         "disabled:opacity-40 disabled:pointer-events-none",
         toneClasses[tone],
@@ -179,10 +185,11 @@ export function RowAction({
       )}
     >
       <span className="shrink-0 inline-flex items-center justify-center">{icon}</span>
-      <span className="row-action-label">{label}</span>
+      <span className="sr-only">{label}</span>
     </button>
   );
 }
+
 
 
 /** Toolbar control that switches optional columns on and off. */
