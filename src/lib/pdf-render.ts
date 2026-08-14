@@ -141,15 +141,17 @@ export async function renderHtmlToPdfBlob(html: string, opts: RenderOptions = {}
     // Canvas pixels that fit on one PDF page.
     const pxPerPage = Math.floor((page.h / page.w) * canvas.width);
     const pxRatio = canvas.height / contentHeight; // canvas px per CSS px
+    // Trailing whitespace would otherwise produce an extra empty page.
+    const usableHeight = trimTrailingWhitespace(canvas, pxPerPage);
     const cuts = computeCuts(
-      canvas.height,
+      usableHeight,
       pxPerPage,
       opts.avoidBreakSelector ? collectBoundaries(doc, opts.avoidBreakSelector, pxRatio) : [],
     );
 
     for (let i = 0; i < cuts.length; i++) {
       const sliceTop = cuts[i]!;
-      const sliceHeight = (cuts[i + 1] ?? canvas.height) - sliceTop;
+      const sliceHeight = (cuts[i + 1] ?? usableHeight) - sliceTop;
       if (sliceHeight <= 0) continue;
 
       const slice = document.createElement("canvas");
@@ -281,6 +283,35 @@ async function waitForFonts(doc: Document): Promise<void> {
     await fonts.ready;
   })();
   await Promise.race([load, timeout]);
+}
+
+/**
+ * Height (canvas px) of the content once trailing blank space is dropped,
+ * rounded up to at least one full page.
+ */
+function trimTrailingWhitespace(canvas: HTMLCanvasElement, pxPerPage: number): number {
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return canvas.height;
+  const step = Math.max(2, Math.floor(canvas.height / 2000));
+  let lastInk = 0;
+  for (let y = canvas.height - 1; y >= 0; y -= step) {
+    const row = ctx.getImageData(0, y, canvas.width, 1).data;
+    let ink = false;
+    for (let x = 0; x < row.length; x += 4 * 4) {
+      if (row[x + 3] !== 0 && (row[x]! < 245 || row[x + 1]! < 245 || row[x + 2]! < 245)) {
+        ink = true;
+        break;
+      }
+    }
+    if (ink) {
+      lastInk = Math.min(canvas.height, y + step);
+      break;
+    }
+  }
+  if (!lastInk) return Math.min(canvas.height, pxPerPage);
+  // Keep whole pages: never cut below the page the last ink sits on.
+  const pages = Math.max(1, Math.ceil(lastInk / pxPerPage));
+  return Math.min(canvas.height, pages * pxPerPage);
 }
 
 /** Samples a grid of pixels; all-white means the snapshot failed. */
