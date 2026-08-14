@@ -9,12 +9,14 @@ import {
   contactBelongsTo, MAX_QUOTE_ASSIGNEES,
 } from "@/lib/mock-data";
 import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
+import { useLineReorder, DragHandle, moveItem } from "@/components/sortable-row";
 import { newId } from "@/lib/data-store";
 import { defaultTaxRate } from "@/lib/vat";
 import { docTotals, lineNet } from "@/lib/discounts";
 import { inScope, useCompany } from "@/lib/company-context";
 import { useAuth } from "@/lib/auth-context";
 import { format, parseISO, addDays } from "date-fns";
+import { StatusBadge } from "@/components/status-badge";
 import { cn } from "@/lib/utils";
 import { Fragment, useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
@@ -332,7 +334,7 @@ function Body() {
                             Sent · {format(parseISO(q.sentAt), "MMM d")}
                           </span>
                         ) : (
-                          <span className={cn("inline-block text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[q.status])}>{q.status}</span>
+                          <StatusBadge status={q.status} />
                         )}
                       </ListTd>
                     )}
@@ -649,6 +651,8 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   }, [currency]);
 
   const removeLine = (id: string) => setLines((prev) => prev.filter((l) => l.id !== id));
+  const moveLine = (from: number, to: number) => setLines((prev) => moveItem(prev, from, to));
+  const lineDnd = useLineReorder(moveLine);
 
   const duplicateNumber = Boolean(number.trim()) && Boolean(companyId)
     && isNumberTaken("quote", companyId, number, editing?.id);
@@ -810,6 +814,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                 <table className="w-full min-w-[720px] text-xs">
                   <thead className="bg-surface-elevated/40 text-[10px] uppercase tracking-wider text-muted-foreground">
                     <tr>
+                      <th className="w-10" />
                       <th className="text-left font-medium px-2 py-2">Description</th>
                       {mode === "rate-card" && <th className="text-left font-medium px-2 py-2 w-28">Capability</th>}
                       {mode === "rate-card" && <th className="text-left font-medium px-2 py-2 w-20">Level</th>}
@@ -822,8 +827,13 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                     </tr>
                   </thead>
                   <tbody>
-                    {lines.map((l) => (
-                      <tr key={l.id} className="border-t border-border/40">
+                    {lines.map((l, li) => {
+                      const rp = lineDnd.rowProps(li);
+                      return (
+                      <tr key={l.id} {...rp} className={cn("border-t border-border/40 align-top", rp.className)}>
+                        <td className="px-1 py-1.5">
+                          <DragHandle index={li} total={lines.length} handleProps={lineDnd.handleProps(li)} onMove={moveLine} />
+                        </td>
                         <td className="px-2 py-1.5">
                           <Input className="h-8 text-xs" value={l.description} onChange={(e) => updateLine(l.id, { description: e.target.value })} placeholder="Description" />
                           <RichTextField compact className="mt-1" value={l.details ?? ""} onChange={(v) => updateLine(l.id, { details: v })} placeholder="Details (optional)" rows={2} />
@@ -882,18 +892,19 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                         <td className="px-2 py-1.5 text-right font-tnum">{fmt(lineNet(l), currency)}</td>
                         <td className="px-2 py-1.5"><button type="button" onClick={() => removeLine(l.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><X className="h-3.5 w-3.5" /></button></td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                   <tfoot>
                     {totals.lineDiscount > 0 && (
                       <tr className="border-t border-border bg-surface-elevated/30">
-                        <td colSpan={mode === "rate-card" ? 7 : 5} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Line discounts</td>
+                        <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Line discounts</td>
                         <td className="px-2 py-2 text-right font-tnum text-muted-foreground">−{fmt(totals.lineDiscount, currency)}</td>
                         <td />
                       </tr>
                     )}
                     <tr className="border-t border-border bg-surface-elevated/30">
-                      <td colSpan={mode === "rate-card" ? 7 : 5} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
+                      <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
                         <div className="inline-flex items-center gap-2 justify-end">
                           <span>Global discount</span>
                           <div className="relative">
@@ -911,12 +922,12 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                       <td />
                     </tr>
                     <tr className="border-t border-border bg-surface-elevated/30">
-                      <td colSpan={mode === "rate-card" ? 7 : 5} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Subtotal</td>
+                      <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Subtotal</td>
                       <td className="px-2 py-2 text-right font-tnum">{fmt(subtotal, currency)}</td>
                       <td />
                     </tr>
                     <tr className="bg-surface-elevated/30">
-                      <td colSpan={mode === "rate-card" ? 7 : 5} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
+                      <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
                         <div className="inline-flex items-center gap-2 justify-end">
                           <span>Tax</span>
                           <div className="relative">
@@ -936,7 +947,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                       <td />
                     </tr>
                     <tr className="border-t border-border bg-surface-elevated/40">
-                      <td colSpan={mode === "rate-card" ? 7 : 5} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-foreground font-semibold">Total</td>
+                      <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-foreground font-semibold">Total</td>
                       <td className="px-2 py-2 text-right font-tnum font-semibold">{fmt(totalAmount, currency)}</td>
                       <td />
                     </tr>
