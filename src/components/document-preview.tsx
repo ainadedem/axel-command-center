@@ -706,7 +706,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
               dangerouslySetInnerHTML={{ __html: html }}
             />
             {/* Draggable stamp: free placement saved per document */}
-            {floating && stampUrl ? (
+            {floating && stampUrl && showStamp ? (
               <div
                 role="button"
                 tabIndex={0}
@@ -714,14 +714,16 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
                 onPointerDown={startStampDrag}
                 className="absolute z-20 cursor-grab active:cursor-grabbing rounded-md ring-2 ring-primary/50 hover:ring-primary transition"
                 style={{
-                  left: `${place.x}%`, top: `${place.y}%`,
+                  left: `${stampGeom.x}%`, top: `${stampGeom.y}%`,
                   width: stampBoxW, transform: "translate(-50%, -50%)",
+                  opacity: stampGeom.opacity,
                   touchAction: "none",
                 }}
               >
                 <img src={stampUrl} alt="" draggable={false} className="w-full select-none pointer-events-none" />
               </div>
             ) : null}
+
 
             {/* Column resize handles, overlaid on the table header borders */}
             {handles.map((h) => (
