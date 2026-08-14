@@ -129,6 +129,14 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
   const [showPayment, setShowPayment] = useState(company?.showPaymentDetails !== false);
   useEffect(() => { setShowPayment(company?.showPaymentDetails !== false); }, [company?.id, company?.showPaymentDetails]);
 
+  // Stamp / signature ------------------------------------------------------
+  const [showStamp, setShowStamp] = useState(company?.showStamp === true);
+  const [showSignature, setShowSignature] = useState(true);
+  useEffect(() => { setShowStamp(company?.showStamp === true); }, [company?.id, company?.showStamp]);
+
+  const signer = useSigner(doc?.signerId);
+  const stampUrl = useFileUrl(company?.stampUrl);
+  const signatureUrl = useFileUrl(signer.signatureRef);
 
   // Logos are stored as private storage refs (`storage:bucket/path`) — resolve
   // them to a signed URL before embedding into the document HTML.
