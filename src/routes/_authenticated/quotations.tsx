@@ -9,7 +9,7 @@ import {
   contactBelongsTo, MAX_QUOTE_ASSIGNEES,
 } from "@/lib/mock-data";
 import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
-import { useLineReorder, DragHandle, moveItem } from "@/components/sortable-row";
+import { useLineReorder, DragHandle, moveItem, ReorderLiveRegion } from "@/components/sortable-row";
 import { newId } from "@/lib/data-store";
 import { defaultTaxRate } from "@/lib/vat";
 import { docTotals, lineNet } from "@/lib/discounts";
@@ -822,7 +822,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                       return (
                       <tr key={l.id} {...rp} className={cn("border-t border-border/40 align-top", rp.className)}>
                         <td className="px-1 py-1.5">
-                          <DragHandle index={li} total={lines.length} handleProps={lineDnd.handleProps(li)} onMove={moveLine} />
+                          <DragHandle index={li} total={lines.length} handleProps={lineDnd.handleProps(li)} onMove={(f, t) => lineDnd.move(f, t, lines.length)} />
                         </td>
                         <td className="px-2 py-1.5">
                           <Input className="h-8 text-xs" value={l.description} onChange={(e) => updateLine(l.id, { description: e.target.value })} placeholder="Description" />
@@ -943,6 +943,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                     </tr>
                   </tfoot>
                 </table>
+                <ReorderLiveRegion text={lineDnd.announcement} />
                 </div>
               </div>
             )}

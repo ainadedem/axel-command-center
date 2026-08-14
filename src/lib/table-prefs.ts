@@ -60,6 +60,14 @@ export interface TablePrefs {
     onDragEnd: () => void;
     "data-drag-over"?: "left" | "right";
   };
+  /** Live-region text describing the last keyboard reorder/resize. */
+  announcement: string;
+  /** Keyboard handlers for a header cell (Alt+Arrow reorder, Shift+Arrow resize). */
+  keyboardProps: (key: string) => {
+    tabIndex: number;
+    "aria-label": string;
+    onKeyDown: (e: React.KeyboardEvent) => void;
+  };
   reset: () => void;
   resetWidths: () => void;
   resetOrder: () => void;
@@ -78,6 +86,7 @@ export function useTablePrefs(
   const [loadedFor, setLoadedFor] = useState(storeKey);
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [overKey, setOverKey] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState("");
 
   // The user id resolves asynchronously — re-read once the key changes.
   if (loadedFor !== storeKey) {
@@ -231,7 +240,48 @@ export function useTablePrefs(
 
   const visible = ordered.filter((c) => on(c.key));
 
+  const label = (key: string) => columns.find((c) => c.key === key)?.label ?? key;
+
+  const setWidth = (key: string, next: number) => {
+    persist({ ...state, widths: { ...state.widths, [key]: Math.max(64, Math.round(next)) } });
+  };
+
+  const moveBy = (key: string, delta: number) => {
+    const keys = visible.map((c) => c.key);
+    const i = keys.indexOf(key);
+    const j = i + delta;
+    if (i < 0 || j < 0 || j >= keys.length) return null;
+    move(key, keys[j]);
+    return `${label(key)} moved to position ${j + 1} of ${keys.length}.`;
+  };
+
+  /**
+   * Keyboard equivalents for the mouse-only header drag and resize:
+   * Alt+Arrow reorders the column, Shift+Arrow resizes it in 16px steps.
+   */
+  const keyboardProps = (key: string) => ({
+    tabIndex: 0,
+    "aria-label": `${label(key)} column. Alt plus arrow keys reorder, shift plus arrow keys resize.`,
+    onKeyDown: (e: React.KeyboardEvent) => {
+      const isLeft = e.key === "ArrowLeft";
+      const isRight = e.key === "ArrowRight";
+      if (!isLeft && !isRight) return;
+      if (e.altKey) {
+        e.preventDefault();
+        const msg = moveBy(key, isLeft ? -1 : 1);
+        if (msg) setAnnouncement(msg);
+      } else if (e.shiftKey) {
+        e.preventDefault();
+        const next = Math.max(64, width(key) + (isLeft ? -16 : 16));
+        setWidth(key, next);
+        setAnnouncement(`${label(key)} column width ${next} pixels.`);
+      }
+    },
+  });
+
   return {
+    announcement,
+    keyboardProps,
     columns: ordered,
     visible,
     visibleKeys: visible.map((c) => c.key),

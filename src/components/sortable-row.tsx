@@ -17,6 +17,16 @@ export function moveItem<T>(items: T[], from: number, to: number): T[] {
 export function useLineReorder(onReorder: (from: number, to: number) => void) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  const [announcement, setAnnouncement] = useState("");
+
+  const move = (from: number, to: number, total?: number) => {
+    if (from === to) return;
+    onReorder(from, to);
+    setAnnouncement(
+      `Line ${from + 1} moved to position ${to + 1}${total ? ` of ${total}` : ""}.`,
+    );
+  };
+
 
   const rowProps = (index: number) => ({
     onDragOver: (e: React.DragEvent) => {
@@ -27,7 +37,7 @@ export function useLineReorder(onReorder: (from: number, to: number) => void) {
     },
     onDrop: (e: React.DragEvent) => {
       e.preventDefault();
-      if (dragIndex !== null) onReorder(dragIndex, index);
+      if (dragIndex !== null) move(dragIndex, index);
       setDragIndex(null);
       setOverIndex(null);
     },
@@ -56,7 +66,16 @@ export function useLineReorder(onReorder: (from: number, to: number) => void) {
     },
   });
 
-  return { rowProps, handleProps, dragIndex };
+  return { rowProps, handleProps, dragIndex, move, announcement };
+}
+
+/** Polite live region announcing keyboard/drag line moves. */
+export function ReorderLiveRegion({ text }: { text: string }) {
+  return (
+    <div aria-live="polite" role="status" className="sr-only">
+      {text}
+    </div>
+  );
 }
 
 export function DragHandle({
@@ -77,10 +96,25 @@ export function DragHandle({
       <span
         {...handleProps}
         role="button"
-        tabIndex={-1}
-        aria-label={`Reorder line ${index + 1}`}
-        title="Drag to reorder"
-        className="cursor-grab active:cursor-grabbing text-muted-foreground/60 hover:text-foreground transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+        tabIndex={0}
+        aria-label={`Reorder line ${index + 1} of ${total}. Use arrow up or arrow down to move it.`}
+        title="Drag, or focus and use arrow keys, to reorder"
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === "ArrowUp" && index > 0) {
+            e.preventDefault();
+            onMove(index, index - 1);
+          } else if (e.key === "ArrowDown" && index < total - 1) {
+            e.preventDefault();
+            onMove(index, index + 1);
+          } else if (e.key === "Home" && index > 0) {
+            e.preventDefault();
+            onMove(index, 0);
+          } else if (e.key === "End" && index < total - 1) {
+            e.preventDefault();
+            onMove(index, total - 1);
+          }
+        }}
+        className="cursor-grab active:cursor-grabbing text-muted-foreground/60 hover:text-foreground transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)] rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <GripVertical className="h-4 w-4" />
       </span>
