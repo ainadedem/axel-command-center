@@ -473,6 +473,31 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
               {mode === "custom" && <span className="px-2 py-0.5 text-muted-foreground">Custom</span>}
             </div>
 
+            {/* Density / fit to one page */}
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span>Layout</span>
+              <div className="flex rounded-md border border-border overflow-hidden text-[11px]">
+                {([["Fit 1 page", "auto"], ["Compact", "compact"], ["Normal", "normal"], ["Spacious", "spacious"]] as const).map(([label, v]) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setDensity(v)}
+                    className={`px-2 py-0.5 transition ${density === v ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <span className="tabular-nums">{pages} page{pages > 1 ? "s" : ""}</span>
+              <button
+                type="button"
+                onClick={() => setColWidths({})}
+                className="rounded-md border border-border px-2 py-0.5 text-[11px] hover:bg-muted transition"
+              >
+                Reset columns
+              </button>
+            </div>
+
             <Button size="sm" variant="outline" onClick={printPdf} disabled={exporting}>
               {exporting ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Printer className="h-3.5 w-3.5 mr-1.5" />}
               Print
@@ -492,7 +517,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
           </div>
         )}
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto overscroll-contain bg-neutral-200 dark:bg-neutral-900 p-6">
-          <div className="mx-auto" style={{ width: SHEET_W * zoom, height: sheetH * zoom }}>
+          <div className="relative mx-auto" style={{ width: SHEET_W * zoom, height: sheetH * zoom }}>
             <div
               ref={sheetRef}
               className="bg-white text-neutral-900 shadow-xl"
@@ -502,9 +527,22 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
               }}
               dangerouslySetInnerHTML={{ __html: html }}
             />
-
+            {/* Column resize handles, overlaid on the table header borders */}
+            {handles.map((h) => (
+              <div
+                key={h.key}
+                role="separator"
+                aria-label="Resize column"
+                onPointerDown={startColDrag(h.key)}
+                className="absolute z-10 w-2 -ml-1 cursor-col-resize group"
+                style={{ left: h.x, top: h.top, height: h.height }}
+              >
+                <div className="mx-auto h-full w-px bg-transparent group-hover:bg-primary transition-colors" />
+              </div>
+            ))}
           </div>
         </div>
+
       </DialogContent>
     </Dialog>
   );
