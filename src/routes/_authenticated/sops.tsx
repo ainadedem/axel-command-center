@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { AppShell } from "@/components/app-shell";
@@ -34,7 +34,7 @@ import { seedDemoWorkspace, removeDemoWorkspace } from "@/lib/sop-demo.functions
 import { toast } from "sonner";
 import {
   ShieldCheck, AlertTriangle, Download, BookText, CheckCircle2, Clock,
-  PlayCircle, Trash2, Mail, HelpCircle, Loader2,
+  PlayCircle, Trash2, Mail, HelpCircle, Loader2, ExternalLink,
 } from "lucide-react";
 
 const TOUR_STEPS: TourStep[] = [
