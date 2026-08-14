@@ -23,16 +23,16 @@ import type { ColumnPrefs } from "@/lib/column-prefs";
  *  - row actions live on their own padded line under the data row.
  */
 
-export function ListTableShell({ children, className }: { children: ReactNode; className?: string }) {
+export function ListTableShell({ children, className, scrollX }: { children: ReactNode; className?: string; scrollX?: boolean }) {
   return (
     <div className={cn("rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden", className)}>
-      <div className="stacked-table">{children}</div>
+      <div className={cn("stacked-table", scrollX && "md:overflow-x-auto")}>{children}</div>
     </div>
   );
 }
 
-export function ListTable({ children, className }: { children: ReactNode; className?: string }) {
-  return <table className={cn("w-full table-fixed text-sm", className)}>{children}</table>;
+export function ListTable({ children, className, style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
+  return <table style={style} className={cn("w-full table-fixed text-sm", className)}>{children}</table>;
 }
 
 export function ListHeadRow({ children, className }: { children: ReactNode; className?: string }) {
@@ -48,12 +48,15 @@ export function ListTh({
   className,
   width,
   align = "left",
+  onResizeStart,
 }: {
   children?: ReactNode;
   className?: string;
   /** e.g. "12%" or "7rem" — `table-fixed` uses the header widths. */
   width?: string;
   align?: "left" | "right" | "center";
+  /** When provided, renders a drag handle that resizes this column. */
+  onResizeStart?: (e: React.MouseEvent) => void;
 }) {
   const style: CSSProperties | undefined = width ? { width } : undefined;
   return (
@@ -61,14 +64,17 @@ export function ListTh({
       style={style}
       className={cn(
         "font-medium px-4 py-3 truncate",
+        onResizeStart && "relative",
         align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
         className,
       )}
     >
       {children}
+      {onResizeStart && <ResizeHandle onMouseDown={onResizeStart} />}
     </th>
   );
 }
+
 
 export function ListTd({
   children,
