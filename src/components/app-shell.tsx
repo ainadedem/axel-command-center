@@ -613,7 +613,7 @@ function AppShellFrame({ children }: { children: ReactNode }) {
         </main>
 
 
-        <footer className="shrink-0 border-t border-border/70 material-bar px-6 py-3 flex items-center justify-between text-[11px] text-muted-foreground">
+        <footer className="shrink-0 border-t border-border/70 material-bar px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
           <span>© {new Date().getFullYear()} AXEL by WeAxiom</span>
           <div className="flex items-center gap-4">
             <Link to="/about" className="hover:text-foreground transition underline-grow">About</Link>
