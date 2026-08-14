@@ -85,3 +85,18 @@ export function useFocusRow(id?: string) {
     };
   }, [id]);
 }
+
+/**
+ * Deep-link jump used by the aging drawer: writes `?focus=<id>&aging=<bucket>`
+ * so the URL is shareable, then scrolls the row into view and pulses it.
+ */
+export function useJumpToRecord() {
+  const navigate = useNavigate();
+  return (id: string, aging?: string | null) => {
+    void navigate({
+      search: (prev: Record<string, unknown>) => ({ ...prev, focus: id, aging: aging ?? undefined }),
+      replace: true,
+    } as never);
+    focusRowById(id);
+  };
+}
