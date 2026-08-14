@@ -81,6 +81,7 @@ function Body() {
   const [previewing, setPreviewing] = useState<Quote | null>(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [historyOf, setHistoryOf] = useState<Quote | null>(null);
+  const [followingUp, setFollowingUp] = useState<Quote | null>(null);
   const { user } = useAuth();
   const openCreate = () => { setEditing(null); setOpen(true); };
 
