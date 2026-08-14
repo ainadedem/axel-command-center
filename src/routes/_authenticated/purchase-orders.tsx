@@ -388,7 +388,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
               <Label><RequiredLabel>Company</RequiredLabel></Label>
               <Select value={companyId} onValueChange={(v) => { setCompanyId(v); setClientId(""); setQuoteId(""); }}>
                 <SelectTrigger className={invalidFieldClassName(showErrors && !companyId)} aria-invalid={showErrors && !companyId}><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}{companyId && !companies.some((c) => c.id === companyId) && <SelectItem value={companyId}>Current company</SelectItem>}</SelectContent>
               </Select>
             </div>
             <div>

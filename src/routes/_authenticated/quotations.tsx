@@ -686,7 +686,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
               <Label>Company</Label>
               <Select value={companyId} onValueChange={(v) => { setCompanyId(v); setClientId(""); }}>
                 <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}{companyId && !companies.some((c) => c.id === companyId) && <SelectItem value={companyId}>Current company</SelectItem>}</SelectContent>
               </Select>
             </div>
             <div>

@@ -87,6 +87,18 @@ const toLocalCompanyId = (dbId: string) => companyLocalIdByDb.get(dbId) ?? dbId;
 const isUuid = (v: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
+/**
+ * Relation column for an upsert.
+ * - empty value → explicit `null` (the user really cleared the link)
+ * - real backend id → written through
+ * - legacy/local id we cannot resolve → key omitted, so an upsert never blanks
+ *   a link that already exists in the backend. Writing `null` here is what
+ *   wiped client/project on documents replayed from local seeds.
+ */
+const link = (key: string, value?: string | null): Record<string, string | null> =>
+  value ? (isUuid(value) ? { [key]: value } : {}) : { [key]: null };
+
+
 async function fetchScopedRows(table: string, scope: HydrationScope) {
   if (scope.mode === "scoped" && scope.companyIds.length === 0) return [] as Record<string, unknown>[];
   let query = (supabase.from as (t: string) => ReturnType<typeof supabase.from>)(table).select("*");
@@ -546,10 +558,10 @@ const transactionToDb = (t: Transaction) => {
     company_id: dbCompany,
     account_id: t.accountId && isUuid(t.accountId) ? t.accountId : null,
     category_id: t.categoryId && isUuid(t.categoryId) ? t.categoryId : null,
-    client_id: t.clientId && isUuid(t.clientId) ? t.clientId : null,
+    ...link("client_id", t.clientId),
     supplier_id: t.supplierId && isUuid(t.supplierId) ? t.supplierId : null,
-    project_id: t.projectId && isUuid(t.projectId) ? t.projectId : null,
-    invoice_id: t.invoiceId && isUuid(t.invoiceId) ? t.invoiceId : null,
+    ...link("project_id", t.projectId),
+    ...link("invoice_id", t.invoiceId),
     date: t.date,
     type: t.type,
     category: t.category ?? null,
@@ -602,13 +614,14 @@ const invoiceToDb = (inv: Invoice) => {
   return {
     id: isUuid(inv.id) ? inv.id : undefined,
     company_id: dbCompany,
-    client_id: inv.clientId && isUuid(inv.clientId) ? inv.clientId : null,
-    project_id: inv.projectId && isUuid(inv.projectId) ? inv.projectId : null,
-    po_id: inv.poId && isUuid(inv.poId) ? inv.poId : null,
+    ...link("client_id", inv.clientId),
+    ...link("project_id", inv.projectId),
+    ...link("po_id", inv.poId),
     po_waived: inv.poWaived ?? false,
     po_waiver_reason: inv.poWaiverReason ?? null,
 
-    quote_id: inv.quoteId && isUuid(inv.quoteId) ? inv.quoteId : null,
+    ...link("quote_id", inv.quoteId),
+
     number: inv.number,
     issue_date: inv.issueDate,
     due_date: inv.dueDate,
@@ -879,7 +892,7 @@ const opportunityToDb = (o: Opportunity) => {
     company_id: dbCompany,
     name: o.name,
     client: o.client,
-    client_id: o.clientId && isUuid(o.clientId) ? o.clientId : null,
+    ...link("client_id", o.clientId),
     closer: o.closer ?? null,
     stage: o.stage,
     value: o.value,
@@ -921,8 +934,9 @@ const quoteToDb = (q: Quote) => {
   return {
     id: isUuid(q.id) ? q.id : undefined,
     company_id: dbCompany,
-    client_id: q.clientId && isUuid(q.clientId) ? q.clientId : null,
-    project_id: q.projectId && isUuid(q.projectId) ? q.projectId : null,
+    ...link("client_id", q.clientId),
+    ...link("project_id", q.projectId),
+
     number: q.number,
     issue_date: q.issueDate,
     valid_until: q.validUntil,
@@ -1036,9 +1050,10 @@ const poToDb = (p: PurchaseOrder) => {
   return {
     id: isUuid(p.id) ? p.id : undefined,
     company_id: dbCompany,
-    client_id: p.clientId && isUuid(p.clientId) ? p.clientId : null,
-    project_id: p.projectId && isUuid(p.projectId) ? p.projectId : null,
-    quote_id: p.quoteId && isUuid(p.quoteId) ? p.quoteId : null,
+    ...link("client_id", p.clientId),
+    ...link("project_id", p.projectId),
+    ...link("quote_id", p.quoteId),
+
     number: p.number,
     client_reference: p.clientReference ?? null,
     issue_date: p.issueDate,
@@ -1119,7 +1134,7 @@ const expenseToDb = (e: Expense) => {
     account_id: e.accountId && isUuid(e.accountId) ? e.accountId : null,
     category: e.category ?? null,
     description: e.description ?? null,
-    project_id: e.projectId && isUuid(e.projectId) ? e.projectId : null,
+    ...link("project_id", e.projectId),
     attachment_url: e.attachmentUrl ?? null,
     attachment_name: e.attachmentName ?? null,
     payment_cycle: e.paymentCycle ?? null,
@@ -1178,8 +1193,8 @@ const rbToDb = (b: RecurringBilling) => {
   return {
     id: isUuid(b.id) ? b.id : undefined,
     company_id: dbCompany,
-    client_id: b.clientId && isUuid(b.clientId) ? b.clientId : null,
-    project_id: b.projectId && isUuid(b.projectId) ? b.projectId : null,
+    ...link("client_id", b.clientId),
+    ...link("project_id", b.projectId),
     name: b.name,
     amount: b.amount,
     currency: b.currency,
@@ -1372,9 +1387,9 @@ const pvrToDb = (p: PvrRecord) => {
   return {
     id: isUuid(p.id) ? p.id : undefined,
     company_id: dbCompany,
-    invoice_id: p.invoiceId && isUuid(p.invoiceId) ? p.invoiceId : null,
-    project_id: p.projectId && isUuid(p.projectId) ? p.projectId : null,
-    quote_id: p.quoteId && isUuid(p.quoteId) ? p.quoteId : null,
+    ...link("invoice_id", p.invoiceId),
+    ...link("project_id", p.projectId),
+    ...link("quote_id", p.quoteId),
     reference: p.reference ?? null,
     signed_date: p.signedDate,
     completion_pct: p.completionPct,
