@@ -71,12 +71,30 @@ export function AgingPanel({
   onDrawerBucketChange?: (key: AgingKey | null) => void;
   /** Records still resolving (hydration / fetch) — drawer shows skeletons. */
   loading?: boolean;
+  /** Persist the chart expand/collapse choice per user under this key. */
+  storageKey?: string;
 }) {
   const [uncontrolledKey, setUncontrolledKey] = useState<AgingKey | null>(null);
   const drawerKey = drawerBucket !== undefined ? drawerBucket : uncontrolledKey;
   const setDrawerKey = (key: AgingKey | null) => {
     if (drawerBucket === undefined) setUncontrolledKey(key);
     onDrawerBucketChange?.(key);
+  };
+
+  const prefKey = `axel.aging.chart.${storageKey ?? noun}`;
+  const [chartOpen, setChartOpen] = useState(false);
+  useEffect(() => {
+    try {
+      setChartOpen(localStorage.getItem(prefKey) !== "0");
+    } catch {
+      setChartOpen(true);
+    }
+  }, [prefKey]);
+  const toggleChart = () => {
+    setChartOpen((v) => {
+      try { localStorage.setItem(prefKey, v ? "0" : "1"); } catch { /* ignore */ }
+      return !v;
+    });
   };
 
   if (!aging.hasData) return null;
