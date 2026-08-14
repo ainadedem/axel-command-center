@@ -847,6 +847,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
 
       ${doc.notes ? `<div class="notes"><strong>${esc(t.notes)}</strong><div style="margin-top: 4px;">${esc(doc.notes)}</div></div>` : ""}
       ${paymentHtml}
+      ${signBlockHtml({ company, showStamp, stampUrl, showSignature, signatureUrl, signerName, lang: l })}
 
       <div class="footer">
         ${esc(doc.kind === "invoice"
