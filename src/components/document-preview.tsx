@@ -246,20 +246,99 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   const html = useMemo(() => {
     if (!doc) return "";
-    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang });
-  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang]);
+    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale });
+  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale]);
 
-  // Track the real (unscaled) sheet height so the scroll area sizes correctly
-  // for multi-page documents.
+  // Reset the auto-fit search whenever the document content changes.
+  useEffect(() => {
+    setAutoScale(1);
+  }, [doc?.number, showUnit, showPayment, showClientEmail, showStatus, lang, logoScale, colWidths, density, open]);
+
+  // Track the real (unscaled) sheet height, the page count, and step the
+  // auto-fit scale down until the document fits a single A4 page.
   useLayoutEffect(() => {
     const el = sheetRef.current;
     if (!el || !open) return;
-    const measure = () => setSheetH(Math.max(SHEET_H, el.offsetHeight));
-    measure();
-    const ro = new ResizeObserver(measure);
+    const measure = () => {
+      const h = el.scrollHeight;
+      setSheetH(Math.max(SHEET_H, el.offsetHeight));
+      const contentH = Math.max(0, h - PAGE_PAD_MM * 2 * MM);
+      const p = Math.max(1, Math.ceil((contentH - 2) / USABLE_H));
+      setPages(p);
+      if (density === "auto" && p > 1 && autoScale > MIN_AUTO_SCALE) {
+        setAutoScale((s) => Math.max(MIN_AUTO_SCALE, Math.round((s - 0.05) * 1000) / 1000));
+      }
+    };
+    const id = requestAnimationFrame(measure);
+    const ro = new ResizeObserver(() => measure());
     ro.observe(el);
-    return () => ro.disconnect();
-  }, [open, html]);
+    return () => { cancelAnimationFrame(id); ro.disconnect(); };
+  }, [open, html, density, autoScale]);
+
+  // ---- Column resizing (drag the header borders) --------------------------
+  const [handles, setHandles] = useState<Array<{ key: ColKey; x: number; top: number; height: number }>>([]);
+  const colsRef = useRef(cols);
+  colsRef.current = cols;
+
+  const measureHandles = useCallback(() => {
+    const sheet = sheetRef.current;
+    if (!sheet) { setHandles([]); return; }
+    const table = sheet.querySelector("table");
+    const ths = table?.querySelectorAll("thead th");
+    if (!table || !ths || ths.length < 2) { setHandles([]); return; }
+    const base = sheet.getBoundingClientRect();
+    const tRect = table.getBoundingClientRect();
+    const keys = visibleCols(showUnit);
+    const next: Array<{ key: ColKey; x: number; top: number; height: number }> = [];
+    ths.forEach((th, i) => {
+      if (i >= ths.length - 1) return; // no handle after the last column
+      const r = (th as HTMLElement).getBoundingClientRect();
+      next.push({
+        key: keys[i],
+        x: r.right - base.left,
+        top: tRect.top - base.top,
+        height: Math.max(24, tRect.height),
+      });
+    });
+    setHandles(next);
+  }, [showUnit]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const id = requestAnimationFrame(measureHandles);
+    return () => cancelAnimationFrame(id);
+  }, [open, html, zoom, measureHandles]);
+
+  const startColDrag = (key: ColKey) => (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const sheet = sheetRef.current;
+    const table = sheet?.querySelector("table") as HTMLElement | null;
+    if (!table) return;
+    const tableW = table.getBoundingClientRect().width || 1;
+    const startX = e.clientX;
+    const keys = visibleCols(showUnit);
+    const idx = keys.indexOf(key);
+    const nextKey = keys[idx + 1];
+    if (!nextKey) return;
+    const start = { ...colsRef.current };
+    const onMove = (ev: PointerEvent) => {
+      const deltaPct = ((ev.clientX - startX) / tableW) * 100;
+      const d = clamp(deltaPct, -(start[key] - 5), start[nextKey] - 5);
+      setColWidths({ ...start, [key]: start[key] + d, [nextKey]: start[nextKey] - d });
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
 
 
 
