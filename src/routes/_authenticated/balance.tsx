@@ -9,6 +9,7 @@ import { exportCsvRows } from "@/lib/export-csv";
 import { parseISO } from "date-fns";
 import { useState, useMemo } from "react";
 import { Download, CheckCircle2, AlertTriangle } from "lucide-react";
+import { KpiCard } from "@/components/kpi-card";
 
 export const Route = createFileRoute("/_authenticated/balance")({ component: BalancePage });
 
@@ -191,10 +192,5 @@ function Body() {
 }
 
 function StatCard({ label, value, ok }: { label: string; value: string; ok?: boolean }) {
-  return (
-    <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
-      <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
-      <div className={`font-display text-2xl font-bold mt-1 font-tnum ${ok ? "text-success" : ok === false ? "text-destructive" : ""}`}>{value}</div>
-    </div>
-  );
+  return <KpiCard label={label} value={value} tone={ok ? "success" : ok === false ? "danger" : "default"} />;
 }

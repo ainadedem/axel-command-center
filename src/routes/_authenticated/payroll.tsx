@@ -23,6 +23,7 @@ import { Pencil, Trash2, Users, CalendarDays, CheckCircle2, BanknoteIcon, Plus, 
 import { cn } from "@/lib/utils";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { useSingleFlightSubmit } from "@/components/form-ux";
+import { KpiCard } from "@/components/kpi-card";
 
 export const Route = createFileRoute("/_authenticated/payroll")({ component: PayrollPage });
 
@@ -573,11 +574,8 @@ function NewRunDialog({ onClose, register }: { onClose: () => void; register: Sa
   );
 }
 
-function Kpi({ label, value, accent, mono }: { label: string; value: string; accent?: string; mono?: boolean }) {
-  return (
-    <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className={cn("mt-1 text-xl font-display font-semibold", mono && "font-tnum", accent)}>{value}</div>
-    </div>
-  );
+/** Thin wrapper so legacy call sites keep working on the shared dashboard card. */
+function Kpi({ label, value, accent }: { label: string; value: string; accent?: string; mono?: boolean }) {
+  const tone = accent?.includes("destructive") ? "danger" : accent?.includes("success") ? "success" : accent?.includes("warn") || accent?.includes("amber") ? "warning" : "default";
+  return <KpiCard label={label} value={value} tone={tone} />;
 }

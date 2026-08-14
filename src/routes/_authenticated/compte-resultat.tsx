@@ -9,6 +9,7 @@ import { exportCsvRows } from "@/lib/export-csv";
 import { parseISO, subMonths, subQuarters, subYears, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from "date-fns";
 import { useState, useMemo } from "react";
 import { Download } from "lucide-react";
+import { KpiCard } from "@/components/kpi-card";
 
 export const Route = createFileRoute("/_authenticated/compte-resultat")({ component: CompteResultatPage });
 
@@ -160,13 +161,13 @@ function CompteResultatBody() {
 }
 
 function Stat({ label, value, prev, tone, co, invertTrend }: any) {
-  const toneClass = tone === "success" ? "text-success" : tone === "destructive" ? "text-destructive" : "";
   return (
-    <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
-      <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
-      <div className={`font-display text-xl font-bold mt-1 font-tnum ${toneClass}`}>{value}</div>
-      {prev !== undefined && <PrevBadge cur={parseFloat(value.replace(/[^0-9.-]/g, ""))} prevVal={prev} co={co} invertTrend={invertTrend} />}
-    </div>
+    <KpiCard
+      label={label}
+      value={value}
+      tone={tone === "success" ? "success" : tone === "destructive" ? "danger" : "default"}
+      sub={prev !== undefined ? <PrevBadge cur={parseFloat(value.replace(/[^0-9.-]/g, ""))} prevVal={prev} co={co} invertTrend={invertTrend} /> : undefined}
+    />
   );
 }
 

@@ -35,6 +35,7 @@ import { seedDemoWorkspace, removeDemoWorkspace } from "@/lib/sop-demo.functions
 import { saveInvoiceEscalation } from "@/lib/db-sync";
 import { toast } from "sonner";
 import {
+import { KpiCard } from "@/components/kpi-card";
   ShieldCheck, AlertTriangle, Download, BookText, CheckCircle2, Clock,
   PlayCircle, Trash2, Mail, HelpCircle, Loader2, ExternalLink,
 } from "lucide-react";
@@ -218,13 +219,10 @@ function DemoControls() {
   );
 }
 
-function Kpi({ label, value, accent, mono }: { label: string; value: string; accent?: string; mono?: boolean }) {
-  return (
-    <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className={cn("mt-1 text-xl font-display font-semibold", mono && "font-tnum", accent)}>{value}</div>
-    </div>
-  );
+/** Thin wrapper so legacy call sites keep working on the shared dashboard card. */
+function Kpi({ label, value, accent }: { label: string; value: string; accent?: string; mono?: boolean }) {
+  const tone = accent?.includes("destructive") ? "danger" : accent?.includes("success") ? "success" : accent?.includes("warn") || accent?.includes("amber") ? "warning" : "default";
+  return <KpiCard label={label} value={value} tone={tone} />;
 }
 
 /* ─── Compliance tab ────────────────────────────────────────────────── */
