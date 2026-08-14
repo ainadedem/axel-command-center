@@ -37,7 +37,7 @@ export function useLineReorder(onReorder: (from: number, to: number) => void) {
     },
     onDrop: (e: React.DragEvent) => {
       e.preventDefault();
-      if (dragIndex !== null) onReorder(dragIndex, index);
+      if (dragIndex !== null) move(dragIndex, index);
       setDragIndex(null);
       setOverIndex(null);
     },
