@@ -11,6 +11,9 @@ import { renderRichText } from "@/lib/rich-text";
 import { useFileUrl } from "@/hooks/use-file-url";
 import { useSigner } from "@/hooks/use-signer";
 import { docLabels, docDateFormat, DOC_LANGUAGES, type DocLanguage } from "@/lib/doc-i18n";
+import { exportDocumentPdf, pdfFilename, type ExportStage } from "@/lib/pdf-export";
+import { describePlacement, logStampChange, logSignerChange, type DocType } from "@/lib/document-activity";
+
 
 
 import {
@@ -74,9 +77,20 @@ interface Props {
     stampScale?: number;
     stampDirty?: boolean;
   }) => void;
+  /** Identifies the document so stamp/signer changes are written to the audit trail. */
+  audit?: { docType: DocType; docId: string; companyId: string };
 }
 
+
 const MM = 96 / 25.4;
+
+const EXPORT_LABEL: Record<ExportStage, string> = {
+  preparing: "Preparing…",
+  rendering: "Rendering…",
+  saving: "Saving…",
+  done: "Done",
+};
+
 const SHEET_W = 210 * MM;
 const SHEET_H = 297 * MM;
 const MIN_ZOOM = 0.35;
@@ -138,7 +152,7 @@ function saveView(kind: DocKind, v: SavedView) {
   } catch { /* storage unavailable — non-fatal */ }
 }
 
-export function DocumentPreview({ open, onOpenChange, doc, company, client, project, signers, onDocChange }: Props) {
+export function DocumentPreview({ open, onOpenChange, doc, company, client, project, signers, onDocChange, audit }: Props) {
   const [showStatus, setShowStatus] = useState(true);
   const [showClientEmail, setShowClientEmail] = useState(true);
   const [showUnit, setShowUnit] = useState(true);
@@ -385,7 +399,37 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   // ---- Export -------------------------------------------------------------
   const [exporting, setExporting] = useState(false);
+  const [exportStage, setExportStage] = useState<ExportStage | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
+
+
+  const printableHtml = useCallback(() => {
+    if (!doc) return "";
+    return buildPrintableDocument({
+      doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit,
+      logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl,
+      signerName: signer.name, stampX: place.x, stampY: place.y, stampScale: place.scale,
+    });
+  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signer.name, place]);
+
+  const downloadPdf = useCallback(async () => {
+    if (!doc || exporting) return;
+    setExportError(null);
+    setExporting(true);
+    setExportStage("preparing");
+    const filename = pdfFilename(doc.number);
+    try {
+      await exportDocumentPdf(printableHtml(), filename, setExportStage);
+      toast.success(`Downloaded ${filename}`);
+    } catch (e) {
+      const msg = `PDF export failed: ${e instanceof Error ? e.message : String(e)}`;
+      setExportError(msg);
+      toast.error(msg);
+    } finally {
+      setExporting(false);
+      setExportStage(null);
+    }
+  }, [doc, exporting, printableHtml]);
 
   const printPdf = () => {
     if (!doc || exporting) return;
@@ -394,13 +438,13 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     try {
       const w = window.open("", "_blank", "width=900,height=1100");
       if (!w) {
-        const msg = "Pop-ups are blocked — allow pop-ups for this site to export the PDF.";
+        const msg = "Pop-ups are blocked — use “Export PDF” to download the file instead.";
         setExportError(msg);
         toast.error(msg);
         setExporting(false);
         return;
       }
-      w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName: signer.name, stampX: place.x, stampY: place.y, stampScale: place.scale }));
+      w.document.write(printableHtml());
       w.document.close();
       setTimeout(() => {
         try { w.focus(); w.print(); }
@@ -411,7 +455,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
         } finally { setExporting(false); }
       }, 250);
     } catch (e) {
-      const msg = `PDF export failed: ${e instanceof Error ? e.message : String(e)}`;
+      const msg = `Printing failed: ${e instanceof Error ? e.message : String(e)}`;
       setExportError(msg);
       toast.error(msg);
       setExporting(false);
@@ -421,11 +465,19 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   // ---- Stamp placement (drag on the preview) ------------------------------
   const commitPlace = useCallback((next: { x?: number; y?: number; scale?: number }) => {
+    const before = { x: doc?.stampX, y: doc?.stampY, scale: doc?.stampScale };
     setPlace(next);
     onDocChange?.({
       stampX: next.x, stampY: next.y, stampScale: next.scale, stampDirty: false,
     });
-  }, [onDocChange]);
+    if (audit && doc) {
+      logStampChange({
+        ...audit, docNumber: doc.number,
+        summary: describePlacement(before, next),
+        details: { before, after: next },
+      });
+    }
+  }, [onDocChange, audit, doc]);
 
   const startStampDrag = (e: React.PointerEvent) => {
     if (!stampUrl) return;
@@ -447,7 +499,10 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     window.addEventListener("pointerup", up);
   };
 
-  const stampBoxW = (company?.stampWidth ?? 140) * clamp(place.scale ?? 1, 0.3, 3) * zoom;
+  // Same geometry as the exported page; only the visual size follows the zoom.
+  const stampGeom = stampGeometry(company, place);
+  const stampBoxW = stampGeom.width * zoom;
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -491,9 +546,19 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
                   value={signerId ?? ""}
                   onChange={(e) => {
                     const v = e.target.value || undefined;
+                    const prev = signers.find((u) => u.userId === signerId)?.name ?? "nobody";
+                    const next = signers.find((u) => u.userId === v)?.name ?? "nobody";
                     setSignerId(v);
                     onDocChange?.({ signerId: v, stampDirty: false });
+                    if (audit && doc && v !== signerId) {
+                      logSignerChange({
+                        ...audit, docNumber: doc.number,
+                        summary: `Signer changed from ${prev} to ${next}`,
+                        details: { before: signerId ?? null, after: v ?? null },
+                      });
+                    }
                   }}
+
                   className="rounded-md border border-border bg-background px-2 py-1 text-[11px] focus-ring"
                   aria-label="Document signer"
                 >
@@ -631,12 +696,12 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
             </div>
 
             <Button size="sm" variant="outline" onClick={printPdf} disabled={exporting}>
-              {exporting ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Printer className="h-3.5 w-3.5 mr-1.5" />}
+              <Printer className="h-3.5 w-3.5 mr-1.5" />
               Print
             </Button>
-            <Button size="sm" onClick={printPdf} disabled={exporting}>
+            <Button size="sm" onClick={downloadPdf} disabled={exporting} aria-live="polite">
               {exporting ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Download className="h-3.5 w-3.5 mr-1.5" />}
-              {exporting ? "Preparing PDF…" : "Export PDF"}
+              {exporting ? EXPORT_LABEL[exportStage ?? "preparing"] : "Export PDF"}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)}><X className="h-4 w-4" /></Button>
           </div>
@@ -645,9 +710,10 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
           <div className="shrink-0 flex items-start gap-2 border-b border-destructive/30 bg-destructive/10 px-5 py-2 text-xs text-destructive">
             <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
             <span className="flex-1">{exportError}</span>
-            <button type="button" className="underline" onClick={printPdf}>Retry</button>
+            <button type="button" className="underline" onClick={downloadPdf}>Retry</button>
           </div>
         )}
+
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto overscroll-contain bg-neutral-200 dark:bg-neutral-900 p-6">
           <div className="relative mx-auto" style={{ width: SHEET_W * zoom, height: sheetH * zoom }}>
             <div
@@ -660,7 +726,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
               dangerouslySetInnerHTML={{ __html: html }}
             />
             {/* Draggable stamp: free placement saved per document */}
-            {floating && stampUrl ? (
+            {floating && stampUrl && showStamp ? (
               <div
                 role="button"
                 tabIndex={0}
@@ -668,14 +734,16 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
                 onPointerDown={startStampDrag}
                 className="absolute z-20 cursor-grab active:cursor-grabbing rounded-md ring-2 ring-primary/50 hover:ring-primary transition"
                 style={{
-                  left: `${place.x}%`, top: `${place.y}%`,
+                  left: `${stampGeom.x}%`, top: `${stampGeom.y}%`,
                   width: stampBoxW, transform: "translate(-50%, -50%)",
+                  opacity: stampGeom.opacity,
                   touchAction: "none",
                 }}
               >
                 <img src={stampUrl} alt="" draggable={false} className="w-full select-none pointer-events-none" />
               </div>
             ) : null}
+
 
             {/* Column resize handles, overlaid on the table header borders */}
             {handles.map((h) => (
@@ -759,12 +827,12 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
   const t = docLabels(L);
   const df = docDateFormat(L);
   // Free placement: when the document carries coordinates, the stamp is drawn
-  // as an overlay on the page instead of inside the signature block.
+  // as a page-level overlay (added by the printable wrapper / the preview
+  // overlay) instead of inside the signature block, so the same percentage
+  // resolves to the same physical spot in both renderers.
   const stampVisible = (showStamp ?? company?.showStamp === true) && !!stampUrl;
   const floatStamp = stampVisible && stampX != null && stampY != null;
-  const floatStampHtml = floatStamp
-    ? `<img src="${esc(stampUrl)}" alt="" style="position:absolute;left:${clamp(stampX!, 0, 100)}%;top:${clamp(stampY!, 0, 100)}%;transform:translate(-50%,-50%);width:${Math.round((company?.stampWidth ?? 140) * clamp(stampScale ?? 1, 0.3, 3))}px;opacity:${Math.min(1, Math.max(0.1, company?.stampOpacity ?? 1))};object-fit:contain;pointer-events:none;" />`
-    : "";
+
   const rawColor = company?.color ?? "#1e293b";
   // Validate against a strict CSS color allowlist to prevent CSS/script injection
   // via the company.color field (it is embedded verbatim in a <style> block below).
@@ -1026,7 +1094,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
       ${doc.notes ? `<div class="notes"><strong>${esc(t.notes)}</strong><div style="margin-top: 4px;">${esc(doc.notes)}</div></div>` : ""}
       ${paymentHtml}
       ${signBlockHtml({ company, showStamp, stampUrl, showSignature, signatureUrl, signerName, lang: L, floating: floatStamp })}
-      ${floatStampHtml}
+      
 
       <div class="footer">
         ${esc(doc.kind === "invoice"
@@ -1077,15 +1145,50 @@ export interface DocumentHtmlArgs {
 }
 
 
+/**
+ * Stamp geometry shared by the on-screen overlay and the exported page, so a
+ * stamp always lands on the same physical millimetre. Coordinates are percents
+ * of the *full* A4 sheet (padding included), never of the content box.
+ */
+export function stampGeometry(
+  company: Company | undefined,
+  place: { x?: number; y?: number; scale?: number },
+) {
+  return {
+    floating: place.x != null && place.y != null,
+    x: clamp(place.x ?? 50, 0, 100),
+    y: clamp(place.y ?? 50, 0, 100),
+    /** CSS px width at 100% zoom (1px = 1/96in, same unit as the sheet). */
+    width: Math.round((company?.stampWidth ?? 140) * clamp(place.scale ?? 1, 0.3, 3)),
+    opacity: clamp(company?.stampOpacity ?? 1, 0.1, 1),
+  };
+}
+
+/** Page-level floating stamp markup used by the export/print document. */
+function floatingStampHtml(args: DocumentHtmlArgs) {
+  const visible = (args.showStamp ?? args.company?.showStamp === true) && !!args.stampUrl;
+  const g = stampGeometry(args.company, { x: args.stampX, y: args.stampY, scale: args.stampScale });
+  if (!visible || !g.floating) return "";
+  return `<img src="${esc(args.stampUrl)}" alt="" style="position:absolute;left:${g.x}%;top:${g.y}%;transform:translate(-50%,-50%);width:${g.width}px;opacity:${g.opacity};object-fit:contain;pointer-events:none;" />`;
+}
+
 export function buildPrintableDocument(args: DocumentHtmlArgs) {
+  // Zero page margin + an inner padded container: the sheet element is a full
+  // A4 box, exactly like the preview, so percent coordinates match 1:1.
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(args.doc.number)}</title>
-    <style>@page { size: A4; margin: 22mm; } body { margin: 0; }</style>
-    </head><body>${buildHTML(args)}</body></html>`;
+    <style>
+      @page { size: A4; margin: 0; }
+      html, body { margin: 0; padding: 0; background: #fff; }
+      .sheet { position: relative; width: 210mm; min-height: 297mm; box-sizing: border-box; background: #fff; }
+      .sheet-pad { padding: ${PAGE_PAD_MM}mm; }
+    </style>
+    </head><body><div class="sheet" style="position:relative;width:210mm;min-height:297mm;box-sizing:border-box;background:#fff;"><div class="sheet-pad" style="padding:${PAGE_PAD_MM}mm;">${buildHTML(args)}</div>${floatingStampHtml(args)}</div></body></html>`;
 }
 
 export function buildDocumentHTML(args: DocumentHtmlArgs) {
   return buildHTML(args);
 }
+
 
 function esc(s: unknown): string {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
