@@ -1,5 +1,5 @@
 import type { ReactNode, CSSProperties } from "react";
-import { Columns3, RotateCcw, MoveHorizontal, ArrowLeftRight } from "lucide-react";
+import { Columns3, RotateCcw, MoveHorizontal, ArrowLeftRight, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -137,18 +137,28 @@ export function ListActionsTh({ width = "0", className }: { width?: string; clas
 export function ListRowActions({
   children,
   className,
+  busy,
 }: {
   /** Kept for call-site compatibility; the actions no longer span the row. */
   colSpan?: number;
   children: ReactNode;
   className?: string;
+  /** A row action is running — keep the pill visible and block further clicks. */
+  busy?: boolean;
 }) {
   return (
     <td className={cn("row-actions-cell px-2 py-2 align-middle whitespace-nowrap", className)}>
-      <div className="row-actions-inner">{children}</div>
+      <div
+        className={cn("row-actions-inner", busy && "pointer-events-none")}
+        data-busy={busy ? "true" : undefined}
+        aria-busy={busy || undefined}
+      >
+        {children}
+      </div>
     </td>
   );
 }
+
 
 const toneClasses: Record<string, string> = {
   default: "",
@@ -165,6 +175,7 @@ export function RowAction({
   tone = "default",
   disabled,
   title,
+  busy,
 }: {
   icon?: ReactNode;
   label: string;
@@ -172,14 +183,18 @@ export function RowAction({
   tone?: "default" | "success" | "warning" | "danger";
   disabled?: boolean;
   title?: string;
+  /** Swap the icon for a spinner while this action runs. */
+  busy?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || busy}
       title={title ?? label}
       aria-label={label}
+      aria-busy={busy || undefined}
+
       className={cn(
         "row-action inline-flex items-center justify-center h-7 w-7 rounded-full border-0 bg-transparent",
         "text-foreground/70",
@@ -192,7 +207,10 @@ export function RowAction({
 
       )}
     >
-      <span className="shrink-0 inline-flex items-center justify-center">{icon}</span>
+      <span className="shrink-0 inline-flex items-center justify-center">
+        {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : icon}
+      </span>
+
       <span className="sr-only">{label}</span>
     </button>
   );

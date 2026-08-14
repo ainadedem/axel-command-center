@@ -7,14 +7,19 @@
  * `data-focus-id={record.id}`.
  */
 import { useEffect } from "react";
+import { useNavigate } from "@tanstack/react-router";
 
 export interface FocusSearch {
   focus?: string;
+  /** Aging bucket to restore (re-opens the aging drawer on load). */
+  aging?: string;
 }
 
 export const focusSearch = (search: Record<string, unknown>): FocusSearch => ({
   focus: typeof search.focus === "string" && search.focus ? search.focus : undefined,
+  aging: typeof search.aging === "string" && search.aging ? search.aging : undefined,
 });
+
 
 const RING = ["ring-2", "ring-primary", "ring-offset-2", "ring-offset-background", "rounded-lg"];
 
@@ -79,4 +84,19 @@ export function useFocusRow(id?: string) {
       cleanup?.();
     };
   }, [id]);
+}
+
+/**
+ * Deep-link jump used by the aging drawer: writes `?focus=<id>&aging=<bucket>`
+ * so the URL is shareable, then scrolls the row into view and pulses it.
+ */
+export function useJumpToRecord() {
+  const navigate = useNavigate();
+  return (id: string, aging?: string | null) => {
+    void navigate({
+      search: (prev: Record<string, unknown>) => ({ ...prev, focus: id, aging: aging ?? undefined }),
+      replace: true,
+    } as never);
+    focusRowById(id);
+  };
 }

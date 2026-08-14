@@ -1,8 +1,44 @@
-import { ArrowUpRight, CalendarClock } from "lucide-react";
+import { ArrowUpRight, CalendarClock, Inbox } from "lucide-react";
 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AGING_TONE_DOT, AGING_TONE_TEXT, daysLate, type AgingBucketDef } from "@/lib/aging";
 import { cn } from "@/lib/utils";
+
+/** Shimmering placeholder matching the real record card geometry. */
+function DrawerSkeleton() {
+  return (
+    <div className="space-y-1.5" aria-hidden="true">
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="rounded-xl border border-border bg-card px-3.5 py-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="h-3.5 w-32 rounded skeleton-shimmer" />
+              <div className="h-2.5 w-24 rounded skeleton-shimmer" />
+            </div>
+            <div className="h-3.5 w-20 rounded skeleton-shimmer" />
+          </div>
+          <div className="mt-2.5 h-2.5 w-28 rounded skeleton-shimmer" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Designed empty state for a bucket with no records. */
+function DrawerEmpty({ noun }: { noun: string }) {
+  return (
+    <div className="rounded-xl border border-dashed border-border bg-card px-6 py-10 text-center">
+      <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-container)]">
+        <Inbox className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+      </div>
+      <div className="font-display text-sm font-semibold">Nothing in this bucket</div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        No {noun}s currently fall in this aging window with the filters you have applied.
+      </p>
+    </div>
+  );
+}
+
 
 /** One record shown inside the aging drawer. */
 export interface AgingDrawerItem {
@@ -30,6 +66,7 @@ export function AgingDrawer({
   format,
   noun,
   onJump,
+  loading,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -38,6 +75,8 @@ export function AgingDrawer({
   format: (v: number) => string;
   noun: string;
   onJump: (item: AgingDrawerItem) => void;
+  /** Records are still resolving — show skeleton cards. */
+  loading?: boolean;
 }) {
   const total = items.reduce((s, i) => s + i.amount, 0);
   const tone = bucket?.tone ?? "neutral";
@@ -51,15 +90,25 @@ export function AgingDrawer({
             {bucket?.label ?? "Aging"}
           </SheetTitle>
           <SheetDescription>
-            {items.length} {noun}
-            {items.length !== 1 ? "s" : ""} · <span className={AGING_TONE_TEXT[tone]}>{format(total)}</span> outstanding
+            {loading ? (
+              <span className="inline-block h-3 w-40 align-middle rounded skeleton-shimmer" />
+            ) : (
+              <>
+                {items.length} {noun}
+                {items.length !== 1 ? "s" : ""} ·{" "}
+                <span className={AGING_TONE_TEXT[tone]}>{format(total)}</span> outstanding
+              </>
+            )}
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
-          {items.length === 0 ? (
-            <div className="text-sm text-muted-foreground p-6 text-center">Nothing in this bucket.</div>
+        <div className="flex-1 overflow-y-auto p-3 space-y-1.5" aria-busy={loading || undefined}>
+          {loading ? (
+            <DrawerSkeleton />
+          ) : items.length === 0 ? (
+            <DrawerEmpty noun={noun} />
           ) : (
+
             items.map((item) => {
               const late = daysLate(item.due);
               return (
