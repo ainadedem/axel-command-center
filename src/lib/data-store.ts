@@ -2,6 +2,8 @@
 // Each collection mutates an exported array IN PLACE so non-subscribing
 // readers also see fresh data on next render.
 import { useSyncExternalStore } from "react";
+import { pushHistory } from "./history";
+
 
 type WithId = { id: string };
 
@@ -35,12 +37,17 @@ export interface CollectionSync<T extends WithId> {
   remove?: (id: string) => Promise<void>;
 }
 
+export interface MutationOptions {
+  /** Skip recording an undo/redo history entry (hydration, programmatic sync). */
+  silent?: boolean;
+}
+
 export interface Collection<T extends WithId> {
   items: T[];
   /** `onSynced` receives the canonical (DB) id once the remote insert resolves. */
-  add: (item: T, opts?: { onSynced?: (id: string) => void }) => void;
-  update: (id: string, patch: Partial<T>) => void;
-  remove: (id: string) => void;
+  add: (item: T, opts?: { onSynced?: (id: string) => void } & MutationOptions) => void;
+  update: (id: string, patch: Partial<T>, opts?: MutationOptions) => void;
+  remove: (id: string, opts?: MutationOptions) => void;
   replaceAll: (next: T[]) => void;
   subscribe: (cb: () => void) => () => void;
   getSnapshot: () => T[];
@@ -48,6 +55,7 @@ export interface Collection<T extends WithId> {
   setSync: (sync: CollectionSync<T>) => void;
 }
 
+const humanize = (key: string) => key.replace(/-/g, " ").replace(/s$/, "");
 
 export function createCollection<T extends WithId>(key: string, initial: T[]): Collection<T> {
   const hydrated = load<T>(key, initial);
@@ -55,6 +63,7 @@ export function createCollection<T extends WithId>(key: string, initial: T[]): C
   const listeners = new Set<() => void>();
   let snapshot: T[] = [...items];
   let sync: CollectionSync<T> = {};
+  const noun = humanize(key);
 
   const emit = () => {
     snapshot = [...items];
@@ -71,38 +80,70 @@ export function createCollection<T extends WithId>(key: string, initial: T[]): C
     }
   };
 
-  return {
+  const collection: Collection<T> = {
     items,
     add(item, opts) {
       items.push(item);
       emit();
+      let currentId = item.id;
       if (sync.upsert) {
         sync.upsert(item).then((dbId) => {
-          if (dbId) swapId(item.id, dbId);
+          if (dbId) { swapId(item.id, dbId); currentId = dbId; }
           opts?.onSynced?.(dbId ?? item.id);
         }).catch((e) => console.warn(`[sync ${key}] upsert`, e));
       } else {
         opts?.onSynced?.(item.id);
       }
+      if (!opts?.silent) {
+        pushHistory({
+          label: `create ${noun}`,
+          undo: () => { collection.remove(currentId); },
+          redo: () => {
+            const restored = { ...item, id: currentId } as T;
+            collection.add(restored, { onSynced: (id) => { currentId = id; } });
+          },
+        });
+      }
     },
 
-    update(id, patch) {
+    update(id, patch, opts) {
       const i = items.findIndex((x) => x.id === id);
       if (i >= 0) {
-        items[i] = { ...items[i], ...patch };
+        const before = items[i];
+        const previous: Partial<T> = {};
+        (Object.keys(patch) as (keyof T)[]).forEach((k) => { previous[k] = before[k]; });
+        items[i] = { ...before, ...patch };
         emit();
         if (sync.upsert) {
           const snap = items[i];
           sync.upsert(snap).catch((e) => console.warn(`[sync ${key}] upsert`, e));
         }
+        if (!opts?.silent) {
+          pushHistory({
+            label: `edit ${noun}`,
+            undo: () => { collection.update(id, previous); },
+            redo: () => { collection.update(id, patch); },
+          });
+        }
       }
     },
-    remove(id) {
+    remove(id, opts) {
       const i = items.findIndex((x) => x.id === id);
       if (i >= 0) {
+        const removed = items[i];
         items.splice(i, 1);
         emit();
         if (sync.remove) sync.remove(id).catch((e) => console.warn(`[sync ${key}] remove`, e));
+        if (!opts?.silent) {
+          let currentId = id;
+          pushHistory({
+            label: `delete ${noun}`,
+            undo: () => {
+              collection.add({ ...removed, id: currentId } as T, { onSynced: (newId) => { currentId = newId; } });
+            },
+            redo: () => { collection.remove(currentId); },
+          });
+        }
       }
     },
     replaceAll(next) {
@@ -116,7 +157,10 @@ export function createCollection<T extends WithId>(key: string, initial: T[]): C
     getSnapshot: () => snapshot,
     setSync(next) { sync = next; },
   };
+
+  return collection;
 }
+
 
 export function useCollection<T extends WithId>(c: Collection<T>): T[] {
   return useSyncExternalStore(c.subscribe, c.getSnapshot, c.getSnapshot);

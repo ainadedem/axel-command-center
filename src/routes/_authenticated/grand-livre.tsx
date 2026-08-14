@@ -18,6 +18,8 @@ import { exportCsvRows } from "@/lib/export-csv";
 import { parseISO } from "date-fns";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { withoutHistory } from "@/lib/history";
+
 import { Download, Search } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/grand-livre")({ component: GrandLivrePage });
@@ -36,9 +38,12 @@ function GrandLivrePage() {
         actions={
           <button
             onClick={() => {
-              const n = seedLogiaGrandLivre(true);
-              toast.success(`Grand-livre Logia rechargé (${n} écritures)`);
+              void withoutHistory(() => {
+                const n = seedLogiaGrandLivre(true);
+                toast.success(`Grand-livre Logia rechargé (${n} écritures)`);
+              });
             }}
+
             className="text-xs px-3 py-1.5 rounded-md border border-border hover:bg-surface-elevated"
           >
             Recharger depuis Drive
