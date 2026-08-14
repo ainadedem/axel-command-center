@@ -1,5 +1,5 @@
 import type { ReactNode, CSSProperties } from "react";
-import { Columns3, RotateCcw } from "lucide-react";
+import { Columns3, RotateCcw, MoveHorizontal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ColumnPrefs } from "@/lib/column-prefs";
+import { ResizeHandle } from "@/components/resizable-columns";
 
 /**
  * Shared list-table primitives.
@@ -23,16 +24,16 @@ import type { ColumnPrefs } from "@/lib/column-prefs";
  *  - row actions live on their own padded line under the data row.
  */
 
-export function ListTableShell({ children, className }: { children: ReactNode; className?: string }) {
+export function ListTableShell({ children, className, scrollX }: { children: ReactNode; className?: string; scrollX?: boolean }) {
   return (
     <div className={cn("rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden", className)}>
-      <div className="stacked-table">{children}</div>
+      <div className={cn("stacked-table", scrollX && "md:overflow-x-auto")}>{children}</div>
     </div>
   );
 }
 
-export function ListTable({ children, className }: { children: ReactNode; className?: string }) {
-  return <table className={cn("w-full table-fixed text-sm", className)}>{children}</table>;
+export function ListTable({ children, className, style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
+  return <table style={style} className={cn("w-full table-fixed text-sm", className)}>{children}</table>;
 }
 
 export function ListHeadRow({ children, className }: { children: ReactNode; className?: string }) {
@@ -48,12 +49,15 @@ export function ListTh({
   className,
   width,
   align = "left",
+  onResizeStart,
 }: {
   children?: ReactNode;
   className?: string;
   /** e.g. "12%" or "7rem" — `table-fixed` uses the header widths. */
   width?: string;
   align?: "left" | "right" | "center";
+  /** When provided, renders a drag handle that resizes this column. */
+  onResizeStart?: (e: React.MouseEvent) => void;
 }) {
   const style: CSSProperties | undefined = width ? { width } : undefined;
   return (
@@ -61,14 +65,17 @@ export function ListTh({
       style={style}
       className={cn(
         "font-medium px-4 py-3 truncate",
+        onResizeStart && "relative",
         align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
         className,
       )}
     >
       {children}
+      {onResizeStart && <ResizeHandle onMouseDown={onResizeStart} />}
     </th>
   );
 }
+
 
 export function ListTd({
   children,
@@ -169,7 +176,7 @@ export function RowAction({
 
 
 /** Toolbar control that switches optional columns on and off. */
-export function ColumnPicker({ prefs, className }: { prefs: ColumnPrefs; className?: string }) {
+export function ColumnPicker({ prefs, className, onResetWidths }: { prefs: ColumnPrefs; className?: string; onResetWidths?: () => void }) {
   const hidden = prefs.columns.filter((c) => !prefs.on(c.key)).length;
   return (
     <DropdownMenu>
@@ -204,6 +211,11 @@ export function ColumnPicker({ prefs, className }: { prefs: ColumnPrefs; classNa
         <DropdownMenuItem className="text-xs" onSelect={() => prefs.reset()} disabled={prefs.isDefault}>
           <RotateCcw className="h-3.5 w-3.5 mr-2" /> Reset to default
         </DropdownMenuItem>
+        {onResetWidths && (
+          <DropdownMenuItem className="text-xs" onSelect={() => onResetWidths()}>
+            <MoveHorizontal className="h-3.5 w-3.5 mr-2" /> Reset column widths
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
