@@ -732,3 +732,70 @@
     opacity: 1 !important;
   }
 }
+
+/* ---------------------------------------------------------------
+   Two-tier list rows: the action bar stays collapsed until the
+   record is hovered or focused, then springs open.
+   --------------------------------------------------------------- */
+.row-actions-grid {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 260ms cubic-bezier(0.2, 0, 0, 1),
+    opacity 180ms cubic-bezier(0.2, 0, 0, 1);
+}
+.row-actions-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+tr[data-row-actions]:hover .row-actions-grid,
+tr[data-row-actions]:focus-within .row-actions-grid,
+tr:hover + tr[data-row-actions] .row-actions-grid,
+tr:focus-within + tr[data-row-actions] .row-actions-grid {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+/* Icon-only by default; the label slides open on hover / focus. */
+.row-action-label {
+  display: inline-block;
+  max-width: 0;
+  opacity: 0;
+  transform: translateX(-2px);
+  white-space: nowrap;
+  overflow: hidden;
+  transition:
+    max-width 240ms cubic-bezier(0.2, 0, 0, 1),
+    opacity 180ms cubic-bezier(0.2, 0, 0, 1),
+    transform 240ms cubic-bezier(0.2, 0, 0, 1),
+    margin-left 240ms cubic-bezier(0.2, 0, 0, 1);
+}
+.row-action:hover .row-action-label,
+.row-action:focus-visible .row-action-label {
+  max-width: 10rem;
+  opacity: 1;
+  transform: none;
+  margin-left: 0.375rem;
+}
+
+@media (hover: none) {
+  .row-actions-grid {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+  .row-action-label {
+    max-width: 10rem;
+    opacity: 1;
+    transform: none;
+    margin-left: 0.375rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row-actions-grid,
+  .row-action-label {
+    transition: none !important;
+  }
+}
+

@@ -111,8 +111,12 @@ export function ListRowActions({
 }) {
   return (
     <tr data-row-actions className={cn("border-b border-border/40 last:border-0", className)}>
-      <td colSpan={colSpan} className="px-4 pb-3 pt-0">
-        <div className="flex flex-wrap items-center gap-2">{children}</div>
+      <td colSpan={colSpan} className="px-4 pb-0 pt-0">
+        <div className="row-actions-grid">
+          <div className="row-actions-inner">
+            <div className="flex flex-wrap items-center gap-1.5 pb-3 pt-0.5">{children}</div>
+          </div>
+        </div>
       </td>
     </tr>
   );
@@ -148,18 +152,21 @@ export function RowAction({
       title={title ?? label}
       aria-label={label}
       className={cn(
-        "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md border border-border/60 bg-card/40",
-        "text-[11px] font-medium text-muted-foreground transition-colors duration-150",
+        "row-action inline-flex items-center h-7 px-2 rounded-full border border-border/60 bg-card/40",
+        "text-[11px] font-medium text-muted-foreground",
+        "transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
+        "hover:-translate-y-px active:scale-[0.97]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
         "disabled:opacity-40 disabled:pointer-events-none",
         toneClasses[tone],
       )}
     >
-      {icon}
-      <span className="whitespace-nowrap">{label}</span>
+      <span className="shrink-0 inline-flex items-center justify-center">{icon}</span>
+      <span className="row-action-label">{label}</span>
     </button>
   );
 }
+
 
 /** Toolbar control that switches optional columns on and off. */
 export function ColumnPicker({ prefs, className }: { prefs: ColumnPrefs; className?: string }) {
