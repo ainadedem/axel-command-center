@@ -66,6 +66,7 @@ export function AgingDrawer({
   format,
   noun,
   onJump,
+  loading,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -74,6 +75,8 @@ export function AgingDrawer({
   format: (v: number) => string;
   noun: string;
   onJump: (item: AgingDrawerItem) => void;
+  /** Records are still resolving — show skeleton cards. */
+  loading?: boolean;
 }) {
   const total = items.reduce((s, i) => s + i.amount, 0);
   const tone = bucket?.tone ?? "neutral";
@@ -87,15 +90,25 @@ export function AgingDrawer({
             {bucket?.label ?? "Aging"}
           </SheetTitle>
           <SheetDescription>
-            {items.length} {noun}
-            {items.length !== 1 ? "s" : ""} · <span className={AGING_TONE_TEXT[tone]}>{format(total)}</span> outstanding
+            {loading ? (
+              <span className="inline-block h-3 w-40 align-middle rounded skeleton-shimmer" />
+            ) : (
+              <>
+                {items.length} {noun}
+                {items.length !== 1 ? "s" : ""} ·{" "}
+                <span className={AGING_TONE_TEXT[tone]}>{format(total)}</span> outstanding
+              </>
+            )}
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
-          {items.length === 0 ? (
-            <div className="text-sm text-muted-foreground p-6 text-center">Nothing in this bucket.</div>
+        <div className="flex-1 overflow-y-auto p-3 space-y-1.5" aria-busy={loading || undefined}>
+          {loading ? (
+            <DrawerSkeleton />
+          ) : items.length === 0 ? (
+            <DrawerEmpty noun={noun} />
           ) : (
+
             items.map((item) => {
               const late = daysLate(item.due);
               return (
