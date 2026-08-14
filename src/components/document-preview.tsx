@@ -427,14 +427,12 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     });
   }, [onDocChange]);
 
-  const dragRef = useRef<{ w: number; h: number } | null>(null);
   const startStampDrag = (e: React.PointerEvent) => {
     if (!stampUrl) return;
     e.preventDefault();
     const wrap = (e.currentTarget as HTMLElement).parentElement;
     if (!wrap) return;
     const rect = wrap.getBoundingClientRect();
-    dragRef.current = { w: rect.width, h: rect.height };
     const move = (ev: PointerEvent) => {
       const x = clamp(((ev.clientX - rect.left) / rect.width) * 100, 0, 100);
       const y = clamp(((ev.clientY - rect.top) / rect.height) * 100, 0, 100);
