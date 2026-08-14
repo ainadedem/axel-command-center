@@ -3,7 +3,7 @@ import { Avatar } from "@/components/avatar-upload";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/lib/auth-context";
 import { useCompany, COMPANY_ROLES, type CompanyRole } from "@/lib/company-context";
