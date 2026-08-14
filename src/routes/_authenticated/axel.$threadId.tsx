@@ -1,4 +1,4 @@
-import { createFileRoute, useParams } from "@tanstack/react-router";
+import { createFileRoute, useParams, redirect } from "@tanstack/react-router";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -10,10 +10,15 @@ import { getAxelThreadMessages, renameAxelThread } from "@/lib/axel.functions";
 import { buildAxelDataSnapshot } from "@/lib/axel-context";
 import { useCompany } from "@/lib/company-context";
 import { cn } from "@/lib/utils";
+import { AXEL_AI_ENABLED } from "@/lib/features";
 
 export const Route = createFileRoute("/_authenticated/axel/$threadId")({
+  beforeLoad: () => {
+    if (!AXEL_AI_ENABLED) throw redirect({ to: "/" });
+  },
   component: AxelThread,
 });
+
 
 function AxelThread() {
   const { threadId } = useParams({ from: "/_authenticated/axel/$threadId" });
