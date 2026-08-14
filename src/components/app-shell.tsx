@@ -4,11 +4,14 @@ import {
   Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus, Truck,
   ChevronDown, Check, LogOut, Target, UserCog, Handshake,
   BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList, RefreshCw,
-  Sparkles, CreditCard, Repeat, Wallet2, ExternalLink, Info, ShieldCheck, Menu, X,
+  Sparkles, CreditCard, Repeat, Wallet2, ExternalLink, Info, ShieldCheck, Menu, X, Undo2, Redo2,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { CREATE_EVENT } from "@/lib/create-action";
+import { useHistory, undo as undoAction, redo as redoAction } from "@/lib/history";
+import { toast } from "sonner";
+
 import { useCompany } from "@/lib/company-context";
 import { useFxRates } from "@/lib/fx";
 import { useAuth } from "@/lib/auth-context";
@@ -360,18 +363,53 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
   const role = roles[0]?.replace("_", " ") ?? "no role";
   const newAction = NEW_BUTTON_ROUTES.find((route) => route.match(pathname));
   const newLabel = newAction?.label ?? "New";
+  const history = useHistory();
+
+  const runUndo = async () => {
+    try {
+      const label = await undoAction();
+      if (label) toast.success(`Undid ${label}`, { action: { label: "Redo", onClick: () => void redoAction() } });
+    } catch (e) {
+      toast.error(`Could not undo: ${e instanceof Error ? e.message : "unknown error"}`);
+    }
+  };
+  const runRedo = async () => {
+    try {
+      const label = await redoAction();
+      if (label) toast.success(`Redid ${label}`, { action: { label: "Undo", onClick: () => void undoAction() } });
+    } catch (e) {
+      toast.error(`Could not redo: ${e instanceof Error ? e.message : "unknown error"}`);
+    }
+  };
 
   useEffect(() => {
+    const isTyping = (el: EventTarget | null) => {
+      const node = el as HTMLElement | null;
+      if (!node) return false;
+      const tag = node.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || node.isContentEditable;
+    };
     const onKey = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         searchRef.current?.focus();
         searchRef.current?.select();
+        return;
+      }
+      if (!(event.metaKey || event.ctrlKey) || isTyping(event.target)) return;
+      const key = event.key.toLowerCase();
+      if (key === "z" && !event.shiftKey) {
+        event.preventDefault();
+        void runUndo();
+      } else if ((key === "z" && event.shiftKey) || key === "y") {
+        event.preventDefault();
+        void runRedo();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
 
   const submitSearch = (event: React.FormEvent) => {
     event.preventDefault();
@@ -417,7 +455,28 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
         <kbd className="hidden md:block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
       </form>
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <div className="hidden sm:flex items-center gap-0.5">
+          <button
+            onClick={() => void runUndo()}
+            disabled={!history.canUndo}
+            aria-label={history.undoLabel ? `Undo ${history.undoLabel}` : "Undo"}
+            title={history.undoLabel ? `Undo ${history.undoLabel} (⌘Z)` : "Nothing to undo"}
+            className="h-9 w-9 grid place-items-center rounded-full focus-ring tap-target hover:bg-secondary hover:text-primary active:scale-90 transition-all duration-200 disabled:opacity-35 disabled:pointer-events-none"
+          >
+            <Undo2 className="h-4 w-4" aria-hidden="true" />
+          </button>
+          <button
+            onClick={() => void runRedo()}
+            disabled={!history.canRedo}
+            aria-label={history.redoLabel ? `Redo ${history.redoLabel}` : "Redo"}
+            title={history.redoLabel ? `Redo ${history.redoLabel} (⇧⌘Z)` : "Nothing to redo"}
+            className="h-9 w-9 grid place-items-center rounded-full focus-ring tap-target hover:bg-secondary hover:text-primary active:scale-90 transition-all duration-200 disabled:opacity-35 disabled:pointer-events-none"
+          >
+            <Redo2 className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
         <FxBadge />
+
         {newAction && (
           <button
             onClick={handleNew}
