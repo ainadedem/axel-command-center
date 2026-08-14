@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import {
   useQuotes, useCompanies, useClients, useProjects, quotesStore, purchaseOrdersStore,
   fmt, fmtCompact, FX, type Quote, type QuoteLine, type QuoteStatus, type QuoteMode, type Currency,
-  contactBelongsTo,
+  contactBelongsTo, MAX_QUOTE_ASSIGNEES,
 } from "@/lib/mock-data";
 import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
 import { newId } from "@/lib/data-store";
@@ -41,6 +41,8 @@ import html2pdf from "html2pdf.js";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
 import { useSingleFlightSubmit } from "@/components/form-ux";
+import { QuoteAssigneePicker, AssigneeStack } from "@/components/quote-assignee-picker";
+import { QuoteFollowupPanel, followUpTone, followUpToneClass } from "@/components/quote-followup-panel";
 
 export const Route = createFileRoute("/_authenticated/quotations")({ component: QuotationsPage });
 
@@ -81,6 +83,7 @@ function Body() {
   const [previewing, setPreviewing] = useState<Quote | null>(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [historyOf, setHistoryOf] = useState<Quote | null>(null);
+  const [followingUp, setFollowingUp] = useState<Quote | null>(null);
   const { user } = useAuth();
   const openCreate = () => { setEditing(null); setOpen(true); };
 
@@ -216,6 +219,7 @@ function Body() {
                 <th className="text-left font-medium px-5 py-3">Project</th>
                 <th className="text-left font-medium px-5 py-3">Company</th>
                 <th className="text-left font-medium px-5 py-3">Owner</th>
+                <th className="text-left font-medium px-5 py-3">Follow-up</th>
                 <th className="text-left font-medium px-5 py-3">Issued</th>
                 <th className="text-left font-medium px-5 py-3">Valid until</th>
                 <th className="text-left font-medium px-5 py-3">Status</th>
@@ -226,7 +230,7 @@ function Body() {
             <tbody>
               {groups.map((g) => (
                 <Fragment key={g.key}>
-                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={10} />}
+                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={11} />}
                   {g.items.map((q) => {
                 const co = companies.find((c) => c.id === q.companyId);
                 const cl = clients.find((c) => c.id === q.clientId);
@@ -238,6 +242,20 @@ function Body() {
                     <td className="px-5 py-3.5 text-xs">{proj ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}</td>
                     <td className="px-5 py-3.5">{co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}</td>
                     <td className="px-5 py-3.5 text-xs text-muted-foreground">{ownerName(q)}</td>
+                    <td className="px-5 py-3.5">
+                      <button
+                        onClick={() => setFollowingUp(q)}
+                        title="Assigned sales & follow-ups"
+                        className="flex items-center gap-2 rounded px-1 py-0.5 hover:bg-surface-elevated transition"
+                      >
+                        <AssigneeStack companyId={q.companyId} ids={q.assignedTo ?? []} />
+                        {q.nextFollowUpAt && (
+                          <span className={cn("text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full border font-tnum", followUpToneClass[followUpTone(q.nextFollowUpAt)])}>
+                            {format(parseISO(q.nextFollowUpAt), "MMM d")}
+                          </span>
+                        )}
+                      </button>
+                    </td>
                     <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">{format(parseISO(q.issueDate), "MMM d, yyyy")}</td>
                     <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">{format(parseISO(q.validUntil), "MMM d, yyyy")}</td>
                     <td className="px-5 py-3.5">
@@ -288,6 +306,27 @@ function Body() {
         </div>
       )}
       <QuoteDialog open={open} onOpenChange={setOpen} editing={editing} />
+      <Dialog open={!!followingUp} onOpenChange={(v) => { if (!v) setFollowingUp(null); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Follow-up · {followingUp?.number}</DialogTitle></DialogHeader>
+          {followingUp && (
+            <div className="space-y-4">
+              <div>
+                <Label className="text-[11px]">Assigned sales (max 3)</Label>
+                <QuoteAssigneePicker
+                  companyId={followingUp.companyId}
+                  value={followingUp.assignedTo ?? []}
+                  onChange={(next) => {
+                    quotesStore.update(followingUp.id, { assignedTo: next });
+                    setFollowingUp({ ...followingUp, assignedTo: next });
+                  }}
+                />
+              </div>
+              <QuoteFollowupPanel quote={quotes.find((x) => x.id === followingUp.id) ?? followingUp} />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       <DocumentActivityPanel
         open={!!historyOf}
         onOpenChange={(v) => { if (!v) setHistoryOf(null); }}
@@ -351,6 +390,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const [subject, setSubject] = useState("");
   const [bankAccountId, setBankAccountId] = useState("");
   const [taxRate, setTaxRate] = useState<number>(0);
+  const [assignedTo, setAssignedTo] = useState<string[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -366,12 +406,14 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setSubject(editing.subject ?? "");
       setBankAccountId(editing.bankAccountId ?? "");
       setTaxRate(editing.taxRate ?? 0);
+      setAssignedTo(editing.assignedTo ?? []);
     } else {
       const cid = companies[0]?.id ?? "";
       numberTouched.current = false; setNumber(cid ? nextNumber("quote", cid, today) : ""); setCompanyId(cid); setClientId("");
       setProjectId(""); setIssueDate(today); setValidUntil(addDays(new Date(), 30).toISOString().slice(0, 10));
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
       setMode("rate-card");
+      setAssignedTo([]);
       setLines([]); setNotes(""); setSubject(""); setBankAccountId(""); setTaxRate(defaultTaxRate(companies[0], today));
     }
     // Only re-initialise when the dialog opens (or switches record) — background
@@ -529,6 +571,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       totalAmount: computed.totalAmount,
       currency, status, mode, lines, notes: notes || undefined, subject: subject.trim() || undefined,
       bankAccountId: bankAccountId || defaultBankAccount(companies.find((c) => c.id === companyId))?.id,
+      assignedTo: assignedTo.slice(0, MAX_QUOTE_ASSIGNEES),
       ...fxFields,
     };
     if (editing) {
@@ -778,6 +821,11 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
           </div>
 
           <BankAccountSelect company={companies.find((c) => c.id === companyId)} value={bankAccountId} onChange={setBankAccountId} />
+
+          <div>
+            <Label>Assigned sales (max {MAX_QUOTE_ASSIGNEES})</Label>
+            <QuoteAssigneePicker companyId={companyId} value={assignedTo} onChange={setAssignedTo} />
+          </div>
 
           <div>
             <Label>Notes</Label>

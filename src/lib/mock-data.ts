@@ -359,7 +359,30 @@ export interface Quote {
   updatedBy?: string;
   /** ISO timestamp of the last edit. */
   updatedAt?: string;
+  /** Auth user ids of the sales people following this quotation (max 3). */
+  assignedTo?: string[];
+  /** Date (yyyy-mm-dd) of the next planned follow-up. */
+  nextFollowUpAt?: string;
 }
+
+/** Maximum number of sales people that can follow one quotation. */
+export const MAX_QUOTE_ASSIGNEES = 3;
+
+export type QuoteFollowupKind = "call" | "email" | "meeting" | "note";
+
+/** One dated follow-up action logged against a quotation. */
+export interface QuoteFollowup {
+  id: string;
+  companyId: string;
+  quoteId: string;
+  kind: QuoteFollowupKind;
+  note: string;
+  /** ISO timestamp of when the action happened. */
+  happenedAt: string;
+  createdBy?: string;
+}
+
+
 
 export type POStatus = "draft" | "issued" | "fulfilled" | "cancelled";
 export interface PurchaseOrder {
@@ -726,6 +749,8 @@ export const budgetsStore = createCollection<Budget>("budgets", []);
 export const teamMembersStore = createCollection<TeamMember>("team-members", []);
 export const salesMembersStore = createCollection<SalesMember>("sales-members", []);
 export const quotesStore = createCollection<Quote>("quotes", []);
+export const quoteFollowupsStore = createCollection<QuoteFollowup>("quote-followups", []);
+
 export const purchaseOrdersStore = createCollection<PurchaseOrder>("purchase-orders", []);
 export const expensesStore = createCollection<Expense>("expenses", []);
 export const recurringBillingsStore = createCollection<RecurringBilling>("recurring-billings", []);
@@ -812,6 +837,8 @@ export const useBudgets = () => useCollection(budgetsStore);
 export const useTeamMembers = () => useCollection(teamMembersStore);
 export const useSalesMembers = () => useCollection(salesMembersStore);
 export const useQuotes = () => useCollection(quotesStore);
+export const useQuoteFollowups = () => useCollection(quoteFollowupsStore);
+
 export const usePurchaseOrders = () => useCollection(purchaseOrdersStore);
 export const useExpenses = () => useCollection(expensesStore);
 export const useRecurringBillings = () => useCollection(recurringBillingsStore);
