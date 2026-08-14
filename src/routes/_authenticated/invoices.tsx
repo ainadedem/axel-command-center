@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { focusSearch, useFocusRow } from "@/hooks/use-focus-row";
+import { focusSearch, useFocusRow, focusRowById } from "@/hooks/use-focus-row";
 import { BankAccountSelect } from "@/components/bank-account-select";
 import { defaultBankAccount } from "@/lib/payment-details";
 import { AppShell } from "@/components/app-shell";
@@ -512,6 +512,26 @@ function Body() {
             noun="invoice"
             title="Receivables aging"
             tilesTitle="Receivables aging — days past due"
+            itemsInBucket={(key) =>
+              chipFiltered
+                .filter(
+                  (i) =>
+                    i.status !== "cancelled" &&
+                    i.status !== "paid" &&
+                    i.amount - i.paid > 0 &&
+                    inBucket(i.dueDate, key),
+                )
+                .sort((a, b) => (a.dueDate ?? "").localeCompare(b.dueDate ?? ""))
+                .map((i) => ({
+                  id: i.id,
+                  title: i.number,
+                  subtitle: clients.find((c) => c.id === i.clientId)?.name,
+                  amount: toMGA(i.amount - i.paid, i.currency),
+                  due: i.dueDate,
+                  status: i.status,
+                }))
+            }
+            onJump={(item) => focusRowById(item.id)}
           />
 
 

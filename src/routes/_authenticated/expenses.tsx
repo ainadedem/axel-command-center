@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { focusSearch, useFocusRow } from "@/hooks/use-focus-row";
+import { focusSearch, useFocusRow, focusRowById } from "@/hooks/use-focus-row";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -141,6 +141,20 @@ function Body() {
         title="Payables aging"
         tilesTitle="Payables aging — days past due"
         description="Open balance by days past due — follows the current tab. Click a bar to filter."
+        itemsInBucket={(key) =>
+          filtered
+            .filter((e) => computeStatus(e) !== "paid" && e.amount - e.paid > 0 && inBucket(e.dueDate, key))
+            .sort((a, b) => (a.dueDate ?? "").localeCompare(b.dueDate ?? ""))
+            .map((e) => ({
+              id: e.id,
+              title: e.number || (e.kind === "bill" ? "Bill" : "Expense"),
+              subtitle: e.payee || e.description || undefined,
+              amount: e.amount - e.paid,
+              due: e.dueDate,
+              status: computeStatus(e),
+            }))
+        }
+        onJump={(item) => focusRowById(item.id)}
       />
 
 
