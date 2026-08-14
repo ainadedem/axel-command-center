@@ -28,11 +28,14 @@ export function exportTableCsv(filename: string, columns: ExportColumn[], rows: 
 }
 
 function tableHtml(title: string, subtitle: string, columns: ExportColumn[], rows: ExportRow[]) {
-  const total = columns.reduce((s, c) => s + c.width, 0) || 1;
+  // Numeric (right-aligned) columns get a floor so full amounts never collide
+  // with the neighbouring column when the on-screen width is tight.
+  const raw = columns.map((c) => (c.align === "right" ? Math.max(c.width, 130) : c.width));
+  const total = raw.reduce((s, w) => s + w, 0) || 1;
   const head = columns
     .map(
-      (c) =>
-        `<th style="width:${((c.width / total) * 100).toFixed(2)}%;text-align:${c.align ?? "left"}">${esc(c.label)}</th>`,
+      (c, i) =>
+        `<th style="width:${((raw[i]! / total) * 100).toFixed(2)}%;text-align:${c.align ?? "left"}">${esc(c.label)}</th>`,
     )
     .join("");
   const body = rows
@@ -76,7 +79,7 @@ export async function exportTablePdf(
   const html = tableHtml(title, subtitle, columns, rows);
   const name = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
   try {
-    const blob = await renderHtmlToPdfBlob(html, { orientation: "landscape", scale: 2 });
+    const blob = await renderHtmlToPdfBlob(html, { orientation: "landscape", scale: 2, avoidBreakSelector: "tr" });
     saveBlob(blob, name);
   } catch (err) {
     printHtmlFallback(html);
