@@ -18,12 +18,25 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { ResizeHandle, useResizableColumns } from "@/components/resizable-columns";
 import { Pencil, Trash2 } from "lucide-react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
+import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, RowAction, ColumnPicker } from "@/components/list-table";
+
+const TX_COLUMNS: ColumnDef[] = [
+  { key: "date", label: "Date", priority: "always" },
+  { key: "description", label: "Description", priority: "always" },
+  { key: "company", label: "Company" },
+  { key: "counterparty", label: "Counterparty" },
+  { key: "project", label: "Project", priority: "optional" },
+  { key: "account", label: "Account" },
+  { key: "category", label: "Category", priority: "optional" },
+  { key: "type", label: "Type" },
+  { key: "amount", label: "Amount", priority: "always" },
+];
 
 export const Route = createFileRoute("/_authenticated/transactions")({
   component: TransactionsPage,
@@ -84,6 +97,8 @@ function Body() {
   const defaultSorted = view.state.sort ? preList : [...preList].sort((a, b) => b.date.localeCompare(a.date));
   const groups = view.apply(defaultSorted);
   const list = groups.flatMap((g) => g.items);
+
+  const cp = useColumnPrefs("transactions", TX_COLUMNS);
 
   const openCreate = () => { setEditing(null); setOpen(true); };
 
@@ -224,125 +239,105 @@ function Body() {
         </div>
       </div>
 
-      <DataToolbar view={view} items={preList} />
+      <div className="flex items-center gap-2 flex-wrap">
+        <ColumnPicker prefs={cp} />
+        <DataToolbar view={view} items={preList} />
+      </div>
 
       {list.length === 0 ? (
         <EmptyState label="transactions" onCreate={openCreate} />
       ) : (
-        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-x-auto">
-          <ResizableTable />
-        </div>
+        <ListTableShell>
+          <ListTable>
+            <thead>
+              <ListHeadRow>
+                <ListTh width="11%">Date</ListTh>
+                <ListTh width="20%">Description</ListTh>
+                {cp.on("company") && <ListTh width="9%">Company</ListTh>}
+                {cp.on("counterparty") && <ListTh width="14%">Counterparty</ListTh>}
+                {cp.on("project") && <ListTh width="12%">Project</ListTh>}
+                {cp.on("account") && <ListTh width="12%">Account</ListTh>}
+                {cp.on("category") && <ListTh width="12%">Category</ListTh>}
+                {cp.on("type") && <ListTh width="9%">Type</ListTh>}
+                <ListTh width="13%" align="right">Amount</ListTh>
+              </ListHeadRow>
+            </thead>
+            <tbody>
+              {groups.map((g) => (
+                <Fragment key={g.key}>
+                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={cp.count} />}
+                  {g.items.map((t) => {
+                    const co = companies.find((c) => c.id === t.companyId);
+                    const cli = t.clientId ? clients.find((c) => c.id === t.clientId) : null;
+                    const sup = t.supplierId ? suppliers.find((s) => s.id === t.supplierId) : null;
+                    const proj = t.projectId ? projects.find((p) => p.id === t.projectId) : null;
+                    const acc = accounts.find((a) => a.id === t.accountId);
+                    return (
+                      <Fragment key={t.id}>
+                      <tr className="hover:bg-surface-elevated/40">
+                        <ListTd className="text-muted-foreground font-tnum text-xs">{format(parseISO(t.date), "MMM d, yyyy")}</ListTd>
+                        <ListTd className="font-medium" title={t.description}>{t.description}</ListTd>
+                        {cp.on("company") && (
+                          <ListTd title={co?.name}>
+                            {co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}
+                          </ListTd>
+                        )}
+                        {cp.on("counterparty") && (
+                          <ListTd className="text-xs" title={cli?.name ?? sup?.name}>
+                            {cli ? <span className="text-success">↑ {cli.name}</span>
+                              : sup ? <span className="text-muted-foreground">↓ {sup.name}</span>
+                              : <span className="text-muted-foreground/50">—</span>}
+                          </ListTd>
+                        )}
+                        {cp.on("project") && (
+                          <ListTd className="text-xs" title={proj?.name}>
+                            {proj
+                              ? <span className="inline-block max-w-full truncate px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 align-middle">{proj.name}</span>
+                              : <span className="text-muted-foreground/50">—</span>}
+                          </ListTd>
+                        )}
+                        {cp.on("account") && (
+                          <ListTd className="text-xs" title={acc?.name}>
+                            {acc
+                              ? <span className="inline-block max-w-full truncate px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 align-middle">{acc.name}</span>
+                              : <span className="text-muted-foreground/50">—</span>}
+                          </ListTd>
+                        )}
+                        {cp.on("category") && <ListTd className="text-muted-foreground" title={t.category}>{t.category}</ListTd>}
+                        {cp.on("type") && (
+                          <ListTd>
+                            <span className={cn(
+                              "inline-block text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                              t.type === "income" && "border-success/40 text-success bg-success/10",
+                              t.type === "expense" && "border-destructive/30 text-destructive bg-destructive/10",
+                              t.type === "transfer" && "border-chart-2/30 text-chart-2 bg-chart-2/10",
+                              t.type === "intercompany" && "border-chart-4/30 text-chart-4 bg-chart-4/10",
+                            )}>{t.type}</span>
+                          </ListTd>
+                        )}
+                        <ListTd align="right" className={cn("font-tnum font-medium", t.type === "income" && "text-success", t.type === "expense" && "text-destructive")}>
+                          {t.type === "income" ? "+" : t.type === "expense" ? "−" : ""}{fmtCompact(t.amount, t.currency)}
+                        </ListTd>
+                      </tr>
+                      <ListRowActions colSpan={cp.count}>
+                        <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(t); setOpen(true); }} />
+                        <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm("Delete this transaction?")) transactionsStore.remove(t.id); }} />
+                      </ListRowActions>
+                      </Fragment>
+                    );
+                  })}
+                </Fragment>
+              ))}
+            </tbody>
+          </ListTable>
+        </ListTableShell>
       )}
 
       <TransactionDialog open={open} onOpenChange={setOpen} editing={editing} />
     </div>
   );
-
-  function ResizableTable() {
-    const cols = [
-      { key: "date", label: "Date", align: "left" as const, w: 140 },
-      { key: "description", label: "Description", align: "left" as const, w: 260 },
-      { key: "company", label: "Company", align: "left" as const, w: 130 },
-      { key: "counterparty", label: "Counterparty", align: "left" as const, w: 180 },
-      { key: "project", label: "Project", align: "left" as const, w: 160 },
-      { key: "account", label: "Account", align: "left" as const, w: 160 },
-      { key: "category", label: "Category", align: "left" as const, w: 160 },
-      { key: "type", label: "Type", align: "left" as const, w: 120 },
-      { key: "amount", label: "Amount", align: "right" as const, w: 160 },
-      { key: "actions", label: "", align: "right" as const, w: 90 },
-    ];
-    const defaults = Object.fromEntries(cols.map((c) => [c.key, c.w]));
-    const { widths, startResize, resetWidths } = useResizableColumns("tx-col-widths", defaults);
-    const total = cols.reduce((s, c) => s + (widths[c.key] ?? c.w), 0);
-
-    return (
-      <table className="text-sm" style={{ width: total, tableLayout: "fixed" }}>
-        <colgroup>
-          {cols.map((c) => <col key={c.key} style={{ width: widths[c.key] ?? c.w }} />)}
-        </colgroup>
-        <thead>
-          <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
-            {cols.map((c, i) => (
-              <th key={c.key} className={cn("font-medium px-5 py-3 relative select-none", c.align === "right" ? "text-right" : "text-left")}>
-                {c.key === "actions" ? (
-                  <button
-                    onClick={resetWidths}
-                    title="Reset column widths"
-                    className="text-[10px] text-muted-foreground/70 hover:text-foreground"
-                  >
-                    reset
-                  </button>
-                ) : c.label}
-                {i < cols.length - 1 && <ResizeHandle onMouseDown={startResize(c.key)} />}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {groups.map((g) => (
-            <Fragment key={g.key}>
-              {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={cols.length} />}
-              {g.items.map((t) => {
-                const co = companies.find((c) => c.id === t.companyId);
-                const cli = t.clientId ? clients.find((c) => c.id === t.clientId) : null;
-                const sup = t.supplierId ? suppliers.find((s) => s.id === t.supplierId) : null;
-                return (
-                  <tr key={t.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
-                    <td className="px-5 py-3.5 text-muted-foreground font-tnum text-xs truncate">{format(parseISO(t.date), "MMM d, yyyy")}</td>
-                    <td className="px-5 py-3.5 font-medium truncate">{t.description}</td>
-                    <td className="px-5 py-3.5 truncate">
-                      {co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}
-                    </td>
-                    <td className="px-5 py-3.5 text-xs truncate">
-                      {cli ? <span className="text-success">↑ {cli.name}</span>
-                        : sup ? <span className="text-muted-foreground">↓ {sup.name}</span>
-                        : <span className="text-muted-foreground/50">—</span>}
-                    </td>
-                    <td className="px-5 py-3.5 text-xs truncate">
-                      {(() => {
-                        const proj = t.projectId ? projects.find((p) => p.id === t.projectId) : null;
-                        return proj
-                          ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 truncate max-w-full">{proj.name}</span>
-                          : <span className="text-muted-foreground/50">—</span>;
-                      })()}
-                    </td>
-                    <td className="px-5 py-3.5 text-xs truncate">
-                      {(() => {
-                        const acc = accounts.find((a) => a.id === t.accountId);
-                        return acc
-                          ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 truncate max-w-full">{acc.name}</span>
-                          : <span className="text-muted-foreground/50">—</span>;
-                      })()}
-                    </td>
-                    <td className="px-5 py-3.5 text-muted-foreground truncate">{t.category}</td>
-                    <td className="px-5 py-3.5 truncate">
-                      <span className={cn(
-                        "text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border",
-                        t.type === "income" && "border-success/40 text-success bg-success/10",
-                        t.type === "expense" && "border-destructive/30 text-destructive bg-destructive/10",
-                        t.type === "transfer" && "border-chart-2/30 text-chart-2 bg-chart-2/10",
-                        t.type === "intercompany" && "border-chart-4/30 text-chart-4 bg-chart-4/10",
-                      )}>{t.type}</span>
-                    </td>
-                    <td className={cn("px-5 py-3.5 text-right font-tnum font-medium truncate", t.type === "income" && "text-success", t.type === "expense" && "text-destructive")}>
-                      {t.type === "income" ? "+" : t.type === "expense" ? "−" : ""}{fmtCompact(t.amount, t.currency)}
-                    </td>
-                    <td className="px-5 py-3.5 text-right">
-                      <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
-                        <button onClick={() => { setEditing(t); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                        <button onClick={() => confirm("Delete this transaction?") && transactionsStore.remove(t.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </Fragment>
-          ))}
-        </tbody>
-      </table>
-    );
-  }
 }
+
 
 
 function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Transaction | null }) {

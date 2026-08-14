@@ -22,10 +22,20 @@ export function TableStackLabeler() {
         const heads = Array.from(headRow.children).map((th) => (th.textContent ?? "").trim());
         table.querySelectorAll("tbody tr").forEach((tr) => {
           const cells = Array.from(tr.children) as HTMLTableCellElement[];
+          if (tr.hasAttribute("data-row-actions")) {
+            tr.removeAttribute("data-stack-full");
+            cells.forEach((td) => {
+              td.removeAttribute("data-label");
+              td.removeAttribute("data-empty");
+              td.setAttribute("data-label-empty", "");
+            });
+            return;
+          }
           if (cells.length <= 1 && (cells[0]?.colSpan ?? 1) > 1) {
             tr.setAttribute("data-stack-full", "");
             return;
           }
+
           tr.removeAttribute("data-stack-full");
           cells.forEach((td, i) => {
             const text = heads[i] ?? "";

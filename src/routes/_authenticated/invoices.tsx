@@ -48,6 +48,24 @@ import { canWriteCompany, dbCompanyId } from "@/lib/db-sync";
 import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } from "@/components/bulk-select";
 import { BulkEditDocDialog } from "@/components/bulk-edit-doc-dialog";
 import { bulkUpdateDocuments, type BulkPatch } from "@/lib/bulk-edit";
+import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, RowAction, ColumnPicker } from "@/components/list-table";
+
+const INVOICE_COLUMNS: ColumnDef[] = [
+  { key: "number", label: "Number", priority: "always" },
+  { key: "client", label: "Client", priority: "always" },
+  { key: "project", label: "Project" },
+  { key: "company", label: "Company" },
+  { key: "issued", label: "Issued", priority: "optional" },
+  { key: "due", label: "Due" },
+  { key: "paidOn", label: "Paid on", priority: "optional" },
+  { key: "timing", label: "Timing", priority: "optional" },
+  { key: "status", label: "Status" },
+  { key: "amount", label: "Amount", priority: "always" },
+  { key: "balance", label: "Balance" },
+  { key: "owner", label: "Owner", priority: "optional" },
+];
+
 
 export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage, validateSearch: focusSearch });
 
@@ -254,12 +272,19 @@ function Body() {
     },
   ];
 
+  const cp = useColumnPrefs("invoices", INVOICE_COLUMNS);
+  const colCount = 1 + cp.count;
+
+
+
   return (
     <div className="p-4 sm:p-8 space-y-5">
       <div className="flex items-center justify-between gap-4">
         <CrudToolbar createLabel="New invoice" count={list.length} label="invoices" onCreate={openCreate} />
         <div className="flex items-center gap-4">
+          <ColumnPicker prefs={cp} />
           <ReconcileButton checks={checks} />
+
           <button
             onClick={toggleMode}
             className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -310,133 +335,139 @@ function Body() {
             </div>
           )}
 
-          <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-            <div className="overflow-x-auto stacked-table">
-            <table className="w-full min-w-[900px] text-sm">
+          <ListTableShell>
+            <ListTable>
               <thead>
-                <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                <ListHeadRow>
                   <SelectAllHeaderCell checked={selection.allSelected} onToggle={selection.toggleAll} />
-                  <th className="text-left font-medium px-5 py-3">Number</th>
-                  <th className="text-left font-medium px-5 py-3">Client</th>
-                  <th className="text-left font-medium px-5 py-3">Project</th>
-
-                  <th className="text-left font-medium px-5 py-3">Company</th>
-                  <th className="text-left font-medium px-5 py-3">Issued</th>
-                  <th className="text-left font-medium px-5 py-3">Due</th>
-                  <th className="text-left font-medium px-5 py-3">Paid on</th>
-                  <th className="text-left font-medium px-5 py-3">Timing</th>
-                  <th className="text-left font-medium px-5 py-3">Status</th>
-                  <th className="text-right font-medium px-5 py-3">Amount</th>
-                  <th className="text-right font-medium px-5 py-3">Balance</th>
-                  <th className="text-left font-medium px-5 py-3">Owner</th>
-                  <th className="px-5 py-3 w-20" />
-                </tr>
+                  <ListTh width="10%">Number</ListTh>
+                  <ListTh width="16%">Client</ListTh>
+                  {cp.on("project") && <ListTh width="12%">Project</ListTh>}
+                  {cp.on("company") && <ListTh width="9%">Company</ListTh>}
+                  {cp.on("issued") && <ListTh width="10%">Issued</ListTh>}
+                  {cp.on("due") && <ListTh width="11%">Due</ListTh>}
+                  {cp.on("paidOn") && <ListTh width="10%">Paid on</ListTh>}
+                  {cp.on("timing") && <ListTh width="9%">Timing</ListTh>}
+                  {cp.on("status") && <ListTh width="12%">Status</ListTh>}
+                  <ListTh width="12%" align="right">Amount</ListTh>
+                  {cp.on("balance") && <ListTh width="11%" align="right">Balance</ListTh>}
+                  {cp.on("owner") && <ListTh width="13%">Owner</ListTh>}
+                </ListHeadRow>
               </thead>
               <tbody>
                 {groups.map((g) => (
                   <Fragment key={g.key}>
-                    {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={14} />}
+                    {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={colCount} />}
                     {g.items.map((inv) => {
                   const co = companies.find((c) => c.id === inv.companyId);
                   const cl = clients.find((c) => c.id === inv.clientId);
                   const proj = inv.projectId ? projects.find((p) => p.id === inv.projectId) : undefined;
-                  
+
                   const days = differenceInDays(parseISO(inv.dueDate), new Date());
                   const balance = inv.amount - inv.paid;
                   const timing = inv.paidDate
                     ? differenceInDays(parseISO(inv.paidDate), parseISO(inv.dueDate))
                     : null;
                   return (
-                    <tr key={inv.id} data-focus-id={inv.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
+                    <Fragment key={inv.id}>
+                    <tr data-focus-id={inv.id} className="hover:bg-surface-elevated/40">
                       <SelectRowCell
                         checked={selection.isSelected(inv.id)}
                         onToggle={() => selection.toggle(inv.id)}
                         disabled={!isWritable(inv)}
                         label={`Select invoice ${inv.number}`}
                       />
-                      <td className="px-5 py-3.5 font-tnum text-xs text-muted-foreground">{inv.number}</td>
-                      <td className="px-5 py-3.5 font-medium">{cl?.name ?? "—"}</td>
-                      <td className="px-5 py-3.5 text-xs">
-                        {proj ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}
-                      </td>
-                      <td className="px-5 py-3.5">
-
-                        {co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}
-                      </td>
-                      <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">{format(parseISO(inv.issueDate), "MMM d, yyyy")}</td>
-                      <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">
-                        {format(parseISO(inv.dueDate), "MMM d, yyyy")}
-                        {!inv.paidDate && days < 0 && <span className="ml-2 text-destructive">{Math.abs(days)}d late</span>}
-                        {!inv.paidDate && days >= 0 && days < 14 && <span className="ml-2 text-warning">in {days}d</span>}
-                      </td>
-                      <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">
-                        {inv.paidDate ? format(parseISO(inv.paidDate), "MMM d, yyyy") : <span className="text-muted-foreground/50">—</span>}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        {timing === null ? (
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Pending</span>
-                        ) : timing <= 0 ? (
-                          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-success/40 text-success bg-success/10">
-                            {timing === 0 ? "On due day" : `Early ${Math.abs(timing)}d`}
-                          </span>
-                        ) : (
-                          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-destructive/40 text-destructive bg-destructive/10">
-                            Late {timing}d
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span className={cn("text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[inv.status])} title={inv.status === "cancelled" && inv.cancellationReason ? `Cancelled: ${inv.cancellationReason}` : undefined}>{inv.status}</span>
-                        {!inv.poId && inv.status !== "cancelled" && (
-                          <span
-                            className="ml-1.5 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10"
-                            title={inv.poWaived ? `PO bypassed${inv.poWaiverReason ? `: ${inv.poWaiverReason}` : ""}` : "No client PO linked"}
-                          >
-                            <AlertTriangle className="h-2.5 w-2.5" /> PO missing
-                          </span>
-                        )}
-
-                        {inv.status === "cancelled" && inv.cancellationReason && (
-                          <div className="text-[10px] text-muted-foreground mt-1 max-w-[180px] truncate italic" title={inv.cancellationReason}>“{inv.cancellationReason}”</div>
-                        )}
-                      </td>
-                      <td className="px-5 py-3.5 text-right font-tnum">{fmtAmount(inv.amount, inv.currency)}</td>
-                      <td className="px-5 py-3.5 text-right font-tnum font-medium">
-                        {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? fmtAmount(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
-                      </td>
-                      <td className="px-5 py-3.5 text-xs text-muted-foreground">
-                        {ownerName(inv.createdBy)}
-                        {inv.updatedAt && (
-                          <div className="text-[10px] text-muted-foreground/70">
-                            Updated by {ownerName(inv.updatedBy ?? inv.createdBy)} · {format(parseISO(inv.updatedAt), "MMM d, HH:mm")}
-                          </div>
-                        )}
-                      </td>
-
-                      <td className="px-5 py-3.5 text-right">
-                        <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
-                          <button onClick={() => setHistoryOf(inv)} title="Activity history" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><History className="h-3.5 w-3.5" /></button>
-                          <button onClick={() => setPreviewing(inv)} title="Preview & export PDF" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
-                          {inv.status !== "paid" && inv.status !== "cancelled" && (
-                            <>
-                              <button onClick={() => setPaying(inv)} title="Add payment" className="h-7 w-7 grid place-items-center rounded hover:bg-success/10 text-muted-foreground hover:text-success"><Wallet className="h-3.5 w-3.5" /></button>
-                              <button onClick={() => setMarking(inv)} title="Mark as paid" className="h-7 w-7 grid place-items-center rounded hover:bg-success/10 text-muted-foreground hover:text-success"><BadgeCheck className="h-3.5 w-3.5" /></button>
-                              <button onClick={() => setCancelling(inv)} title="Cancel invoice" className="h-7 w-7 grid place-items-center rounded hover:bg-warning/10 text-muted-foreground hover:text-warning"><Ban className="h-3.5 w-3.5" /></button>
-                            </>
+                      <ListTd className="font-tnum text-xs text-muted-foreground" title={inv.number}>{inv.number}</ListTd>
+                      <ListTd className="font-medium" title={cl?.name}>{cl?.name ?? "—"}</ListTd>
+                      {cp.on("project") && (
+                        <ListTd className="text-xs" title={proj?.name}>
+                          {proj ? <span className="inline-block max-w-full truncate px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 align-middle">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}
+                        </ListTd>
+                      )}
+                      {cp.on("company") && (
+                        <ListTd title={co?.name}>
+                          {co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}
+                        </ListTd>
+                      )}
+                      {cp.on("issued") && (
+                        <ListTd className="text-muted-foreground text-xs font-tnum">{format(parseISO(inv.issueDate), "MMM d, yyyy")}</ListTd>
+                      )}
+                      {cp.on("due") && (
+                        <ListTd className="text-muted-foreground text-xs font-tnum">
+                          {format(parseISO(inv.dueDate), "MMM d, yyyy")}
+                          {!inv.paidDate && days < 0 && <span className="ml-1.5 text-destructive">{Math.abs(days)}d late</span>}
+                          {!inv.paidDate && days >= 0 && days < 14 && <span className="ml-1.5 text-warning">in {days}d</span>}
+                        </ListTd>
+                      )}
+                      {cp.on("paidOn") && (
+                        <ListTd className="text-muted-foreground text-xs font-tnum">
+                          {inv.paidDate ? format(parseISO(inv.paidDate), "MMM d, yyyy") : <span className="text-muted-foreground/50">—</span>}
+                        </ListTd>
+                      )}
+                      {cp.on("timing") && (
+                        <ListTd>
+                          {timing === null ? (
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Pending</span>
+                          ) : timing <= 0 ? (
+                            <span className="inline-block text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-success/40 text-success bg-success/10">
+                              {timing === 0 ? "On due day" : `Early ${Math.abs(timing)}d`}
+                            </span>
+                          ) : (
+                            <span className="inline-block text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-destructive/40 text-destructive bg-destructive/10">
+                              Late {timing}d
+                            </span>
                           )}
-                          <button onClick={() => { setEditing(inv); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                          <button onClick={() => confirm(`Delete invoice ${inv.number}?`) && invoicesStore.remove(inv.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                        </div>
-                      </td>
+                        </ListTd>
+                      )}
+                      {cp.on("status") && (
+                        <ListTd wrap title={inv.status === "cancelled" && inv.cancellationReason ? `Cancelled: ${inv.cancellationReason}` : inv.status}>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className={cn("text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[inv.status])}>{inv.status}</span>
+                            {!inv.poId && inv.status !== "cancelled" && (
+                              <span
+                                className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10"
+                                title={inv.poWaived ? `PO bypassed${inv.poWaiverReason ? `: ${inv.poWaiverReason}` : ""}` : "No client PO linked"}
+                              >
+                                <AlertTriangle className="h-2.5 w-2.5" /> PO
+                              </span>
+                            )}
+                          </div>
+                        </ListTd>
+                      )}
+                      <ListTd align="right" className="font-tnum">{fmtAmount(inv.amount, inv.currency)}</ListTd>
+                      {cp.on("balance") && (
+                        <ListTd align="right" className="font-tnum font-medium">
+                          {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? fmtAmount(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
+                        </ListTd>
+                      )}
+                      {cp.on("owner") && (
+                        <ListTd className="text-xs text-muted-foreground" title={inv.updatedAt ? `Updated by ${ownerName(inv.updatedBy ?? inv.createdBy)} · ${format(parseISO(inv.updatedAt), "MMM d, HH:mm")}` : ownerName(inv.createdBy)}>
+                          {ownerName(inv.createdBy)}
+                        </ListTd>
+                      )}
                     </tr>
+                    <ListRowActions colSpan={colCount}>
+                      <RowAction icon={<History className="h-3.5 w-3.5" />} label="History" onClick={() => setHistoryOf(inv)} title="Activity history" />
+                      <RowAction icon={<Eye className="h-3.5 w-3.5" />} label="Preview" onClick={() => setPreviewing(inv)} title="Preview & export PDF" />
+                      {inv.status !== "paid" && inv.status !== "cancelled" && (
+                        <>
+                          <RowAction icon={<Wallet className="h-3.5 w-3.5" />} label="Payment" tone="success" onClick={() => setPaying(inv)} title="Add payment" />
+                          <RowAction icon={<BadgeCheck className="h-3.5 w-3.5" />} label="Mark paid" tone="success" onClick={() => setMarking(inv)} />
+                          <RowAction icon={<Ban className="h-3.5 w-3.5" />} label="Cancel" tone="warning" onClick={() => setCancelling(inv)} title="Cancel invoice" />
+                        </>
+                      )}
+                      <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(inv); setOpen(true); }} />
+                      <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete invoice ${inv.number}?`)) invoicesStore.remove(inv.id); }} />
+                    </ListRowActions>
+                    </Fragment>
                   );
                 })}
                   </Fragment>
                 ))}
               </tbody>
-            </table>
-            </div>
-          </div>
+            </ListTable>
+          </ListTableShell>
+
         </>
       )}
 
