@@ -155,6 +155,12 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [cropOpen, setCropOpen] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const logoPreviewUrl = useFileUrl(logoUrl);
+  const [stampUrl, setStampUrl] = useState<string | undefined>();
+  const [stampPosition, setStampPosition] = useState<StampPosition>("bottom-right");
+  const [stampWidth, setStampWidth] = useState(140);
+  const [stampOpacity, setStampOpacity] = useState(1);
+  const [showStamp, setShowStamp] = useState(false);
+  const stampPreviewUrl = useFileUrl(stampUrl);
 
   useEffect(() => {
     if (!open) return;
