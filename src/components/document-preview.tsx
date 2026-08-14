@@ -800,7 +800,12 @@ export interface DocumentHtmlArgs {
   logoScale?: number;
   /** Printed language; falls back to the document, then the company default, then English. */
   lang?: DocLanguage;
+  /** Table column widths in percent (normalised internally). */
+  cols?: ColWidths;
+  /** Density / auto-fit multiplier applied to font sizes and paddings. */
+  scale?: number;
 }
+
 
 export function buildPrintableDocument(args: DocumentHtmlArgs) {
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(args.doc.number)}</title>
