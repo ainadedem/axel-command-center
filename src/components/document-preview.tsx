@@ -977,8 +977,9 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
 
   return `
     <style>
-      .doc { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: #0f172a; font-size: ${px(12)}; line-height: 1.45; }
-      .doc h1 { font-size: ${px(28)}; font-weight: 800; letter-spacing: -0.02em; margin: 0; color: ${accent}; }
+      .doc { font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: #0f172a; font-size: ${px(12)}; line-height: 1.5; }
+      .doc h1 { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-size: ${px(28)}; font-weight: 800; letter-spacing: -0.02em; margin: 0; color: ${accent}; }
+
       .doc h2 { font-size: ${px(10)}; text-transform: uppercase; letter-spacing: 0.12em; color: #64748b; margin: 0 0 6px; font-weight: 600; }
       .doc .row { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
       .doc .meta { text-align: right; font-size: ${px(11)}; }
