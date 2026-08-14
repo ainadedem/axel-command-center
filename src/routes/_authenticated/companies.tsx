@@ -229,6 +229,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       mobileProvider: def?.mobileProvider, mobileNumber: def?.mobileNumber, mobileName: def?.mobileName,
       showPaymentDetails, bankAccounts: accounts,
       logoUrl, logoHeight, logoMaxWidth, logoCrop,
+      stampUrl, stampPosition, stampWidth, stampOpacity, showStamp,
       defaultDocumentLanguage: docLanguage,
     };
     const dbRow = {
