@@ -617,12 +617,14 @@ function headingFor(k: DocKind, lang?: DocLanguage) {
 
 /** Signature (per user) + company stamp block printed above the footer. */
 function signBlockHtml({
-  company, showStamp, stampUrl, showSignature, signatureUrl, signerName, lang,
+  company, showStamp, stampUrl, showSignature, signatureUrl, signerName, lang, floating,
 }: {
   company?: Company; showStamp?: boolean; stampUrl?: string;
   showSignature?: boolean; signatureUrl?: string; signerName?: string; lang: DocLanguage;
+  /** The stamp is drawn as a free-floating overlay instead of inside the block. */
+  floating?: boolean;
 }) {
-  const stampOn = (showStamp ?? company?.showStamp === true) && !!stampUrl;
+  const stampOn = !floating && (showStamp ?? company?.showStamp === true) && !!stampUrl;
   const signOn = showSignature !== false && (!!signatureUrl || !!signerName);
   if (!stampOn && !signOn) return "";
 
@@ -648,7 +650,7 @@ function signBlockHtml({
 }
 
 
-function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName }: DocumentHtmlArgs) {
+function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName, stampX, stampY, stampScale }: DocumentHtmlArgs) {
   const unitVisible = showUnit !== false;
   const w = normalizeCols(cols, unitVisible);
   const s = clamp(scale ?? 1, 0.5, 1.4);
@@ -659,6 +661,13 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
   const L = (lang ?? doc.language ?? (company?.defaultDocumentLanguage as DocLanguage) ?? "en") as DocLanguage;
   const t = docLabels(L);
   const df = docDateFormat(L);
+  // Free placement: when the document carries coordinates, the stamp is drawn
+  // as an overlay on the page instead of inside the signature block.
+  const stampVisible = (showStamp ?? company?.showStamp === true) && !!stampUrl;
+  const floatStamp = stampVisible && stampX != null && stampY != null;
+  const floatStampHtml = floatStamp
+    ? `<img src="${esc(stampUrl)}" alt="" style="position:absolute;left:${clamp(stampX!, 0, 100)}%;top:${clamp(stampY!, 0, 100)}%;transform:translate(-50%,-50%);width:${Math.round((company?.stampWidth ?? 140) * clamp(stampScale ?? 1, 0.3, 3))}px;opacity:${Math.min(1, Math.max(0.1, company?.stampOpacity ?? 1))};object-fit:contain;pointer-events:none;" />`
+    : "";
   const rawColor = company?.color ?? "#1e293b";
   // Validate against a strict CSS color allowlist to prevent CSS/script injection
   // via the company.color field (it is embedded verbatim in a <style> block below).
@@ -846,7 +855,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
       .doc .bank { margin-top: 16px; padding: 12px 16px; background: #f8fafc; border-left: 3px solid ${accent}; font-size: 11px; }
       .doc .notes { margin-top: 16px; padding: 12px 16px; background: #fffaf0; border-left: 3px solid #ca8a04; font-size: 11px; color: #475569; }
     </style>
-    <div class="doc">
+    <div class="doc" style="position:relative;">
       <div class="row">
         <div>
           ${logoHtml}
@@ -919,7 +928,8 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
 
       ${doc.notes ? `<div class="notes"><strong>${esc(t.notes)}</strong><div style="margin-top: 4px;">${esc(doc.notes)}</div></div>` : ""}
       ${paymentHtml}
-      ${signBlockHtml({ company, showStamp, stampUrl, showSignature, signatureUrl, signerName, lang: L })}
+      ${signBlockHtml({ company, showStamp, stampUrl, showSignature, signatureUrl, signerName, lang: L, floating: floatStamp })}
+      ${floatStampHtml}
 
       <div class="footer">
         ${esc(doc.kind === "invoice"
@@ -962,6 +972,11 @@ export interface DocumentHtmlArgs {
   signatureUrl?: string;
   /** Display name printed under the signature. */
   signerName?: string;
+  /** Custom stamp placement in percent of the page; when set the stamp floats. */
+  stampX?: number;
+  stampY?: number;
+  /** Stamp size multiplier relative to the company default width. */
+  stampScale?: number;
 }
 
 
