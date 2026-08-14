@@ -879,6 +879,16 @@ export interface DocumentHtmlArgs {
   cols?: ColWidths;
   /** Density / auto-fit multiplier applied to font sizes and paddings. */
   scale?: number;
+  /** Print the company stamp (defaults to the company setting). */
+  showStamp?: boolean;
+  /** Resolved (signed) company stamp URL. */
+  stampUrl?: string;
+  /** Print the signature block of the document's signer. */
+  showSignature?: boolean;
+  /** Resolved (signed) signature image URL. */
+  signatureUrl?: string;
+  /** Display name printed under the signature. */
+  signerName?: string;
 }
 
 
