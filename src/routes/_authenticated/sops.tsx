@@ -389,15 +389,25 @@ function EscalationsTab({
   const clients = useClients();
   const companies = useCompanies();
   const { profile } = useAuth() as { profile?: { displayName?: string } | null };
-  const [logging, setLogging] = useState<{ invoice: Invoice; stage: number } | null>(null);
+  const [logging, setLogging] = useState<{ invoice: Invoice; stage: number; existing?: InvoiceEscalation } | null>(null);
   const [drafting, setDrafting] = useState<{ invoice: Invoice; stage: number } | null>(null);
 
   const rows = useMemo(() => {
     return invoices
       .filter((i) => i.status !== "cancelled" && i.status !== "draft" && i.amount - i.paid > 0.5)
       .map((i) => {
-        const done = new Set(escalations.filter((e) => e.invoiceId === i.id).map((e) => e.stage));
-        return { inv: i, days: agingDays(i), stage: dueStage(i), done };
+        // Green comes from the saved "done" timestamp: keep the latest log per stage.
+        const done = new Map<number, InvoiceEscalation>();
+        for (const e of escalations) {
+          if (e.invoiceId !== i.id || !e.performedAt) continue;
+          const prev = done.get(e.stage);
+          if (!prev || e.performedAt > prev.performedAt) done.set(e.stage, e);
+        }
+        const lastAt = [...done.values()].reduce<string | null>(
+          (acc, e) => (!acc || e.performedAt > acc ? e.performedAt : acc),
+          null,
+        );
+        return { inv: i, days: agingDays(i), stage: dueStage(i), done, lastAt };
       })
       .filter((r) => r.stage > 0)
       .sort((a, b) => b.days - a.days);
@@ -418,33 +428,58 @@ function EscalationsTab({
             <div className="col-span-1 text-right">Age</div>
             <div className="col-span-4">Ladder</div>
           </div>
-          {rows.map(({ inv, days, stage, done }) => (
+          {rows.map(({ inv, days, stage, done, lastAt }) => {
+            const client = clients.find((c) => c.id === inv.clientId);
+            return (
             <div key={inv.id} className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated/60 transition">
-              <div className="col-span-2 text-sm font-tnum truncate">{inv.number}</div>
-              <div className="col-span-3 text-sm truncate">{clients.find((c) => c.id === inv.clientId)?.name ?? "—"}</div>
+              <div className="col-span-2 text-sm font-tnum truncate">
+                <Link to="/invoices" search={{ focus: inv.id }} title={`Open invoice ${inv.number}`} className="text-primary hover:underline underline-offset-2 inline-flex items-center gap-1">
+                  {inv.number}
+                  <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
+                </Link>
+              </div>
+              <div className="col-span-3 text-sm truncate">
+                {client ? (
+                  <Link to="/clients" search={{ focus: client.id }} title={`Open ${client.name}`} className="text-primary hover:underline underline-offset-2">
+                    {client.name}
+                  </Link>
+                ) : "—"}
+              </div>
               <div className="col-span-2 text-right text-sm font-tnum">{fmtAmount(inv.amount - inv.paid, inv.currency)}</div>
-              <div className={cn("col-span-1 text-right text-sm font-tnum", days >= 60 ? "text-destructive" : days >= 30 ? "text-warning" : "")}>{days}d</div>
+              <div className={cn("col-span-1 text-right text-sm font-tnum", days >= 60 ? "text-destructive" : days >= 30 ? "text-warning" : "")}>
+                {days}d
+                {lastAt && (
+                  <div className="text-[10px] text-muted-foreground font-normal">{format(parseISO(lastAt), "MMM d")}</div>
+                )}
+              </div>
               <div className="col-span-4 flex flex-wrap gap-1">
                 {ESCALATION_STAGES.map((s) => {
-                  const isDone = done.has(s);
+                  const entry = done.get(s);
+                  const isDone = !!entry;
                   const isDue = s <= stage;
                   return (
                     <button
                       key={s}
-                      disabled={isDone || !isDue}
-                      onClick={() => setLogging({ invoice: inv, stage: s })}
-                      title={isDone ? "Logged" : isDue ? `Log day ${s} action` : `Due at day ${s}`}
+                      disabled={!isDone && !isDue}
+                      onClick={() => setLogging({ invoice: inv, stage: s, existing: entry })}
+                      title={
+                        entry
+                          ? `Done ${format(parseISO(entry.performedAt), "MMM d, yyyy")}${entry.performedByName ? ` · ${entry.performedByName}` : ""} — click to review`
+                          : isDue ? `Log day ${s} action` : `Due at day ${s}`
+                      }
                       className={cn(
-                        "text-[10px] px-2 py-0.5 rounded border uppercase tracking-wider transition-all",
-                        isDone && "border-success/40 text-success bg-success/10",
+                        "text-[10px] px-2 py-0.5 rounded border uppercase tracking-wider transition-all inline-flex items-center gap-1",
+                        isDone && "border-success/40 text-success bg-success/10 hover:bg-success/20 press-scale",
                         !isDone && isDue && "border-destructive/40 text-destructive bg-destructive/10 hover:bg-destructive/20 press-scale",
-                        !isDue && "border-border text-muted-foreground opacity-60",
+                        !isDone && !isDue && "border-border text-muted-foreground opacity-60",
                       )}
                     >
+                      {isDone && <CheckCircle2 className="h-3 w-3" aria-hidden />}
                       D{s}
                     </button>
                   );
                 })}
+
                 {stage >= 30 && (
                   <button
                     onClick={() => setDrafting({ invoice: inv, stage })}
