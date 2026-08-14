@@ -310,6 +310,8 @@ export interface QuoteLine {
   quantity: number;
   /** Per-unit price in the quote's currency. */
   rate: number;
+  /** Sales discount on this line, in percent (0–100). */
+  discountPct?: number;
   /** Auth user id of whoever added this line. */
   createdBy?: string;
   /** ISO timestamp when this line was added. */
