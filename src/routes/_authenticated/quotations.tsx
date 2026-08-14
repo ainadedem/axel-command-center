@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { focusSearch, useFocusRow } from "@/hooks/use-focus-row";
 import { BankAccountSelect } from "@/components/bank-account-select";
 import { defaultBankAccount } from "@/lib/payment-details";
 import { AppShell } from "@/components/app-shell";
@@ -69,7 +70,7 @@ const QUOTE_COLUMNS: ColumnDef[] = [
 ];
 
 
-export const Route = createFileRoute("/_authenticated/quotations")({ component: QuotationsPage });
+export const Route = createFileRoute("/_authenticated/quotations")({ component: QuotationsPage, validateSearch: focusSearch });
 
 const statusStyles: Record<QuoteStatus, string> = {
   draft: "border-muted text-muted-foreground bg-muted/30",
@@ -281,7 +282,7 @@ function Body() {
                 const proj = q.projectId ? projects.find((p) => p.id === q.projectId) : undefined;
                 return (
                   <Fragment key={q.id}>
-                  <tr className="hover:bg-surface-elevated/40">
+                  <tr data-focus-id={q.id} className="hover:bg-surface-elevated/40">
 <ListRowActions colSpan={colCount}>
                     {!q.sentAt && (
                       <RowAction
