@@ -53,6 +53,7 @@ import { type ColumnDef } from "@/lib/column-prefs";
 import { useTablePrefs } from "@/lib/table-prefs";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, RowAction, ColumnPicker } from "@/components/list-table";
 import { StatusBadge, PoBadge } from "@/components/status-badge";
+import { useLineReorder, DragHandle, moveItem } from "@/components/sortable-row";
 import { StatusFilterBar, type PoState } from "@/components/status-filter-bar";
 import { TableExportMenu } from "@/components/table-export-menu";
 
@@ -826,6 +827,8 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const addLine = () => setLines((prev) => [...prev, { id: newId("ql"), description: "", details: "", unit: "fixed", quantity: 1, rate: 0, createdBy: user?.id, createdAt: new Date().toISOString() }]);
   const updateLine = (id: string, patch: Partial<QuoteLine>) => setLines((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
   const removeLine = (id: string) => setLines((prev) => prev.filter((l) => l.id !== id));
+  const moveLine = (from: number, to: number) => setLines((prev) => moveItem(prev, from, to));
+  const lineDnd = useLineReorder(moveLine);
   const totals = docTotals(lines, Number(discountPct) || 0, 0);
   const linesTotal = totals.subtotal;
 
@@ -1061,7 +1064,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                       </tr>
                     )}
                     <tr className="border-t border-border bg-surface-elevated/30">
-                      <td colSpan={5} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
+                      <td colSpan={6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
                         <div className="inline-flex items-center gap-2 justify-end">
                           <span>Global discount</span>
                           <div className="relative">
@@ -1079,7 +1082,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                       <td />
                     </tr>
                     <tr className="border-t border-border bg-surface-elevated/30">
-                      <td colSpan={5} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Lines total</td>
+                      <td colSpan={6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Lines total</td>
                       <td className="px-2 py-2 text-right font-tnum">{fmtAmount(linesTotal, currency)}</td>
                       <td />
                     </tr>
