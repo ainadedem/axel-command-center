@@ -168,6 +168,9 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     const saved = loadView(doc?.kind);
     setMode(saved?.mode ?? "fit");
     setZoom(saved?.mode === "fit" || !saved ? 1 : saved.zoom);
+    setColWidths(saved?.colWidths ?? {});
+    setDensity(saved?.density ?? "auto");
+
     const id = requestAnimationFrame(() => {
       const el = scrollRef.current;
       if (!saved || saved.mode === "fit") setZoom(fitZoom());
