@@ -28,6 +28,22 @@ import { KpiCard } from "@/components/kpi-card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
+import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, RowAction, ColumnPicker } from "@/components/list-table";
+
+const PROJECT_COLUMNS: ColumnDef[] = [
+  { key: "salesRep", label: "Sales rep" },
+  { key: "company", label: "Company" },
+  { key: "revenue", label: "Revenue" },
+  { key: "cost", label: "Cost", priority: "optional" },
+  { key: "profit", label: "Profit" },
+  { key: "margin", label: "Margin" },
+  { key: "invoiced", label: "Invoiced", priority: "optional" },
+  { key: "collected", label: "Collected", priority: "optional" },
+  { key: "spend", label: "Logged spend", priority: "optional" },
+  { key: "netpl", label: "Net P&L", priority: "optional" },
+];
+
 
 export const Route = createFileRoute("/_authenticated/projects")({ component: ProjectsPage });
 
@@ -118,6 +134,12 @@ function Body() {
   const view = useDataView<Project>("projects", fields);
   const groups = view.apply(baseList);
   const list = groups.flatMap((g) => g.items);
+  const cp = useColumnPrefs("projects", PROJECT_COLUMNS);
+  const hiddenForSales = salesOnly ? ["revenue", "cost", "profit", "margin", "invoiced", "collected", "spend", "netpl"] : [];
+  // 1 chevron col + Project + Client + toggled columns
+  const colCount = 3 + PROJECT_COLUMNS.filter((c) => !hiddenForSales.includes(c.key) && cp.on(c.key)).length;
+
+
 
   // Portfolio KPIs (all MGA)
   const kpi = useMemo(() => {
@@ -163,8 +185,10 @@ function Body() {
     <div className="p-4 sm:p-8 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <CrudToolbar createLabel="New project" count={list.length} label="projects" onCreate={openCreate} />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {mainTab === "projects" && <ColumnPicker prefs={cp} />}
           <DataToolbar view={view} items={baseList} />
+
           <ReconcileButton checks={reconcileChecks} />
         </div>
       </div>
@@ -194,31 +218,29 @@ function Body() {
           </Tabs>
 
           {mainTab === "projects" ? (
-            <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-              <div className="overflow-x-auto stacked-table">
-              <table className="w-full min-w-[900px] text-sm">
+            <ListTableShell>
+              <ListTable>
                 <thead>
-                  <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
-                    <th className="px-3 py-3 w-8" />
-                    <th className="text-left font-medium px-5 py-3">Project</th>
-                    <th className="text-left font-medium px-5 py-3">Client</th>
-                    <th className="text-left font-medium px-5 py-3">Sales rep</th>
-                    <th className="text-left font-medium px-5 py-3">Company</th>
-                    {!salesOnly && <th className="text-right font-medium px-5 py-3">Revenue</th>}
-                    {!salesOnly && <th className="text-right font-medium px-5 py-3">Cost</th>}
-                    {!salesOnly && <th className="text-right font-medium px-5 py-3">Profit</th>}
-                    {!salesOnly && <th className="text-right font-medium px-5 py-3">Margin</th>}
-                    {!salesOnly && <th className="text-right font-medium px-5 py-3">Invoiced</th>}
-                    {!salesOnly && <th className="text-right font-medium px-5 py-3">Collected</th>}
-                    {!salesOnly && <th className="text-right font-medium px-5 py-3">Logged spend</th>}
-                    {!salesOnly && <th className="text-right font-medium px-5 py-3">Net P&amp;L</th>}
-                    <th className="px-5 py-3 w-20" />
-                  </tr>
+                  <ListHeadRow>
+                    <ListTh width="2.25rem" />
+                    <ListTh width={salesOnly ? "28%" : "18%"}>Project</ListTh>
+                    <ListTh width={salesOnly ? "24%" : "15%"}>Client</ListTh>
+                    {cp.on("salesRep") && <ListTh width={salesOnly ? "20%" : "11%"}>Sales rep</ListTh>}
+                    {cp.on("company") && <ListTh width={salesOnly ? "18%" : "10%"}>Company</ListTh>}
+                    {!salesOnly && cp.on("revenue") && <ListTh width="10%" align="right">Revenue</ListTh>}
+                    {!salesOnly && cp.on("cost") && <ListTh width="9%" align="right">Cost</ListTh>}
+                    {!salesOnly && cp.on("profit") && <ListTh width="10%" align="right">Profit</ListTh>}
+                    {!salesOnly && cp.on("margin") && <ListTh width="8%" align="right">Margin</ListTh>}
+                    {!salesOnly && cp.on("invoiced") && <ListTh width="10%" align="right">Invoiced</ListTh>}
+                    {!salesOnly && cp.on("collected") && <ListTh width="10%" align="right">Collected</ListTh>}
+                    {!salesOnly && cp.on("spend") && <ListTh width="10%" align="right">Logged spend</ListTh>}
+                    {!salesOnly && cp.on("netpl") && <ListTh width="10%" align="right">Net P&amp;L</ListTh>}
+                  </ListHeadRow>
                 </thead>
                 <tbody>
                   {groups.map((g) => (
                     <Fragment key={g.key}>
-                      {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={salesOnly ? 6 : 14} />}
+                      {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={colCount} />}
                       {g.items.map((p) => {
                         const cl = clients.find((c) => c.id === p.clientId);
                         const co = companies.find((c) => c.id === p.companyId);
@@ -237,52 +259,52 @@ function Body() {
                         return (
                           <Fragment key={p.id}>
                             <tr
-                              className="border-b border-border/40 hover:bg-surface-elevated/40 group cursor-pointer"
+                              className="hover:bg-surface-elevated/40 cursor-pointer"
                               onClick={() => toggleExpanded(p.id)}
                             >
-                              <td className="px-3 py-3.5 text-muted-foreground w-8">
+                              <ListTd className="px-3 text-muted-foreground">
                                 {isExp ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                              </td>
-                              <td className="px-5 py-3.5 font-medium" onClick={(e) => e.stopPropagation()}>
-                                {p.name}
-                                <div className="flex gap-1 mt-1">
-                                  {projInvoices.length > 0 && (
-                                    <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-primary/30 text-primary bg-primary/5">{projInvoices.length} inv</span>
-                                  )}
-                                  {projTx.length > 0 && (
-                                    <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-chart-2/30 text-chart-2 bg-chart-2/5">{projTx.length} tx</span>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-5 py-3.5 text-muted-foreground">{cl?.name ?? "—"}</td>
-                              <td className="px-5 py-3.5 text-xs text-muted-foreground">{cl?.acquisition ?? <span className="text-muted-foreground/50">—</span>}</td>
-                              <td className="px-5 py-3.5">
-                                {co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}
-                              </td>
+                              </ListTd>
+                              <ListTd className="font-medium" title={p.name}>{p.name}</ListTd>
+                              <ListTd className="text-muted-foreground" title={cl?.name}>{cl?.name ?? "—"}</ListTd>
+                              {cp.on("salesRep") && <ListTd className="text-xs text-muted-foreground" title={cl?.acquisition}>{cl?.acquisition ?? <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                              {cp.on("company") && (
+                                <ListTd title={co?.name}>
+                                  {co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}
+                                </ListTd>
+                              )}
                               {!salesOnly && <>
-                              <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(p.revenue, p.currency)}</td>
-                              <td className="px-5 py-3.5 text-right font-tnum text-muted-foreground">{fmtCompact(p.cost, p.currency)}</td>
-                              <td className={`px-5 py-3.5 text-right font-tnum font-medium ${profit > 0 ? "text-success" : profit < 0 ? "text-destructive" : ""}`}>{fmtCompact(profit, p.currency)}</td>
-                              <td className="px-5 py-3.5 text-right"><span className="font-display text-primary font-tnum">{margin.toFixed(0)}%</span></td>
-                              <td className="px-5 py-3.5 text-right font-tnum text-xs">{invoiced > 0 ? fmtCompact(invoiced, p.currency) : <span className="text-muted-foreground/50">—</span>}</td>
-                              <td className="px-5 py-3.5 text-right font-tnum text-xs text-success">{collected > 0 ? fmtCompact(collected, p.currency) : <span className="text-muted-foreground/50">—</span>}</td>
-                              <td className="px-5 py-3.5 text-right font-tnum text-xs text-destructive">{spend > 0 ? fmtCompact(spend, p.currency) : <span className="text-muted-foreground/50">—</span>}</td>
-                              <td className="px-5 py-3.5 text-right font-tnum text-xs font-medium">
-                                {projTx.length > 0
-                                  ? <span className={netPL >= 0 ? "text-success" : "text-destructive"}>{fmtCompact(netPL, p.currency)}</span>
-                                  : <span className="text-muted-foreground/50">—</span>}
-                              </td>
+                              {cp.on("revenue") && <ListTd align="right" className="font-tnum">{fmtCompact(p.revenue, p.currency)}</ListTd>}
+                              {cp.on("cost") && <ListTd align="right" className="font-tnum text-muted-foreground">{fmtCompact(p.cost, p.currency)}</ListTd>}
+                              {cp.on("profit") && <ListTd align="right" className={cn("font-tnum font-medium", profit > 0 ? "text-success" : profit < 0 ? "text-destructive" : "")}>{fmtCompact(profit, p.currency)}</ListTd>}
+                              {cp.on("margin") && <ListTd align="right"><span className="font-display text-primary font-tnum">{margin.toFixed(0)}%</span></ListTd>}
+                              {cp.on("invoiced") && <ListTd align="right" className="font-tnum text-xs">{invoiced > 0 ? fmtCompact(invoiced, p.currency) : <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                              {cp.on("collected") && <ListTd align="right" className="font-tnum text-xs text-success">{collected > 0 ? fmtCompact(collected, p.currency) : <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                              {cp.on("spend") && <ListTd align="right" className="font-tnum text-xs text-destructive">{spend > 0 ? fmtCompact(spend, p.currency) : <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                              {cp.on("netpl") && (
+                                <ListTd align="right" className="font-tnum text-xs font-medium">
+                                  {projTx.length > 0
+                                    ? <span className={netPL >= 0 ? "text-success" : "text-destructive"}>{fmtCompact(netPL, p.currency)}</span>
+                                    : <span className="text-muted-foreground/50">—</span>}
+                                </ListTd>
+                              )}
                               </>}
-                              <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
-                                <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
-                                  <button onClick={() => { setEditing(p); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                                  <button onClick={() => { if (confirm(`Delete ${p.name}?`)) { projectsStore.remove(p.id); void deleteProjectDb(p.id); } }} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                                </div>
-                              </td>
                             </tr>
+                            <ListRowActions colSpan={colCount}>
+                              <span className="text-[11px] text-muted-foreground/70 mr-1">
+                                {projInvoices.length} inv · {projTx.length} tx
+                              </span>
+                              <RowAction
+                                icon={isExp ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                                label={isExp ? "Hide details" : "Details"}
+                                onClick={() => toggleExpanded(p.id)}
+                              />
+                              <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(p); setOpen(true); }} />
+                              <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete ${p.name}?`)) { projectsStore.remove(p.id); void deleteProjectDb(p.id); } }} />
+                            </ListRowActions>
                             {isExp && (
                               <tr className="border-b border-border/40 bg-surface-elevated/10">
-                                <td colSpan={salesOnly ? 6 : 14} className="p-0">
+                                <td colSpan={colCount} className="p-0">
                                   <ProjectDetail projInvoices={projInvoices} projTx={projTx} />
                                 </td>
                               </tr>
@@ -293,9 +315,9 @@ function Body() {
                     </Fragment>
                   ))}
                 </tbody>
-              </table>
-              </div>
-            </div>
+              </ListTable>
+            </ListTableShell>
+
           ) : (
             /* Client P&L rollup */
             clientRollup.length === 0 ? (
@@ -303,49 +325,48 @@ function Body() {
                 No client data. Link invoices and transactions to projects to see profitability by client.
               </div>
             ) : (
-              <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-                <div className="overflow-x-auto stacked-table">
-                <table className="w-full min-w-[900px] text-sm">
+              <ListTableShell>
+                <ListTable>
                   <thead>
-                    <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
-                      <th className="text-left font-medium px-5 py-3">Client</th>
-                      <th className="text-left font-medium px-5 py-3">Company</th>
-                      <th className="text-right font-medium px-5 py-3">Projects</th>
-                      <th className="text-right font-medium px-5 py-3">Invoiced</th>
-                      <th className="text-right font-medium px-5 py-3">Collected</th>
-                      <th className="text-right font-medium px-5 py-3">Logged spend</th>
-                      <th className="text-right font-medium px-5 py-3">Outstanding</th>
-                      <th className="text-right font-medium px-5 py-3">Gross margin</th>
-                    </tr>
+                    <ListHeadRow>
+                      <ListTh width="22%">Client</ListTh>
+                      <ListTh width="12%">Company</ListTh>
+                      <ListTh width="9%" align="right">Projects</ListTh>
+                      <ListTh width="12%" align="right">Invoiced</ListTh>
+                      <ListTh width="12%" align="right">Collected</ListTh>
+                      <ListTh width="12%" align="right">Spend</ListTh>
+                      <ListTh width="11%" align="right">Outstanding</ListTh>
+                      <ListTh width="10%" align="right">Margin</ListTh>
+                    </ListHeadRow>
                   </thead>
                   <tbody>
                     {clientRollup.map((row) => {
                       const outstanding = row.invoicedMGA - row.collectedMGA;
                       return (
                         <tr key={row.clientId} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40">
-                          <td className="px-5 py-3.5 font-medium">{row.cl?.name ?? <span className="text-muted-foreground/50">—</span>}</td>
-                          <td className="px-5 py-3.5">
-                            {row.co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: row.co.color }} />{row.co.shortName}</span>}
-                          </td>
-                          <td className="px-5 py-3.5 text-right font-tnum text-muted-foreground">{row.projects.length}</td>
-                          <td className="px-5 py-3.5 text-right font-tnum">{row.invoicedMGA > 0 ? fmtCompact(row.invoicedMGA, "MGA") : <span className="text-muted-foreground/50">—</span>}</td>
-                          <td className="px-5 py-3.5 text-right font-tnum text-success">{row.collectedMGA > 0 ? fmtCompact(row.collectedMGA, "MGA") : <span className="text-muted-foreground/50">—</span>}</td>
-                          <td className="px-5 py-3.5 text-right font-tnum text-destructive">{row.spendMGA > 0 ? fmtCompact(row.spendMGA, "MGA") : <span className="text-muted-foreground/50">—</span>}</td>
-                          <td className="px-5 py-3.5 text-right font-tnum text-warning">{outstanding > 0 ? fmtCompact(outstanding, "MGA") : <span className="text-muted-foreground/50">—</span>}</td>
-                          <td className="px-5 py-3.5 text-right">
+                          <ListTd className="font-medium" title={row.cl?.name}>{row.cl?.name ?? <span className="text-muted-foreground/50">—</span>}</ListTd>
+                          <ListTd title={row.co?.name}>
+                            {row.co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: row.co.color }} /><span className="truncate">{row.co.shortName}</span></span>}
+                          </ListTd>
+                          <ListTd align="right" className="font-tnum text-muted-foreground">{row.projects.length}</ListTd>
+                          <ListTd align="right" className="font-tnum">{row.invoicedMGA > 0 ? fmtCompact(row.invoicedMGA, "MGA") : <span className="text-muted-foreground/50">—</span>}</ListTd>
+                          <ListTd align="right" className="font-tnum text-success">{row.collectedMGA > 0 ? fmtCompact(row.collectedMGA, "MGA") : <span className="text-muted-foreground/50">—</span>}</ListTd>
+                          <ListTd align="right" className="font-tnum text-destructive">{row.spendMGA > 0 ? fmtCompact(row.spendMGA, "MGA") : <span className="text-muted-foreground/50">—</span>}</ListTd>
+                          <ListTd align="right" className="font-tnum text-warning">{outstanding > 0 ? fmtCompact(outstanding, "MGA") : <span className="text-muted-foreground/50">—</span>}</ListTd>
+                          <ListTd align="right">
                             {row.invoicedMGA > 0 || row.revMGA > 0 ? (
                               <span className={cn("font-display font-tnum", row.margin >= 30 ? "text-success" : row.margin >= 0 ? "text-primary" : "text-destructive")}>
                                 {row.margin.toFixed(0)}%
                               </span>
                             ) : <span className="text-muted-foreground/50">—</span>}
-                          </td>
+                          </ListTd>
                         </tr>
                       );
                     })}
                   </tbody>
-                </table>
-                </div>
-              </div>
+                </ListTable>
+              </ListTableShell>
+
             )
           )}
         </>

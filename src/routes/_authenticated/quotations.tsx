@@ -48,6 +48,22 @@ import { withSelected } from "@/lib/select-options";
 import { useSingleFlightSubmit } from "@/components/form-ux";
 import { QuoteAssigneePicker, AssigneeStack } from "@/components/quote-assignee-picker";
 import { QuoteFollowupPanel, followUpTone, followUpToneClass } from "@/components/quote-followup-panel";
+import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, RowAction, ColumnPicker } from "@/components/list-table";
+
+const QUOTE_COLUMNS: ColumnDef[] = [
+  { key: "number", label: "Number", priority: "always" },
+  { key: "client", label: "Client", priority: "always" },
+  { key: "project", label: "Project" },
+  { key: "company", label: "Company" },
+  { key: "owner", label: "Owner", priority: "optional" },
+  { key: "followup", label: "Follow-up" },
+  { key: "issued", label: "Issued", priority: "optional" },
+  { key: "validUntil", label: "Valid until" },
+  { key: "status", label: "Status" },
+  { key: "amount", label: "Amount", priority: "always" },
+];
+
 
 export const Route = createFileRoute("/_authenticated/quotations")({ component: QuotationsPage });
 
@@ -161,6 +177,9 @@ function Body() {
   const view = useDataView<Quote>("quotations", fields);
   const groups = view.apply(baseList);
   const list = groups.flatMap((g) => g.items);
+  const cp = useColumnPrefs("quotations", QUOTE_COLUMNS);
+  const colCount = 1 + cp.count;
+
 
   const isWritable = useCallback(
     (q: Quote) => canWriteCompany(dbCompanyId(q.companyId) ?? q.companyId),
@@ -232,113 +251,118 @@ function Body() {
     <div className="p-4 sm:p-8 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <CrudToolbar createLabel="New quote" count={list.length} label="quotations" onCreate={openCreate} />
-        <DataToolbar view={view} items={baseList} />
+        <div className="flex items-center gap-2 flex-wrap">
+          <ColumnPicker prefs={cp} />
+          <DataToolbar view={view} items={baseList} />
+        </div>
+
       </div>
       {list.length === 0 ? (
         <EmptyState label="quotations" onCreate={openCreate} />
       ) : (
-        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-          <div className="overflow-x-auto stacked-table">
-          <table className="w-full min-w-[900px] text-sm">
+        <ListTableShell>
+          <ListTable>
             <thead>
-              <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+              <ListHeadRow>
                 <SelectAllHeaderCell checked={selection.allSelected} onToggle={selection.toggleAll} />
-                <th className="text-left font-medium px-5 py-3">Number</th>
-                <th className="text-left font-medium px-5 py-3">Client</th>
-                <th className="text-left font-medium px-5 py-3">Project</th>
-                <th className="text-left font-medium px-5 py-3">Company</th>
-                <th className="text-left font-medium px-5 py-3">Owner</th>
-                <th className="text-left font-medium px-5 py-3">Follow-up</th>
-                <th className="text-left font-medium px-5 py-3">Issued</th>
-                <th className="text-left font-medium px-5 py-3">Valid until</th>
-                <th className="text-left font-medium px-5 py-3">Status</th>
-                <th className="text-right font-medium px-5 py-3">Amount</th>
-                <th className="px-5 py-3 w-28" />
-              </tr>
+                <ListTh width="11%">Number</ListTh>
+                <ListTh width="17%">Client</ListTh>
+                {cp.on("project") && <ListTh width="13%">Project</ListTh>}
+                {cp.on("company") && <ListTh width="9%">Company</ListTh>}
+                {cp.on("owner") && <ListTh width="12%">Owner</ListTh>}
+                {cp.on("followup") && <ListTh width="12%">Follow-up</ListTh>}
+                {cp.on("issued") && <ListTh width="11%">Issued</ListTh>}
+                {cp.on("validUntil") && <ListTh width="11%">Valid until</ListTh>}
+                {cp.on("status") && <ListTh width="12%">Status</ListTh>}
+                <ListTh width="12%" align="right">Amount</ListTh>
+              </ListHeadRow>
             </thead>
             <tbody>
               {groups.map((g) => (
                 <Fragment key={g.key}>
-                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={12} />}
+                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={colCount} />}
                   {g.items.map((q) => {
                 const co = companies.find((c) => c.id === q.companyId);
                 const cl = clients.find((c) => c.id === q.clientId);
                 const proj = q.projectId ? projects.find((p) => p.id === q.projectId) : undefined;
                 return (
-                  <tr key={q.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
+                  <Fragment key={q.id}>
+                  <tr className="hover:bg-surface-elevated/40">
                     <SelectRowCell
                       checked={selection.isSelected(q.id)}
                       onToggle={() => selection.toggle(q.id)}
                       disabled={!isWritable(q)}
                       label={`Select quote ${q.number}`}
                     />
-                    <td className="px-5 py-3.5 font-tnum text-xs text-muted-foreground">{q.number}</td>
-                    <td className="px-5 py-3.5 font-medium">{cl?.name ?? "—"}</td>
-                    <td className="px-5 py-3.5 text-xs">{proj ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}</td>
-                    <td className="px-5 py-3.5">{co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}</td>
-                    <td className="px-5 py-3.5 text-xs text-muted-foreground">{ownerName(q)}</td>
-                    <td className="px-5 py-3.5">
-                      <button
-                        onClick={() => setFollowingUp(q)}
-                        title="Assigned sales & follow-ups"
-                        className="flex items-center gap-2 rounded px-1 py-0.5 hover:bg-surface-elevated transition"
-                      >
-                        <AssigneeStack companyId={q.companyId} ids={q.assignedTo ?? []} />
-                        {q.nextFollowUpAt && (
-                          <span className={cn("text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full border font-tnum", followUpToneClass[followUpTone(q.nextFollowUpAt)])}>
-                            {format(parseISO(q.nextFollowUpAt), "MMM d")}
+                    <ListTd className="font-tnum text-xs text-muted-foreground" title={q.number}>{q.number}</ListTd>
+                    <ListTd className="font-medium" title={cl?.name}>{cl?.name ?? "—"}</ListTd>
+                    {cp.on("project") && (
+                      <ListTd className="text-xs" title={proj?.name}>{proj ? <span className="inline-block max-w-full truncate px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 align-middle">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}</ListTd>
+                    )}
+                    {cp.on("company") && (
+                      <ListTd title={co?.name}>{co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}</ListTd>
+                    )}
+                    {cp.on("owner") && <ListTd className="text-xs text-muted-foreground" title={ownerName(q)}>{ownerName(q)}</ListTd>}
+                    {cp.on("followup") && (
+                      <ListTd wrap>
+                        <button
+                          onClick={() => setFollowingUp(q)}
+                          title="Assigned sales & follow-ups"
+                          className="flex items-center gap-2 rounded px-1 py-0.5 hover:bg-surface-elevated transition"
+                        >
+                          <AssigneeStack companyId={q.companyId} ids={q.assignedTo ?? []} />
+                          {q.nextFollowUpAt && (
+                            <span className={cn("text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full border font-tnum", followUpToneClass[followUpTone(q.nextFollowUpAt)])}>
+                              {format(parseISO(q.nextFollowUpAt), "MMM d")}
+                            </span>
+                          )}
+                        </button>
+                      </ListTd>
+                    )}
+                    {cp.on("issued") && <ListTd className="text-muted-foreground text-xs font-tnum">{format(parseISO(q.issueDate), "MMM d, yyyy")}</ListTd>}
+                    {cp.on("validUntil") && <ListTd className="text-muted-foreground text-xs font-tnum">{format(parseISO(q.validUntil), "MMM d, yyyy")}</ListTd>}
+                    {cp.on("status") && (
+                      <ListTd>
+                        {q.sentAt ? (
+                          <span className={cn("inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles.sent)} title={`Sent ${format(parseISO(q.sentAt), "MMM d, yyyy HH:mm")}${q.sentTo ? ` to ${q.sentTo}` : ""}`}>
+                            <CheckCircle2 className="h-3 w-3" />
+                            Sent · {format(parseISO(q.sentAt), "MMM d")}
                           </span>
+                        ) : (
+                          <span className={cn("inline-block text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[q.status])}>{q.status}</span>
                         )}
-                      </button>
-                    </td>
-                    <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">{format(parseISO(q.issueDate), "MMM d, yyyy")}</td>
-                    <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">{format(parseISO(q.validUntil), "MMM d, yyyy")}</td>
-                    <td className="px-5 py-3.5">
-                      {q.sentAt ? (
-                        <span className={cn("inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles.sent)} title={`Sent ${format(parseISO(q.sentAt), "MMM d, yyyy HH:mm")}${q.sentTo ? ` to ${q.sentTo}` : ""}`}>
-                          <CheckCircle2 className="h-3 w-3" />
-                          Sent · {format(parseISO(q.sentAt), "MMM d")}
-                        </span>
-                      ) : (
-                        <span className={cn("text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[q.status])}>{q.status}</span>
-                      )}
-                    </td>
-                    <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(q.totalAmount ?? q.amount, q.currency)}</td>
-                    <td className="px-5 py-3.5 text-right">
-                      <div className="flex gap-1 justify-end items-center">
-                        {!q.sentAt && (
-                          <button
-                            onClick={() => sendToClient(q)}
-                            disabled={!cl?.email || sendingId === q.id}
-                            title={cl?.email ? `Send to ${cl.email}` : "Client has no email on file"}
-                            className="text-[10px] uppercase tracking-wider px-2 py-1 rounded border border-chart-2/40 text-chart-2 hover:bg-chart-2/10 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
-                          >
-                            {sendingId === q.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-                            Send
-                          </button>
-                        )}
-                        {q.status !== "accepted" && q.status !== "rejected" && (
-                          <button onClick={() => convertToPO(q)} title="Convert to PO" className="text-[10px] uppercase tracking-wider px-2 py-1 rounded border border-success/30 text-success hover:bg-success/10 flex items-center gap-1"><FileCheck2 className="h-3 w-3" /> To PO</button>
-                        )}
-                        <div className="opacity-0 group-hover:opacity-100 flex gap-1">
-                          <button onClick={() => setHistoryOf(q)} title="Activity history" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><History className="h-3.5 w-3.5" /></button>
-                          <button onClick={() => duplicateQuote(q)} title="Duplicate quote" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Copy className="h-3.5 w-3.5" /></button>
-                          <button onClick={() => setPreviewing(q)} title="Preview & export PDF" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
-                          <button onClick={() => { setEditing(q); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                          <button onClick={() => confirm(`Delete quote ${q.number}?`) && quotesStore.remove(q.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                        </div>
-
-                      </div>
-                    </td>
+                      </ListTd>
+                    )}
+                    <ListTd align="right" className="font-tnum">{fmtCompact(q.totalAmount ?? q.amount, q.currency)}</ListTd>
                   </tr>
+                  <ListRowActions colSpan={colCount}>
+                    {!q.sentAt && (
+                      <RowAction
+                        icon={sendingId === q.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                        label="Send"
+                        onClick={() => sendToClient(q)}
+                        disabled={!cl?.email || sendingId === q.id}
+                        title={cl?.email ? `Send to ${cl.email}` : "Client has no email on file"}
+                      />
+                    )}
+                    {q.status !== "accepted" && q.status !== "rejected" && (
+                      <RowAction icon={<FileCheck2 className="h-3.5 w-3.5" />} label="To PO" tone="success" onClick={() => convertToPO(q)} title="Convert to PO" />
+                    )}
+                    <RowAction icon={<History className="h-3.5 w-3.5" />} label="History" onClick={() => setHistoryOf(q)} title="Activity history" />
+                    <RowAction icon={<Copy className="h-3.5 w-3.5" />} label="Duplicate" onClick={() => duplicateQuote(q)} title="Duplicate quote" />
+                    <RowAction icon={<Eye className="h-3.5 w-3.5" />} label="Preview" onClick={() => setPreviewing(q)} title="Preview & export PDF" />
+                    <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(q); setOpen(true); }} />
+                    <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete quote ${q.number}?`)) quotesStore.remove(q.id); }} />
+                  </ListRowActions>
+                  </Fragment>
                 );
               })}
                 </Fragment>
               ))}
             </tbody>
-          </table>
-          </div>
-        </div>
+          </ListTable>
+        </ListTableShell>
+
       )}
       <BulkActionBar count={selection.count} noun="quote" onClear={selection.clear}>
         <Button size="sm" className="h-7 px-3 text-xs" onClick={() => setBulkOpen(true)}>

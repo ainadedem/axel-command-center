@@ -31,6 +31,23 @@ import { Pencil, Trash2, Upload, FileText, X, History, RefreshCw, Eye, AlertTria
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
+import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, RowAction, ColumnPicker } from "@/components/list-table";
+
+const PO_COLUMNS: ColumnDef[] = [
+  { key: "number", label: "Number", priority: "always" },
+  { key: "clientRef", label: "Client ref" },
+  { key: "fromQuote", label: "From quote", priority: "optional" },
+  { key: "client", label: "Client", priority: "always" },
+  { key: "project", label: "Project" },
+  { key: "company", label: "Company" },
+  { key: "issued", label: "Issued", priority: "optional" },
+  { key: "status", label: "Status" },
+  { key: "document", label: "Document" },
+  { key: "amount", label: "Amount", priority: "always" },
+  { key: "owner", label: "Owner", priority: "optional" },
+];
+
 
 type DocVersion = { url: string; name?: string; type?: string; uploadedAt: string };
 
@@ -83,98 +100,95 @@ function Body() {
   const view = useDataView<PurchaseOrder>("purchase-orders", fields);
   const groups = view.apply(baseList);
   const list = groups.flatMap((g) => g.items);
+  const cp = useColumnPrefs("purchase-orders", PO_COLUMNS);
 
   return (
     <div className="p-4 sm:p-8 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <CrudToolbar createLabel="New PO" count={list.length} label="purchase orders" onCreate={openCreate} />
-        <DataToolbar view={view} items={baseList} />
+        <div className="flex items-center gap-2 flex-wrap">
+          <ColumnPicker prefs={cp} />
+          <DataToolbar view={view} items={baseList} />
+        </div>
+
       </div>
       {list.length === 0 ? (
         <EmptyState label="purchase orders" onCreate={openCreate} />
       ) : (
-        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-          <div className="overflow-x-auto stacked-table">
-          <table className="w-full min-w-[900px] text-sm">
+        <ListTableShell>
+          <ListTable>
             <thead>
-              <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
-                <th className="text-left font-medium px-5 py-3">Number</th>
-                <th className="text-left font-medium px-5 py-3">Client ref</th>
-                <th className="text-left font-medium px-5 py-3">From quote</th>
-                <th className="text-left font-medium px-5 py-3">Client</th>
-                <th className="text-left font-medium px-5 py-3">Project</th>
-                <th className="text-left font-medium px-5 py-3">Company</th>
-                <th className="text-left font-medium px-5 py-3">Issued</th>
-                <th className="text-left font-medium px-5 py-3">Status</th>
-                <th className="text-left font-medium px-5 py-3">Document</th>
-                <th className="text-right font-medium px-5 py-3">Amount</th>
-                <th className="text-left font-medium px-5 py-3">Owner</th>
-                <th className="px-5 py-3 w-20" />
-              </tr>
-
+              <ListHeadRow>
+                <ListTh width="11%">Number</ListTh>
+                {cp.on("clientRef") && <ListTh width="11%">Client ref</ListTh>}
+                {cp.on("fromQuote") && <ListTh width="11%">From quote</ListTh>}
+                <ListTh width="16%">Client</ListTh>
+                {cp.on("project") && <ListTh width="12%">Project</ListTh>}
+                {cp.on("company") && <ListTh width="9%">Company</ListTh>}
+                {cp.on("issued") && <ListTh width="11%">Issued</ListTh>}
+                {cp.on("status") && <ListTh width="10%">Status</ListTh>}
+                {cp.on("document") && <ListTh width="13%">Document</ListTh>}
+                <ListTh width="12%" align="right">Amount</ListTh>
+                {cp.on("owner") && <ListTh width="12%">Owner</ListTh>}
+              </ListHeadRow>
             </thead>
             <tbody>
               {groups.map((g) => (
                 <Fragment key={g.key}>
-                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={12} />}
+                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={cp.count} />}
                   {g.items.map((po) => {
                 const co = companies.find((c) => c.id === po.companyId);
                 const cl = clients.find((c) => c.id === po.clientId);
                 const proj = po.projectId ? projects.find((p) => p.id === po.projectId) : undefined;
                 const q = po.quoteId ? quotes.find((x) => x.id === po.quoteId) : undefined;
                 return (
-                  <tr key={po.id} data-focus-id={po.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
-                    <td className="px-5 py-3.5 font-tnum text-xs text-muted-foreground">{po.number}</td>
-                    <td className="px-5 py-3.5 text-xs">{po.clientReference || <span className="text-muted-foreground/50">—</span>}</td>
-                    <td className="px-5 py-3.5 text-xs text-muted-foreground">{q?.number ?? <span className="text-muted-foreground/50">—</span>}</td>
-                    <td className="px-5 py-3.5 font-medium">{cl?.name ?? "—"}</td>
-                    <td className="px-5 py-3.5 text-xs">{proj ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}</td>
-                    <td className="px-5 py-3.5">{co && <span className="inline-flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.shortName}</span>}</td>
-                    <td className="px-5 py-3.5 text-muted-foreground text-xs font-tnum">{format(parseISO(po.issueDate), "MMM d, yyyy")}</td>
-                    <td className="px-5 py-3.5"><span className={cn("text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[po.status])}>{po.status}</span></td>
-                    <td className="px-5 py-3.5 text-xs">
-                      {po.documentUrl ? (
-                        <button type="button" onClick={() => openStoredFile(po.documentUrl)} className="inline-flex items-center gap-1.5 text-primary hover:underline max-w-[180px] truncate">
-                          <FileText className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{po.documentName ?? "PO file"}</span>
-                        </button>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10" title="No client PO document uploaded">
-                          <AlertTriangle className="h-2.5 w-2.5" /> File missing
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="px-5 py-3.5 text-right font-tnum">{fmtCompact(po.amount, po.currency)}</td>
-
-                    <td className="px-5 py-3.5 text-xs text-muted-foreground">
-                      {ownerName(po.createdBy)}
-                      {po.updatedAt && (
-                        <div className="text-[10px] text-muted-foreground/70">
-                          Updated by {ownerName(po.updatedBy ?? po.createdBy)} · {format(parseISO(po.updatedAt), "MMM d, HH:mm")}
-                        </div>
-                      )}
-                    </td>
-
-                    <td className="px-5 py-3.5 text-right">
-                      <div className="opacity-0 group-hover:opacity-100 flex gap-1 justify-end">
-                        {po.documentUrl && (
-                          <button type="button" onClick={() => openStoredFile(po.documentUrl)} title="Open client PO document" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Eye className="h-3.5 w-3.5" /></button>
+                  <Fragment key={po.id}>
+                  <tr data-focus-id={po.id} className="hover:bg-surface-elevated/40">
+                    <ListTd className="font-tnum text-xs text-muted-foreground" title={po.number}>{po.number}</ListTd>
+                    {cp.on("clientRef") && <ListTd className="text-xs" title={po.clientReference}>{po.clientReference || <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                    {cp.on("fromQuote") && <ListTd className="text-xs text-muted-foreground">{q?.number ?? <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                    <ListTd className="font-medium" title={cl?.name}>{cl?.name ?? "—"}</ListTd>
+                    {cp.on("project") && <ListTd className="text-xs" title={proj?.name}>{proj ? <span className="inline-block max-w-full truncate px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 align-middle">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                    {cp.on("company") && <ListTd title={co?.name}>{co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}</ListTd>}
+                    {cp.on("issued") && <ListTd className="text-muted-foreground text-xs font-tnum">{format(parseISO(po.issueDate), "MMM d, yyyy")}</ListTd>}
+                    {cp.on("status") && <ListTd><span className={cn("inline-block text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[po.status])}>{po.status}</span></ListTd>}
+                    {cp.on("document") && (
+                      <ListTd className="text-xs" title={po.documentName}>
+                        {po.documentUrl ? (
+                          <button type="button" onClick={() => openStoredFile(po.documentUrl)} className="inline-flex items-center gap-1.5 text-primary hover:underline max-w-full">
+                            <FileText className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{po.documentName ?? "PO file"}</span>
+                          </button>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10" title="No client PO document uploaded">
+                            <AlertTriangle className="h-2.5 w-2.5" /> Missing
+                          </span>
                         )}
-
-                        <button onClick={() => setHistoryOf(po)} title="Activity history" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><History className="h-3.5 w-3.5" /></button>
-                        <button onClick={() => { setEditing(po); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                        <button onClick={() => confirm(`Delete PO ${po.number}?`) && purchaseOrdersStore.remove(po.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                      </div>
-                    </td>
+                      </ListTd>
+                    )}
+                    <ListTd align="right" className="font-tnum">{fmtCompact(po.amount, po.currency)}</ListTd>
+                    {cp.on("owner") && (
+                      <ListTd className="text-xs text-muted-foreground" title={po.updatedAt ? `Updated by ${ownerName(po.updatedBy ?? po.createdBy)} · ${format(parseISO(po.updatedAt), "MMM d, HH:mm")}` : ownerName(po.createdBy)}>
+                        {ownerName(po.createdBy)}
+                      </ListTd>
+                    )}
                   </tr>
+                  <ListRowActions colSpan={cp.count}>
+                    {po.documentUrl && (
+                      <RowAction icon={<Eye className="h-3.5 w-3.5" />} label="Open file" onClick={() => openStoredFile(po.documentUrl)} title="Open client PO document" />
+                    )}
+                    <RowAction icon={<History className="h-3.5 w-3.5" />} label="History" onClick={() => setHistoryOf(po)} title="Activity history" />
+                    <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(po); setOpen(true); }} />
+                    <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete PO ${po.number}?`)) purchaseOrdersStore.remove(po.id); }} />
+                  </ListRowActions>
+                  </Fragment>
                 );
               })}
                 </Fragment>
               ))}
             </tbody>
-          </table>
-          </div>
-        </div>
+          </ListTable>
+        </ListTableShell>
+
       )}
       <PODialog open={open} onOpenChange={setOpen} editing={editing} />
       <DocumentActivityPanel

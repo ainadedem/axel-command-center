@@ -651,6 +651,29 @@
   .stacked-table tbody > tr[data-stack-full] > td::before {
     content: none;
   }
+  /* Two-tier records: the action row is the footer of the card above it. */
+  .stacked-table tbody > tr:has(+ tr[data-row-actions]) {
+    margin-bottom: 0;
+    border-bottom: 0 !important;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    box-shadow: none;
+  }
+  .stacked-table tbody > tr[data-row-actions] {
+    margin-top: 0;
+    border-top: 0 !important;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    padding-top: 0;
+  }
+  .stacked-table tbody > tr[data-row-actions] > td {
+    display: block;
+    padding: 0.25rem 0.875rem 0.625rem !important;
+  }
+  .stacked-table tbody > tr[data-row-actions] > td::before {
+    content: none;
+  }
+
   /* Keep numeric ledgers tabular but anchor the label column. */
   .sticky-first-col table :is(thead, tbody) tr > :first-child {
     position: sticky;

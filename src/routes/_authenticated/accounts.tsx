@@ -27,6 +27,19 @@ import {
   exportReconciliationCsv, exportReconciliationPdf, type ReconciliationSummary,
 } from "@/lib/reconciliation-export";
 import { cn } from "@/lib/utils";
+import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, RowAction, ColumnPicker } from "@/components/list-table";
+
+const ACCOUNT_COLUMNS: ColumnDef[] = [
+  { key: "account", label: "Account", priority: "always" },
+  { key: "company", label: "Company", priority: "always" },
+  { key: "type", label: "Type" },
+  { key: "statement", label: "Last statement" },
+  { key: "opening", label: "Opening" },
+  { key: "balance", label: "Balance", priority: "always" },
+  { key: "mga", label: "MGA equiv." },
+];
+
 
 function TooltipHint({ label, children }: { label: ReactNode; children: ReactNode }) {
   return (
@@ -81,12 +94,17 @@ function Body() {
   const view = useDataView<Account>("accounts", fields);
   const groups = view.apply(baseList);
   const list = groups.flatMap((g) => g.items);
+  const cp = useColumnPrefs("accounts", ACCOUNT_COLUMNS);
 
   return (
     <div className="p-4 sm:p-8 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <CrudToolbar createLabel="New account" count={list.length} label="accounts" onCreate={openCreate} />
-        <DataToolbar view={view} items={baseList} />
+        <div className="flex items-center gap-2 flex-wrap">
+          <ColumnPicker prefs={cp} />
+          <DataToolbar view={view} items={baseList} />
+        </div>
+
       </div>
 
       <div className="flex items-start gap-2 rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
@@ -112,89 +130,83 @@ function Body() {
             <div className="text-xs text-muted-foreground">{baseList.length} accounts</div>
           </div>
 
-          <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-            <div className="overflow-x-auto stacked-table">
-            <table className="w-full min-w-[900px] text-sm">
+          <ListTableShell>
+            <ListTable>
               <thead>
-                <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
-                  <th className="text-left font-medium px-5 py-3">Account</th>
-                  <th className="text-left font-medium px-5 py-3">Company</th>
-                  <th className="text-left font-medium px-5 py-3">Type</th>
-                  <th className="text-left font-medium px-5 py-3">Last statement</th>
-                  <th className="text-right font-medium px-5 py-3">Opening</th>
-                  <th className="text-right font-medium px-5 py-3">Balance</th>
-                  <th className="text-right font-medium px-5 py-3">MGA equiv.</th>
-                  <th className="px-5 py-3 w-32" />
-                </tr>
+                <ListHeadRow>
+                  <ListTh width="26%">Account</ListTh>
+                  <ListTh width="11%">Company</ListTh>
+                  {cp.on("type") && <ListTh width="10%">Type</ListTh>}
+                  {cp.on("statement") && <ListTh width="15%">Last statement</ListTh>}
+                  {cp.on("opening") && <ListTh width="13%" align="right">Opening</ListTh>}
+                  <ListTh width="13%" align="right">Balance</ListTh>
+                  {cp.on("mga") && <ListTh width="12%" align="right">MGA equiv.</ListTh>}
+                </ListHeadRow>
               </thead>
               <tbody>
                 {groups.map((g) => (
                   <Fragment key={g.key}>
-                    {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={8} />}
+                    {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={cp.count} />}
                     {g.items.map((a) => {
                       const co = companies.find((c) => c.id === a.companyId);
                       const Icon = iconFor(a.type);
                       return (
-                        <tr key={a.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/50 group">
-                          <td className="px-5 py-3.5">
-                            <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-md bg-surface-elevated grid place-items-center text-muted-foreground"><Icon className="h-4 w-4" /></div>
-                              <div>
-                                <div className="font-medium">{a.name}</div>
+                        <Fragment key={a.id}>
+                        <tr className="hover:bg-surface-elevated/50">
+                          <ListTd title={a.name}>
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="h-8 w-8 shrink-0 rounded-md bg-surface-elevated grid place-items-center text-muted-foreground"><Icon className="h-4 w-4" /></div>
+                              <div className="min-w-0">
+                                <div className="font-medium truncate">{a.name}</div>
                                 <div className="text-xs text-muted-foreground uppercase">{a.currency}</div>
                               </div>
                             </div>
-                          </td>
-                          <td className="px-5 py-3.5">
-                            {co ? <span className="inline-flex items-center gap-2 font-mono" title={co.name}><span className="h-2 w-2 rounded-full" style={{ background: co.color }} />{co.code || co.shortName}</span> : <span className="text-muted-foreground">—</span>}
-                          </td>
-                          <td className="px-5 py-3.5 capitalize text-muted-foreground">{a.type}</td>
-                          <td className="px-5 py-3.5 text-xs text-muted-foreground">
-                            {a.statementUploadedAt ? (
-                              <div className="flex flex-col">
-                                <span className="font-tnum">{format(parseISO(a.statementUploadedAt), "MMM d, yyyy")}</span>
-                                {a.statementName && <span className="text-[10px] text-muted-foreground/70 truncate max-w-[180px]">{a.statementName}</span>}
+                          </ListTd>
+                          <ListTd title={co?.name}>
+                            {co ? <span className="inline-flex items-center gap-2 font-mono max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.code || co.shortName}</span></span> : <span className="text-muted-foreground">—</span>}
+                          </ListTd>
+                          {cp.on("type") && <ListTd className="capitalize text-muted-foreground">{a.type}</ListTd>}
+                          {cp.on("statement") && (
+                            <ListTd className="text-xs text-muted-foreground" title={a.statementName}>
+                              {a.statementUploadedAt ? (
+                                <div className="flex flex-col min-w-0">
+                                  <span className="font-tnum">{format(parseISO(a.statementUploadedAt), "MMM d, yyyy")}</span>
+                                  {a.statementName && <span className="text-[10px] text-muted-foreground/70 truncate">{a.statementName}</span>}
+                                </div>
+                              ) : <span className="text-muted-foreground/40">—</span>}
+                            </ListTd>
+                          )}
+                          {cp.on("opening") && (
+                            <ListTd align="right" className="font-tnum text-muted-foreground">
+                              <div className="flex flex-col items-end">
+                                <span>{fmtCompact(openingOf(a), a.currency)}</span>
+                                {a.openingBalanceDate && <span className="text-[10px] text-muted-foreground/70">as of {format(parseISO(a.openingBalanceDate), "MMM d, yyyy")}</span>}
                               </div>
-                            ) : <span className="text-muted-foreground/40">—</span>}
-                          </td>
-                          <td className="px-5 py-3.5 text-right font-tnum text-muted-foreground">
-                            <div className="flex flex-col items-end">
-                              <span>{fmtCompact(openingOf(a), a.currency)}</span>
-                              {a.openingBalanceDate && <span className="text-[10px] text-muted-foreground/70">as of {format(parseISO(a.openingBalanceDate), "MMM d, yyyy")}</span>}
-                            </div>
-                          </td>
-                          <td className="px-5 py-3.5 text-right font-tnum">
+                            </ListTd>
+                          )}
+                          <ListTd align="right" className="font-tnum">
                             <div className="flex flex-col items-end">
                               <span>{fmtCompact(balanceOf(a), a.currency)}</span>
                               <span className="text-[10px] text-muted-foreground/70">{balances.get(a.id)?.txCount ?? 0} movements</span>
                             </div>
-                          </td>
-                          <td className="px-5 py-3.5 text-right font-tnum text-muted-foreground">{fmtCompact(toMGA(balanceOf(a), a.currency), "MGA")}</td>
-                          <td className="px-5 py-3.5 text-right">
-                            <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 flex gap-1 justify-end">
-                              <TooltipHint label="Reconciliation history — past statement checks, with CSV/PDF export">
-                                <button onClick={() => setHistoryFor(a)} aria-label="Reconciliation history" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-primary"><History className="h-3.5 w-3.5" /></button>
-                              </TooltipHint>
-                              <TooltipHint label="Reconcile bank statement — upload a CSV or Excel statement and step through opening balance, rows and closing balance">
-                                <button onClick={() => setImporting(a)} aria-label="Reconcile bank statement" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-primary"><Upload className="h-3.5 w-3.5" /></button>
-                              </TooltipHint>
-                              <TooltipHint label="Edit account">
-                                <button onClick={() => openEdit(a)} aria-label="Edit account" className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                              </TooltipHint>
-                              <TooltipHint label="Delete account">
-                                <button onClick={() => confirm(`Delete ${a.name}?`) && accountsStore.remove(a.id)} aria-label="Delete account" className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                              </TooltipHint>
-                            </div>
-                          </td>
+                          </ListTd>
+                          {cp.on("mga") && <ListTd align="right" className="font-tnum text-muted-foreground">{fmtCompact(toMGA(balanceOf(a), a.currency), "MGA")}</ListTd>}
                         </tr>
+                        <ListRowActions colSpan={cp.count}>
+                          <RowAction icon={<History className="h-3.5 w-3.5" />} label="History" title="Reconciliation history — past statement checks, with CSV/PDF export" onClick={() => setHistoryFor(a)} />
+                          <RowAction icon={<Upload className="h-3.5 w-3.5" />} label="Reconcile" title="Reconcile bank statement — upload a CSV or Excel statement" onClick={() => setImporting(a)} />
+                          <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => openEdit(a)} />
+                          <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete ${a.name}?`)) accountsStore.remove(a.id); }} />
+                        </ListRowActions>
+                        </Fragment>
                       );
                     })}
                   </Fragment>
                 ))}
               </tbody>
-            </table>
-            </div>
-          </div>
+            </ListTable>
+          </ListTableShell>
+
         </>
       )}
 

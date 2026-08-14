@@ -3,7 +3,7 @@ import { Avatar } from "@/components/avatar-upload";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/lib/auth-context";
 import { useCompany, COMPANY_ROLES, type CompanyRole } from "@/lib/company-context";
@@ -303,44 +303,25 @@ function UsersAccessPage() {
         />
 
         <div className="rounded-lg border border-border bg-card overflow-hidden">
-          <div className="overflow-x-auto">
-            <div className="overflow-x-auto stacked-table">
-            <table className="w-full min-w-[900px] text-sm">
+          <div className="stacked-table">
+            <table className="w-full table-fixed text-sm">
               <thead className="bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
                 <tr>
-                  <th className="text-left font-medium px-4 py-3 sticky left-0 bg-muted/40 min-w-[260px]">
-                    User
-                  </th>
-                  <th className="text-left font-medium px-4 py-3 min-w-[160px]">Platform</th>
-                  <th className="text-left font-medium px-4 py-3 min-w-[220px]">Effective access</th>
-                  {companies.map((c) => (
-                    <th key={c.id} className="text-center font-medium px-3 py-3 min-w-[160px]">
-                      <div className="flex flex-col items-center gap-1">
-                        <span
-                          className="h-5 w-5 rounded grid place-items-center text-[9px] font-bold text-primary-foreground"
-                          style={{ background: c.color ?? "#7c3aed" }}
-                        >
-                          {(c.short_name ?? c.code ?? c.name.slice(0, 3)).toUpperCase()}
-                        </span>
-                        <span className="truncate max-w-[140px]">{c.name}</span>
-                      </div>
-                    </th>
-                  ))}
+                  <th className="text-left font-medium px-4 py-3 w-[42%]">User</th>
+                  <th className="text-left font-medium px-4 py-3 w-[24%]">Platform</th>
+                  <th className="text-left font-medium px-4 py-3 w-[34%]">Effective access</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={3 + companies.length} className="px-4 py-10 text-center">
+                    <td colSpan={3} className="px-4 py-10 text-center">
                       <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={3 + companies.length}
-                      className="px-4 py-10 text-center text-muted-foreground"
-                    >
+                    <td colSpan={3} className="px-4 py-10 text-center text-muted-foreground">
                       No users found.
                     </td>
                   </tr>
@@ -350,23 +331,21 @@ function UsersAccessPage() {
                     const isGroupLevel =
                       row.platformRole === "super_admin" || row.platformRole === "group_admin";
                     return (
-                      <tr key={row.user_id} className="border-t border-border/60 hover:bg-muted/20">
-                        <td className="px-4 py-3 sticky left-0 bg-card">
-                          <div className="flex items-center gap-3">
+                      <Fragment key={row.user_id}>
+                      <tr className="border-t border-border/60 hover:bg-muted/20">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3 min-w-0">
                             <Avatar src={row.avatar_url ?? undefined} name={row.display_name ?? row.email ?? "?"} size={32} />
-
                             <div className="min-w-0">
                               <div className="font-medium truncate flex items-center gap-2">
-                                {row.display_name ?? "—"}
+                                <span className="truncate">{row.display_name ?? "—"}</span>
                                 {isSelf && (
-                                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground border border-border rounded px-1.5 py-0.5">
+                                  <span className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground border border-border rounded px-1.5 py-0.5">
                                     you
                                   </span>
                                 )}
                               </div>
-                              <div className="text-xs text-muted-foreground truncate">
-                                {row.email}
-                              </div>
+                              <div className="text-xs text-muted-foreground truncate">{row.email}</div>
                             </div>
                           </div>
                         </td>
@@ -397,56 +376,72 @@ function UsersAccessPage() {
                             </SelectContent>
                           </Select>
                         </td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground max-w-[280px]">
+                        <td className="px-4 py-3 text-xs text-muted-foreground truncate" title={typeof effectiveAccess(row) === "string" ? (effectiveAccess(row) as string) : undefined}>
                           {effectiveAccess(row)}
                         </td>
-                        {companies.map((c) => {
-                          const cellKey = row.user_id + ":" + c.id;
-                          const current = row.companyRoles.get(c.id) ?? "none";
-                          const isLegacy = current !== "none" && LEGACY_ROLES.includes(current as CompanyRole);
-                          return (
-                            <td key={c.id} className="px-3 py-3">
-                              <Select
-                                value={isGroupLevel ? "company_admin" : current}
-                                onValueChange={(v) =>
-                                  setCompanyRole(row, c.id, v as CompanyRole | "none")
-                                }
-                                disabled={isGroupLevel || busy === cellKey}
-                              >
-                                <SelectTrigger className="h-8 text-xs">
-                                  {isGroupLevel ? (
-                                    <span className="text-muted-foreground">all access</span>
-                                  ) : (
-                                    <SelectValue placeholder="No access" />
-                                  )}
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="none">No access</SelectItem>
-                                  {ASSIGNABLE_ROLES.map((r) => (
-                                    <SelectItem key={r} value={r}>
-                                      {ROLE_LABEL[r]}
-                                    </SelectItem>
-                                  ))}
-                                  {isLegacy && (
-                                    <SelectItem value={current}>
-                                      {ROLE_LABEL[current as CompanyRole]} (legacy)
-                                    </SelectItem>
-                                  )}
-                                </SelectContent>
-                              </Select>
-                            </td>
-                          );
-                        })}
-
                       </tr>
+                      <tr data-row-actions className="border-b border-border/40">
+                        <td colSpan={3} className="px-4 pb-4 pt-0">
+                          <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+                            Company access
+                          </div>
+                          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            {companies.map((c) => {
+                              const cellKey = row.user_id + ":" + c.id;
+                              const current = row.companyRoles.get(c.id) ?? "none";
+                              const isLegacy = current !== "none" && LEGACY_ROLES.includes(current as CompanyRole);
+                              return (
+                                <div key={c.id} className="min-w-0 rounded-md border border-border/60 bg-background/40 px-2.5 py-2">
+                                  <div className="flex items-center gap-2 mb-1.5 min-w-0">
+                                    <span
+                                      className="h-4 w-4 shrink-0 rounded grid place-items-center text-[8px] font-bold text-primary-foreground"
+                                      style={{ background: c.color ?? "#7c3aed" }}
+                                    >
+                                      {(c.short_name ?? c.code ?? c.name.slice(0, 3)).toUpperCase().slice(0, 2)}
+                                    </span>
+                                    <span className="text-[11px] truncate" title={c.name}>{c.name}</span>
+                                  </div>
+                                  <Select
+                                    value={isGroupLevel ? "company_admin" : current}
+                                    onValueChange={(v) => setCompanyRole(row, c.id, v as CompanyRole | "none")}
+                                    disabled={isGroupLevel || busy === cellKey}
+                                  >
+                                    <SelectTrigger className="h-8 text-xs">
+                                      {isGroupLevel ? (
+                                        <span className="text-muted-foreground">all access</span>
+                                      ) : (
+                                        <SelectValue placeholder="No access" />
+                                      )}
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="none">No access</SelectItem>
+                                      {ASSIGNABLE_ROLES.map((r) => (
+                                        <SelectItem key={r} value={r}>
+                                          {ROLE_LABEL[r]}
+                                        </SelectItem>
+                                      ))}
+                                      {isLegacy && (
+                                        <SelectItem value={current}>
+                                          {ROLE_LABEL[current as CompanyRole]} (legacy)
+                                        </SelectItem>
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </td>
+                      </tr>
+                      </Fragment>
                     );
                   })
                 )}
               </tbody>
             </table>
-            </div>
           </div>
         </div>
+
 
         <div className="text-xs text-muted-foreground space-y-1">
           <p>
