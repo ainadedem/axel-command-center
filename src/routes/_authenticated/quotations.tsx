@@ -571,6 +571,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       totalAmount: computed.totalAmount,
       currency, status, mode, lines, notes: notes || undefined, subject: subject.trim() || undefined,
       bankAccountId: bankAccountId || defaultBankAccount(companies.find((c) => c.id === companyId))?.id,
+      assignedTo: assignedTo.slice(0, MAX_QUOTE_ASSIGNEES),
       ...fxFields,
     };
     if (editing) {
