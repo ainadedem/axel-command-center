@@ -385,7 +385,36 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   // ---- Export -------------------------------------------------------------
   const [exporting, setExporting] = useState(false);
+  const [exportStage, setExportStage] = useState<ExportStage | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
+
+  const printableHtml = useCallback(() => {
+    if (!doc) return "";
+    return buildPrintableDocument({
+      doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit,
+      logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl,
+      signerName: signer.name, stampX: place.x, stampY: place.y, stampScale: place.scale,
+    });
+  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signer.name, place]);
+
+  const downloadPdf = useCallback(async () => {
+    if (!doc || exporting) return;
+    setExportError(null);
+    setExporting(true);
+    setExportStage("preparing");
+    const filename = pdfFilename(doc.number);
+    try {
+      await exportDocumentPdf(printableHtml(), filename, setExportStage);
+      toast.success(`Downloaded ${filename}`);
+    } catch (e) {
+      const msg = `PDF export failed: ${e instanceof Error ? e.message : String(e)}`;
+      setExportError(msg);
+      toast.error(msg);
+    } finally {
+      setExporting(false);
+      setExportStage(null);
+    }
+  }, [doc, exporting, printableHtml]);
 
   const printPdf = () => {
     if (!doc || exporting) return;
@@ -394,13 +423,13 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     try {
       const w = window.open("", "_blank", "width=900,height=1100");
       if (!w) {
-        const msg = "Pop-ups are blocked — allow pop-ups for this site to export the PDF.";
+        const msg = "Pop-ups are blocked — use “Export PDF” to download the file instead.";
         setExportError(msg);
         toast.error(msg);
         setExporting(false);
         return;
       }
-      w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName: signer.name, stampX: place.x, stampY: place.y, stampScale: place.scale }));
+      w.document.write(printableHtml());
       w.document.close();
       setTimeout(() => {
         try { w.focus(); w.print(); }
@@ -411,7 +440,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
         } finally { setExporting(false); }
       }, 250);
     } catch (e) {
-      const msg = `PDF export failed: ${e instanceof Error ? e.message : String(e)}`;
+      const msg = `Printing failed: ${e instanceof Error ? e.message : String(e)}`;
       setExportError(msg);
       toast.error(msg);
       setExporting(false);
@@ -421,11 +450,19 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   // ---- Stamp placement (drag on the preview) ------------------------------
   const commitPlace = useCallback((next: { x?: number; y?: number; scale?: number }) => {
+    const before = { x: doc?.stampX, y: doc?.stampY, scale: doc?.stampScale };
     setPlace(next);
     onDocChange?.({
       stampX: next.x, stampY: next.y, stampScale: next.scale, stampDirty: false,
     });
-  }, [onDocChange]);
+    if (audit && doc) {
+      logStampChange({
+        ...audit, docNumber: doc.number,
+        summary: describePlacement(before, next),
+        details: { before, after: next },
+      });
+    }
+  }, [onDocChange, audit, doc]);
 
   const startStampDrag = (e: React.PointerEvent) => {
     if (!stampUrl) return;
@@ -447,7 +484,10 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     window.addEventListener("pointerup", up);
   };
 
-  const stampBoxW = (company?.stampWidth ?? 140) * clamp(place.scale ?? 1, 0.3, 3) * zoom;
+  // Same geometry as the exported page; only the visual size follows the zoom.
+  const stampGeom = stampGeometry(company, place);
+  const stampBoxW = stampGeom.width * zoom;
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
