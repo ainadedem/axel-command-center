@@ -144,7 +144,7 @@ function saveView(kind: DocKind, v: SavedView) {
   } catch { /* storage unavailable — non-fatal */ }
 }
 
-export function DocumentPreview({ open, onOpenChange, doc, company, client, project, signers, onDocChange }: Props) {
+export function DocumentPreview({ open, onOpenChange, doc, company, client, project, signers, onDocChange, audit }: Props) {
   const [showStatus, setShowStatus] = useState(true);
   const [showClientEmail, setShowClientEmail] = useState(true);
   const [showUnit, setShowUnit] = useState(true);
