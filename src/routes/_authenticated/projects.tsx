@@ -162,7 +162,7 @@ function Body() {
   return (
     <div className="p-4 sm:p-8 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <CrudToolbar count={list.length} label="projects" onCreate={openCreate} />
+        <CrudToolbar createLabel="New project" count={list.length} label="projects" onCreate={openCreate} />
         <div className="flex items-center gap-2">
           <DataToolbar view={view} items={baseList} />
           <ReconcileButton checks={reconcileChecks} />

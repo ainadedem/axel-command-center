@@ -1,3 +1,4 @@
+import { useCreateAction } from "@/lib/create-action";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { focusSearch, useFocusRow } from "@/hooks/use-focus-row";
 import { AppShell } from "@/components/app-shell";
@@ -168,6 +169,7 @@ function ClientsPage() {
   };
 
   const openCreate = () => { setEditing(null); setOpen(true); };
+  useCreateAction(openCreate);
   const { isSalesOnly: salesOnly } = useEffectiveRole();
 
   return (
@@ -226,7 +228,7 @@ function ClientsPage() {
               <button onClick={() => setView("grid")} className={`h-8 w-8 grid place-items-center ${view === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-elevated"}`} title="Grid view"><LayoutGrid className="h-3.5 w-3.5" /></button>
               <button onClick={() => setView("list")} className={`h-8 w-8 grid place-items-center ${view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-elevated"}`} title="List view"><ListIcon className="h-3.5 w-3.5" /></button>
             </div>
-            <Button size="sm" onClick={openCreate} className="h-8 gap-1 text-xs"><Plus className="h-3.5 w-3.5" /> New</Button>
+            <Button size="sm" onClick={openCreate} className="h-8 gap-1 text-xs"><Plus className="h-3.5 w-3.5" /> {tab === "leads" ? "New lead" : "New client"}</Button>
           </div>
           <div className="text-[11px] text-muted-foreground font-tnum">{visibleCount} {tab === "leads" ? "leads" : "clients"}</div>
         </div>

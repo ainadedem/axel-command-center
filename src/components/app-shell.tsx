@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
+import { CREATE_EVENT } from "@/lib/create-action";
 import { useCompany } from "@/lib/company-context";
 import { useFxRates } from "@/lib/fx";
 import { useAuth } from "@/lib/auth-context";
@@ -319,8 +320,6 @@ function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
-const CREATE_EVENT = "axel:open-create";
-
 const NEW_BUTTON_ROUTES: { match: (p: string) => boolean; to: string; label: string }[] = [
   { match: (p) => p.startsWith("/accounts"), to: "/accounts", label: "New account" },
   { match: (p) => p.startsWith("/transactions"), to: "/transactions", label: "New transaction" },
@@ -337,9 +336,15 @@ const NEW_BUTTON_ROUTES: { match: (p: string) => boolean; to: string; label: str
   { match: (p) => p.startsWith("/companies"), to: "/companies", label: "New company" },
   { match: (p) => p.startsWith("/expenses"), to: "/expenses", label: "New expense" },
   { match: (p) => p.startsWith("/billing"), to: "/billing", label: "New schedule" },
-  { match: (p) => p.startsWith("/payroll"), to: "/payroll", label: "New run" },
-  { match: (p) => p.startsWith("/journal"), to: "/journal", label: "New entry" },
+  { match: (p) => p.startsWith("/payroll"), to: "/payroll", label: "New payroll run" },
+  { match: (p) => p.startsWith("/journal"), to: "/journal", label: "New journal entry" },
+  { match: (p) => p.startsWith("/users-access"), to: "/users-access", label: "Add user" },
+  { match: (p) => p.startsWith("/sops"), to: "/sops", label: "Log escalation" },
+  { match: (p) => p.startsWith("/axel"), to: "/axel", label: "New conversation" },
+  // Dashboard has no entity of its own — invoicing is the primary action.
+  { match: (p) => p === "/" || p.startsWith("/dashboard"), to: "/invoices", label: "New invoice" },
 ];
+
 
 function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
   const { profile, user, signOut, roles } = useAuth();
@@ -376,13 +381,17 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
   };
 
   const handleNew = () => {
-    if (newAction) {
-      if (pathname.startsWith(newAction.to)) window.dispatchEvent(new CustomEvent(CREATE_EVENT));
-      else navigate({ to: newAction.to });
-    } else {
-      navigate({ to: "/transactions", search: { q: "" } });
+    if (!newAction) return;
+    if (pathname.startsWith(newAction.to)) {
+      window.dispatchEvent(new CustomEvent(CREATE_EVENT));
+      return;
     }
+    void Promise.resolve(navigate({ to: newAction.to })).then(() => {
+      // Give the destination page a tick to mount its create listener.
+      setTimeout(() => window.dispatchEvent(new CustomEvent(CREATE_EVENT)), 120);
+    });
   };
+
 
   return (
     <header className="h-14 shrink-0 border-b border-border/70 material-bar px-3 sm:px-6 flex items-center gap-2 sm:gap-4 sticky top-0 z-30">
@@ -409,15 +418,18 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
       </form>
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         <FxBadge />
-        <button
-          onClick={handleNew}
-          aria-label={newLabel}
-          title={newLabel}
-          className="h-9 w-9 sm:w-auto sm:px-4 focus-ring tap-target rounded-full text-sm font-medium bg-primary text-primary-foreground hover:opacity-95 hover:-translate-y-px hover:shadow-[var(--shadow-glow)] active:translate-y-0 active:scale-[0.97] transition-all duration-200 ease-in-out flex items-center justify-center gap-1.5 group"
-        >
-          <Plus className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:rotate-90" />
-          <span className="hidden sm:inline">{newLabel}</span>
-        </button>
+        {newAction && (
+          <button
+            onClick={handleNew}
+            aria-label={newLabel}
+            title={newLabel}
+            className="h-9 w-9 sm:w-auto sm:px-4 focus-ring tap-target rounded-full text-sm font-medium bg-primary text-primary-foreground hover:opacity-95 hover:-translate-y-px hover:shadow-[var(--shadow-glow)] active:translate-y-0 active:scale-[0.97] transition-all duration-200 ease-in-out flex items-center justify-center gap-1.5 group"
+          >
+            <Plus className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:rotate-90" />
+            <span className="hidden sm:inline">{newLabel}</span>
+          </button>
+        )}
+
         <div className="relative">
           <button
             onClick={() => setBellOpen((v) => !v)}

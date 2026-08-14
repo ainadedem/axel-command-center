@@ -72,7 +72,7 @@ function CompaniesPage() {
     <AppShell>
       <PageHeader title="Companies" description="Group entities under your control." />
       <div className="p-4 sm:p-8 space-y-5">
-        <CrudToolbar count={companies.length} label="companies" onCreate={openCreate} />
+        <CrudToolbar createLabel="New company" count={companies.length} label="companies" onCreate={openCreate} />
         {companies.length === 0 ? (
           <EmptyState label="companies" onCreate={openCreate} />
         ) : (

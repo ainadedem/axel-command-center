@@ -95,7 +95,7 @@ function Body() {
             <SelectContent>{years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
           </Select>
         </div>
-        <CrudToolbar count={scopedCategories.length} label="categories" onCreate={openCreateCat} />
+        <CrudToolbar createLabel="New category" count={scopedCategories.length} label="categories" onCreate={openCreateCat} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">

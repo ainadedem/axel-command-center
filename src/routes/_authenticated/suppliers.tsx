@@ -1,3 +1,4 @@
+import { useCreateAction } from "@/lib/create-action";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
@@ -157,6 +158,7 @@ function Body() {
 
   const visibleCount = sorted.length;
   const openCreate = () => { setEditing(null); setOpen(true); };
+  useCreateAction(openCreate);
 
   return (
     <div className="p-6 space-y-5">
@@ -195,7 +197,7 @@ function Body() {
             <button onClick={() => setView("grid")} className={`h-8 w-8 grid place-items-center ${view === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-elevated"}`} title="Grid view"><LayoutGrid className="h-3.5 w-3.5" /></button>
             <button onClick={() => setView("list")} className={`h-8 w-8 grid place-items-center ${view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-elevated"}`} title="List view"><ListIcon className="h-3.5 w-3.5" /></button>
           </div>
-          <Button size="sm" onClick={openCreate} className="h-8 gap-1 text-xs"><Plus className="h-3.5 w-3.5" /> New</Button>
+          <Button size="sm" onClick={openCreate} className="h-8 gap-1 text-xs"><Plus className="h-3.5 w-3.5" /> New supplier</Button>
         </div>
         <div className="text-[11px] text-muted-foreground font-tnum">{visibleCount} contacts</div>
       </div>

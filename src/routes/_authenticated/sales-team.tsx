@@ -41,7 +41,7 @@ function SalesTeamPage() {
       <PageHeader title="Sales team" description="People who acquire or close deals - drawn from the Team database." />
       <div className="p-4 sm:p-8 space-y-5">
         <div className="flex items-center justify-between">
-          <CrudToolbar count={sales.length} label="sales people" onCreate={() => { if (team.length > 0) { setEditing(null); setOpen(true); } }} />
+          <CrudToolbar createLabel="Add sales member" count={sales.length} label="sales people" onCreate={() => { if (team.length > 0) { setEditing(null); setOpen(true); } }} />
           {team.length === 0 && (
             <div className="text-xs text-muted-foreground">
               No people yet - <Link to="/team" className="text-primary underline">add team members</Link> first.

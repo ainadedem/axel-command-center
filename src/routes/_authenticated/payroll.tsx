@@ -93,7 +93,7 @@ function RegisterTab() {
         <Kpi label="Monthly gross total" value={fmtAmount(totalGross, defaultCurrency)} accent="text-primary" />
         <Kpi label="Inactive entries" value={String(list.filter((e) => !e.active).length)} mono />
       </div>
-      <CrudToolbar count={list.length} label="register entries" onCreate={openCreate} />
+      <CrudToolbar createLabel="New payroll run" count={list.length} label="register entries" onCreate={openCreate} />
       {list.length === 0 ? (
         <EmptyState label="salary register entries" onCreate={openCreate} />
       ) : (

@@ -60,7 +60,7 @@ function Body() {
             </button>
           ))}
         </div>
-        <CrudToolbar count={entries.length} label={`écritures · Total débit ≈ ${totalDebit.toLocaleString("fr-FR")}`} onCreate={openCreate} />
+        <CrudToolbar createLabel="Nouvelle écriture" count={entries.length} label={`écritures · Total débit ≈ ${totalDebit.toLocaleString("fr-FR")}`} onCreate={openCreate} />
       </div>
 
       {entries.length === 0 ? (

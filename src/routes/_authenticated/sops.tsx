@@ -1,3 +1,4 @@
+import { useCreateAction } from "@/lib/create-action";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
@@ -94,6 +95,8 @@ type Tab = "dashboard" | "escalations" | "library";
 function Body() {
   const { scope } = useCompany();
   const [tab, setTab] = useState<Tab>("dashboard");
+  // Topbar "Log escalation" jumps to the AR escalation ladder.
+  useCreateAction(() => setTab("escalations"));
   const { isGroupAdmin } = useEffectiveRole();
   const [tourSeen, markTourSeen] = useTourSeen("sops-tour-v1");
   const [tourOpen, setTourOpen] = useState(false);
