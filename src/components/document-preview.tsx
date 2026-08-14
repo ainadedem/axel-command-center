@@ -419,6 +419,38 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
   };
 
 
+  // ---- Stamp placement (drag on the preview) ------------------------------
+  const commitPlace = useCallback((next: { x?: number; y?: number; scale?: number }) => {
+    setPlace(next);
+    onDocChange?.({
+      stampX: next.x, stampY: next.y, stampScale: next.scale, stampDirty: false,
+    });
+  }, [onDocChange]);
+
+  const dragRef = useRef<{ w: number; h: number } | null>(null);
+  const startStampDrag = (e: React.PointerEvent) => {
+    if (!stampUrl) return;
+    e.preventDefault();
+    const wrap = (e.currentTarget as HTMLElement).parentElement;
+    if (!wrap) return;
+    const rect = wrap.getBoundingClientRect();
+    dragRef.current = { w: rect.width, h: rect.height };
+    const move = (ev: PointerEvent) => {
+      const x = clamp(((ev.clientX - rect.left) / rect.width) * 100, 0, 100);
+      const y = clamp(((ev.clientY - rect.top) / rect.height) * 100, 0, 100);
+      setPlace((p) => ({ ...p, x, y }));
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      setPlace((p) => { commitPlace(p); return p; });
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+
+  const stampBoxW = (company?.stampWidth ?? 140) * clamp(place.scale ?? 1, 0.3, 3) * zoom;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl p-0 gap-0 max-h-[90vh] overflow-hidden flex flex-col">
@@ -453,6 +485,55 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
                 <Checkbox checked={showSignature} onCheckedChange={(v) => setShowSignature(!!v)} />
                 Show signature
               </label>
+            ) : null}
+            {signers && signers.length > 0 ? (
+              <label className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span>Signer</span>
+                <select
+                  value={signerId ?? ""}
+                  onChange={(e) => {
+                    const v = e.target.value || undefined;
+                    setSignerId(v);
+                    onDocChange?.({ signerId: v, stampDirty: false });
+                  }}
+                  className="rounded-md border border-border bg-background px-2 py-1 text-[11px] focus-ring"
+                  aria-label="Document signer"
+                >
+                  <option value="">No signature</option>
+                  {signers.map((u) => (
+                    <option key={u.userId} value={u.userId}>{u.name}</option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            {company?.stampUrl && showStamp ? (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span>Stamp</span>
+                <div className="flex rounded-md border border-border overflow-hidden text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => commitPlace(floating ? {} : { x: 76, y: 86, scale: place.scale ?? 1 })}
+                    className={`px-2 py-0.5 transition ${floating ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                    title="Drag the stamp anywhere on the page"
+                  >
+                    {floating ? "Free placement" : "Place freely"}
+                  </button>
+                  <button
+                    type="button" aria-label="Smaller stamp"
+                    onClick={() => commitPlace({ ...place, scale: clamp((place.scale ?? 1) - 0.1, 0.3, 3) })}
+                    className="px-2 py-0.5 hover:bg-muted transition"
+                  >
+                    −
+                  </button>
+                  <button
+                    type="button" aria-label="Bigger stamp"
+                    onClick={() => commitPlace({ ...place, scale: clamp((place.scale ?? 1) + 0.1, 0.3, 3) })}
+                    className="px-2 py-0.5 hover:bg-muted transition"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
             ) : null}
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <span>Language</span>
@@ -580,6 +661,24 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
               }}
               dangerouslySetInnerHTML={{ __html: html }}
             />
+            {/* Draggable stamp: free placement saved per document */}
+            {floating && stampUrl ? (
+              <div
+                role="button"
+                tabIndex={0}
+                aria-label="Drag to position the stamp"
+                onPointerDown={startStampDrag}
+                className="absolute z-20 cursor-grab active:cursor-grabbing rounded-md ring-2 ring-primary/50 hover:ring-primary transition"
+                style={{
+                  left: `${place.x}%`, top: `${place.y}%`,
+                  width: stampBoxW, transform: "translate(-50%, -50%)",
+                  touchAction: "none",
+                }}
+              >
+                <img src={stampUrl} alt="" draggable={false} className="w-full select-none pointer-events-none" />
+              </div>
+            ) : null}
+
             {/* Column resize handles, overlaid on the table header borders */}
             {handles.map((h) => (
               <div
