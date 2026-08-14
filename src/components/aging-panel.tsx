@@ -55,7 +55,7 @@ export function AgingPanel({
   if (!aging.hasData) return null;
 
   const toggle = (key: AgingKey) => onSelect(selected === key ? null : key);
-  const chartData = aging.rows;
+  const chartData = aging.rows.map((r) => ({ ...r })) as unknown as (Record<string, unknown> & typeof aging.rows[number])[];
 
   return (
     <div className="space-y-4">
