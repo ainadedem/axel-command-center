@@ -359,7 +359,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
         setExporting(false);
         return;
       }
-      w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang }));
+      w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale }));
       w.document.close();
       setTimeout(() => {
         try { w.focus(); w.print(); }
