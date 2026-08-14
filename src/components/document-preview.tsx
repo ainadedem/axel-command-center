@@ -415,6 +415,18 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
               <Checkbox checked={showPayment} onCheckedChange={(v) => setShowPayment(!!v)} />
               Show payment details
             </label>
+            {company?.stampUrl ? (
+              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                <Checkbox checked={showStamp} onCheckedChange={(v) => setShowStamp(!!v)} />
+                Show stamp
+              </label>
+            ) : null}
+            {signer.signatureRef ? (
+              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                <Checkbox checked={showSignature} onCheckedChange={(v) => setShowSignature(!!v)} />
+                Show signature
+              </label>
+            ) : null}
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <span>Language</span>
               <div className="flex rounded-md border border-border overflow-hidden">
