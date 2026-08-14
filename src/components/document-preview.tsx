@@ -92,7 +92,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
       <DialogContent className="max-w-4xl p-0 gap-0 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="shrink-0 flex flex-wrap items-center justify-between gap-y-2 border-b border-border px-5 py-3">
           <div className="text-sm font-medium">{titleFor(doc?.kind)} preview · {doc?.number}</div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 gap-y-2">
             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
               <Checkbox checked={showStatus} onCheckedChange={(v) => setShowStatus(!!v)} />
               Show status
