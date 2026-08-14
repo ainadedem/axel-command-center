@@ -167,6 +167,22 @@ export function AgingPanel({
           </BarChart>
         </ResponsiveContainer>
       </ChartFrame>
+
+      {itemsInBucket && (
+        <AgingDrawer
+          open={drawerKey !== null}
+          onOpenChange={(o) => !o && setDrawerKey(null)}
+          bucket={AGING_BUCKETS.find((b) => b.key === drawerKey) ?? null}
+          items={drawerKey ? itemsInBucket(drawerKey) : []}
+          format={format}
+          noun={noun}
+          onJump={(item) => {
+            setDrawerKey(null);
+            onJump?.(item);
+          }}
+        />
+      )}
     </div>
+
   );
 }
