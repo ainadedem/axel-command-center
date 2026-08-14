@@ -16,7 +16,10 @@ export type ActivityAction =
   | "payment"
   | "document_uploaded"
   | "sent"
-  | "deleted";
+  | "deleted"
+  | "stamp_changed"
+  | "signer_changed";
+
 
 export interface ActivityEntry {
   id: string;
