@@ -175,6 +175,7 @@ export function RowAction({
   tone = "default",
   disabled,
   title,
+  busy,
 }: {
   icon?: ReactNode;
   label: string;
@@ -182,14 +183,18 @@ export function RowAction({
   tone?: "default" | "success" | "warning" | "danger";
   disabled?: boolean;
   title?: string;
+  /** Swap the icon for a spinner while this action runs. */
+  busy?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || busy}
       title={title ?? label}
       aria-label={label}
+      aria-busy={busy || undefined}
+
       className={cn(
         "row-action inline-flex items-center justify-center h-7 w-7 rounded-full border-0 bg-transparent",
         "text-foreground/70",
