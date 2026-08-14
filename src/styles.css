@@ -281,8 +281,8 @@
 
   /* Sidebar-style hover fill for plain (non-branded) buttons and icon buttons.
      Filled primary/destructive/tonal buttons keep their own hover via :not() exclusions. */
-  button:where(:not([class*="bg-primary"], [class*="bg-destructive"], [class*="bg-[var(--primary-container"])),
-  [role="button"]:where(:not([class*="bg-primary"], [class*="bg-destructive"], [class*="bg-[var(--primary-container"]))):hover {
+  button:where(:not([class*="bg-primary"], [class*="bg-destructive"])):hover,
+  [role="button"]:where(:not([class*="bg-primary"], [class*="bg-destructive"])):hover {
     background-color: var(--surface-container);
   }
 
