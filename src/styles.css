@@ -73,90 +73,95 @@
 }
 
 :root {
-  /* 8px cards/inputs; buttons and pills override locally */
-  --radius: 0.5rem;
+  /* Material 3: 12px default corner; pills override locally */
+  --radius: 0.75rem;
 
-  /* ClickUp canvas */
-  --background: #FAFBFC;
-  --foreground: #292D34;
+  /* Google Workspace canvas */
+  --background: #F8FAFD;
+  --foreground: #1F1F1F;
 
   --surface: #FFFFFF;
   --surface-elevated: #FFFFFF;
+  --surface-container: #F0F4F9;
+  --surface-container-high: #EAF1FB;
 
   --card: #FFFFFF;
-  --card-foreground: #292D34;
+  --card-foreground: #1F1F1F;
   --popover: #FFFFFF;
-  --popover-foreground: #292D34;
+  --popover-foreground: #1F1F1F;
 
-  /* ClickUp signature purple */
-  --primary: #7B68EE;
-  --primary-hover: #6C5CE7;
+  /* Google blue */
+  --primary: #0B57D1;
+  --primary-hover: #0A4CB8;
   --primary-foreground: #FFFFFF;
-  --primary-glow: #C83CB9;
+  --primary-glow: #A8C7FA;
+  --primary-container: #C2E7FF;
+  --on-primary-container: #001D35;
 
-  --secondary: #F7F8FA;
-  --secondary-foreground: #292D34;
+  --secondary: #F0F4F9;
+  --secondary-foreground: #1F1F1F;
 
-  --muted: #F7F8FA;
-  --muted-foreground: #656F7D;
+  --muted: #F0F4F9;
+  --muted-foreground: #444746;
 
-  --accent: color-mix(in oklab, #7B68EE 12%, #FFFFFF);
-  --accent-foreground: #6C5CE7;
+  --accent: #EAF1FB;
+  --accent-foreground: #0B57D1;
 
-  --destructive: #E74C3C;
+  --destructive: #B3261E;
   --destructive-foreground: #FFFFFF;
 
-  --success: #2ECC71;
+  --success: #146C2E;
   --success-foreground: #FFFFFF;
 
-  --warning: #FFC107;
-  --warning-foreground: #3A2E00;
+  --warning: #E37400;
+  --warning-foreground: #FFFFFF;
 
-  --border: #E8EAED;
-  --input: #E8EAED;
-  --ring: rgba(123, 104, 238, 0.35);
+  --border: #E3E7EC;
+  --outline: #C4C7C5;
+  --input: #E3E7EC;
+  --ring: rgba(11, 87, 209, 0.4);
 
-  /* Chart family — purple-led ClickUp spectrum */
-  --chart-1: #7B68EE;
-  --chart-2: #49CCF9;
-  --chart-3: #C83CB9;
-  --chart-4: #2ECC71;
-  --chart-5: #FFC107;
-  --chart-6: #14B8C4;
-  --chart-7: #FF7FAB;
-  --chart-8: #97A0AF;
+  /* Material tonal chart spectrum */
+  --chart-1: #0B57D1;
+  --chart-2: #4285F4;
+  --chart-3: #7C4DFF;
+  --chart-4: #146C2E;
+  --chart-5: #E37400;
+  --chart-6: #00A0B0;
+  --chart-7: #C5221F;
+  --chart-8: #80868B;
 
   /* Semantic chart aliases */
   --chart-income: var(--chart-4);
-  --chart-expense: #E74C3C;
+  --chart-expense: #C5221F;
   --chart-forecast: var(--chart-2);
   --chart-neutral: var(--chart-8);
-  --chart-grid: #E8EAED;
+  --chart-grid: #E3E7EC;
 
 
-  --sidebar: #F7F8FA;
-  --sidebar-foreground: #656F7D;
-  --sidebar-primary: #7B68EE;
+  --sidebar: #F8FAFD;
+  --sidebar-foreground: #444746;
+  --sidebar-primary: #0B57D1;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: color-mix(in oklab, #7B68EE 12%, #FFFFFF);
-  --sidebar-accent-foreground: #6C5CE7;
-  --sidebar-border: #E8EAED;
-  --sidebar-ring: rgba(123, 104, 238, 0.35);
+  --sidebar-accent: #C2E7FF;
+  --sidebar-accent-foreground: #001D35;
+  --sidebar-border: transparent;
+  --sidebar-ring: rgba(11, 87, 209, 0.4);
 
-  --gradient-surface: linear-gradient(180deg, #FFFFFF 0%, #FAFBFC 100%);
-  --gradient-primary: linear-gradient(135deg, #7B68EE 0%, #C83CB9 100%);
-  --gradient-dark: linear-gradient(135deg, #3B3363 0%, #241F3D 100%);
-  --gradient-glow: radial-gradient(ellipse at top, rgba(123, 104, 238, 0.10), transparent 62%);
-  --gradient-mesh: linear-gradient(135deg, #7B68EE 0%, #9B5CE0 50%, #C83CB9 100%);
+  --gradient-surface: linear-gradient(180deg, #FFFFFF 0%, #F8FAFD 100%);
+  --gradient-primary: linear-gradient(135deg, #0B57D1 0%, #4285F4 100%);
+  --gradient-dark: linear-gradient(135deg, #1F1F1F 0%, #001D35 100%);
+  --gradient-glow: radial-gradient(ellipse at top, rgba(11, 87, 209, 0.07), transparent 62%);
+  --gradient-mesh: linear-gradient(135deg, #0B57D1 0%, #4285F4 50%, #A8C7FA 100%);
 
-  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-elevated: 0 4px 16px rgba(41, 45, 52, 0.12);
-  --shadow-glow: 0 4px 12px rgba(123, 104, 238, 0.25);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-soft: 0 1px 2px rgba(60, 64, 67, 0.1);
+  --shadow-elevated: 0 1px 3px rgba(60, 64, 67, 0.14), 0 4px 12px rgba(60, 64, 67, 0.1);
+  --shadow-glow: 0 1px 3px rgba(60, 64, 67, 0.2);
+  --shadow-card: 0 1px 2px rgba(60, 64, 67, 0.1);
 
   /* Bar / panel materials */
-  --material-thin: rgba(255, 255, 255, 0.82);
-  --material-regular: rgba(255, 255, 255, 0.94);
+  --material-thin: rgba(248, 250, 253, 0.88);
+  --material-regular: rgba(255, 255, 255, 0.96);
 }
 
 .dark {
