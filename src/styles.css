@@ -279,6 +279,13 @@
                 opacity 150ms ease-in-out;
   }
 
+  /* Sidebar-style hover fill for plain (non-branded) buttons and icon buttons.
+     Filled primary/destructive/tonal buttons keep their own hover via :not() exclusions. */
+  button:where(:not([class*="bg-primary"], [class*="bg-destructive"], [class*="bg-[var(--primary-container"])),
+  [role="button"]:where(:not([class*="bg-primary"], [class*="bg-destructive"], [class*="bg-[var(--primary-container"]))):hover {
+    background-color: var(--surface-container);
+  }
+
   /* Inputs: purple ring + soft glow, no browser outline */
   input:not([type="checkbox"]):not([type="radio"]):focus-visible,
   textarea:focus-visible,
