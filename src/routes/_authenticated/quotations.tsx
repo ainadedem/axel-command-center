@@ -823,6 +823,11 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
           <BankAccountSelect company={companies.find((c) => c.id === companyId)} value={bankAccountId} onChange={setBankAccountId} />
 
           <div>
+            <Label>Assigned sales (max {MAX_QUOTE_ASSIGNEES})</Label>
+            <QuoteAssigneePicker companyId={companyId} value={assignedTo} onChange={setAssignedTo} />
+          </div>
+
+          <div>
             <Label>Notes</Label>
             <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes for the client" />
           </div>
