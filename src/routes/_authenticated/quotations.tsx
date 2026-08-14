@@ -339,6 +339,19 @@ function Body() {
           </div>
         </div>
       )}
+      <BulkActionBar count={selection.count} noun="quote" onClear={selection.clear}>
+        <Button size="sm" className="h-7 px-3 text-xs" onClick={() => setBulkOpen(true)}>
+          Edit client / project
+        </Button>
+      </BulkActionBar>
+      <BulkEditDocDialog
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        rows={selection.selectedRows}
+        noun="quote"
+        onApply={applyBulk}
+      />
+
       <QuoteDialog open={open} onOpenChange={setOpen} editing={editing} />
       <Dialog open={!!followingUp} onOpenChange={(v) => { if (!v) setFollowingUp(null); }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
