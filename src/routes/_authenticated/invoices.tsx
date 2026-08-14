@@ -529,7 +529,7 @@ function Body() {
             onSelect={setBucket}
             format={(v) => fmtAmount(v, "MGA")}
             noun="invoice"
-            title="Receivables aging"
+            storageKey="receivables"
             tilesTitle="Receivables aging — days past due"
             itemsInBucket={(key) =>
               chipFiltered
