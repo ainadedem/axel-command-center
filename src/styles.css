@@ -259,9 +259,9 @@
 
   /* Motion tokens — ClickUp snap */
   :root {
-    --ease-out-soft: ease-in-out;
-    --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
-    --ease-snap: ease-in-out;
+    --ease-out-soft: cubic-bezier(0.2, 0, 0, 1);
+    --ease-spring: cubic-bezier(0.2, 0, 0, 1);
+    --ease-snap: cubic-bezier(0.2, 0, 0, 1);
     --dur-fast: 120ms;
     --dur-base: 150ms;
     --dur-slow: 150ms;
