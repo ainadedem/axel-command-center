@@ -17,6 +17,16 @@ export function moveItem<T>(items: T[], from: number, to: number): T[] {
 export function useLineReorder(onReorder: (from: number, to: number) => void) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  const [announcement, setAnnouncement] = useState("");
+
+  const move = (from: number, to: number, total?: number) => {
+    if (from === to) return;
+    onReorder(from, to);
+    setAnnouncement(
+      `Line ${from + 1} moved to position ${to + 1}${total ? ` of ${total}` : ""}.`,
+    );
+  };
+
 
   const rowProps = (index: number) => ({
     onDragOver: (e: React.DragEvent) => {
