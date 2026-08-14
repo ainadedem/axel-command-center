@@ -759,12 +759,12 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
   const t = docLabels(L);
   const df = docDateFormat(L);
   // Free placement: when the document carries coordinates, the stamp is drawn
-  // as an overlay on the page instead of inside the signature block.
+  // as a page-level overlay (added by the printable wrapper / the preview
+  // overlay) instead of inside the signature block, so the same percentage
+  // resolves to the same physical spot in both renderers.
   const stampVisible = (showStamp ?? company?.showStamp === true) && !!stampUrl;
   const floatStamp = stampVisible && stampX != null && stampY != null;
-  const floatStampHtml = floatStamp
-    ? `<img src="${esc(stampUrl)}" alt="" style="position:absolute;left:${clamp(stampX!, 0, 100)}%;top:${clamp(stampY!, 0, 100)}%;transform:translate(-50%,-50%);width:${Math.round((company?.stampWidth ?? 140) * clamp(stampScale ?? 1, 0.3, 3))}px;opacity:${Math.min(1, Math.max(0.1, company?.stampOpacity ?? 1))};object-fit:contain;pointer-events:none;" />`
-    : "";
+
   const rawColor = company?.color ?? "#1e293b";
   // Validate against a strict CSS color allowlist to prevent CSS/script injection
   // via the company.color field (it is embedded verbatim in a <style> block below).
