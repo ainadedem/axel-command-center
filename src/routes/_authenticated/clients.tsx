@@ -33,6 +33,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CategoryChips, CategoryMultiSelect, CompanyTag, CompanyTags, defaultCategoriesFor } from "@/components/category-chips";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { toast } from "sonner";
+import { KpiCard } from "@/components/kpi-card";
 
 export const Route = createFileRoute("/_authenticated/clients")({ component: ClientsPage, validateSearch: focusSearch });
 
@@ -517,17 +518,14 @@ function StatMini({ label, value, tone = "default" }: { label: string; value: st
   );
 }
 
-function KpiTile({ icon, label, value, sub, tint, ring }: { icon: React.ReactNode; label: string; value: string; sub?: string; tint: string; ring: string }) {
+function KpiTile({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub?: string; tint?: string; ring?: string }) {
   return (
-    <div className={`relative rounded-xl border border-border bg-gradient-to-br ${tint} p-4 ring-1 ${ring} overflow-hidden`}>
-      <div className="flex items-center justify-between mb-2">
-        <div className="h-8 w-8 rounded-lg bg-background/80 backdrop-blur grid place-items-center text-foreground border border-border">{icon}</div>
-        <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
-      </div>
-      <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground font-semibold">{label}</div>
-      <div className="font-display text-xl font-bold tracking-tight font-tnum mt-0.5 truncate">{value}</div>
-      {sub && <div className="text-[11px] text-muted-foreground font-tnum mt-0.5">{sub}</div>}
-    </div>
+    <KpiCard
+      label={label}
+      value={value}
+      sub={sub}
+      badge={<span className="h-6 w-6 rounded-lg bg-background/80 grid place-items-center text-foreground border border-border">{icon}</span>}
+    />
   );
 }
 

@@ -39,6 +39,7 @@ import {
   PlayCircle, Trash2, Mail, HelpCircle, Loader2, ExternalLink,
 } from "lucide-react";
 
+import { KpiCard } from "@/components/kpi-card";
 const TOUR_STEPS: TourStep[] = [
   {
     selector: '[data-tour="kpis"]',
@@ -218,13 +219,10 @@ function DemoControls() {
   );
 }
 
-function Kpi({ label, value, accent, mono }: { label: string; value: string; accent?: string; mono?: boolean }) {
-  return (
-    <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className={cn("mt-1 text-xl font-display font-semibold", mono && "font-tnum", accent)}>{value}</div>
-    </div>
-  );
+/** Thin wrapper so legacy call sites keep working on the shared dashboard card. */
+function Kpi({ label, value, accent }: { label: string; value: string; accent?: string; mono?: boolean }) {
+  const tone = accent?.includes("destructive") ? "danger" : accent?.includes("success") ? "success" : accent?.includes("warn") || accent?.includes("amber") ? "warning" : "default";
+  return <KpiCard label={label} value={value} tone={tone} />;
 }
 
 /* ─── Compliance tab ────────────────────────────────────────────────── */

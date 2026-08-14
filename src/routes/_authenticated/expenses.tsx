@@ -18,6 +18,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { buildAging, inBucket, type AgingKey } from "@/lib/aging";
+import { AgingPanel } from "@/components/aging-panel";
+import { KpiCard } from "@/components/kpi-card";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, Receipt, FileText, BanknoteIcon, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -66,9 +69,30 @@ function Body() {
   const [editing, setEditing] = useState<Expense | null>(null);
   const [defaultKind, setDefaultKind] = useState<ExpenseKind>("bill");
 
-  const filtered = useMemo(
+  const [bucket, setBucket] = useState<AgingKey | null>(null);
+
+  const tabFiltered = useMemo(
     () => list.filter((e) => tab === "all" || e.kind === tab).sort((a, b) => b.issueDate.localeCompare(a.issueDate)),
     [list, tab],
+  );
+
+  // Payables aging shares the exact bucket definitions used by receivables.
+  const aging = useMemo(
+    () =>
+      buildAging(tabFiltered, {
+        due: (e) => e.dueDate,
+        balance: (e) => Math.max(0, e.amount - e.paid),
+        include: (e) => computeStatus(e) !== "paid",
+      }),
+    [tabFiltered],
+  );
+
+  const filtered = useMemo(
+    () =>
+      bucket
+        ? tabFiltered.filter((e) => computeStatus(e) !== "paid" && inBucket(e.dueDate, bucket))
+        : tabFiltered,
+    [tabFiltered, bucket],
   );
 
   const totals = useMemo(() => {
@@ -101,12 +125,24 @@ function Body() {
 
   return (
     <div className="p-4 sm:p-8 space-y-5">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <Kpi label="Entries" value={String(totals.count)} mono />
-        <Kpi label="Outstanding" value={fmtAmount(totals.unpaid, defaultCurrency)} accent="text-chart-2" />
-        <Kpi label="Overdue" value={fmtAmount(totals.overdue, defaultCurrency)} accent="text-destructive" />
-        <Kpi label="Paid (period)" value={fmtAmount(totals.paid, defaultCurrency)} accent="text-success" />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <KpiCard label="Entries" value={String(totals.count)} />
+        <KpiCard label="Outstanding" value={fmtAmount(totals.unpaid, defaultCurrency)} />
+        <KpiCard label="Overdue" value={fmtAmount(totals.overdue, defaultCurrency)} tone={totals.overdue > 0 ? "danger" : "default"} />
+        <KpiCard label="Paid (period)" value={fmtAmount(totals.paid, defaultCurrency)} tone="success" />
       </div>
+
+      <AgingPanel
+        aging={aging}
+        selected={bucket}
+        onSelect={setBucket}
+        format={(v) => fmtAmount(v, defaultCurrency)}
+        noun="bill"
+        title="Payables aging"
+        tilesTitle="Payables aging — days past due"
+        description="Open balance by days past due — follows the current tab. Click a bar to filter."
+      />
+
 
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="inline-flex rounded-md border border-border bg-surface p-0.5 text-xs">
@@ -205,14 +241,6 @@ function Body() {
   );
 }
 
-function Kpi({ label, value, accent, mono }: { label: string; value: string; accent?: string; mono?: boolean }) {
-  return (
-    <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className={cn("mt-1 text-xl font-display font-semibold", mono && "font-tnum", accent)}>{value}</div>
-    </div>
-  );
-}
 
 function ExpenseDialog({
   open, onOpenChange, editing, defaultKind, defaultCurrency,

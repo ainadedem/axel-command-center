@@ -20,6 +20,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
+import { KpiCard } from "@/components/kpi-card";
 
 export const Route = createFileRoute("/_authenticated/pipeline")({ component: PipelinePage });
 
@@ -635,11 +636,5 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-border bg-surface p-4">
-      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="text-xl font-semibold mt-1.5 font-tnum">{value}</div>
-    </div>
-  );
-
+  return <KpiCard label={label} value={value} />;
 }

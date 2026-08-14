@@ -56,10 +56,13 @@ import { StatusBadge, PoBadge } from "@/components/status-badge";
 import { useLineReorder, DragHandle, moveItem, ReorderLiveRegion } from "@/components/sortable-row";
 import { useFilterPresets } from "@/lib/filter-presets";
 import { FilterPresetBar } from "@/components/filter-presets";
-import { ChartFrame, CHART_SEMANTIC, chartAxisProps, chartGridProps, chartMargin, chartCursor, chartBarProps, ChartTooltip } from "@/components/charts";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+
+import { buildAging, inBucket, type AgingKey } from "@/lib/aging";
+import { AgingPanel } from "@/components/aging-panel";
+import { KpiCard } from "@/components/kpi-card";
 import { StatusFilterBar, type PoState } from "@/components/status-filter-bar";
 import { TableExportMenu } from "@/components/table-export-menu";
+
 
 
 const INVOICE_COLUMNS: ColumnDef[] = [
@@ -167,7 +170,14 @@ function Body() {
     [baseList, chipStatuses, chipPo],
   );
   const presets = useFilterPresets("invoices");
-  const groups = view.apply(chipFiltered);
+  // Aging bucket filter driven by the shared aging panel (click a tile / bar).
+  const [bucket, setBucket] = useState<AgingKey | null>(null);
+  const bucketFiltered = useMemo(
+    () => (bucket ? chipFiltered.filter((i) => i.status !== "paid" && inBucket(i.dueDate, bucket)) : chipFiltered),
+    [chipFiltered, bucket],
+  );
+  const groups = view.apply(bucketFiltered);
+
 
   const list = groups.flatMap((g) => g.items);
 
@@ -220,36 +230,17 @@ function Body() {
   const totalOverdue = active.filter((i) => i.status === "overdue").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
   const totalPaid = active.filter((i) => i.status === "paid").reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
 
-  const agingBuckets = { "0-30": { count: 0, amount: 0 }, "31-60": { count: 0, amount: 0 }, "61-90": { count: 0, amount: 0 }, "90+": { count: 0, amount: 0 } } as Record<"0-30"|"31-60"|"61-90"|"90+", { count: number; amount: number }>;
-  const _today = new Date();
-  for (const inv of active) {
-    if (inv.status === "paid") continue;
-    const daysLate = differenceInDays(_today, parseISO(inv.dueDate));
-    if (daysLate <= 0) continue;
-    const balance = toMGA(inv.amount - inv.paid, inv.currency);
-    const key: "0-30"|"31-60"|"61-90"|"90+" = daysLate <= 30 ? "0-30" : daysLate <= 60 ? "31-60" : daysLate <= 90 ? "61-90" : "90+";
-    agingBuckets[key].count++;
-    agingBuckets[key].amount += balance;
-  }
-  const hasAging = Object.values(agingBuckets).some((b) => b.count > 0);
-  const currentBucket = active.reduce(
-    (acc, inv) => {
-      if (inv.status === "paid") return acc;
-      if (differenceInDays(_today, parseISO(inv.dueDate)) > 0) return acc;
-      acc.count++;
-      acc.amount += toMGA(inv.amount - inv.paid, inv.currency);
-      return acc;
-    },
-    { count: 0, amount: 0 },
+  const aging = useMemo(
+    () =>
+      buildAging(chipFiltered.filter((i) => i.status !== "cancelled"), {
+        due: (i) => i.dueDate,
+        balance: (i) => toMGA(i.amount - i.paid, i.currency),
+        include: (i) => i.status !== "paid",
+      }),
+    [chipFiltered],
   );
-  const agingChartData = [
-    { bucket: "Current", amount: currentBucket.amount, count: currentBucket.count },
-    { bucket: "1-30 d", amount: agingBuckets["0-30"].amount, count: agingBuckets["0-30"].count },
-    { bucket: "31-60 d", amount: agingBuckets["31-60"].amount, count: agingBuckets["31-60"].count },
-    { bucket: "61-90 d", amount: agingBuckets["61-90"].amount, count: agingBuckets["61-90"].count },
-    { bucket: "90+ d", amount: agingBuckets["90+"].amount, count: agingBuckets["90+"].count },
-  ];
-  const hasAgingChart = agingChartData.some((d) => d.count > 0);
+
+
   const openCreate = () => { setEditing(null); setOpen(true); };
 
 
@@ -508,59 +499,21 @@ function Body() {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Stat label="Open receivables" value={fmtAmount(totalOpen, "MGA")} />
-            <Stat label="Overdue" value={fmtAmount(totalOverdue, "MGA")} danger />
-            <Stat label="Collected (period)" value={fmtAmount(totalPaid, "MGA")} good />
+            <KpiCard label="Open receivables" value={fmtAmount(totalOpen, "MGA")} />
+            <KpiCard label="Overdue" value={fmtAmount(totalOverdue, "MGA")} tone={totalOverdue > 0 ? "danger" : "default"} />
+            <KpiCard label="Collected (period)" value={fmtAmount(totalPaid, "MGA")} tone="success" />
           </div>
 
-          {hasAging && (
-            <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-              <div className="px-5 py-2.5 border-b border-border">
-                <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Receivables aging — days past due</div>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border/40">
-                {(["0-30", "31-60", "61-90", "90+"] as const).map((key, i) => {
-                  const b = agingBuckets[key];
-                  const tone = i === 0 ? "text-primary" : i === 1 ? "text-warning" : "text-destructive";
-                  const dot = i === 0 ? "bg-primary" : i === 1 ? "bg-warning" : "bg-destructive";
-                  return (
-                    <div key={key} className="p-5 relative">
-                      <div className="flex items-center gap-1.5">
-                        <span className={cn("h-1.5 w-1.5 rounded-full", b.count > 0 ? dot : "bg-muted-foreground/30")} />
-                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{key} days</div>
-                      </div>
-                      <div className={`font-display text-2xl font-bold font-tnum mt-2 leading-none ${b.count > 0 ? tone : "text-muted-foreground/40"}`}>
-                        {b.count > 0 ? fmtAmount(b.amount, "MGA") : "—"}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5">{b.count} invoice{b.count !== 1 ? "s" : ""}</div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          <AgingPanel
+            aging={aging}
+            selected={bucket}
+            onSelect={setBucket}
+            format={(v) => fmtAmount(v, "MGA")}
+            noun="invoice"
+            title="Receivables aging"
+            tilesTitle="Receivables aging — days past due"
+          />
 
-          {hasAgingChart && (
-            <ChartFrame
-              title="Receivables aging"
-              description="Open balance by days past due (MGA) — follows the current filters"
-              labelKey="bucket"
-              data={agingChartData}
-              series={[{ key: "amount", label: "Open balance", color: CHART_SEMANTIC.expense }]}
-              formatValue={(v) => fmtAmount(v, "MGA")}
-              height={240}
-            >
-              <ResponsiveContainer>
-                <BarChart data={agingChartData} margin={chartMargin}>
-                  <CartesianGrid {...chartGridProps} />
-                  <XAxis dataKey="bucket" {...chartAxisProps} />
-                  <YAxis {...chartAxisProps} />
-                  <Tooltip content={<ChartTooltip formatter={(v: number) => fmtAmount(v, "MGA")} />} cursor={chartCursor} />
-                  <Bar dataKey="amount" name="Open balance" {...chartBarProps} fill={CHART_SEMANTIC.expense} />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartFrame>
-          )}
 
           <ListTableShell scrollX announcement={tp.announcement}>
             <ListTable style={{ minWidth: tableMinWidth }}>
@@ -1269,19 +1222,6 @@ function ProcessStrip({ hasQuote, hasPO }: { hasQuote: boolean; hasPO: boolean }
   );
 }
 
-function Stat({ label, value, danger, good }: { label: string; value: string; danger?: boolean; good?: boolean }) {
-  const accent = danger ? "before:bg-destructive" : good ? "before:bg-success" : "before:bg-primary";
-  return (
-    <div className={cn(
-      "relative rounded-xl border border-border bg-[var(--gradient-surface)] p-5 overflow-hidden",
-      "before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:rounded-l-xl",
-      accent,
-    )}>
-      <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
-      <div className={cn("font-display text-2xl font-bold mt-2 font-tnum", danger && "text-destructive", good && "text-success")}>{value}</div>
-    </div>
-  );
-}
 
 function MarkPaidDialog({ open, onOpenChange, invoice }: { open: boolean; onOpenChange: (v: boolean) => void; invoice: Invoice | null }) {
   const { dataLoading } = useCompany();

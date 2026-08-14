@@ -23,6 +23,7 @@ import { Pencil, Trash2, Repeat, Play, Pause, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
+import { KpiCard } from "@/components/kpi-card";
 
 export const Route = createFileRoute("/_authenticated/billing")({ component: BillingPage });
 
@@ -198,13 +199,10 @@ function Body() {
   );
 }
 
-function Kpi({ label, value, accent, mono }: { label: string; value: string; accent?: string; mono?: boolean }) {
-  return (
-    <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className={cn("mt-1 text-xl font-display font-semibold", mono && "font-tnum", accent)}>{value}</div>
-    </div>
-  );
+/** Thin wrapper so legacy call sites keep working on the shared dashboard card. */
+function Kpi({ label, value, accent }: { label: string; value: string; accent?: string; mono?: boolean }) {
+  const tone = accent?.includes("destructive") ? "danger" : accent?.includes("success") ? "success" : accent?.includes("warn") || accent?.includes("amber") ? "warning" : "default";
+  return <KpiCard label={label} value={value} tone={tone} />;
 }
 
 function BillingDialog({
