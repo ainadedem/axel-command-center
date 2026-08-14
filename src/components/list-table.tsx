@@ -24,9 +24,12 @@ import { ResizeHandle } from "@/components/resizable-columns";
  *  - row actions live on their own padded line under the data row.
  */
 
-export function ListTableShell({ children, className, scrollX }: { children: ReactNode; className?: string; scrollX?: boolean }) {
+export function ListTableShell({ children, className, scrollX, announcement }: { children: ReactNode; className?: string; scrollX?: boolean; announcement?: string }) {
   return (
     <div className={cn("rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden", className)}>
+      {announcement !== undefined && (
+        <div aria-live="polite" role="status" className="sr-only">{announcement}</div>
+      )}
       <div className={cn("stacked-table", scrollX && "md:overflow-x-auto")}>{children}</div>
     </div>
   );
@@ -51,6 +54,7 @@ export function ListTh({
   align = "left",
   onResizeStart,
   dragProps,
+  keyProps,
 }: {
   children?: ReactNode;
   className?: string;
@@ -61,15 +65,19 @@ export function ListTh({
   onResizeStart?: (e: React.MouseEvent) => void;
   /** Native drag handlers that reorder this column. */
   dragProps?: Record<string, unknown>;
+  /** Keyboard equivalents for drag/resize (Alt+Arrow, Shift+Arrow). */
+  keyProps?: Record<string, unknown>;
 }) {
   const style: CSSProperties | undefined = width ? { width } : undefined;
   return (
     <th
       style={style}
       {...(dragProps ?? {})}
+      {...(keyProps ?? {})}
       className={cn(
         "font-medium px-4 py-3 truncate select-none",
         (onResizeStart || dragProps) && "relative",
+        keyProps && "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
         dragProps && "cursor-grab active:cursor-grabbing hover:text-foreground transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
         dragProps && "data-[drag-over=right]:shadow-[inset_-2px_0_0_0_var(--primary)]",
         align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
