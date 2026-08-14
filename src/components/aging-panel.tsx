@@ -12,7 +12,6 @@ import {
 import { AgingDrawer, type AgingDrawerItem } from "@/components/aging-drawer";
 import {
   CHART_SEMANTIC,
-  ChartFrame,
   ChartTooltip,
   chartAxisProps,
   chartBarProps,
