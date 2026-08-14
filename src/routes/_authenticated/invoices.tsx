@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { focusSearch, useFocusRow, focusRowById } from "@/hooks/use-focus-row";
+import { focusSearch, useFocusRow, useJumpToRecord } from "@/hooks/use-focus-row";
 import { BankAccountSelect } from "@/components/bank-account-select";
 import { defaultBankAccount } from "@/lib/payment-details";
 import { AppShell } from "@/components/app-shell";
@@ -171,10 +171,29 @@ function Body() {
   );
   const presets = useFilterPresets("invoices");
   // Aging bucket filter driven by the shared aging panel (click a tile / bar).
-  const [bucket, setBucket] = useState<AgingKey | null>(null);
+  // The bucket + focused record live in the URL so drawer jumps are shareable.
+  const search = Route.useSearch();
+  const navigate = useNavigate();
+  const jumpTo = useJumpToRecord();
+  const urlBucket = (search.aging as AgingKey | undefined) ?? null;
+  const [bucket, setBucket] = useState<AgingKey | null>(urlBucket);
+  useEffect(() => {
+    if (urlBucket && urlBucket !== bucket) setBucket(urlBucket);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlBucket]);
+  const setDrawerBucket = (key: AgingKey | null) => {
+    if (key) setBucket(key);
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, aging: key ?? undefined }), replace: true } as never);
+  };
   const bucketFiltered = useMemo(
-    () => (bucket ? chipFiltered.filter((i) => i.status !== "paid" && inBucket(i.dueDate, bucket)) : chipFiltered),
-    [chipFiltered, bucket],
+    () =>
+      bucket
+        ? chipFiltered.filter(
+            // Never filter out the deep-linked record — the jump must always land.
+            (i) => i.id === search.focus || (i.status !== "paid" && inBucket(i.dueDate, bucket)),
+          )
+        : chipFiltered,
+    [chipFiltered, bucket, search.focus],
   );
   const groups = view.apply(bucketFiltered);
 
@@ -531,7 +550,9 @@ function Body() {
                   status: i.status,
                 }))
             }
-            onJump={(item) => focusRowById(item.id)}
+            drawerBucket={urlBucket}
+            onDrawerBucketChange={setDrawerBucket}
+            onJump={(item) => jumpTo(item.id, bucket)}
           />
 
 
