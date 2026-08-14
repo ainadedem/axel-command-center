@@ -343,16 +343,20 @@ const projectFromDb = (r: Record<string, unknown>): Project => ({
 export async function upsertProject(p: Project): Promise<string | null> {
   const row = projectToDb(p);
   if (!row) return null;
+  // Background seed replays into companies the user cannot write to were the
+  // bulk of the row-level-security rejections; skip them silently.
+  if (!canWriteCompany(row.company_id)) return null;
   const { data, error } = await supabase.from("projects").upsert(row, { onConflict: "company_id,name" }).select("id").single();
-  if (error) { console.warn("[db-sync] upsertProject", error.message); return null; }
+  if (error) { reportWriteError("upsertProject", error.message); return null; }
   return data.id;
 }
 
 export async function deleteProjectDb(id: string) {
   if (!isUuid(id)) return;
   const { error } = await supabase.from("projects").delete().eq("id", id);
-  if (error) console.warn("[db-sync] deleteProject", error.message);
+  if (error) reportWriteError("deleteProject", error.message);
 }
+
 
 /* ─────────────────────── HYDRATION ─────────────────────── */
 
