@@ -85,7 +85,7 @@ function Body() {
   const list = groups.flatMap((g) => g.items);
 
   return (
-    <div className="p-8 space-y-5">
+    <div className="p-4 sm:p-8 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <CrudToolbar count={list.length} label="purchase orders" onCreate={openCreate} />
         <DataToolbar view={view} items={baseList} />
@@ -375,7 +375,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
         <div className="space-y-4 py-2">
           <FormErrorBanner show={showErrors} />
           <p className="text-[11px] text-muted-foreground -mt-1">Enter the purchase order details exactly as issued by your client, then attach their document.</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label><RequiredLabel>Client PO number</RequiredLabel></Label>
               <Input value={number} onChange={(e) => setNumber(e.target.value)} placeholder="As written on the client PO" className={invalidFieldClassName(showErrors && !number.trim())} aria-invalid={showErrors && !number.trim()} />
@@ -383,7 +383,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
             <div><Label>Client internal reference</Label><Input value={clientReference} onChange={(e) => setClientReference(e.target.value)} placeholder="Their internal #" /></div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label><RequiredLabel>Company</RequiredLabel></Label>
               <Select value={companyId} onValueChange={(v) => { setCompanyId(v); setClientId(""); setQuoteId(""); }}>
@@ -420,7 +420,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div><Label>PO date (client)</Label><Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
             <div><Label>Amount</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
             <div>

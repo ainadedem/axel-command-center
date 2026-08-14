@@ -59,7 +59,7 @@ export function WeeklySummaryCard({ summary, ownerName }: Props) {
         </Button>
       </header>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <Metric label="Red flags" value={summary.critical} tone="destructive" delta={summary.criticalDelta} />
         <Metric label="Yellow flags" value={summary.warning} tone="warning" delta={summary.warningDelta} />
         <div className="rounded-lg border border-border bg-surface-elevated/40 p-3">

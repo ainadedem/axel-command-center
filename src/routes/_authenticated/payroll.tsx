@@ -38,7 +38,7 @@ function PayrollPage() {
 function Body() {
   const [tab, setTab] = useState<"register" | "runs">("runs");
   return (
-    <div className="p-8 space-y-5">
+    <div className="p-4 sm:p-8 space-y-5">
       <div className="inline-flex rounded-md border border-border bg-surface p-0.5 text-xs">
         <button
           onClick={() => setTab("runs")}
@@ -229,7 +229,7 @@ function RegisterDialog({
       <DialogContent>
         <DialogHeader><DialogTitle>{editing ? "Edit salary" : "Add salary entry"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Team member</Label>
               <Select value={teamMemberId} onValueChange={setTeamMemberId}>
@@ -249,7 +249,7 @@ function RegisterDialog({
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Gross monthly</Label>
               <Input type="number" min="0" step="0.01" value={gross} onChange={(e) => setGross(e.target.value)} />
@@ -266,7 +266,7 @@ function RegisterDialog({
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <Label>CNAPS %</Label>
               <Input type="number" min="0" step="0.1" value={cnapsRate} onChange={(e) => setCnapsRate(e.target.value)} />
@@ -280,7 +280,7 @@ function RegisterDialog({
               <Input type="number" min="0" step="0.1" value={irsaRate} onChange={(e) => setIrsaRate(e.target.value)} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
             <div>
               <Label>Effective since</Label>
               <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
@@ -535,7 +535,7 @@ function NewRunDialog({ onClose, register }: { onClose: () => void; register: Sa
       <DialogContent>
         <DialogHeader><DialogTitle>New monthly payroll run</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Company</Label>
               <Select value={companyId} onValueChange={setCompanyId}>

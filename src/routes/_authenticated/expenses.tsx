@@ -100,7 +100,7 @@ function Body() {
     : "MGA";
 
   return (
-    <div className="p-8 space-y-5">
+    <div className="p-4 sm:p-8 space-y-5">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <Kpi label="Entries" value={String(totals.count)} mono />
         <Kpi label="Outstanding" value={fmtAmount(totals.unpaid, defaultCurrency)} accent="text-chart-2" />
@@ -328,7 +328,7 @@ function ExpenseDialog({
         <DialogHeader><DialogTitle>{editing ? "Edit expense" : kind === "bill" ? "New bill" : "New expense"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
           <FormErrorBanner show={showErrors} />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Type</Label>
               <Select value={kind} onValueChange={(v) => setKind(v as ExpenseKind)}>
@@ -350,7 +350,7 @@ function ExpenseDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Supplier</Label>
               <Select value={supplierId || "none"} onValueChange={(v) => setSupplierId(v === "none" ? "" : v)}>
@@ -367,7 +367,7 @@ function ExpenseDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <Label>Document number</Label>
               <Input value={number} onChange={(e) => setNumber(e.target.value)} placeholder="optional" />
@@ -382,7 +382,7 @@ function ExpenseDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <Label><RequiredLabel>Amount</RequiredLabel></Label>
               <Input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className={invalidFieldClassName(showErrors && !(parseFloat(amount) > 0))} aria-invalid={showErrors && !(parseFloat(amount) > 0)} />
@@ -417,7 +417,7 @@ function ExpenseDialog({
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>PCG account</Label>
               <Input value={account} onChange={(e) => setAccount(e.target.value)} placeholder="e.g. 622600" />

@@ -583,7 +583,7 @@ export function StatementImportDialog({
           {/* STEP 2 — opening balance */}
           {step === 1 && (
             <div className="rounded-lg border border-border bg-surface/40 p-4 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <Label className="text-[11px] text-muted-foreground">Detected period start</Label>
                   <Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} className="h-8" />
@@ -593,7 +593,7 @@ export function StatementImportDialog({
                   <Input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} className="h-8" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <Label className="text-[11px] text-muted-foreground">Opening balance</Label>
                   <Input type="number" value={openingInput} onChange={(e) => setOpeningInput(e.target.value)} className="h-8 font-tnum" />
@@ -815,7 +815,7 @@ export function RecordPaymentDialog({
               <div className="flex justify-between font-medium"><span>Remaining</span><span className="font-tnum">{remaining.toLocaleString()} {invoice.currency}</span></div>
             </div>
           )}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Payment date</Label>
               <input type="date" value={date} onChange={(e) => setDate(e.target.value)}

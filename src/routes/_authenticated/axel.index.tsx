@@ -27,7 +27,7 @@ function AxelIndex() {
   }, []);
 
   return (
-    <div className="h-full grid place-items-center text-center px-8">
+    <div className="h-full grid place-items-center text-center px-4 sm:px-8">
       <div>
         <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-chart-2 grid place-items-center mx-auto mb-4 shadow-[var(--shadow-glow)]">
           <Sparkles className="h-7 w-7 text-primary-foreground" />

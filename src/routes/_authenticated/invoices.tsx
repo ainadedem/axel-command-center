@@ -225,7 +225,7 @@ function Body() {
   ];
 
   return (
-    <div className="p-8 space-y-5">
+    <div className="p-4 sm:p-8 space-y-5">
       <div className="flex items-center justify-between gap-4">
         <CrudToolbar count={list.length} label="invoices" onCreate={openCreate} />
         <div className="flex items-center gap-4">
@@ -258,7 +258,7 @@ function Body() {
               <div className="px-5 py-2.5 border-b border-border">
                 <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Receivables aging — days past due</div>
               </div>
-              <div className="grid grid-cols-4 divide-x divide-border/40">
+              <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border/40">
                 {(["0-30", "31-60", "61-90", "90+"] as const).map((key, i) => {
                   const b = agingBuckets[key];
                   const tone = i === 0 ? "text-primary" : i === 1 ? "text-warning" : "text-destructive";
@@ -713,7 +713,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
 
         <div className="space-y-4 py-2">
           <FormErrorBanner show={showErrors} />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label><RequiredLabel>Number</RequiredLabel></Label>
               <Input value={number} onChange={(e) => { numberTouched.current = true; setNumber(e.target.value); }} className={invalidFieldClassName((showErrors && !number.trim()) || duplicateNumber)} aria-invalid={(showErrors && !number.trim()) || duplicateNumber} />
@@ -730,7 +730,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label><RequiredLabel>Company</RequiredLabel></Label>
               <Select value={companyId} onValueChange={(v) => { setCompanyId(v); setClientId(""); setPoId(""); }}>
@@ -876,11 +876,11 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
           </div>
 
           <BankAccountSelect company={companies.find((c) => c.id === companyId)} value={bankAccountId} onChange={setBankAccountId} />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Issue date</Label><Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
             <div><Label>Due date</Label><Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <Label>Amount</Label>
               <div className="relative">
@@ -1081,7 +1081,7 @@ function MarkPaidDialog({ open, onOpenChange, invoice }: { open: boolean; onOpen
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Payment date</Label>
               <input type="date" value={date} onChange={(e) => setDate(e.target.value)}

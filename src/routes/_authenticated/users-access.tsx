@@ -250,8 +250,8 @@ function UsersAccessPage() {
     return (
       <>
         <PageHeader title="Users & Access" description="Manage admins and per-company permissions." />
-        <div className="px-8 py-12">
-          <div className="max-w-md mx-auto text-center border border-border rounded-lg p-8 bg-card">
+        <div className="px-4 sm:px-8 py-12">
+          <div className="max-w-md mx-auto text-center border border-border rounded-lg p-4 sm:p-8 bg-card">
             <ShieldAlert className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
             <h2 className="font-display text-lg font-semibold">Restricted</h2>
             <p className="text-sm text-muted-foreground mt-1">
@@ -269,7 +269,7 @@ function UsersAccessPage() {
         title="Users & Access"
         description="Assign a platform role, then a per-company role for each user."
       />
-      <div className="px-8 py-6 space-y-4">
+      <div className="px-4 sm:px-8 py-6 space-y-4">
         <div className="flex items-center gap-3">
           <div className="relative max-w-sm flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -540,7 +540,7 @@ function AddUserDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="new-user-email">Email</Label>
               <Input
@@ -562,7 +562,7 @@ function AddUserDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>How to activate</Label>
               <Select value={mode} onValueChange={(v) => setMode(v as "invite" | "password")}>

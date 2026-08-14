@@ -99,14 +99,14 @@ function Body() {
   const onEdit = (o: Opportunity) => { setEditing(o); setOpen(true); };
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 sm:p-8 space-y-6">
       <CrudToolbar count={list.length} label="opportunities" onCreate={openCreate} />
 
       {list.length === 0 ? (
         <EmptyState label="opportunities" onCreate={openCreate} />
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
             <Stat label="Pipeline" value={fmtCompact(total, "MGA")} />
             <Stat label="Weighted" value={fmtCompact(weighted, "MGA")} />
             <Stat label="Closed" value={fmtCompact(won, "MGA")} />
@@ -596,7 +596,7 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
               Sourced from the <Link to="/sales-team" className="text-primary underline">Sales team</Link>.
             </p>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <Label>Stage</Label>
               <Select value={stage} onValueChange={(v) => setStage(v as Stage)}>

@@ -88,7 +88,7 @@ function Body() {
   const openCreate = () => { setEditing(null); setOpen(true); };
 
   return (
-    <div className="p-8 space-y-5">
+    <div className="p-4 sm:p-8 space-y-5">
       {q && (
         <div className="text-xs text-muted-foreground">
           Filtered by <span className="text-foreground font-medium">"{q}"</span> · {list.length} match{list.length === 1 ? "" : "es"}
@@ -513,7 +513,7 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
         <DialogHeader><DialogTitle>{editing ? "Edit transaction" : "New transaction"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
           <FormErrorBanner show={showErrors} />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label><RequiredLabel>Company</RequiredLabel></Label>
                 <Select value={companyId} onValueChange={(v) => { setCompanyId(v); setAccountId(""); }}>
@@ -529,7 +529,7 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Date</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
             <div>
               <Label>Type</Label>
@@ -575,7 +575,7 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
               />
             )}
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Amount</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
             <div>
               <Label>Currency</Label>

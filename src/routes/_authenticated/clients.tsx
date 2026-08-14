@@ -370,7 +370,7 @@ function ClientCard({
         </div>
       ) : salesOnly ? null : (
         <div className="mt-2 border-t border-border/50 pt-2">
-          <div className="grid grid-cols-3 gap-1.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
             <StatMini label="Revenue" value={fmtCompact(revenue, "MGA")} />
             <StatMini label="Outstanding" value={fmtCompact(outstanding, "MGA")} tone={outstanding > 0 ? "warn" : "default"} />
             <StatMini label="Margin" value={`${margin.toFixed(0)}%`} tone={margin >= 30 ? "good" : margin >= 0 ? "default" : "bad"} />
@@ -708,7 +708,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Status</Label>
               <div className="inline-flex rounded-md border border-border overflow-hidden text-xs mt-1">
@@ -731,15 +731,15 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
             <div className="mt-1.5"><CategoryMultiSelect value={categories} onChange={setCategories} /></div>
             <p className="text-[11px] text-muted-foreground mt-1.5">Tag this contact with one or more roles. Defaults to <span className="font-medium text-foreground">Client</span>.</p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Acquired on</Label><Input type="date" value={acquiredAt} onChange={(e) => setAcquiredAt(e.target.value)} /></div>
             <div />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Industry</Label><Input value={industry} onChange={(e) => setIndustry(e.target.value)} placeholder="Telecom, Finance, …" /></div>
             <div><Label>Website</Label><Input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://…" /></div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Billing email</Label>
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="billing@client.com" className={invalidFieldClassName(showErrors && missing.email)} aria-invalid={showErrors && missing.email} />
@@ -753,7 +753,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
           </div>
           <div className="rounded-lg border border-border bg-surface p-3 space-y-3">
             <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">Tax & legal identifiers</div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <Label>NIF</Label>
                 <Input value={nif} onChange={(e) => setNif(e.target.value)} placeholder="Numéro d'Identification Fiscale (optional)" />

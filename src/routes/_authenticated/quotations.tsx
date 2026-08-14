@@ -198,7 +198,7 @@ function Body() {
   };
 
   return (
-    <div className="p-8 space-y-5">
+    <div className="p-4 sm:p-8 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <CrudToolbar count={list.length} label="quotations" onCreate={openCreate} />
         <DataToolbar view={view} items={baseList} />
@@ -561,7 +561,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{editing ? "Edit quote" : "New quote"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Number</Label>
               <Input value={number} onChange={(e) => { numberTouched.current = true; setNumber(e.target.value); }} aria-invalid={duplicateNumber} />
@@ -581,7 +581,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Company</Label>
               <Select value={companyId} onValueChange={(v) => { setCompanyId(v); setClientId(""); }}>
@@ -597,7 +597,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Project</Label>
               <Select value={projectId || "__none__"} onValueChange={(v) => setProjectId(v === "__none__" ? "" : v)} disabled={!clientId}>
@@ -628,7 +628,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Issue date</Label><Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
             <div><Label>Valid until</Label><Input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} /></div>
           </div>

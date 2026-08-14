@@ -133,7 +133,7 @@ function TeamPage() {
   return (
     <AppShell>
       <PageHeader title="Team" description="Everyone in the organization - the source of truth for people." />
-      <div className="p-8 space-y-5">
+      <div className="p-4 sm:p-8 space-y-5">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           {isAdmin ? (
             <CrudToolbar count={total} label="people" onCreate={openCreate} />
@@ -151,7 +151,7 @@ function TeamPage() {
             </div>
           )
         ) : total === 0 ? (
-          <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-8 text-center text-sm text-muted-foreground">
+          <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4 sm:p-8 text-center text-sm text-muted-foreground">
             No people match the current filters.
           </div>
         ) : grouped ? (
@@ -251,12 +251,12 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
           <FormErrorBanner show={showErrors} />
           <div className="flex items-start gap-4">
             <AvatarUpload value={avatarUrl} onChange={setAvatarUrl} name={displayName} size={72} />
-            <div className="flex-1 grid grid-cols-2 gap-3">
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><Label><RequiredLabel>First name</RequiredLabel></Label><Input value={firstName} onChange={(e) => setFirstName(e.target.value)} className={invalidFieldClassName(showErrors && !displayName)} aria-invalid={showErrors && !displayName} /></div>
               <div><Label>Last name</Label><Input value={lastName} onChange={(e) => setLastName(e.target.value)} className={invalidFieldClassName(showErrors && !displayName)} aria-invalid={showErrors && !displayName} /></div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
             <div><Label>Phone</Label><Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+261 ..." /></div>
           </div>
@@ -277,7 +277,7 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Job title</Label><Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} /></div>
             <div><Label>Department</Label><Input value={department} onChange={(e) => setDepartment(e.target.value)} /></div>
           </div>

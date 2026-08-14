@@ -39,7 +39,7 @@ function SalesTeamPage() {
   return (
     <AppShell>
       <PageHeader title="Sales team" description="People who acquire or close deals - drawn from the Team database." />
-      <div className="p-8 space-y-5">
+      <div className="p-4 sm:p-8 space-y-5">
         <div className="flex items-center justify-between">
           <CrudToolbar count={sales.length} label="sales people" onCreate={() => { if (team.length > 0) { setEditing(null); setOpen(true); } }} />
           {team.length === 0 && (

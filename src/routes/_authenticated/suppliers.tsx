@@ -296,7 +296,7 @@ function SupplierCard({
           </div>
         )}
       </div>
-      <div className="mt-2 border-t border-border/50 pt-2 grid grid-cols-2 gap-2">
+      <div className="mt-2 border-t border-border/50 pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
           <div className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground font-semibold">Outstanding</div>
           <div className={`font-tnum font-semibold mt-0.5 text-xs ${bal > 0 ? "text-amber-600" : "text-foreground"}`}>{fmtAr(bal)}</div>
@@ -520,7 +520,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
             </div>
             <p className="text-[10px] text-muted-foreground mt-1">Click to link, double-click to set primary (★).</p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Kind</Label>
               <Select value={kind} onValueChange={(v) => setKind(v as Supplier["kind"])}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -531,12 +531,12 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>PCG account</Label><Input value={account} onChange={(e) => setAccount(e.target.value)} /></div>
             <div><Label>Payment terms (days)</Label><Input type="number" value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} placeholder="30" /></div>
           </div>
           <div className="pt-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Contact</div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Contact person</Label><Input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} /></div>
             <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
             <div><Label>Phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
@@ -545,7 +545,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
             <div><Label>Country</Label><Input value={country} onChange={(e) => setCountry(e.target.value)} /></div>
           </div>
           <div className="pt-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Legal IDs</div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>NIF</Label><Input value={nif} onChange={(e) => setNif(e.target.value)} /></div>
             <div><Label>STAT</Label><Input value={stat} onChange={(e) => setStat(e.target.value)} /></div>
             <div><Label>RCS</Label><Input value={rcs} onChange={(e) => setRcs(e.target.value)} /></div>

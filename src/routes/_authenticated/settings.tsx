@@ -65,7 +65,7 @@ function Body() {
   ] as const;
 
   return (
-    <div className="p-8 space-y-6 max-w-5xl">
+    <div className="p-4 sm:p-8 space-y-6 max-w-5xl">
       <section className="rounded-xl border border-border bg-[var(--gradient-surface)] p-6">
         <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Account</div>
         <div className="mt-4 flex flex-wrap items-start gap-6">

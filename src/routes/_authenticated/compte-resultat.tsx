@@ -133,8 +133,8 @@ function CompteResultatBody() {
           </div>
         }
       />
-      <div className="p-8 space-y-5">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="p-4 sm:p-8 space-y-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <Stat label="Produits" value={fmtMoney(cur.totProduits, co.baseCurrency)} prev={hasPrior ? prev.totProduits : undefined} tone={cur.totProduits > 0 ? "success" : undefined} co={co} />
           <Stat label="Charges" value={fmtMoney(cur.totCharges, co.baseCurrency)} prev={hasPrior ? prev.totCharges : undefined} tone="destructive" co={co} invertTrend />
           <Stat label="Résultat exploitation" value={fmtMoney(cur.resultatExpl, co.baseCurrency)} prev={hasPrior ? prev.resultatExpl : undefined} tone={cur.resultatExpl > 0 ? "success" : cur.resultatExpl < 0 ? "destructive" : undefined} co={co} />

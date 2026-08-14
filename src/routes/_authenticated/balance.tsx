@@ -86,7 +86,7 @@ function Body() {
   };
 
   return (
-    <div className="p-8 space-y-5">
+    <div className="p-4 sm:p-8 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <PeriodPicker value={period} onChange={setPeriod} />
         <button
@@ -97,7 +97,7 @@ function Body() {
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <StatCard label="Total débit" value={fmtMoney(totD, displayCo.baseCurrency)} />
         <StatCard label="Total crédit" value={fmtMoney(totC, displayCo.baseCurrency)} />
         <StatCard
