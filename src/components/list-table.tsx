@@ -137,18 +137,28 @@ export function ListActionsTh({ width = "0", className }: { width?: string; clas
 export function ListRowActions({
   children,
   className,
+  busy,
 }: {
   /** Kept for call-site compatibility; the actions no longer span the row. */
   colSpan?: number;
   children: ReactNode;
   className?: string;
+  /** A row action is running — keep the pill visible and block further clicks. */
+  busy?: boolean;
 }) {
   return (
     <td className={cn("row-actions-cell px-2 py-2 align-middle whitespace-nowrap", className)}>
-      <div className="row-actions-inner">{children}</div>
+      <div
+        className={cn("row-actions-inner", busy && "pointer-events-none")}
+        data-busy={busy ? "true" : undefined}
+        aria-busy={busy || undefined}
+      >
+        {children}
+      </div>
     </td>
   );
 }
+
 
 const toneClasses: Record<string, string> = {
   default: "",
