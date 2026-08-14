@@ -89,6 +89,7 @@ function computeTotals(subtotal: number, taxRate: number) {
 }
 
 function QuotationsPage() {
+  useFocusRow(Route.useSearch().focus);
   return (
     <AppShell>
       <PageHeader title="Quotations" description="Step 1 of the sales process — quote → PO → invoice." />
