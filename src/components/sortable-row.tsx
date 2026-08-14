@@ -66,7 +66,16 @@ export function useLineReorder(onReorder: (from: number, to: number) => void) {
     },
   });
 
-  return { rowProps, handleProps, dragIndex };
+  return { rowProps, handleProps, dragIndex, move, announcement };
+}
+
+/** Polite live region announcing keyboard/drag line moves. */
+export function ReorderLiveRegion({ text }: { text: string }) {
+  return (
+    <div aria-live="polite" role="status" className="sr-only">
+      {text}
+    </div>
+  );
 }
 
 export function DragHandle({
