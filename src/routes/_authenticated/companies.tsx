@@ -20,7 +20,7 @@ import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightS
 import { Checkbox } from "@/components/ui/checkbox";
 import { BankAccountsEditor } from "@/components/bank-accounts-editor";
 import { companyBankAccounts } from "@/lib/payment-details";
-import type { CompanyBankAccount, CompanyLogoCrop } from "@/lib/mock-data";
+import type { CompanyBankAccount, CompanyLogoCrop, StampPosition } from "@/lib/mock-data";
 import { Slider } from "@/components/ui/slider";
 import { LogoCropDialog } from "@/components/logo-crop-dialog";
 import { useFileUrl } from "@/hooks/use-file-url";
