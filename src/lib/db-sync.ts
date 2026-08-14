@@ -1405,11 +1405,42 @@ export async function upsertInvoiceEscalation(e: InvoiceEscalation): Promise<str
   if (error) { reportWriteError("upsertInvoiceEscalation", error.message); return null; }
   return data.id;
 }
+
+/**
+ * Persist an escalation step and report the outcome to the caller so the UI can
+ * keep the dialog open and show the real reason when the save is rejected.
+ */
+export async function saveInvoiceEscalation(
+  e: InvoiceEscalation,
+): Promise<{ id: string } | { error: string }> {
+  const row = escToDb(e);
+  if (!row) {
+    return {
+      error: !isUuid(e.invoiceId)
+        ? "This invoice only exists locally and cannot be tracked yet."
+        : "This company is not linked to the backend yet.",
+    };
+  }
+  if (!canWriteCompany(row.company_id)) {
+    return { error: "You do not have permission to record actions for this company." };
+  }
+  const { data, error } = await supabase.from("invoice_escalations").upsert(row).select("id").single();
+  if (error) {
+    return {
+      error: error.message.includes("row-level security")
+        ? "You do not have permission to record actions for this company."
+        : error.message,
+    };
+  }
+  return { id: data.id as string };
+}
+
 export async function deleteInvoiceEscalationDb(id: string) {
   if (!isUuid(id)) return;
   const { error } = await supabase.from("invoice_escalations").delete().eq("id", id);
   if (error) reportWriteError("deleteInvoiceEscalation", error.message);
 }
+
 
 /* ───────── REGISTER + HYDRATE + SEED for extras ───────── */
 export function registerExtraSync() {
