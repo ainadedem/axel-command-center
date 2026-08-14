@@ -677,12 +677,12 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
             </div>
 
             <Button size="sm" variant="outline" onClick={printPdf} disabled={exporting}>
-              {exporting ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Printer className="h-3.5 w-3.5 mr-1.5" />}
+              <Printer className="h-3.5 w-3.5 mr-1.5" />
               Print
             </Button>
-            <Button size="sm" onClick={printPdf} disabled={exporting}>
+            <Button size="sm" onClick={downloadPdf} disabled={exporting} aria-live="polite">
               {exporting ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Download className="h-3.5 w-3.5 mr-1.5" />}
-              {exporting ? "Preparing PDF…" : "Export PDF"}
+              {exporting ? EXPORT_LABEL[exportStage ?? "preparing"] : "Export PDF"}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)}><X className="h-4 w-4" /></Button>
           </div>
@@ -691,9 +691,10 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
           <div className="shrink-0 flex items-start gap-2 border-b border-destructive/30 bg-destructive/10 px-5 py-2 text-xs text-destructive">
             <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
             <span className="flex-1">{exportError}</span>
-            <button type="button" className="underline" onClick={printPdf}>Retry</button>
+            <button type="button" className="underline" onClick={downloadPdf}>Retry</button>
           </div>
         )}
+
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto overscroll-contain bg-neutral-200 dark:bg-neutral-900 p-6">
           <div className="relative mx-auto" style={{ width: SHEET_W * zoom, height: sheetH * zoom }}>
             <div
