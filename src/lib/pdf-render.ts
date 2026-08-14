@@ -167,7 +167,6 @@ export async function renderHtmlToPdfBlob(html: string, opts: RenderOptions = {}
       // A slice with no ink is padding at the end of the document — skip it
       // rather than emitting an empty trailing page.
       if (pageIndex > 0 && !hasInk(slice)) continue;
-      console.log("[pdfdbg]", { i, sliceTop, sliceHeight, canvasH: canvas.height, usableHeight, pxPerPage, cuts });
 
       const imgHeightMm = (sliceHeight / canvas.width) * mm.w;
       if (pageIndex > 0) pdf.addPage("a4", orientation);
