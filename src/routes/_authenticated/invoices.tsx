@@ -171,7 +171,14 @@ function Body() {
     [baseList, chipStatuses, chipPo],
   );
   const presets = useFilterPresets("invoices");
-  const groups = view.apply(chipFiltered);
+  // Aging bucket filter driven by the shared aging panel (click a tile / bar).
+  const [bucket, setBucket] = useState<AgingKey | null>(null);
+  const bucketFiltered = useMemo(
+    () => (bucket ? chipFiltered.filter((i) => i.status !== "paid" && inBucket(i.dueDate, bucket)) : chipFiltered),
+    [chipFiltered, bucket],
+  );
+  const groups = view.apply(bucketFiltered);
+
 
   const list = groups.flatMap((g) => g.items);
 
