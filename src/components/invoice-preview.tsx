@@ -1,5 +1,6 @@
 import { DocumentPreview, type DocumentData } from "./document-preview";
-import type { Invoice, Company, Client, Project, PurchaseOrder, Quote } from "@/lib/mock-data";
+import { invoicesStore, type Invoice, type Company, type Client, type Project, type PurchaseOrder, type Quote } from "@/lib/mock-data";
+import { useCompanySalesUsers } from "@/hooks/use-company-users";
 
 interface Props {
   open: boolean;
@@ -33,10 +34,19 @@ export function InvoicePreview({ open, onOpenChange, invoice, company, client, p
           po?.number ? { label: "PO", value: po.number } : null,
           quote?.number ? { label: "Quote", value: quote.number } : null,
         ].filter(Boolean) as Array<{ label: string; value: string }>,
-        signerId: invoice.updatedBy ?? invoice.createdBy,
+        signerId: invoice.signerId ?? invoice.updatedBy ?? invoice.createdBy,
+        stampX: invoice.stampX,
+        stampY: invoice.stampY,
+        stampScale: invoice.stampScale,
       }
     : null;
+  const { users } = useCompanySalesUsers(invoice?.companyId);
   return (
-    <DocumentPreview open={open} onOpenChange={onOpenChange} doc={doc} company={company} client={client} project={project} />
+    <DocumentPreview
+      open={open} onOpenChange={onOpenChange} doc={doc}
+      company={company} client={client} project={project}
+      signers={users.map((u) => ({ userId: u.userId, name: u.name }))}
+      onDocChange={(patch) => { if (invoice) invoicesStore.update(invoice.id, patch); }}
+    />
   );
 }

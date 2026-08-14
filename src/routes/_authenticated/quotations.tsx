@@ -413,6 +413,8 @@ function Body() {
         company={previewing ? companies.find((c) => c.id === previewing.companyId) : undefined}
         client={previewing ? clients.find((c) => c.id === previewing.clientId) : undefined}
         project={previewing?.projectId ? projects.find((p) => p.id === previewing.projectId) : undefined}
+        signers={previewSigners.map((u) => ({ userId: u.userId, name: u.name }))}
+        onDocChange={(patch) => { if (previewing) quotesStore.update(previewing.id, patch); }}
       />
     </div>
   );
