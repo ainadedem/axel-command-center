@@ -194,7 +194,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
       restoredRef.current = true;
     });
     return () => cancelAnimationFrame(id);
-  }, [open, doc?.kind, fitZoom]);
+  }, [open, doc?.kind, fitZoom, company?.showStamp]);
 
   // Keep fit mode in sync with the container size.
   useLayoutEffect(() => {
