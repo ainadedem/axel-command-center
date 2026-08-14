@@ -123,9 +123,12 @@ export interface Violation {
   reference: string;
   detail: string;
   companyId: string;
+  /** Client the flagged document belongs to, when known. */
+  clientId?: string;
   amount?: number;
   currency?: string;
 }
+
 
 export interface ComplianceInput {
   invoices: Invoice[];
