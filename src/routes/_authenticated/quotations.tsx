@@ -390,6 +390,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const [subject, setSubject] = useState("");
   const [bankAccountId, setBankAccountId] = useState("");
   const [taxRate, setTaxRate] = useState<number>(0);
+  const [assignedTo, setAssignedTo] = useState<string[]>([]);
 
   useEffect(() => {
     if (!open) return;
