@@ -30,6 +30,7 @@ function Body() {
   const { user, profile, roles, signOut, refresh } = useAuth();
   const companies = useCompanies();
   const [avatar, setAvatar] = useState<string | undefined>(profile?.avatar_url ?? undefined);
+  const [signature, setSignature] = useState<string | undefined>(profile?.signature_url ?? undefined);
   const [name, setName] = useState(profile?.display_name ?? "");
   const [saving, setSaving] = useState(false);
   const hydrated = useRef(false);
@@ -39,17 +40,21 @@ function Body() {
     if (hydrated.current || !profile) return;
     hydrated.current = true;
     setAvatar(profile.avatar_url ?? undefined);
+    setSignature(profile.signature_url ?? undefined);
     setName(profile.display_name ?? "");
   }, [profile]);
 
-  const dirty = (avatar ?? null) !== (profile?.avatar_url ?? null) || name.trim() !== (profile?.display_name ?? "");
+  const dirty =
+    (avatar ?? null) !== (profile?.avatar_url ?? null) ||
+    (signature ?? null) !== (profile?.signature_url ?? null) ||
+    name.trim() !== (profile?.display_name ?? "");
 
   const saveProfile = async () => {
     if (!user) return;
     setSaving(true);
     const { error } = await supabase
       .from("profiles")
-      .update({ display_name: name.trim() || null, avatar_url: avatar ?? null })
+      .update({ display_name: name.trim() || null, avatar_url: avatar ?? null, signature_url: signature ?? null })
       .eq("user_id", user.id);
     setSaving(false);
     if (error) { toast.error(`Could not save your profile: ${error.message}`); return; }
@@ -81,6 +86,22 @@ function Body() {
             />
             <span className="text-[10px] text-muted-foreground">Profile picture</span>
 
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <AvatarUpload
+              value={signature}
+              onChange={setSignature}
+              name="Signature"
+              size={84}
+              square
+              folder="signatures"
+            />
+            <span className="text-[10px] text-muted-foreground">Signature</span>
+            {signature ? (
+              <button type="button" onClick={() => setSignature(undefined)} className="text-[10px] text-muted-foreground underline focus-ring">
+                Remove
+              </button>
+            ) : null}
           </div>
           <div className="flex-1 min-w-[240px] grid sm:grid-cols-2 gap-4">
             <div>

@@ -68,11 +68,25 @@ export interface Company {
   logoMaxWidth?: number;
   /** Crop metadata so the crop can be re-edited or reset. */
   logoCrop?: CompanyLogoCrop;
+
+  /** Official stamp image printed on invoices and quotations. */
+  stampUrl?: string;
+  /** Where the stamp prints on the document. */
+  stampPosition?: StampPosition;
+  /** Printed stamp width in px. */
+  stampWidth?: number;
+  /** Stamp opacity (0.2 – 1). */
+  stampOpacity?: number;
+  /** Print the stamp on documents. */
+  showStamp?: boolean;
   /** Default printed language for this company's invoices and quotes ("en" | "fr"). */
   defaultDocumentLanguage?: "en" | "fr";
   /** Demonstration workspace: sample data, removable in one click. */
   isDemo?: boolean;
 }
+
+/** Where the company stamp prints on invoices and quotations. */
+export type StampPosition = "bottom-right" | "bottom-left" | "center";
 
 /** Saved logo crop transform + reference to the original uploaded image. */
 export interface CompanyLogoCrop {

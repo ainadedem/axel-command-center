@@ -9,6 +9,7 @@ import { formatRib, resolveBankAccount } from "@/lib/payment-details";
 import { amountInFrench } from "@/lib/amount-words";
 import { renderRichText } from "@/lib/rich-text";
 import { useFileUrl } from "@/hooks/use-file-url";
+import { useSigner } from "@/hooks/use-signer";
 import { docLabels, docDateFormat, DOC_LANGUAGES, type DocLanguage } from "@/lib/doc-i18n";
 
 
@@ -47,6 +48,8 @@ export interface DocumentData {
   bankAccountId?: string;
   /** Printed language of the document ("en" | "fr"). */
   language?: DocLanguage;
+  /** User id whose signature is printed (last editor, else creator). */
+  signerId?: string;
 }
 
 interface Props {
@@ -79,6 +82,7 @@ type ZoomMode = "fit" | "actual" | "custom";
 type SavedView = {
   zoom: number; mode: ZoomMode; scrollTop: number; scrollLeft: number;
   colWidths?: ColWidths; density?: Density;
+  showStamp?: boolean; showSignature?: boolean;
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -126,6 +130,14 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
   const [showPayment, setShowPayment] = useState(company?.showPaymentDetails !== false);
   useEffect(() => { setShowPayment(company?.showPaymentDetails !== false); }, [company?.id, company?.showPaymentDetails]);
 
+  // Stamp / signature ------------------------------------------------------
+  const [showStamp, setShowStamp] = useState(company?.showStamp === true);
+  const [showSignature, setShowSignature] = useState(true);
+  useEffect(() => { setShowStamp(company?.showStamp === true); }, [company?.id, company?.showStamp]);
+
+  const signer = useSigner(doc?.signerId);
+  const stampUrl = useFileUrl(company?.stampUrl);
+  const signatureUrl = useFileUrl(signer.signatureRef);
 
   // Logos are stored as private storage refs (`storage:bucket/path`) — resolve
   // them to a signed URL before embedding into the document HTML.
@@ -172,6 +184,8 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     setZoom(saved?.mode === "fit" || !saved ? 1 : saved.zoom);
     setColWidths(saved?.colWidths ?? {});
     setDensity(saved?.density ?? "auto");
+    setShowStamp(saved?.showStamp ?? company?.showStamp === true);
+    setShowSignature(saved?.showSignature ?? true);
 
     const id = requestAnimationFrame(() => {
       const el = scrollRef.current;
@@ -180,7 +194,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
       restoredRef.current = true;
     });
     return () => cancelAnimationFrame(id);
-  }, [open, doc?.kind, fitZoom]);
+  }, [open, doc?.kind, fitZoom, company?.showStamp]);
 
   // Keep fit mode in sync with the container size.
   useLayoutEffect(() => {
@@ -199,11 +213,11 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     const persist = () => saveView(kind, {
       zoom: zoomRef.current, mode,
       scrollTop: el?.scrollTop ?? 0, scrollLeft: el?.scrollLeft ?? 0,
-      colWidths, density,
+      colWidths, density, showStamp, showSignature,
     });
     const t = setInterval(persist, 1000);
     return () => { clearInterval(t); persist(); };
-  }, [open, doc?.kind, mode, zoom, colWidths, density]);
+  }, [open, doc?.kind, mode, zoom, colWidths, density, showStamp, showSignature]);
 
 
   const applyZoom = useCallback((next: number, anchor?: { x: number; y: number }) => {
@@ -248,8 +262,8 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   const html = useMemo(() => {
     if (!doc) return "";
-    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale });
-  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale]);
+    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName: signer.name });
+  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signer.name]);
 
   // Reset the auto-fit search whenever the document content changes.
   useEffect(() => {
@@ -361,7 +375,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
         setExporting(false);
         return;
       }
-      w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale }));
+      w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName: signer.name }));
       w.document.close();
       setTimeout(() => {
         try { w.focus(); w.print(); }
@@ -403,6 +417,18 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
               <Checkbox checked={showPayment} onCheckedChange={(v) => setShowPayment(!!v)} />
               Show payment details
             </label>
+            {company?.stampUrl ? (
+              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                <Checkbox checked={showStamp} onCheckedChange={(v) => setShowStamp(!!v)} />
+                Show stamp
+              </label>
+            ) : null}
+            {signer.signatureRef ? (
+              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                <Checkbox checked={showSignature} onCheckedChange={(v) => setShowSignature(!!v)} />
+                Show signature
+              </label>
+            ) : null}
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <span>Language</span>
               <div className="flex rounded-md border border-border overflow-hidden">
@@ -564,7 +590,40 @@ function headingFor(k: DocKind, lang?: DocLanguage) {
   return t.invoice;
 }
 
-function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale }: DocumentHtmlArgs) {
+/** Signature (per user) + company stamp block printed above the footer. */
+function signBlockHtml({
+  company, showStamp, stampUrl, showSignature, signatureUrl, signerName, lang,
+}: {
+  company?: Company; showStamp?: boolean; stampUrl?: string;
+  showSignature?: boolean; signatureUrl?: string; signerName?: string; lang: DocLanguage;
+}) {
+  const stampOn = (showStamp ?? company?.showStamp === true) && !!stampUrl;
+  const signOn = showSignature !== false && (!!signatureUrl || !!signerName);
+  if (!stampOn && !signOn) return "";
+
+  const stampWidth = Math.round(company?.stampWidth ?? 140);
+  const opacity = Math.min(1, Math.max(0.1, company?.stampOpacity ?? 1));
+  const position = company?.stampPosition ?? "bottom-right";
+  const align = position === "bottom-left" ? "flex-start" : position === "center" ? "center" : "flex-end";
+
+  const stampImg = stampOn
+    ? `<img src="${esc(stampUrl)}" alt="" style="width:${stampWidth}px;max-width:45%;opacity:${opacity};object-fit:contain;" />`
+    : "";
+  const signBlock = signOn
+    ? `<div style="min-width:180px;text-align:${position === "bottom-left" ? "left" : "right"};">
+        ${signatureUrl ? `<img src="${esc(signatureUrl)}" alt="" style="height:52px;max-width:200px;object-fit:contain;" />` : `<div style="height:52px;"></div>`}
+        <div style="border-top:1px solid #cbd5e1;margin-top:4px;padding-top:4px;font-size:10px;color:#475569;">
+          ${esc(lang === "fr" ? "Signature" : "Signature")}${signerName ? ` — ${esc(signerName)}` : ""}
+        </div>
+      </div>`
+    : "";
+
+  const inner = position === "bottom-left" ? `${stampImg}${signBlock}` : `${signBlock}${stampImg}`;
+  return `<div class="signblock" style="margin-top:28px;display:flex;gap:24px;align-items:flex-end;justify-content:${align};">${inner}</div>`;
+}
+
+
+function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName }: DocumentHtmlArgs) {
   const unitVisible = showUnit !== false;
   const w = normalizeCols(cols, unitVisible);
   const s = clamp(scale ?? 1, 0.5, 1.4);
@@ -835,6 +894,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
 
       ${doc.notes ? `<div class="notes"><strong>${esc(t.notes)}</strong><div style="margin-top: 4px;">${esc(doc.notes)}</div></div>` : ""}
       ${paymentHtml}
+      ${signBlockHtml({ company, showStamp, stampUrl, showSignature, signatureUrl, signerName, lang: L })}
 
       <div class="footer">
         ${esc(doc.kind === "invoice"
@@ -867,6 +927,16 @@ export interface DocumentHtmlArgs {
   cols?: ColWidths;
   /** Density / auto-fit multiplier applied to font sizes and paddings. */
   scale?: number;
+  /** Print the company stamp (defaults to the company setting). */
+  showStamp?: boolean;
+  /** Resolved (signed) company stamp URL. */
+  stampUrl?: string;
+  /** Print the signature block of the document's signer. */
+  showSignature?: boolean;
+  /** Resolved (signed) signature image URL. */
+  signatureUrl?: string;
+  /** Display name printed under the signature. */
+  signerName?: string;
 }
 
 

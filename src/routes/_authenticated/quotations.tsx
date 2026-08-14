@@ -414,6 +414,7 @@ function quoteToDoc(q: Quote): DocumentData {
     taxRate,
     taxAmount: q.taxAmount ?? taxAmount,
     totalAmount: q.totalAmount ?? totalAmount,
+    signerId: q.updatedBy ?? q.createdBy,
   };
 }
 
