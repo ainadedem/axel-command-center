@@ -17,11 +17,11 @@ const buttonVariants = cva(
         outline:
           "border border-outline bg-transparent text-foreground shadow-none hover:bg-[var(--surface-container)] hover:text-foreground",
         secondary:
-          "bg-[var(--surface-container)] text-secondary-foreground shadow-none hover:bg-[var(--surface-container-high)]",
+          "bg-[var(--surface-container)] text-secondary-foreground shadow-none hover:bg-[var(--surface-container-high)] hover:text-foreground",
         tonal:
-          "bg-[var(--primary-container)] text-[var(--on-primary-container)] shadow-none hover:shadow-[var(--shadow-soft)] hover:brightness-[0.98]",
+          "bg-[var(--primary-container)] text-[var(--on-primary-container)] shadow-none hover:bg-[color-mix(in_oklab,var(--primary-container)_82%,var(--surface))] hover:shadow-[var(--shadow-soft)]",
         elevated:
-          "bg-surface text-primary shadow-[var(--shadow-elevated)] hover:brightness-[0.99] hover:shadow-[0_1px_3px_rgba(60,64,67,0.2),0_6px_16px_rgba(60,64,67,0.14)]",
+          "bg-surface text-primary shadow-[var(--shadow-elevated)] hover:bg-[var(--surface-container)] hover:shadow-[0_1px_3px_rgba(60,64,67,0.2),0_6px_16px_rgba(60,64,67,0.14)]",
         ghost: "text-foreground hover:bg-[var(--surface-container)]",
         link: "text-primary underline-offset-4 hover:underline",
       },

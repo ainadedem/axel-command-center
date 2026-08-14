@@ -127,7 +127,7 @@ function CompanySwitcher() {
           {scope.id === "group" ? "GR" : companies.find((c) => c.id === scope.companyId)?.shortName}
         </div>
         <div className="flex-1 text-left min-w-0">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Workspace</div>
+          <div className="text-[10px] uppercase tracking-wider text-foreground/60">Workspace</div>
           <div className="truncate font-medium">{label}</div>
         </div>
         <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -179,7 +179,7 @@ function SidebarSection({ section, pathname, onNavigate }: { section: NavSection
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger aria-label={`${section.label} section`} className="w-full focus-ring rounded-full flex items-center justify-between px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/80 hover:text-foreground transition cursor-pointer select-none group/section">
+      <CollapsibleTrigger aria-label={`${section.label} section`} className="w-full focus-ring rounded-full flex items-center justify-between px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-foreground/55 hover:text-foreground transition cursor-pointer select-none group/section">
         <span className="transition-transform duration-200 group-hover/section:translate-x-0.5">{section.label}</span>
         <ChevronDown
           aria-hidden="true"
@@ -202,15 +202,15 @@ function SidebarSection({ section, pathname, onNavigate }: { section: NavSection
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "group focus-ring flex items-center gap-3 pl-4 pr-4 py-2.5 rounded-full text-sm relative transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
-                  active
-                    ? "bg-[var(--primary-container)] text-[var(--on-primary-container)] font-medium"
-                    : "text-sidebar-foreground hover:text-foreground hover:bg-[var(--surface-container)]",
+                    active
+                      ? "bg-[var(--primary-container)] text-[var(--on-primary-container)] font-medium"
+                      : "text-foreground/80 hover:text-foreground hover:bg-[var(--surface-container)]",
                 )}
               >
                 <Icon
                   className={cn(
                     "h-[18px] w-[18px] transition-colors duration-150",
-                    active ? "text-[var(--on-primary-container)]" : "text-muted-foreground",
+                    active ? "text-[var(--on-primary-container)]" : "text-foreground/55",
                   )}
                   aria-hidden="true"
                 />
@@ -248,7 +248,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
     <>
       <div className="px-5 py-5 flex flex-col gap-1.5">
         <AxelWordmark title="AXEL Business Platform" className="h-7 w-auto self-start text-foreground" />
-        <span className="text-[11px] font-medium tracking-wide text-foreground/70">The Axiom Winford Group</span>
+        <span className="text-[11px] font-medium tracking-wide text-foreground/80">The Axiom Winford Group</span>
       </div>
       <div className="px-3 pb-3">
         <CompanySwitcher />
@@ -262,7 +262,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
         <Link
           to="/settings"
           onClick={onNavigate}
-          className="group focus-ring flex items-center gap-3 px-4 py-2.5 rounded-full text-sm text-sidebar-foreground hover:bg-[var(--surface-container)] hover:text-foreground transition-all duration-150"
+          className="group focus-ring flex items-center gap-3 px-4 py-2.5 rounded-full text-sm text-foreground/80 hover:bg-[var(--surface-container)] hover:text-foreground transition-all duration-150"
         >
           <Settings className="h-4 w-4 transition-transform duration-500 group-hover:rotate-90" /> Settings
         </Link>
