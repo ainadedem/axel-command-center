@@ -7,9 +7,9 @@
 /* AXEL — Premium Financial Control System */
 
 @theme inline {
-  --font-sans: "Roboto", -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Roboto", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: "Roboto Mono", ui-monospace, monospace;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: ui-monospace, "Roboto Mono", monospace;
 
 
   --radius-sm: calc(var(--radius) - 4px);
@@ -245,8 +245,8 @@
 
   h1, h2, h3, h4, .font-display {
     font-family: var(--font-display);
-    letter-spacing: 0;
-    font-weight: 500;
+    letter-spacing: -0.01em;
+    font-weight: 600;
   }
 
   .font-display {
