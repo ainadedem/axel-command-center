@@ -100,7 +100,7 @@ function Body() {
 
   return (
     <div className="p-4 sm:p-8 space-y-6">
-      <CrudToolbar count={list.length} label="opportunities" onCreate={openCreate} />
+      <CrudToolbar createLabel="New opportunity" count={list.length} label="opportunities" onCreate={openCreate} />
 
       {list.length === 0 ? (
         <EmptyState label="opportunities" onCreate={openCreate} />

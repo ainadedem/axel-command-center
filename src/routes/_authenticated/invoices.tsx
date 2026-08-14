@@ -227,7 +227,7 @@ function Body() {
   return (
     <div className="p-4 sm:p-8 space-y-5">
       <div className="flex items-center justify-between gap-4">
-        <CrudToolbar count={list.length} label="invoices" onCreate={openCreate} />
+        <CrudToolbar createLabel="New invoice" count={list.length} label="invoices" onCreate={openCreate} />
         <div className="flex items-center gap-4">
           <ReconcileButton checks={checks} />
           <button

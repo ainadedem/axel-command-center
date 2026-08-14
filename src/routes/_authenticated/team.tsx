@@ -136,7 +136,7 @@ function TeamPage() {
       <div className="p-4 sm:p-8 space-y-5">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           {isAdmin ? (
-            <CrudToolbar count={total} label="people" onCreate={openCreate} />
+            <CrudToolbar createLabel="New team member" count={total} label="people" onCreate={openCreate} />
           ) : (
             <div className="text-xs text-muted-foreground font-tnum">{total} people</div>
           )}

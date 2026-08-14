@@ -120,7 +120,7 @@ function Body() {
         <Kpi label="Due in 7 days" value={String(totals.dueSoon)} mono accent={totals.dueSoon > 0 ? "text-warning" : undefined} />
       </div>
 
-      <CrudToolbar count={list.length} label="schedules" onCreate={openCreate} />
+      <CrudToolbar createLabel="New schedule" count={list.length} label="schedules" onCreate={openCreate} />
 
       {list.length === 0 ? (
         <EmptyState label="recurring schedules" onCreate={openCreate} />

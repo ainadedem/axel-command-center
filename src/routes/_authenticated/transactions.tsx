@@ -220,7 +220,7 @@ function Body() {
             ];
             return checks;
           })()} />
-          <CrudToolbar count={list.length} label="transactions" onCreate={openCreate} />
+          <CrudToolbar createLabel="New transaction" count={list.length} label="transactions" onCreate={openCreate} />
         </div>
       </div>
 

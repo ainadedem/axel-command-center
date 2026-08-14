@@ -1,3 +1,4 @@
+import { useCreateAction } from "@/lib/create-action";
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -29,6 +30,8 @@ function AxelLayout() {
     await qc.invalidateQueries({ queryKey: ["axel-threads"] });
     navigate({ to: "/axel/$threadId", params: { threadId: t.id } });
   };
+
+  useCreateAction(onNew);
 
   const onDelete = async (id: string) => {
     await del({ data: { threadId: id } });

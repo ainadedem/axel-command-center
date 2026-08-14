@@ -130,7 +130,7 @@ function Body() {
             );
           })}
         </div>
-        <CrudToolbar count={filtered.length} label={tab === "bill" ? "bills" : tab === "adhoc" ? "expenses" : "entries"} onCreate={openCreate} />
+        <CrudToolbar createLabel="New expense" count={filtered.length} label={tab === "bill" ? "bills" : tab === "adhoc" ? "expenses" : "entries"} onCreate={openCreate} />
       </div>
 
       {filtered.length === 0 ? (
