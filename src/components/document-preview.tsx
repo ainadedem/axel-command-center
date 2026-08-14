@@ -11,6 +11,9 @@ import { renderRichText } from "@/lib/rich-text";
 import { useFileUrl } from "@/hooks/use-file-url";
 import { useSigner } from "@/hooks/use-signer";
 import { docLabels, docDateFormat, DOC_LANGUAGES, type DocLanguage } from "@/lib/doc-i18n";
+import { exportDocumentPdf, pdfFilename, type ExportStage } from "@/lib/pdf-export";
+import { describePlacement, logStampChange, logSignerChange, type DocType } from "@/lib/document-activity";
+
 
 
 import {
