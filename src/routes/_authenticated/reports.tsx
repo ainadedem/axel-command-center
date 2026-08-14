@@ -7,7 +7,7 @@ import { PeriodPicker, defaultPeriod, type Period } from "@/components/period-pi
 import { exportCsvRows } from "@/lib/export-csv";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import {
-  ChartFrame, ChartTooltip, CHART_SEMANTIC, chartGridProps, chartAxisProps, chartMargin, chartCursor,
+  ChartFrame, ChartTooltip, CHART_SEMANTIC, chartGridProps, chartAxisProps, chartMargin, chartCursor, chartBarProps,
 } from "@/components/charts";
 import { parseISO } from "date-fns";
 import { useState, useMemo } from "react";
@@ -141,9 +141,9 @@ function Body() {
               content={<ChartTooltip formatter={(v: number) => `${Number(v).toFixed(1)} M MGA`} />}
               cursor={chartCursor}
             />
-            <Bar dataKey="Revenus" radius={[8, 8, 0, 0]} fill={CHART_SEMANTIC.income} />
-            <Bar dataKey="Charges" radius={[8, 8, 0, 0]} fill={CHART_SEMANTIC.expense} />
-            <Bar dataKey="Résultat" radius={[8, 8, 0, 0]} fill={CHART_SEMANTIC.forecast} />
+            <Bar dataKey="Revenus" {...chartBarProps} fill={CHART_SEMANTIC.income} />
+            <Bar dataKey="Charges" {...chartBarProps} fill={CHART_SEMANTIC.expense} />
+            <Bar dataKey="Résultat" {...chartBarProps} fill={CHART_SEMANTIC.forecast} />
           </BarChart>
         </ResponsiveContainer>
       </ChartFrame>

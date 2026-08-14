@@ -56,7 +56,7 @@ import { StatusBadge, PoBadge } from "@/components/status-badge";
 import { useLineReorder, DragHandle, moveItem, ReorderLiveRegion } from "@/components/sortable-row";
 import { useFilterPresets } from "@/lib/filter-presets";
 import { FilterPresetBar } from "@/components/filter-presets";
-import { ChartFrame, CHART_SEMANTIC, chartAxisProps, chartGridProps, chartMargin, chartCursor, ChartTooltip } from "@/components/charts";
+import { ChartFrame, CHART_SEMANTIC, chartAxisProps, chartGridProps, chartMargin, chartCursor, chartBarProps, ChartTooltip } from "@/components/charts";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { StatusFilterBar, type PoState } from "@/components/status-filter-bar";
 import { TableExportMenu } from "@/components/table-export-menu";
@@ -556,7 +556,7 @@ function Body() {
                   <XAxis dataKey="bucket" {...chartAxisProps} />
                   <YAxis {...chartAxisProps} />
                   <Tooltip content={<ChartTooltip formatter={(v: number) => fmtAmount(v, "MGA")} />} cursor={chartCursor} />
-                  <Bar dataKey="amount" name="Open balance" radius={[8, 8, 0, 0]} fill={CHART_SEMANTIC.expense} />
+                  <Bar dataKey="amount" name="Open balance" {...chartBarProps} fill={CHART_SEMANTIC.expense} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartFrame>

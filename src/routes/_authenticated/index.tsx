@@ -13,7 +13,7 @@ import {
   BarChart, Bar,
 } from "recharts";
 import {
-  ChartFrame, ChartTooltip, CHART_SEMANTIC, chartGridProps, chartAxisProps, chartMargin, chartCursor,
+  ChartFrame, ChartTooltip, CHART_SEMANTIC, chartGridProps, chartAxisProps, chartMargin, chartCursor, chartBarProps, chartBarStackBaseProps,
 } from "@/components/charts";
 import { format, subDays, subMonths, startOfMonth, endOfMonth, startOfYear, parseISO } from "date-fns";
 import { useState, useMemo } from "react";
@@ -418,7 +418,7 @@ function DashboardBody() {
               <XAxis dataKey="name" {...chartAxisProps} />
               <YAxis {...chartAxisProps} />
               <Tooltip content={<ChartTooltip />} cursor={chartCursor} />
-              <Bar dataKey="profit" name="Net profit" radius={[8, 8, 0, 0]} fill={CHART_SEMANTIC.income} />
+              <Bar dataKey="profit" name="Net profit" {...chartBarProps} fill={CHART_SEMANTIC.income} />
             </BarChart>
           </ResponsiveContainer>
         </ChartFrame>
@@ -448,8 +448,8 @@ function DashboardBody() {
             <XAxis dataKey="date" {...chartAxisProps} />
             <YAxis {...chartAxisProps} />
             <Tooltip content={<ChartTooltip />} cursor={chartCursor} />
-            <Bar dataKey="closed" stackId="s" fill={CHART_SEMANTIC.income} name="Closed" />
-            <Bar dataKey="forecast" stackId="s" radius={[8, 8, 0, 0]} fill={CHART_SEMANTIC.forecast} fillOpacity={0.55} name="Forecast (weighted)" />
+            <Bar dataKey="closed" stackId="s" {...chartBarStackBaseProps} fill={CHART_SEMANTIC.income} name="Closed" />
+            <Bar dataKey="forecast" stackId="s" {...chartBarProps} fill={CHART_SEMANTIC.forecast} fillOpacity={0.55} name="Forecast (weighted)" />
           </BarChart>
         </ResponsiveContainer>
       </ChartFrame>
@@ -558,8 +558,8 @@ function DashboardBody() {
                   content={<ChartTooltip formatter={(v) => `${Number(v).toFixed(1)} M MGA`} />}
                   cursor={chartCursor}
                 />
-                <Bar dataKey="gross" radius={[8, 8, 0, 0]} fill={CHART_SEMANTIC.forecast} fillOpacity={0.3} name="Gross" />
-                <Bar dataKey="weighted" radius={[8, 8, 0, 0]} fill={CHART_SEMANTIC.primary} name="Weighted" />
+                <Bar dataKey="gross" {...chartBarProps} fill={CHART_SEMANTIC.forecast} fillOpacity={0.3} name="Gross" />
+                <Bar dataKey="weighted" {...chartBarProps} fill={CHART_SEMANTIC.primary} name="Weighted" />
               </BarChart>
             </ResponsiveContainer>
           </ChartFrame>
