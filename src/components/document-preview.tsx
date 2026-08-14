@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Download, Printer, X } from "lucide-react";
+import { Download, Printer, X, ZoomIn, ZoomOut, Maximize2, Loader2, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { formatRib, resolveBankAccount } from "@/lib/payment-details";
 import { amountInFrench } from "@/lib/amount-words";
 import { renderRichText } from "@/lib/rich-text";
 import { useFileUrl } from "@/hooks/use-file-url";
 import { docLabels, docDateFormat, DOC_LANGUAGES, type DocLanguage } from "@/lib/doc-i18n";
+
 
 import {
   fmt, type Company, type Client, type Project, type Currency, type QuoteLine,
