@@ -62,11 +62,41 @@ const SHEET_H = 297 * MM;
 const MIN_ZOOM = 0.35;
 const MAX_ZOOM = 2.5;
 const VIEW_KEY = "axel:doc-preview:view";
+const PAGE_PAD_MM = 22;
+const USABLE_H = (297 - PAGE_PAD_MM * 2) * MM;
+
+export type ColKey = "desc" | "qty" | "unit" | "rate" | "total";
+export type ColWidths = Partial<Record<ColKey, number>>;
+export type Density = "auto" | "compact" | "normal" | "spacious";
+
+const DEFAULT_COLS: Record<ColKey, number> = { desc: 46, qty: 8, unit: 10, rate: 18, total: 18 };
+const DENSITY_SCALE: Record<Exclude<Density, "auto">, number> = { compact: 0.85, normal: 1, spacious: 1.12 };
+const MIN_AUTO_SCALE = 0.62;
 
 type ZoomMode = "fit" | "actual" | "custom";
-type SavedView = { zoom: number; mode: ZoomMode; scrollTop: number; scrollLeft: number };
+type SavedView = {
+  zoom: number; mode: ZoomMode; scrollTop: number; scrollLeft: number;
+  colWidths?: ColWidths; density?: Density;
+};
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
+/** Visible column keys in print order. */
+function visibleCols(showUnit: boolean): ColKey[] {
+  return showUnit ? ["desc", "qty", "unit", "rate", "total"] : ["desc", "qty", "rate", "total"];
+}
+
+/** Normalise the stored widths to the currently visible columns, summing to 100%. */
+export function normalizeCols(widths: ColWidths | undefined, showUnit: boolean): Record<ColKey, number> {
+  const keys = visibleCols(showUnit);
+  const raw = keys.map((k) => Math.max(4, widths?.[k] ?? DEFAULT_COLS[k]));
+  const sum = raw.reduce((a, b) => a + b, 0) || 1;
+  const out = {} as Record<ColKey, number>;
+  keys.forEach((k, i) => { out[k] = (raw[i] / sum) * 100; });
+  return out;
+}
+
+
 
 function loadView(kind?: DocKind): SavedView | null {
   if (typeof window === "undefined" || !kind) return null;
@@ -105,6 +135,15 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     setLang(doc?.language ?? (company?.defaultDocumentLanguage as DocLanguage) ?? "en");
   }, [doc?.number, doc?.language, company?.id, company?.defaultDocumentLanguage]);
 
+  // ---- Column widths / density -------------------------------------------
+  const [colWidths, setColWidths] = useState<ColWidths>({});
+  const [density, setDensity] = useState<Density>("auto");
+  const [autoScale, setAutoScale] = useState(1);
+  const [pages, setPages] = useState(1);
+  const cols = useMemo(() => normalizeCols(colWidths, showUnit), [colWidths, showUnit]);
+  const scale = density === "auto" ? autoScale : DENSITY_SCALE[density];
+
+
   // ---- Zoom / fit ---------------------------------------------------------
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const sheetRef = useRef<HTMLDivElement | null>(null);
@@ -129,6 +168,9 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     const saved = loadView(doc?.kind);
     setMode(saved?.mode ?? "fit");
     setZoom(saved?.mode === "fit" || !saved ? 1 : saved.zoom);
+    setColWidths(saved?.colWidths ?? {});
+    setDensity(saved?.density ?? "auto");
+
     const id = requestAnimationFrame(() => {
       const el = scrollRef.current;
       if (!saved || saved.mode === "fit") setZoom(fitZoom());
@@ -155,10 +197,12 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     const persist = () => saveView(kind, {
       zoom: zoomRef.current, mode,
       scrollTop: el?.scrollTop ?? 0, scrollLeft: el?.scrollLeft ?? 0,
+      colWidths, density,
     });
     const t = setInterval(persist, 1000);
     return () => { clearInterval(t); persist(); };
-  }, [open, doc?.kind, mode, zoom]);
+  }, [open, doc?.kind, mode, zoom, colWidths, density]);
+
 
   const applyZoom = useCallback((next: number, anchor?: { x: number; y: number }) => {
     const el = scrollRef.current;
@@ -202,20 +246,99 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   const html = useMemo(() => {
     if (!doc) return "";
-    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang });
-  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang]);
+    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale });
+  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale]);
 
-  // Track the real (unscaled) sheet height so the scroll area sizes correctly
-  // for multi-page documents.
+  // Reset the auto-fit search whenever the document content changes.
+  useEffect(() => {
+    setAutoScale(1);
+  }, [doc?.number, showUnit, showPayment, showClientEmail, showStatus, lang, logoScale, colWidths, density, open]);
+
+  // Track the real (unscaled) sheet height, the page count, and step the
+  // auto-fit scale down until the document fits a single A4 page.
   useLayoutEffect(() => {
     const el = sheetRef.current;
     if (!el || !open) return;
-    const measure = () => setSheetH(Math.max(SHEET_H, el.offsetHeight));
-    measure();
-    const ro = new ResizeObserver(measure);
+    const measure = () => {
+      const h = el.scrollHeight;
+      setSheetH(Math.max(SHEET_H, el.offsetHeight));
+      const contentH = Math.max(0, h - PAGE_PAD_MM * 2 * MM);
+      const p = Math.max(1, Math.ceil((contentH - 2) / USABLE_H));
+      setPages(p);
+      if (density === "auto" && p > 1 && autoScale > MIN_AUTO_SCALE) {
+        setAutoScale((s) => Math.max(MIN_AUTO_SCALE, Math.round((s - 0.05) * 1000) / 1000));
+      }
+    };
+    const id = requestAnimationFrame(measure);
+    const ro = new ResizeObserver(() => measure());
     ro.observe(el);
-    return () => ro.disconnect();
-  }, [open, html]);
+    return () => { cancelAnimationFrame(id); ro.disconnect(); };
+  }, [open, html, density, autoScale]);
+
+  // ---- Column resizing (drag the header borders) --------------------------
+  const [handles, setHandles] = useState<Array<{ key: ColKey; x: number; top: number; height: number }>>([]);
+  const colsRef = useRef(cols);
+  colsRef.current = cols;
+
+  const measureHandles = useCallback(() => {
+    const sheet = sheetRef.current;
+    if (!sheet) { setHandles([]); return; }
+    const table = sheet.querySelector("table");
+    const ths = table?.querySelectorAll("thead th");
+    if (!table || !ths || ths.length < 2) { setHandles([]); return; }
+    const base = sheet.getBoundingClientRect();
+    const tRect = table.getBoundingClientRect();
+    const keys = visibleCols(showUnit);
+    const next: Array<{ key: ColKey; x: number; top: number; height: number }> = [];
+    ths.forEach((th, i) => {
+      if (i >= ths.length - 1) return; // no handle after the last column
+      const r = (th as HTMLElement).getBoundingClientRect();
+      next.push({
+        key: keys[i],
+        x: r.right - base.left,
+        top: tRect.top - base.top,
+        height: Math.max(24, tRect.height),
+      });
+    });
+    setHandles(next);
+  }, [showUnit]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const id = requestAnimationFrame(measureHandles);
+    return () => cancelAnimationFrame(id);
+  }, [open, html, zoom, measureHandles]);
+
+  const startColDrag = (key: ColKey) => (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const sheet = sheetRef.current;
+    const table = sheet?.querySelector("table") as HTMLElement | null;
+    if (!table) return;
+    const tableW = table.getBoundingClientRect().width || 1;
+    const startX = e.clientX;
+    const keys = visibleCols(showUnit);
+    const idx = keys.indexOf(key);
+    const nextKey = keys[idx + 1];
+    if (!nextKey) return;
+    const start = { ...colsRef.current };
+    const onMove = (ev: PointerEvent) => {
+      const deltaPct = ((ev.clientX - startX) / tableW) * 100;
+      const d = clamp(deltaPct, -(start[key] - 5), start[nextKey] - 5);
+      setColWidths({ ...start, [key]: start[key] + d, [nextKey]: start[nextKey] - d });
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
 
 
 
@@ -236,7 +359,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
         setExporting(false);
         return;
       }
-      w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang }));
+      w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale }));
       w.document.close();
       setTimeout(() => {
         try { w.focus(); w.print(); }
@@ -350,6 +473,31 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
               {mode === "custom" && <span className="px-2 py-0.5 text-muted-foreground">Custom</span>}
             </div>
 
+            {/* Density / fit to one page */}
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span>Layout</span>
+              <div className="flex rounded-md border border-border overflow-hidden text-[11px]">
+                {([["Fit 1 page", "auto"], ["Compact", "compact"], ["Normal", "normal"], ["Spacious", "spacious"]] as const).map(([label, v]) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setDensity(v)}
+                    className={`px-2 py-0.5 transition ${density === v ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <span className="tabular-nums">{pages} page{pages > 1 ? "s" : ""}</span>
+              <button
+                type="button"
+                onClick={() => setColWidths({})}
+                className="rounded-md border border-border px-2 py-0.5 text-[11px] hover:bg-muted transition"
+              >
+                Reset columns
+              </button>
+            </div>
+
             <Button size="sm" variant="outline" onClick={printPdf} disabled={exporting}>
               {exporting ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Printer className="h-3.5 w-3.5 mr-1.5" />}
               Print
@@ -369,7 +517,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
           </div>
         )}
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto overscroll-contain bg-neutral-200 dark:bg-neutral-900 p-6">
-          <div className="mx-auto" style={{ width: SHEET_W * zoom, height: sheetH * zoom }}>
+          <div className="relative mx-auto" style={{ width: SHEET_W * zoom, height: sheetH * zoom }}>
             <div
               ref={sheetRef}
               className="bg-white text-neutral-900 shadow-xl"
@@ -379,9 +527,22 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
               }}
               dangerouslySetInnerHTML={{ __html: html }}
             />
-
+            {/* Column resize handles, overlaid on the table header borders */}
+            {handles.map((h) => (
+              <div
+                key={h.key}
+                role="separator"
+                aria-label="Resize column"
+                onPointerDown={startColDrag(h.key)}
+                className="absolute z-10 w-2 -ml-1 cursor-col-resize group"
+                style={{ left: h.x, top: h.top, height: h.height }}
+              >
+                <div className="mx-auto h-full w-px bg-transparent group-hover:bg-primary transition-colors" />
+              </div>
+            ))}
           </div>
         </div>
+
       </DialogContent>
     </Dialog>
   );
@@ -401,8 +562,13 @@ function headingFor(k: DocKind, lang?: DocLanguage) {
   return t.invoice;
 }
 
-function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang }: DocumentHtmlArgs) {
+function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale }: DocumentHtmlArgs) {
   const unitVisible = showUnit !== false;
+  const w = normalizeCols(cols, unitVisible);
+  const s = clamp(scale ?? 1, 0.5, 1.4);
+  const px = (n: number) => `${Math.round(n * s * 100) / 100}px`;
+
+
 
   const L = (lang ?? doc.language ?? (company?.defaultDocumentLanguage as DocLanguage) ?? "en") as DocLanguage;
   const t = docLabels(L);
@@ -533,20 +699,21 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
 
   return `
     <style>
-      .doc { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: #0f172a; font-size: 12px; line-height: 1.5; }
-      .doc h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin: 0; color: ${accent}; }
-      .doc h2 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: #64748b; margin: 0 0 6px; font-weight: 600; }
+      .doc { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: #0f172a; font-size: ${px(12)}; line-height: 1.45; }
+      .doc h1 { font-size: ${px(28)}; font-weight: 800; letter-spacing: -0.02em; margin: 0; color: ${accent}; }
+      .doc h2 { font-size: ${px(10)}; text-transform: uppercase; letter-spacing: 0.12em; color: #64748b; margin: 0 0 6px; font-weight: 600; }
       .doc .row { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
-      .doc .meta { text-align: right; font-size: 11px; }
-      .doc .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: white; background: ${statusColors[doc.status] ?? "#475569"}; }
-      .doc .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 28px; }
+      .doc .meta { text-align: right; font-size: ${px(11)}; }
+      .doc .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: ${px(10)}; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: white; background: ${statusColors[doc.status] ?? "#475569"}; }
+      .doc .grid { display: grid; grid-template-columns: 1fr 1fr; gap: ${px(32)}; margin-top: ${px(28)}; }
       .doc .party div { margin-bottom: 2px; }
-      .doc .legal { margin-top: 6px; color: #64748b; font-size: 10px; }
-      .doc .taxmeta { margin-top: 8px; padding: 8px 10px; background: #f8fafc; border-left: 3px solid ${accent}; font-size: 10px; color: #475569; font-variant-numeric: tabular-nums; }
-      .doc table { width: 100%; border-collapse: collapse; margin-top: 32px; font-size: 11px; table-layout: fixed; }
-      .doc th { text-align: left; padding: 10px 8px; background: #f8fafc; border-bottom: 2px solid ${accent}; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; }
-      .doc td { padding: 12px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; overflow-wrap: anywhere; word-break: break-word; }
+      .doc .legal { margin-top: 6px; color: #64748b; font-size: ${px(10)}; }
+      .doc .taxmeta { margin-top: 8px; padding: 8px 10px; background: #f8fafc; border-left: 3px solid ${accent}; font-size: ${px(10)}; color: #475569; font-variant-numeric: tabular-nums; }
+      .doc table { width: 100%; border-collapse: collapse; margin-top: ${px(32)}; font-size: ${px(11)}; table-layout: fixed; }
+      .doc th { text-align: left; padding: ${px(10)} ${px(8)}; background: #f8fafc; border-bottom: 2px solid ${accent}; font-size: ${px(10)}; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; }
+      .doc td { padding: ${px(12)} ${px(8)}; border-bottom: 1px solid #e2e8f0; vertical-align: top; overflow-wrap: anywhere; word-break: break-word; }
       .doc .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
       .doc .sub { color: #64748b; font-size: 10px; margin-top: 3px; }
       .doc .rt { overflow-wrap: anywhere; }
       .doc .rt ul, .doc .rt ol { margin: 3px 0 0; padding-left: 16px; }
@@ -608,15 +775,23 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
       </div>
 
       <table>
+        <colgroup>
+          <col style="width: ${w.desc.toFixed(3)}%;" />
+          <col style="width: ${w.qty.toFixed(3)}%;" />
+          ${unitVisible ? `<col style="width: ${w.unit.toFixed(3)}%;" />` : ""}
+          <col style="width: ${w.rate.toFixed(3)}%;" />
+          <col style="width: ${w.total.toFixed(3)}%;" />
+        </colgroup>
         <thead>
           <tr>
             <th>${esc(t.description)}</th>
-            <th class="num" style="width: 70px;">${esc(t.quantity)}</th>
-            ${unitVisible ? `<th class="num" style="width: 60px;">${esc(t.unit)}</th>` : ""}
-            <th class="num" style="width: 120px;">${esc(t.unitPrice)}</th>
-            <th class="num" style="width: 130px;">${esc(t.lineTotal)}</th>
+            <th class="num">${esc(t.quantity)}</th>
+            ${unitVisible ? `<th class="num">${esc(t.unit)}</th>` : ""}
+            <th class="num">${esc(t.unitPrice)}</th>
+            <th class="num">${esc(t.lineTotal)}</th>
           </tr>
         </thead>
+
         <tbody>${linesHtml}</tbody>
       </table>
 
@@ -663,7 +838,12 @@ export interface DocumentHtmlArgs {
   logoScale?: number;
   /** Printed language; falls back to the document, then the company default, then English. */
   lang?: DocLanguage;
+  /** Table column widths in percent (normalised internally). */
+  cols?: ColWidths;
+  /** Density / auto-fit multiplier applied to font sizes and paddings. */
+  scale?: number;
 }
+
 
 export function buildPrintableDocument(args: DocumentHtmlArgs) {
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(args.doc.number)}</title>
