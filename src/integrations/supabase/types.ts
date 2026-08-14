@@ -773,6 +773,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           details: string | null
+          discount_pct: number | null
           id: string
           invoice_id: string
           level: string | null
@@ -787,6 +788,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           details?: string | null
+          discount_pct?: number | null
           id?: string
           invoice_id: string
           level?: string | null
@@ -801,6 +803,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           details?: string | null
+          discount_pct?: number | null
           id?: string
           invoice_id?: string
           level?: string | null
@@ -831,6 +834,7 @@ export type Database = {
           created_by: string | null
           currency: string
           dating_note: string | null
+          discount_pct: number | null
           due_date: string
           handover_by: string | null
           handover_proof_name: string | null
@@ -864,6 +868,7 @@ export type Database = {
           created_by?: string | null
           currency?: string
           dating_note?: string | null
+          discount_pct?: number | null
           due_date: string
           handover_by?: string | null
           handover_proof_name?: string | null
@@ -897,6 +902,7 @@ export type Database = {
           created_by?: string | null
           currency?: string
           dating_note?: string | null
+          discount_pct?: number | null
           due_date?: string
           handover_by?: string | null
           handover_proof_name?: string | null
@@ -1348,6 +1354,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           currency: string
+          discount_pct: number | null
           fx_base_currency: string | null
           fx_rate: number | null
           id: string
@@ -1380,6 +1387,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           currency?: string
+          discount_pct?: number | null
           fx_base_currency?: string | null
           fx_rate?: number | null
           id?: string
@@ -1412,6 +1420,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           currency?: string
+          discount_pct?: number | null
           fx_base_currency?: string | null
           fx_rate?: number | null
           id?: string
