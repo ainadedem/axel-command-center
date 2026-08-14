@@ -56,6 +56,37 @@ interface Props {
   project?: Project;
 }
 
+const MM = 96 / 25.4;
+const SHEET_W = 210 * MM;
+const SHEET_H = 297 * MM;
+const MIN_ZOOM = 0.35;
+const MAX_ZOOM = 2.5;
+const VIEW_KEY = "axel:doc-preview:view";
+
+type ZoomMode = "fit" | "actual" | "custom";
+type SavedView = { zoom: number; mode: ZoomMode; scrollTop: number; scrollLeft: number };
+
+const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
+function loadView(kind?: DocKind): SavedView | null {
+  if (typeof window === "undefined" || !kind) return null;
+  try {
+    const all = JSON.parse(localStorage.getItem(VIEW_KEY) ?? "{}") as Record<string, SavedView>;
+    const v = all[kind];
+    if (!v || typeof v.zoom !== "number") return null;
+    return { ...v, zoom: clamp(v.zoom, MIN_ZOOM, MAX_ZOOM) };
+  } catch { return null; }
+}
+
+function saveView(kind: DocKind, v: SavedView) {
+  if (typeof window === "undefined") return;
+  try {
+    const all = JSON.parse(localStorage.getItem(VIEW_KEY) ?? "{}") as Record<string, SavedView>;
+    all[kind] = v;
+    localStorage.setItem(VIEW_KEY, JSON.stringify(all));
+  } catch { /* storage unavailable — non-fatal */ }
+}
+
 export function DocumentPreview({ open, onOpenChange, doc, company, client, project }: Props) {
   const [showStatus, setShowStatus] = useState(true);
   const [showClientEmail, setShowClientEmail] = useState(true);
@@ -74,18 +105,136 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     setLang(doc?.language ?? (company?.defaultDocumentLanguage as DocLanguage) ?? "en");
   }, [doc?.number, doc?.language, company?.id, company?.defaultDocumentLanguage]);
 
+  // ---- Zoom / fit ---------------------------------------------------------
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [mode, setMode] = useState<ZoomMode>("fit");
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
+  const restoredRef = useRef(false);
+
+  const fitZoom = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return 1;
+    const pad = 48; // p-6 both sides
+    return clamp((el.clientWidth - pad) / SHEET_W, MIN_ZOOM, MAX_ZOOM);
+  }, []);
+
+  // Restore the saved view whenever the dialog opens.
+  useEffect(() => {
+    if (!open) { restoredRef.current = false; return; }
+    const saved = loadView(doc?.kind);
+    setMode(saved?.mode ?? "fit");
+    setZoom(saved?.mode === "fit" || !saved ? 1 : saved.zoom);
+    const id = requestAnimationFrame(() => {
+      const el = scrollRef.current;
+      if (!saved || saved.mode === "fit") setZoom(fitZoom());
+      if (el && saved) { el.scrollTop = saved.scrollTop ?? 0; el.scrollLeft = saved.scrollLeft ?? 0; }
+      restoredRef.current = true;
+    });
+    return () => cancelAnimationFrame(id);
+  }, [open, doc?.kind, fitZoom]);
+
+  // Keep fit mode in sync with the container size.
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !open) return;
+    const ro = new ResizeObserver(() => { if (mode === "fit") setZoom(fitZoom()); });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [open, mode, fitZoom]);
+
+  // Persist zoom + scroll position.
+  useEffect(() => {
+    if (!open || !doc?.kind || !restoredRef.current) return;
+    const el = scrollRef.current;
+    const kind = doc.kind;
+    const persist = () => saveView(kind, {
+      zoom: zoomRef.current, mode,
+      scrollTop: el?.scrollTop ?? 0, scrollLeft: el?.scrollLeft ?? 0,
+    });
+    const t = setInterval(persist, 1000);
+    return () => { clearInterval(t); persist(); };
+  }, [open, doc?.kind, mode, zoom]);
+
+  const applyZoom = useCallback((next: number, anchor?: { x: number; y: number }) => {
+    const el = scrollRef.current;
+    const clamped = clamp(next, MIN_ZOOM, MAX_ZOOM);
+    if (el) {
+      const k = clamped / zoomRef.current;
+      const px = (anchor?.x ?? el.clientWidth / 2) + el.scrollLeft;
+      const py = (anchor?.y ?? el.clientHeight / 2) + el.scrollTop;
+      requestAnimationFrame(() => {
+        el.scrollLeft = px * k - (anchor?.x ?? el.clientWidth / 2);
+        el.scrollTop = py * k - (anchor?.y ?? el.clientHeight / 2);
+      });
+    }
+    zoomRef.current = clamped;
+    setZoom(clamped);
+    setMode(Math.abs(clamped - 1) < 0.005 ? "actual" : "custom");
+  }, []);
+
+  const applyZoomRef = useRef(applyZoom);
+  applyZoomRef.current = applyZoom;
+
+  // Ctrl/Cmd + wheel (and trackpad pinch) zoom — needs a non-passive listener.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !open) return;
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
+      const rect = el.getBoundingClientRect();
+      applyZoomRef.current(zoomRef.current * Math.exp(-dy * 0.0015), {
+        x: e.clientX - rect.left, y: e.clientY - rect.top,
+      });
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [open]);
+
+  const setFit = () => { setMode("fit"); const z = fitZoom(); zoomRef.current = z; setZoom(z); };
+  const setActual = () => { setMode("actual"); zoomRef.current = 1; setZoom(1); };
+
   const html = useMemo(() => {
     if (!doc) return "";
     return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang });
   }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang]);
 
+  // ---- Export -------------------------------------------------------------
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
   const printPdf = () => {
-    if (!doc) return;
-    const w = window.open("", "_blank", "width=900,height=1100");
-    if (!w) return;
-    w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang }));
-    w.document.close();
-    setTimeout(() => { w.focus(); w.print(); }, 250);
+    if (!doc || exporting) return;
+    setExportError(null);
+    setExporting(true);
+    try {
+      const w = window.open("", "_blank", "width=900,height=1100");
+      if (!w) {
+        const msg = "Pop-ups are blocked — allow pop-ups for this site to export the PDF.";
+        setExportError(msg);
+        toast.error(msg);
+        setExporting(false);
+        return;
+      }
+      w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang }));
+      w.document.close();
+      setTimeout(() => {
+        try { w.focus(); w.print(); }
+        catch (e) {
+          const msg = `Could not open the print dialog: ${e instanceof Error ? e.message : String(e)}`;
+          setExportError(msg);
+          toast.error(msg);
+        } finally { setExporting(false); }
+      }, 250);
+    } catch (e) {
+      const msg = `PDF export failed: ${e instanceof Error ? e.message : String(e)}`;
+      setExportError(msg);
+      toast.error(msg);
+      setExporting(false);
+    }
   };
 
 
@@ -142,17 +291,77 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
                 ))}
               </div>
             </div>
-            <Button size="sm" variant="outline" onClick={printPdf}><Printer className="h-3.5 w-3.5 mr-1.5" />Print</Button>
-            <Button size="sm" onClick={printPdf}><Download className="h-3.5 w-3.5 mr-1.5" />Export PDF</Button>
+
+            {/* Zoom */}
+            <div className="flex items-center rounded-md border border-border overflow-hidden">
+              <button
+                type="button" aria-label="Zoom out"
+                onClick={() => applyZoom(zoom - 0.1)}
+                className="px-2 py-1 hover:bg-muted transition disabled:opacity-40"
+                disabled={zoom <= MIN_ZOOM + 0.001}
+              >
+                <ZoomOut className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button" onClick={setActual} title="Actual size (100%)"
+                className="px-2 py-0.5 text-[11px] tabular-nums hover:bg-muted transition min-w-[46px]"
+              >
+                {Math.round(zoom * 100)}%
+              </button>
+              <button
+                type="button" aria-label="Zoom in"
+                onClick={() => applyZoom(zoom + 0.1)}
+                className="px-2 py-1 hover:bg-muted transition disabled:opacity-40"
+                disabled={zoom >= MAX_ZOOM - 0.001}
+              >
+                <ZoomIn className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <div className="flex rounded-md border border-border overflow-hidden text-[11px]">
+              <button
+                type="button" onClick={setFit}
+                className={`px-2 py-0.5 transition ${mode === "fit" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+              >
+                <Maximize2 className="h-3 w-3 inline mr-1" />Fit
+              </button>
+              <button
+                type="button" onClick={setActual}
+                className={`px-2 py-0.5 transition ${mode === "actual" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+              >
+                100%
+              </button>
+              {mode === "custom" && <span className="px-2 py-0.5 text-muted-foreground">Custom</span>}
+            </div>
+
+            <Button size="sm" variant="outline" onClick={printPdf} disabled={exporting}>
+              {exporting ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Printer className="h-3.5 w-3.5 mr-1.5" />}
+              Print
+            </Button>
+            <Button size="sm" onClick={printPdf} disabled={exporting}>
+              {exporting ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Download className="h-3.5 w-3.5 mr-1.5" />}
+              {exporting ? "Preparing PDF…" : "Export PDF"}
+            </Button>
             <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)}><X className="h-4 w-4" /></Button>
           </div>
         </div>
-        <div className="flex-1 min-h-0 overflow-auto overscroll-contain bg-neutral-200 dark:bg-neutral-900 p-6">
-          <div
-            className="bg-white text-neutral-900 shadow-xl mx-auto"
-            style={{ width: "210mm", minHeight: "297mm", padding: "22mm" }}
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
+        {exportError && (
+          <div className="shrink-0 flex items-start gap-2 border-b border-destructive/30 bg-destructive/10 px-5 py-2 text-xs text-destructive">
+            <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            <span className="flex-1">{exportError}</span>
+            <button type="button" className="underline" onClick={printPdf}>Retry</button>
+          </div>
+        )}
+        <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto overscroll-contain bg-neutral-200 dark:bg-neutral-900 p-6">
+          <div className="mx-auto" style={{ width: SHEET_W * zoom, height: SHEET_H * zoom }}>
+            <div
+              className="bg-white text-neutral-900 shadow-xl"
+              style={{
+                width: "210mm", minHeight: "297mm", padding: "22mm",
+                transform: `scale(${zoom})`, transformOrigin: "top left",
+              }}
+              dangerouslySetInnerHTML={{ __html: html }}
+            />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
@@ -160,6 +369,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 }
 
 function titleFor(k?: DocKind) {
+
   if (k === "po") return "Purchase order";
   if (k === "quote") return "Quotation";
   return "Invoice";
