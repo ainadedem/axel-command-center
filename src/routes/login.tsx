@@ -28,9 +28,9 @@ export const Route = createFileRoute("/login")({
   },
   head: () => ({
     meta: [
-      { title: "Sign in — AXEL" },
+      { title: "Sign in — AXEL — The Axiom Winford Group" },
       { name: "description", content: "Sign in to AXEL, the premium multi-company, multi-currency ERP, CRM and accounting command center." },
-      { property: "og:title", content: "Sign in — AXEL" },
+      { property: "og:title", content: "Sign in — AXEL — The Axiom Winford Group" },
       { property: "og:description", content: "Sign in to AXEL, the premium multi-company, multi-currency ERP, CRM and accounting command center." },
       { property: "og:url", content: "https://axel-command-center.lovable.app/login" },
       { name: "robots", content: "noindex,follow" },

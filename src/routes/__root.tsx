@@ -60,10 +60,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "AXEL — ERP" },
+      { title: "AXEL — The Axiom Winford Group" },
       { name: "description", content: "Premium multi-company, multi-currency finance command center." },
-      { property: "og:title", content: "AXEL — ERP" },
-      { name: "twitter:title", content: "AXEL — ERP" },
+      { property: "og:title", content: "AXEL — The Axiom Winford Group" },
+      { name: "twitter:title", content: "AXEL — The Axiom Winford Group" },
       { property: "og:description", content: "Premium multi-company, multi-currency finance command center." },
       { name: "twitter:description", content: "Premium multi-company, multi-currency finance command center." },
       { property: "og:site_name", content: "AXEL" },
