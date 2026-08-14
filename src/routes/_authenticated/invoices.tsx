@@ -298,8 +298,8 @@ function Body() {
     },
   ];
 
-  const colCount = 1 + tp.count;
-  const tableMinWidth = 48 + tp.totalWidth;
+  const colCount = 2 + tp.count;
+  const tableMinWidth = 48 + 136 + tp.totalWidth;
 
   const renderCell = (key: string, inv: Invoice) => {
     const co = companies.find((c) => c.id === inv.companyId);

@@ -170,7 +170,7 @@ function Body() {
   const groups = view.apply(baseList);
   const list = groups.flatMap((g) => g.items);
   const cp = useColumnPrefs("quotations", QUOTE_COLUMNS);
-  const colCount = 1 + cp.count;
+  const colCount = 2 + cp.count;
 
 
   const isWritable = useCallback(

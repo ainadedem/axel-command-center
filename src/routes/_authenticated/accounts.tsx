@@ -147,7 +147,7 @@ function Body() {
               <tbody>
                 {groups.map((g) => (
                   <Fragment key={g.key}>
-                    {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={cp.count} />}
+                    {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={cp.count + 1} />}
                     {g.items.map((a) => {
                       const co = companies.find((c) => c.id === a.companyId);
                       const Icon = iconFor(a.type);

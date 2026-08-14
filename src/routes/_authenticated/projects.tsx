@@ -137,7 +137,7 @@ function Body() {
   const cp = useColumnPrefs("projects", PROJECT_COLUMNS);
   const hiddenForSales = salesOnly ? ["revenue", "cost", "profit", "margin", "invoiced", "collected", "spend", "netpl"] : [];
   // 1 chevron col + Project + Client + toggled columns
-  const colCount = 3 + PROJECT_COLUMNS.filter((c) => !hiddenForSales.includes(c.key) && cp.on(c.key)).length;
+  const colCount = 4 + PROJECT_COLUMNS.filter((c) => !hiddenForSales.includes(c.key) && cp.on(c.key)).length;
 
 
 
