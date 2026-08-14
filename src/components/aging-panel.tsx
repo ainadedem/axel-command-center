@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { X } from "lucide-react";
 
 import {
+  AGING_BUCKETS,
   AGING_TONE_DOT,
   AGING_TONE_TEXT,
   type AgingKey,
   type AgingResult,
 } from "@/lib/aging";
+import { AgingDrawer, type AgingDrawerItem } from "@/components/aging-drawer";
 import {
   CHART_SEMANTIC,
   ChartFrame,
@@ -31,6 +34,9 @@ const TONE_FILL: Record<string, string> = {
  * Shared aging block: past-due tiles + bar chart, with click-to-filter.
  * Used by Invoices, Receivables and Payables so the bucket definitions and
  * interactions stay identical everywhere.
+ *
+ * When `itemsInBucket` is supplied, clicking a tile or bar also opens a drawer
+ * listing the exact records behind that bucket, each jumping to its row.
  */
 export function AgingPanel({
   aging,
@@ -41,6 +47,8 @@ export function AgingPanel({
   title = "Aging",
   description,
   tilesTitle = "Aging — days past due",
+  itemsInBucket,
+  onJump,
 }: {
   aging: AgingResult;
   selected: AgingKey | null;
@@ -51,10 +59,21 @@ export function AgingPanel({
   title?: string;
   description?: string;
   tilesTitle?: string;
+  /** Records behind a bucket — enables the click-through drawer. */
+  itemsInBucket?: (key: AgingKey) => AgingDrawerItem[];
+  /** Called when a drawer row is clicked. */
+  onJump?: (item: AgingDrawerItem) => void;
 }) {
+  const [drawerKey, setDrawerKey] = useState<AgingKey | null>(null);
+
   if (!aging.hasData) return null;
 
-  const toggle = (key: AgingKey) => onSelect(selected === key ? null : key);
+  const openBucket = (key: AgingKey) => {
+    onSelect(key);
+    if (itemsInBucket) setDrawerKey(key);
+  };
+  const toggle = (key: AgingKey) => (selected === key && !itemsInBucket ? onSelect(null) : openBucket(key));
+
   const chartData = aging.rows.map((r) => ({ ...r })) as unknown as (Record<string, unknown> & typeof aging.rows[number])[];
 
   return (
