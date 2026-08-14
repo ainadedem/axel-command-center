@@ -184,6 +184,8 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     setZoom(saved?.mode === "fit" || !saved ? 1 : saved.zoom);
     setColWidths(saved?.colWidths ?? {});
     setDensity(saved?.density ?? "auto");
+    setShowStamp(saved?.showStamp ?? company?.showStamp === true);
+    setShowSignature(saved?.showSignature ?? true);
 
     const id = requestAnimationFrame(() => {
       const el = scrollRef.current;
