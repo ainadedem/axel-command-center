@@ -102,12 +102,17 @@ export async function renderHtmlToPdfBlob(html: string, opts: RenderOptions = {}
 
     // Canvas pixels that fit on one PDF page.
     const pxPerPage = Math.floor((page.h / page.w) * canvas.width);
-    const pageCount = Math.max(1, Math.ceil(canvas.height / pxPerPage));
+    const pxRatio = canvas.height / contentHeight; // canvas px per CSS px
+    const cuts = computeCuts(
+      canvas.height,
+      pxPerPage,
+      opts.avoidBreakSelector ? collectBoundaries(doc, opts.avoidBreakSelector, pxRatio) : [],
+    );
 
-    for (let i = 0; i < pageCount; i++) {
-      const sliceTop = i * pxPerPage;
-      const sliceHeight = Math.min(pxPerPage, canvas.height - sliceTop);
-      if (sliceHeight <= 0) break;
+    for (let i = 0; i < cuts.length; i++) {
+      const sliceTop = cuts[i]!;
+      const sliceHeight = (cuts[i + 1] ?? canvas.height) - sliceTop;
+      if (sliceHeight <= 0) continue;
 
       const slice = document.createElement("canvas");
       slice.width = canvas.width;
@@ -131,6 +136,7 @@ export async function renderHtmlToPdfBlob(html: string, opts: RenderOptions = {}
         "FAST",
       );
     }
+
 
     return pdf.output("blob");
   } finally {
