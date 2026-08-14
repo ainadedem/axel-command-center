@@ -26,7 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { EmptyState } from "@/components/crud-toolbar";
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
 import {
-  Pencil, Trash2, Wallet, AlertCircle, TrendingUp, ArrowUpRight, UserCheck, Sparkles,
+  Pencil, Trash2, Eye, Wallet, AlertCircle, TrendingUp, ArrowUpRight, UserCheck, Sparkles,
   LayoutGrid, List as ListIcon, Search, ArrowUpDown, ChevronDown, Plus,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -304,7 +304,8 @@ function ClientCard({
   onEdit: (cl: Client) => void;
   onPromote: (cl: Client) => void;
 }) {
-  const { isSalesOnly: salesOnly } = useEffectiveRole();
+  const { isSalesOnly: salesOnly, roleResolved } = useEffectiveRole();
+  const canEdit = !(roleResolved && salesOnly);
   const linkedIds = contactCompanyIds(cl);
   const co = companies.find((c) => c.id === cl.companyId);
   const cliProjects = projects.filter((p) => p.clientId === cl.id);
@@ -358,11 +359,11 @@ function ClientCard({
           </div>
         </div>
         <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-          {isLead && (
+          {isLead && canEdit && (
             <button onClick={() => onPromote(cl)} title="Promote to client" className="h-6 w-6 grid place-items-center rounded hover:bg-emerald-500/15 text-muted-foreground hover:text-emerald-700"><UserCheck className="h-3 w-3" /></button>
           )}
-          <button onClick={() => onEdit(cl)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
-          <button onClick={() => { if (confirm(`Delete ${cl.name}?`)) { clientsStore.remove(cl.id); void deleteClientDb(cl.id); } }} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+          <button onClick={() => onEdit(cl)} title={canEdit ? "Edit" : "View details"} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground">{canEdit ? <Pencil className="h-3 w-3" /> : <Eye className="h-3 w-3" />}</button>
+          {canEdit && <button onClick={() => { if (confirm(`Delete ${cl.name}?`)) { clientsStore.remove(cl.id); void deleteClientDb(cl.id); } }} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>}
         </div>
       </div>
 
@@ -403,7 +404,8 @@ function ClientListView({
   group: string;
   grouped: { key: string; label: string; items: Client[] }[];
 }) {
-  const { isSalesOnly: salesOnly } = useEffectiveRole();
+  const { isSalesOnly: salesOnly, roleResolved } = useEffectiveRole();
+  const canEdit = !(roleResolved && salesOnly);
   const renderRow = (cl: Client) => {
     const co = companies.find((c) => c.id === cl.companyId);
     const cliProjects = projects.filter((p) => p.clientId === cl.id);
@@ -460,11 +462,11 @@ function ClientListView({
         </div>
         <div className="col-span-3 sm:col-span-1 flex justify-end">
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-            {isLead && (
+            {isLead && canEdit && (
               <button onClick={() => onPromote(cl)} title="Promote" className="h-6 w-6 grid place-items-center rounded hover:bg-emerald-500/15 text-muted-foreground hover:text-emerald-700"><UserCheck className="h-3 w-3" /></button>
             )}
-            <button onClick={() => onEdit(cl)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
-            <button onClick={() => { if (confirm(`Delete ${cl.name}?`)) { clientsStore.remove(cl.id); void deleteClientDb(cl.id); } }} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+            <button onClick={() => onEdit(cl)} title={canEdit ? "Edit" : "View details"} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground">{canEdit ? <Pencil className="h-3 w-3" /> : <Eye className="h-3 w-3" />}</button>
+            {canEdit && <button onClick={() => { if (confirm(`Delete ${cl.name}?`)) { clientsStore.remove(cl.id); void deleteClientDb(cl.id); } }} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>}
           </div>
         </div>
       </div>
@@ -530,6 +532,9 @@ function KpiTile({ icon, label, value, sub, tint, ring }: { icon: React.ReactNod
 }
 
 function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Client | null }) {
+  const { isSalesOnly, roleResolved } = useEffectiveRole();
+  // Sales may create clients, but existing records are view-only for them.
+  const readOnly = !!editing && roleResolved && isSalesOnly;
   const { scope } = useCompany();
   const companies = useCompanies();
   const acqPeople = useSalesPeople("acquisition");
@@ -678,8 +683,8 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
-        <DialogHeader><DialogTitle>{editing ? "Edit client" : "New client"}</DialogTitle></DialogHeader>
-        <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-1">
+        <DialogHeader><DialogTitle>{editing ? (readOnly ? "Client details" : "Edit client") : "New client"}</DialogTitle></DialogHeader>
+        <fieldset disabled={readOnly} className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-1 disabled:opacity-100">
           <FormErrorBanner show={showErrors} />
           <div className="flex items-start gap-4">
             <AvatarUpload value={avatarUrl} onChange={setAvatarUrl} name={name} size={72} />
@@ -824,10 +829,10 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
               Another team member credited for bringing this client. Sourced from the <Link to="/team" className="text-primary underline">Team</Link>.
             </p>
           </div>
-        </div>
+        </fieldset>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>{editing ? "Save" : "Create"}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{readOnly ? "Close" : "Cancel"}</Button>
+          {!readOnly && <Button onClick={handleSubmit} disabled={isSubmitting}>{editing ? "Save" : "Create"}</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>
