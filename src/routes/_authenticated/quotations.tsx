@@ -15,7 +15,7 @@ import { inScope, useCompany } from "@/lib/company-context";
 import { useAuth } from "@/lib/auth-context";
 import { format, parseISO, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Fragment, useEffect, useMemo, useState, useRef } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { useOwnerNames } from "@/hooks/use-owner-names";
 import { logActivity, diffDocument } from "@/lib/document-activity";
