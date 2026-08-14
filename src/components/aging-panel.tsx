@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 const TONE_FILL: Record<string, string> = {
   neutral: "var(--chart-neutral)",
   primary: "var(--chart-1)",
-  warning: "var(--chart-4)",
+  warning: "var(--warning)",
   danger: CHART_SEMANTIC.expense,
 };
 
