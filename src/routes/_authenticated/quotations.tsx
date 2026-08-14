@@ -41,6 +41,8 @@ import html2pdf from "html2pdf.js";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
 import { useSingleFlightSubmit } from "@/components/form-ux";
+import { QuoteAssigneePicker, AssigneeStack } from "@/components/quote-assignee-picker";
+import { QuoteFollowupPanel, followUpTone, followUpToneClass } from "@/components/quote-followup-panel";
 
 export const Route = createFileRoute("/_authenticated/quotations")({ component: QuotationsPage });
 
