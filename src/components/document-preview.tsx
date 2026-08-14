@@ -983,7 +983,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
       .doc h2 { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-size: ${px(10)}; text-transform: uppercase; letter-spacing: 0.12em; color: #64748b; margin: 0 0 6px; font-weight: 600; }
       .doc .row { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
       .doc .meta { text-align: right; font-size: ${px(11)}; }
-      .doc .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: ${px(10)}; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: white; background: ${statusColors[doc.status] ?? "#475569"}; }
+      .doc .pill { display: inline-block; font-family: "Plus Jakarta Sans", "Inter", sans-serif; padding: 3px 10px; border-radius: 999px; font-size: ${px(10)}; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: white; background: ${statusColors[doc.status] ?? "#475569"}; }
       .doc .grid { display: grid; grid-template-columns: 1fr 1fr; gap: ${px(32)}; margin-top: ${px(28)}; }
       .doc .party div { margin-bottom: 2px; }
       .doc .legal { margin-top: 6px; color: #64748b; font-size: ${px(10)}; }
