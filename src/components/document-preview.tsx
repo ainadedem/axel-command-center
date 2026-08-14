@@ -524,8 +524,13 @@ function headingFor(k: DocKind, lang?: DocLanguage) {
   return t.invoice;
 }
 
-function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang }: DocumentHtmlArgs) {
+function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale }: DocumentHtmlArgs) {
   const unitVisible = showUnit !== false;
+  const w = normalizeCols(cols, unitVisible);
+  const s = clamp(scale ?? 1, 0.5, 1.4);
+  const px = (n: number) => `${Math.round(n * s * 100) / 100}px`;
+
+
 
   const L = (lang ?? doc.language ?? (company?.defaultDocumentLanguage as DocLanguage) ?? "en") as DocLanguage;
   const t = docLabels(L);
