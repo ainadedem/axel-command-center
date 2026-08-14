@@ -26,7 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { EmptyState } from "@/components/crud-toolbar";
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
 import {
-  Pencil, Trash2, Wallet, AlertCircle, TrendingUp, ArrowUpRight, UserCheck, Sparkles,
+  Pencil, Trash2, Eye, Wallet, AlertCircle, TrendingUp, ArrowUpRight, UserCheck, Sparkles,
   LayoutGrid, List as ListIcon, Search, ArrowUpDown, ChevronDown, Plus,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -304,7 +304,8 @@ function ClientCard({
   onEdit: (cl: Client) => void;
   onPromote: (cl: Client) => void;
 }) {
-  const { isSalesOnly: salesOnly } = useEffectiveRole();
+  const { isSalesOnly: salesOnly, roleResolved } = useEffectiveRole();
+  const canEdit = !(roleResolved && salesOnly);
   const linkedIds = contactCompanyIds(cl);
   const co = companies.find((c) => c.id === cl.companyId);
   const cliProjects = projects.filter((p) => p.clientId === cl.id);
@@ -403,7 +404,8 @@ function ClientListView({
   group: string;
   grouped: { key: string; label: string; items: Client[] }[];
 }) {
-  const { isSalesOnly: salesOnly } = useEffectiveRole();
+  const { isSalesOnly: salesOnly, roleResolved } = useEffectiveRole();
+  const canEdit = !(roleResolved && salesOnly);
   const renderRow = (cl: Client) => {
     const co = companies.find((c) => c.id === cl.companyId);
     const cliProjects = projects.filter((p) => p.clientId === cl.id);
