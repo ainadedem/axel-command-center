@@ -81,6 +81,7 @@ type ZoomMode = "fit" | "actual" | "custom";
 type SavedView = {
   zoom: number; mode: ZoomMode; scrollTop: number; scrollLeft: number;
   colWidths?: ColWidths; density?: Density;
+  showStamp?: boolean; showSignature?: boolean;
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
