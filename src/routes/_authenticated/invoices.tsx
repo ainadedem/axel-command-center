@@ -48,12 +48,16 @@ import { canWriteCompany, dbCompanyId } from "@/lib/db-sync";
 import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } from "@/components/bulk-select";
 import { refreshStampsAndSignatures } from "@/lib/stamp-refresh";
 import { BulkEditDocDialog } from "@/components/bulk-edit-doc-dialog";
-import { bulkUpdateDocuments, type BulkPatch } from "@/lib/bulk-edit";
+import { bulkUpdateDocuments, bulkSetFields, type BulkPatch } from "@/lib/bulk-edit";
 import { type ColumnDef } from "@/lib/column-prefs";
 import { useTablePrefs } from "@/lib/table-prefs";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 import { StatusBadge, PoBadge } from "@/components/status-badge";
-import { useLineReorder, DragHandle, moveItem } from "@/components/sortable-row";
+import { useLineReorder, DragHandle, moveItem, ReorderLiveRegion } from "@/components/sortable-row";
+import { useFilterPresets } from "@/lib/filter-presets";
+import { FilterPresetBar } from "@/components/filter-presets";
+import { ChartFrame, CHART_SEMANTIC, chartAxisProps, chartGridProps, chartMargin, chartCursor, ChartTooltip } from "@/components/charts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { StatusFilterBar, type PoState } from "@/components/status-filter-bar";
 import { TableExportMenu } from "@/components/table-export-menu";
 
@@ -162,6 +166,7 @@ function Body() {
       ),
     [baseList, chipStatuses, chipPo],
   );
+  const presets = useFilterPresets("invoices");
   const groups = view.apply(chipFiltered);
 
   const list = groups.flatMap((g) => g.items);
@@ -190,6 +195,26 @@ function Body() {
     toast.success(`Updated ${n} invoice${n !== 1 ? "s" : ""}`);
   };
 
+  const bulkStatus = async (
+    status: Invoice["status"],
+    verb: string,
+    extra?: (inv: Invoice) => Partial<Invoice>,
+  ) => {
+    const rows = selection.selectedRows;
+    const n = await bulkSetFields<Invoice>({
+      collection: invoicesStore,
+      docType: "invoice",
+      rows,
+      userId: authUser?.id,
+      label: `${verb} ${rows.length} invoice${rows.length !== 1 ? "s" : ""}`,
+      summary: `Bulk update: status → ${status}`,
+      patch: (inv) => (inv.status === status ? null : { status, ...(extra?.(inv) ?? {}) }),
+    });
+    selection.clear();
+    if (n === 0) toast.info("Nothing to update");
+    else toast.success(`${verb} ${n} invoice${n !== 1 ? "s" : ""}`);
+  };
+
   const active = list.filter((i) => i.status !== "cancelled");
   const totalOpen = active.filter((i) => i.status !== "paid").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
   const totalOverdue = active.filter((i) => i.status === "overdue").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
@@ -207,6 +232,24 @@ function Body() {
     agingBuckets[key].amount += balance;
   }
   const hasAging = Object.values(agingBuckets).some((b) => b.count > 0);
+  const currentBucket = active.reduce(
+    (acc, inv) => {
+      if (inv.status === "paid") return acc;
+      if (differenceInDays(_today, parseISO(inv.dueDate)) > 0) return acc;
+      acc.count++;
+      acc.amount += toMGA(inv.amount - inv.paid, inv.currency);
+      return acc;
+    },
+    { count: 0, amount: 0 },
+  );
+  const agingChartData = [
+    { bucket: "Current", amount: currentBucket.amount, count: currentBucket.count },
+    { bucket: "1-30 d", amount: agingBuckets["0-30"].amount, count: agingBuckets["0-30"].count },
+    { bucket: "31-60 d", amount: agingBuckets["31-60"].amount, count: agingBuckets["31-60"].count },
+    { bucket: "61-90 d", amount: agingBuckets["61-90"].amount, count: agingBuckets["61-90"].count },
+    { bucket: "90+ d", amount: agingBuckets["90+"].amount, count: agingBuckets["90+"].count },
+  ];
+  const hasAgingChart = agingChartData.some((d) => d.count > 0);
   const openCreate = () => { setEditing(null); setOpen(true); };
 
 
@@ -439,6 +482,13 @@ function Body() {
 
       <DataToolbar view={view} items={baseList} />
 
+      <FilterPresetBar
+        api={presets}
+        statuses={chipStatuses}
+        po={chipPo}
+        onApply={(p) => { setChipStatuses(p.statuses); setChipPo(p.po as PoState[]); }}
+      />
+
       <StatusFilterBar
         statuses={INVOICE_STATUSES}
         selected={chipStatuses}
@@ -490,7 +540,7 @@ function Body() {
             </div>
           )}
 
-          <ListTableShell scrollX>
+          <ListTableShell scrollX announcement={tp.announcement}>
             <ListTable style={{ minWidth: tableMinWidth }}>
               <thead>
                 <ListHeadRow>
@@ -503,6 +553,7 @@ function Body() {
                       align={ALIGN[c.key] ?? "left"}
                       onResizeStart={tp.startResize(c.key)}
                       dragProps={tp.dragProps(c.key)}
+                      keyProps={tp.keyboardProps(c.key)}
                     >
                       {c.label}
                     </ListTh>
@@ -556,6 +607,23 @@ function Body() {
       <BulkActionBar count={selection.count} noun="invoice" onClear={selection.clear}>
         <Button size="sm" className="h-7 px-3 text-xs" onClick={() => setBulkOpen(true)}>
           Edit client / project
+        </Button>
+        <Button
+          size="sm" variant="outline" className="h-7 px-3 text-xs"
+          onClick={() => bulkStatus("paid", "Marked paid", (inv) => ({ paid: inv.amount, paidDate: inv.paidDate ?? new Date().toISOString().slice(0, 10) }))}
+        >
+          Mark paid
+        </Button>
+        <Button size="sm" variant="outline" className="h-7 px-3 text-xs" onClick={() => bulkStatus("sent", "Marked sent")}>
+          Mark sent
+        </Button>
+        <Button
+          size="sm" variant="outline" className="h-7 px-3 text-xs text-destructive"
+          onClick={() => {
+            if (confirm(`Cancel ${selection.count} invoice${selection.count !== 1 ? "s" : ""}?`)) void bulkStatus("cancelled", "Cancelled");
+          }}
+        >
+          Cancel
         </Button>
         <Button
           size="sm" variant="outline" className="h-7 px-3 text-xs"
@@ -1018,7 +1086,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                       return (
                       <tr key={l.id} {...rp} className={cn("border-t border-border/40 align-top", rp.className)}>
                         <td className="px-1 py-1.5">
-                          <DragHandle index={li} total={lines.length} handleProps={lineDnd.handleProps(li)} onMove={moveLine} />
+                          <DragHandle index={li} total={lines.length} handleProps={lineDnd.handleProps(li)} onMove={(f, t) => lineDnd.move(f, t, lines.length)} />
                         </td>
 
                         <td className="px-2 py-1.5">
