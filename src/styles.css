@@ -324,25 +324,43 @@
 /* ---------- Motion utilities ---------- */
 
 @utility hover-lift {
-  transition: transform 150ms ease-in-out,
-              box-shadow 150ms ease-in-out,
-              background-color 150ms ease-in-out,
-              border-color 150ms ease-in-out;
+  transition: transform 150ms var(--ease-out-soft),
+              box-shadow 150ms var(--ease-out-soft),
+              background-color 150ms var(--ease-out-soft);
   &:hover, &:focus-visible {
     transform: translateY(-1px);
     box-shadow: var(--shadow-elevated);
-    border-color: color-mix(in oklab, var(--primary) 22%, var(--border));
   }
 }
 
 /* Row / card surface hover used by lists and tables */
 @utility hover-row {
-  transition: background-color 150ms ease-in-out, border-color 150ms ease-in-out;
+  transition: background-color 150ms var(--ease-out-soft);
   cursor: pointer;
   &:hover, &:focus-within {
-    background-color: var(--secondary);
-    border-color: color-mix(in oklab, var(--foreground) 8%, var(--border));
+    background-color: var(--surface-container);
   }
+}
+
+/* Material 3 filled search pill */
+@utility m3-search {
+  border-radius: 28px;
+  background-color: var(--surface-container);
+  border: 0;
+  box-shadow: none;
+  transition: background-color 150ms var(--ease-out-soft), box-shadow 150ms var(--ease-out-soft);
+  &:hover { background-color: var(--surface-container-high); }
+  &:focus-within, &:focus-visible {
+    background-color: var(--surface);
+    box-shadow: var(--shadow-elevated);
+  }
+}
+
+/* Active nav / chip pill */
+@utility m3-pill-active {
+  background-color: var(--primary-container);
+  color: var(--on-primary-container);
+  border-radius: 999px;
 }
 
 @utility press-scale {
