@@ -31,6 +31,9 @@ type Labels = {
   unitPrice: string;
   lineTotal: string;
   subtotal: string;
+  grossSubtotal: string;
+  lineDiscounts: string;
+  discount: string;
   vat: string;
   total: string;
   paidToDate: string;
@@ -67,6 +70,9 @@ const en: Labels = {
   unitPrice: "Unit price",
   lineTotal: "Total",
   subtotal: "Subtotal",
+  grossSubtotal: "Gross subtotal",
+  lineDiscounts: "Line discounts",
+  discount: "Discount",
   vat: "VAT",
   total: "Total",
   paidToDate: "Paid to date",
@@ -103,6 +109,9 @@ const fr: Labels = {
   unitPrice: "Prix unitaire HT",
   lineTotal: "Total HT",
   subtotal: "Total HT",
+  grossSubtotal: "Total brut",
+  lineDiscounts: "Remises lignes",
+  discount: "Remise",
   vat: "TVA",
   total: "Total TTC",
   paidToDate: "Déjà réglé",

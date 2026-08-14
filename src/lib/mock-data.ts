@@ -267,6 +267,8 @@ export interface Invoice {
   cancellationReason?: string;
   /** Line items inherited from the source quote / PO for information consistency. */
   lines?: QuoteLine[];
+  /** Document-wide sales discount, in percent (0–100), applied before tax. */
+  discountPct?: number;
   /** Short object / title printed on the document. */
   subject?: string;
   /** Which company bank account prints in the payment details block. */
@@ -310,6 +312,8 @@ export interface QuoteLine {
   quantity: number;
   /** Per-unit price in the quote's currency. */
   rate: number;
+  /** Sales discount on this line, in percent (0–100). */
+  discountPct?: number;
   /** Auth user id of whoever added this line. */
   createdBy?: string;
   /** ISO timestamp when this line was added. */
@@ -338,6 +342,8 @@ export interface Quote {
   mode?: QuoteMode;
   /** Line items — priced from rate card or free-form depending on mode. */
   lines?: QuoteLine[];
+  /** Document-wide sales discount, in percent (0–100), applied before tax. */
+  discountPct?: number;
   /** Tax rate as a percentage (e.g. 20 = 20%). */
   taxRate?: number;
   /** Computed tax amount in `currency`. */

@@ -11,6 +11,7 @@ import {
 import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
 import { newId } from "@/lib/data-store";
 import { defaultTaxRate } from "@/lib/vat";
+import { docTotals, lineNet } from "@/lib/discounts";
 import { inScope, useCompany } from "@/lib/company-context";
 import { useAuth } from "@/lib/auth-context";
 import { format, parseISO, addDays } from "date-fns";
@@ -409,6 +410,7 @@ function quoteToDoc(q: Quote): DocumentData {
     subject: q.subject,
     bankAccountId: q.bankAccountId,
     notes: q.notes,
+    discountPct: q.discountPct,
     taxRate,
     taxAmount: q.taxAmount ?? taxAmount,
     totalAmount: q.totalAmount ?? totalAmount,
@@ -437,6 +439,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const [subject, setSubject] = useState("");
   const [bankAccountId, setBankAccountId] = useState("");
   const [taxRate, setTaxRate] = useState<number>(0);
+  const [discountPct, setDiscountPct] = useState<number>(0);
   const [assignedTo, setAssignedTo] = useState<string[]>([]);
 
   useEffect(() => {
@@ -453,6 +456,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setSubject(editing.subject ?? "");
       setBankAccountId(editing.bankAccountId ?? "");
       setTaxRate(editing.taxRate ?? 0);
+      setDiscountPct(editing.discountPct ?? 0);
       setAssignedTo(editing.assignedTo ?? []);
     } else {
       const cid = companies[0]?.id ?? "";
@@ -461,7 +465,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
       setMode("rate-card");
       setAssignedTo([]);
-      setLines([]); setNotes(""); setSubject(""); setBankAccountId(""); setTaxRate(defaultTaxRate(companies[0], today));
+      setLines([]); setNotes(""); setSubject(""); setBankAccountId(""); setTaxRate(defaultTaxRate(companies[0], today)); setDiscountPct(0);
     }
     // Only re-initialise when the dialog opens (or switches record) — background
     // data refreshes must never overwrite in-progress edits.
@@ -541,8 +545,12 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     onChange: setProjectId,
   });
 
-  const subtotal = useMemo(() => lines.reduce((s, l) => s + (Number(l.quantity) || 0) * (Number(l.rate) || 0), 0), [lines]);
-  const { taxAmount, totalAmount } = useMemo(() => computeTotals(Math.round(subtotal), Number(taxRate) || 0), [subtotal, taxRate]);
+  const totals = useMemo(
+    () => docTotals(lines, Number(discountPct) || 0, Number(taxRate) || 0),
+    [lines, discountPct, taxRate],
+  );
+  const subtotal = totals.subtotal;
+  const { taxAmount, totalAmount } = { taxAmount: totals.taxAmount, totalAmount: totals.total };
 
   const addLine = () => {
     // Row-level ownership: remember who added each line and when.
@@ -601,9 +609,10 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
 
   const submit = () => {
     if (!number.trim() || !companyId || !clientId || duplicateNumber) return;
-    const amountInt = Math.round(subtotal);
     const taxRateNum = Number(taxRate) || 0;
-    const computed = computeTotals(amountInt, taxRateNum);
+    const discountNum = Number(discountPct) || 0;
+    const computed = docTotals(lines, discountNum, taxRateNum);
+    const amountInt = computed.subtotal;
     // FX snapshot is captured/refreshed only while the quote is still a draft and has never been sent.
     const isDraft = status === "draft" && !editing?.sentAt;
     const fxFields = isDraft
@@ -613,9 +622,10 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       number, companyId, clientId, projectId: projectId || undefined,
       issueDate, validUntil,
       amount: amountInt,
+      discountPct: discountNum || undefined,
       taxRate: taxRateNum,
       taxAmount: computed.taxAmount,
-      totalAmount: computed.totalAmount,
+      totalAmount: computed.total,
       currency, status, mode, lines, notes: notes || undefined, subject: subject.trim() || undefined,
       bankAccountId: bankAccountId || defaultBankAccount(companies.find((c) => c.id === companyId))?.id,
       assignedTo: assignedTo.slice(0, MAX_QUOTE_ASSIGNEES),
@@ -760,6 +770,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                       <th className="text-left font-medium px-2 py-2 w-20">Unit</th>
                       <th className="text-right font-medium px-2 py-2 w-20">Qty</th>
                       <th className="text-right font-medium px-2 py-2 w-28">Rate ({currency})</th>
+                      <th className="text-right font-medium px-2 py-2 w-20">Disc %</th>
                       <th className="text-right font-medium px-2 py-2 w-28">Amount ({currency})</th>
                       <th className="w-8" />
                     </tr>
@@ -811,19 +822,55 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                             </span>
                           </div>
                         </td>
-                        <td className="px-2 py-1.5 text-right font-tnum">{fmt((Number(l.quantity) || 0) * (Number(l.rate) || 0), currency)}</td>
+                        <td className="px-2 py-1.5">
+                          <div className="relative">
+                            <Input
+                              type="number" min={0} max={100} step={0.5}
+                              className="h-8 text-xs text-right pr-6"
+                              value={l.discountPct ?? 0}
+                              onChange={(e) => updateLine(l.id, { discountPct: Number(e.target.value) })}
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">%</span>
+                          </div>
+                        </td>
+                        <td className="px-2 py-1.5 text-right font-tnum">{fmt(lineNet(l), currency)}</td>
                         <td className="px-2 py-1.5"><button type="button" onClick={() => removeLine(l.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><X className="h-3.5 w-3.5" /></button></td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot>
+                    {totals.lineDiscount > 0 && (
+                      <tr className="border-t border-border bg-surface-elevated/30">
+                        <td colSpan={mode === "rate-card" ? 7 : 5} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Line discounts</td>
+                        <td className="px-2 py-2 text-right font-tnum text-muted-foreground">−{fmt(totals.lineDiscount, currency)}</td>
+                        <td />
+                      </tr>
+                    )}
                     <tr className="border-t border-border bg-surface-elevated/30">
-                      <td colSpan={mode === "rate-card" ? 6 : 4} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Subtotal</td>
+                      <td colSpan={mode === "rate-card" ? 7 : 5} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
+                        <div className="inline-flex items-center gap-2 justify-end">
+                          <span>Global discount</span>
+                          <div className="relative">
+                            <Input
+                              type="number" min={0} max={100} step={0.5}
+                              className="h-7 w-20 text-xs text-right pr-6"
+                              value={discountPct}
+                              onChange={(e) => setDiscountPct(Number(e.target.value))}
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">%</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-2 py-2 text-right font-tnum text-muted-foreground">{totals.globalDiscount > 0 ? `−${fmt(totals.globalDiscount, currency)}` : fmt(0, currency)}</td>
+                      <td />
+                    </tr>
+                    <tr className="border-t border-border bg-surface-elevated/30">
+                      <td colSpan={mode === "rate-card" ? 7 : 5} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Subtotal</td>
                       <td className="px-2 py-2 text-right font-tnum">{fmt(subtotal, currency)}</td>
                       <td />
                     </tr>
                     <tr className="bg-surface-elevated/30">
-                      <td colSpan={mode === "rate-card" ? 6 : 4} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
+                      <td colSpan={mode === "rate-card" ? 7 : 5} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
                         <div className="inline-flex items-center gap-2 justify-end">
                           <span>Tax</span>
                           <div className="relative">
@@ -843,7 +890,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                       <td />
                     </tr>
                     <tr className="border-t border-border bg-surface-elevated/40">
-                      <td colSpan={mode === "rate-card" ? 6 : 4} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-foreground font-semibold">Total</td>
+                      <td colSpan={mode === "rate-card" ? 7 : 5} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-foreground font-semibold">Total</td>
                       <td className="px-2 py-2 text-right font-tnum font-semibold">{fmt(totalAmount, currency)}</td>
                       <td />
                     </tr>
