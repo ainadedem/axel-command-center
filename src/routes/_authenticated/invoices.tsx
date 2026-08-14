@@ -438,6 +438,20 @@ function Body() {
 
       <DataToolbar view={view} items={baseList} />
 
+      <StatusFilterBar
+        statuses={INVOICE_STATUSES}
+        selected={chipStatuses}
+        statusCount={(s) => baseList.filter((i) => i.status === s).length}
+        onToggleStatus={(s) =>
+          setChipStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))
+        }
+        poSelected={chipPo}
+        poCount={(s) => baseList.filter((i) => poStateOf(i) === s).length}
+        onTogglePo={(s) => setChipPo((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))}
+        onClear={() => { setChipStatuses([]); setChipPo([]); }}
+      />
+
+
       {list.length === 0 ? (
         <EmptyState label="invoices" onCreate={openCreate} />
       ) : (
