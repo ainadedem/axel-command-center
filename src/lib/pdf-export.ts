@@ -26,9 +26,10 @@ export async function renderDocumentPdfBlob(html: string, filename: string): Pro
   container.innerHTML = html;
   document.body.appendChild(container);
   try {
-    // Give embedded images (logo, stamp, signature) a chance to decode so the
-    // canvas snapshot matches the preview exactly.
-    await waitForImages(container);
+    // Give embedded images (logo, stamp, signature) and the document fonts a
+    // chance to load so the canvas snapshot matches the preview exactly.
+    await Promise.all([waitForImages(container), waitForFonts()]);
+
     return await html2pdf()
       .set({
         margin: 0,
