@@ -773,6 +773,7 @@
   }
   /* Stacked cards: the leading actions cell becomes the card footer. */
   .stacked-table tbody > tr > td.row-actions-cell {
+    position: static;
     display: block;
     order: 99;
     padding: 0.5rem 0.875rem 0.25rem !important;
@@ -781,6 +782,9 @@
   }
   .stacked-table tbody > tr > td.row-actions-cell::before {
     content: none;
+  }
+  .stacked-table tbody > tr:has(td.row-actions-cell) > td:not(.row-actions-cell) {
+    padding-bottom: inherit;
   }
 
 

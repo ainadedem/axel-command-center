@@ -122,9 +122,9 @@ export function ListTd({
 }
 
 /** Header cell above the leading actions column. */
-export function ListActionsTh({ width = "8.5rem", className }: { width?: string; className?: string }) {
+export function ListActionsTh({ width = "0", className }: { width?: string; className?: string }) {
   return (
-    <th scope="col" style={{ width }} className={cn("px-2 py-3 select-none", className)}>
+    <th scope="col" style={{ width, padding: 0 }} className={cn("select-none", className)}>
       <span className="sr-only">Actions</span>
     </th>
   );
