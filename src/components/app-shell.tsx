@@ -340,7 +340,7 @@ const NEW_BUTTON_ROUTES: { match: (p: string) => boolean; to: string; label: str
   { match: (p) => p.startsWith("/journal"), to: "/journal", label: "New entry" },
 ];
 
-function Topbar() {
+function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
   const { profile, user, signOut, roles } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
@@ -384,21 +384,29 @@ function Topbar() {
   };
 
   return (
-    <header className="h-14 shrink-0 border-b border-border/70 material-bar px-6 flex items-center gap-4 sticky top-0 z-30">
-      <form onSubmit={submitSearch} className="flex-1 max-w-md relative">
+    <header className="h-14 shrink-0 border-b border-border/70 material-bar px-3 sm:px-6 flex items-center gap-2 sm:gap-4 sticky top-0 z-30">
+      <button
+        onClick={onOpenNav}
+        aria-label="Open navigation"
+        className="lg:hidden h-9 w-9 shrink-0 grid place-items-center rounded-full focus-ring hover:bg-secondary active:scale-90 transition-all duration-200"
+      >
+        <Menu className="h-5 w-5" aria-hidden="true" />
+      </button>
+      <AxelBraceMark title="AXEL" className="lg:hidden h-5 w-5 shrink-0 text-foreground" />
+      <form onSubmit={submitSearch} className="flex-1 min-w-0 max-w-md relative">
         <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
         <input
           ref={searchRef}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search transactions, invoices, clients..."
+          placeholder="Search..."
           aria-label="Search transactions, invoices and clients"
           type="search"
-          className="w-full h-9 pl-9 pr-12 rounded-full bg-secondary border border-border/80 text-sm placeholder:text-muted-foreground/60 transition-[border-color,box-shadow,background-color] duration-200 hover:border-primary/35 focus:outline-none focus:border-primary/60 focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_18%,transparent)]"
+          className="w-full h-9 pl-9 pr-3 md:pr-12 rounded-full bg-secondary border border-border/80 text-sm placeholder:text-muted-foreground/60 transition-[border-color,box-shadow,background-color] duration-200 hover:border-primary/35 focus:outline-none focus:border-primary/60 focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_18%,transparent)]"
         />
-        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
+        <kbd className="hidden md:block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
       </form>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         <FxBadge />
         <button
           onClick={handleNew}
