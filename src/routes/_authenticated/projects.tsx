@@ -195,7 +195,7 @@ function Body() {
 
           {mainTab === "projects" ? (
             <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto stacked-table">
               <table className="w-full min-w-[900px] text-sm">
                 <thead>
                   <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
@@ -304,7 +304,7 @@ function Body() {
               </div>
             ) : (
               <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto stacked-table">
                 <table className="w-full min-w-[900px] text-sm">
                   <thead>
                     <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">

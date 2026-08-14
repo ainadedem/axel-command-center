@@ -45,7 +45,7 @@ function PlanComptablePage() {
                 </div>
                 <div className="text-xs text-muted-foreground">{list.length} comptes</div>
               </div>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto sticky-first-col">
               <table className="w-full min-w-[900px] text-sm">
                 <thead>
                   <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">

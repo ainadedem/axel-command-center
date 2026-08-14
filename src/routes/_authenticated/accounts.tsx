@@ -113,7 +113,7 @@ function Body() {
           </div>
 
           <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto stacked-table">
             <table className="w-full min-w-[900px] text-sm">
               <thead>
                 <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
@@ -404,7 +404,7 @@ function ReconciliationHistoryDialog({ open, onOpenChange, account }: { open: bo
             <>
               <div className="text-[11px] text-muted-foreground mb-2">{filtered.length} of {rows.length} reconciliations</div>
               <div className="rounded-lg border border-border overflow-hidden">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto stacked-table">
                 <table className="w-full min-w-[720px] text-xs">
                   <thead>
                     <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">

@@ -192,7 +192,7 @@ function Section({ title, rows, prevRows, co }: any) {
           {prevRows && <span className="text-right w-20">Var.</span>}
         </div>
       </div>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto sticky-first-col">
       <table className="w-full min-w-[900px] text-sm">
         <tbody>
           {filtered.length === 0 && (

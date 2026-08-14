@@ -281,7 +281,7 @@ function Body() {
           )}
 
           <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto stacked-table">
             <table className="w-full min-w-[900px] text-sm">
               <thead>
                 <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
@@ -816,7 +816,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               </p>
             ) : (
               <div className="rounded-md border border-border overflow-hidden">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto stacked-table">
                 <table className="w-full min-w-[720px] text-xs">
                   <thead className="bg-surface-elevated/40 text-[10px] uppercase tracking-wider text-muted-foreground">
                     <tr>

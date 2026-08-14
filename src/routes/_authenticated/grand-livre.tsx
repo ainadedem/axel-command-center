@@ -205,7 +205,7 @@ function Body() {
             </div>
           </div>
           <div className="max-h-[68vh] overflow-y-auto">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto sticky-first-col">
             <table className="w-full min-w-[900px] text-sm">
               <thead className="sticky top-0 bg-[var(--gradient-surface)] z-10">
                 <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">

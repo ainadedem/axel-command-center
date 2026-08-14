@@ -207,7 +207,7 @@ function Body() {
         <EmptyState label="quotations" onCreate={openCreate} />
       ) : (
         <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto stacked-table">
           <table className="w-full min-w-[900px] text-sm">
             <thead>
               <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
@@ -660,7 +660,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
               <p className="text-xs text-muted-foreground border border-dashed border-border rounded-md py-6 text-center">{mode === "rate-card" ? "No lines yet — add roles from the rate card." : "No lines yet — add a free-form item."}</p>
             ) : (
               <div className="rounded-md border border-border overflow-hidden">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto stacked-table">
                 <table className="w-full min-w-[720px] text-xs">
                   <thead className="bg-surface-elevated/40 text-[10px] uppercase tracking-wider text-muted-foreground">
                     <tr>

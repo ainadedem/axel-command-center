@@ -302,7 +302,7 @@ function UsersAccessPage() {
 
         <div className="rounded-lg border border-border bg-card overflow-hidden">
           <div className="overflow-x-auto">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto stacked-table">
             <table className="w-full min-w-[900px] text-sm">
               <thead className="bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
                 <tr>
