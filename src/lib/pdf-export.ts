@@ -26,9 +26,10 @@ export async function renderDocumentPdfBlob(html: string, filename: string): Pro
   container.innerHTML = html;
   document.body.appendChild(container);
   try {
-    // Give embedded images (logo, stamp, signature) a chance to decode so the
-    // canvas snapshot matches the preview exactly.
-    await waitForImages(container);
+    // Give embedded images (logo, stamp, signature) and the document fonts a
+    // chance to load so the canvas snapshot matches the preview exactly.
+    await Promise.all([waitForImages(container), waitForFonts()]);
+
     return await html2pdf()
       .set({
         margin: 0,
@@ -86,4 +87,31 @@ async function waitForImages(root: HTMLElement) {
 export function pdfFilename(docNumber: string): string {
   const safe = docNumber.replace(/[^\w.-]+/g, "-").replace(/^-+|-+$/g, "") || "document";
   return `${safe}.pdf`;
+}
+
+/**
+ * The printable document uses the same pairing as the app UI (Plus Jakarta
+ * Sans for headings, Inter for body). html2canvas snapshots whatever is
+ * painted, so the faces must be resolved before rendering or the PDF falls
+ * back to Helvetica while the preview shows the real fonts.
+ */
+const PDF_FONT_FACES = [
+  '400 12px "Inter"',
+  '500 12px "Inter"',
+  '600 12px "Inter"',
+  '700 12px "Inter"',
+  '600 12px "Plus Jakarta Sans"',
+  '700 12px "Plus Jakarta Sans"',
+  '800 28px "Plus Jakarta Sans"',
+];
+
+async function waitForFonts(): Promise<void> {
+  const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
+  if (!fonts) return;
+  const timeout = new Promise<void>((resolve) => setTimeout(resolve, 4000));
+  const load = (async () => {
+    await Promise.all(PDF_FONT_FACES.map((f) => fonts.load(f).catch(() => undefined)));
+    await fonts.ready;
+  })();
+  await Promise.race([load, timeout]);
 }

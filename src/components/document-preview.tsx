@@ -977,12 +977,13 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
 
   return `
     <style>
-      .doc { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: #0f172a; font-size: ${px(12)}; line-height: 1.45; }
-      .doc h1 { font-size: ${px(28)}; font-weight: 800; letter-spacing: -0.02em; margin: 0; color: ${accent}; }
-      .doc h2 { font-size: ${px(10)}; text-transform: uppercase; letter-spacing: 0.12em; color: #64748b; margin: 0 0 6px; font-weight: 600; }
+      .doc { font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: #0f172a; font-size: ${px(12)}; line-height: 1.5; }
+      .doc h1 { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-size: ${px(28)}; font-weight: 800; letter-spacing: -0.02em; margin: 0; color: ${accent}; }
+
+      .doc h2 { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-size: ${px(10)}; text-transform: uppercase; letter-spacing: 0.12em; color: #64748b; margin: 0 0 6px; font-weight: 600; }
       .doc .row { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
       .doc .meta { text-align: right; font-size: ${px(11)}; }
-      .doc .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: ${px(10)}; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: white; background: ${statusColors[doc.status] ?? "#475569"}; }
+      .doc .pill { display: inline-block; font-family: "Plus Jakarta Sans", "Inter", sans-serif; padding: 3px 10px; border-radius: 999px; font-size: ${px(10)}; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: white; background: ${statusColors[doc.status] ?? "#475569"}; }
       .doc .grid { display: grid; grid-template-columns: 1fr 1fr; gap: ${px(32)}; margin-top: ${px(28)}; }
       .doc .party div { margin-bottom: 2px; }
       .doc .legal { margin-top: 6px; color: #64748b; font-size: ${px(10)}; }
@@ -1005,9 +1006,10 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
         .doc .totals, .doc .paycard, .doc .notes, .doc .footer { break-inside: avoid; page-break-inside: avoid; }
       }
 
-      .doc .totals { margin-top: 20px; margin-left: auto; width: 280px; font-size: 11px; }
+      .doc .totals { margin-top: 20px; margin-left: auto; width: 280px; font-size: 11px; font-variant-numeric: tabular-nums; }
       .doc .totals .line { display: flex; justify-content: space-between; padding: 6px 0; }
-      .doc .totals .grand { border-top: 2px solid ${accent}; margin-top: 6px; padding-top: 10px; font-size: 14px; font-weight: 700; }
+      .doc .totals .grand { font-family: "Plus Jakarta Sans", "Inter", sans-serif; border-top: 2px solid ${accent}; margin-top: 6px; padding-top: 10px; font-size: 14px; font-weight: 700; }
+
       .doc .totals .arrete { font-style: italic; color: #475569; font-size: 10px; margin: 8px 0 10px; padding-top: 6px; border-top: 1px dashed #cbd5e1; }
       .doc .totals .due { color: ${balance > 0 ? "#dc2626" : "#16a34a"}; font-weight: 700; }
       .doc .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #64748b; }
@@ -1176,12 +1178,16 @@ export function buildPrintableDocument(args: DocumentHtmlArgs) {
   // Zero page margin + an inner padded container: the sheet element is a full
   // A4 box, exactly like the preview, so percent coordinates match 1:1.
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(args.doc.number)}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
     <style>
       @page { size: A4; margin: 0; }
-      html, body { margin: 0; padding: 0; background: #fff; }
+      html, body { margin: 0; padding: 0; background: #fff; font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
       .sheet { position: relative; width: 210mm; min-height: 297mm; box-sizing: border-box; background: #fff; }
       .sheet-pad { padding: ${PAGE_PAD_MM}mm; }
     </style>
+
     </head><body><div class="sheet" style="position:relative;width:210mm;min-height:297mm;box-sizing:border-box;background:#fff;"><div class="sheet-pad" style="padding:${PAGE_PAD_MM}mm;">${buildHTML(args)}</div>${floatingStampHtml(args)}</div></body></html>`;
 }
 
