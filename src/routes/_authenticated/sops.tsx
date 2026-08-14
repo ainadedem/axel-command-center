@@ -307,35 +307,69 @@ function ComplianceTab({ violations, summary }: { violations: Violation[]; summa
           <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
             <div className="col-span-2">Rule</div>
             <div className="col-span-2">Reference</div>
+            <div className="col-span-2">Client</div>
             <div className="col-span-1">Company</div>
-            <div className="col-span-4">Detail</div>
-            <div className="col-span-2 text-right">Exposure</div>
+            <div className="col-span-3">Detail</div>
+            <div className="col-span-1 text-right">Exposure</div>
             <div className="col-span-1 text-right">Severity</div>
           </div>
-          {list.map((v, idx) => (
-            <div key={`${v.ruleId}-${v.entityId}-${idx}`} className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated/60 transition">
-              <div className="col-span-2 text-sm font-medium truncate">{v.ruleLabel}</div>
-              <div className="col-span-2 text-sm font-tnum truncate">{v.reference}</div>
-              <div className="col-span-1 text-[11px] font-mono text-muted-foreground truncate">
-                {companies.find((c) => c.id === v.companyId)?.shortName ?? "—"}
+          {list.map((v, idx) => {
+            const target = docTarget(v);
+            const client = clients.find((c) => c.id === v.clientId);
+            return (
+              <div key={`${v.ruleId}-${v.entityId}-${idx}`} className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated/60 transition">
+                <div className="col-span-2 text-sm font-medium truncate">{v.ruleLabel}</div>
+                <div className="col-span-2 text-sm font-tnum truncate">
+                  {target ? (
+                    <Link
+                      to={target.to}
+                      search={{ focus: v.entityId }}
+                      title={`${target.label} ${v.reference}`}
+                      className="text-primary hover:underline underline-offset-2 inline-flex items-center gap-1"
+                    >
+                      {v.reference}
+                      <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
+                    </Link>
+                  ) : (
+                    v.reference
+                  )}
+                </div>
+                <div className="col-span-2 text-sm truncate">
+                  {client ? (
+                    <Link
+                      to="/clients"
+                      search={{ focus: client.id }}
+                      title={`Open ${client.name}`}
+                      className="text-primary hover:underline underline-offset-2"
+                    >
+                      {client.name}
+                    </Link>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </div>
+                <div className="col-span-1 text-[11px] font-mono text-muted-foreground truncate">
+                  {companies.find((c) => c.id === v.companyId)?.shortName ?? "—"}
+                </div>
+                <div className="col-span-3 text-xs text-muted-foreground">{v.detail}</div>
+                <div className="col-span-1 text-right text-sm font-tnum">
+                  {v.amount != null && v.currency ? fmtAmount(v.amount, v.currency as never) : "—"}
+                </div>
+                <div className="col-span-1 flex justify-end">
+                  <span className={cn(
+                    "text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider border inline-flex items-center gap-1",
+                    v.severity === "critical"
+                      ? "border-destructive/40 text-destructive bg-destructive/10"
+                      : "border-warning/40 text-warning bg-warning/10",
+                  )}>
+                    <AlertTriangle className="h-3 w-3" />
+                    {v.severity}
+                  </span>
+                </div>
               </div>
-              <div className="col-span-4 text-xs text-muted-foreground">{v.detail}</div>
-              <div className="col-span-2 text-right text-sm font-tnum">
-                {v.amount != null && v.currency ? fmtAmount(v.amount, v.currency as never) : "—"}
-              </div>
-              <div className="col-span-1 flex justify-end">
-                <span className={cn(
-                  "text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider border inline-flex items-center gap-1",
-                  v.severity === "critical"
-                    ? "border-destructive/40 text-destructive bg-destructive/10"
-                    : "border-warning/40 text-warning bg-warning/10",
-                )}>
-                  <AlertTriangle className="h-3 w-3" />
-                  {v.severity}
-                </span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
+
         </div>
       )}
     </div>
