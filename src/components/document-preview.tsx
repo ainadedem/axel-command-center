@@ -9,6 +9,7 @@ import { formatRib, resolveBankAccount } from "@/lib/payment-details";
 import { amountInFrench } from "@/lib/amount-words";
 import { renderRichText } from "@/lib/rich-text";
 import { useFileUrl } from "@/hooks/use-file-url";
+import { useSigner } from "@/hooks/use-signer";
 import { docLabels, docDateFormat, DOC_LANGUAGES, type DocLanguage } from "@/lib/doc-i18n";
 
 
