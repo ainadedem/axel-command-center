@@ -40,10 +40,13 @@ export function StatusBadge({
   status,
   title,
   className,
+  showLabel = false,
 }: {
   status: string;
   title?: string;
   className?: string;
+  /** Always show the text (filter bars, drawers). Tables use the hover reveal. */
+  showLabel?: boolean;
 }) {
   const meta = STATUS_META[status] ?? {
     label: status,
@@ -54,16 +57,13 @@ export function StatusBadge({
     <span
       title={title ?? meta.label}
       aria-label={`Status: ${meta.label}`}
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5",
-        "text-[10px] font-medium uppercase tracking-wider leading-4",
-        "transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
-        toneClasses[meta.tone],
-        className,
-      )}
+      tabIndex={0}
+      className={cn("status-chip", showLabel && "status-chip-static", toneClasses[meta.tone], className)}
     >
       {meta.icon}
-      <span className="truncate">{meta.label}</span>
+      <span className="status-chip-label" aria-hidden={!showLabel}>
+        <span>{meta.label}</span>
+      </span>
     </span>
   );
 }
@@ -82,10 +82,12 @@ export function PoBadge({
   state,
   title,
   className,
+  showLabel = false,
 }: {
   state: PoState;
   title?: string;
   className?: string;
+  showLabel?: boolean;
 }) {
   const meta = PO_META[state];
 
@@ -93,15 +95,13 @@ export function PoBadge({
     <span
       title={title ?? meta.aria}
       aria-label={meta.aria}
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5",
-        "text-[10px] font-medium uppercase tracking-wider leading-4",
-        toneClasses[meta.tone],
-        className,
-      )}
+      tabIndex={0}
+      className={cn("status-chip", showLabel && "status-chip-static", toneClasses[meta.tone], className)}
     >
       {meta.icon}
-      <span className="truncate">{meta.label}</span>
+      <span className="status-chip-label" aria-hidden={!showLabel}>
+        <span>{meta.label}</span>
+      </span>
     </span>
   );
 }

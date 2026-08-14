@@ -75,7 +75,7 @@ export function ListTh({
       {...(dragProps ?? {})}
       {...(keyProps ?? {})}
       className={cn(
-        "font-medium px-4 py-3 truncate select-none",
+        "font-medium px-4 py-2 truncate select-none",
         (onResizeStart || dragProps) && "relative",
         keyProps && "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
         dragProps && "cursor-grab active:cursor-grabbing hover:text-foreground transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
@@ -110,7 +110,7 @@ export function ListTd({
     <td
       title={title}
       className={cn(
-        "px-4 py-3 align-middle",
+        "px-4 py-1.5 align-middle",
         align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
         wrap ? "min-w-0" : "truncate",
         className,
@@ -147,7 +147,7 @@ export function ListRowActions({
   busy?: boolean;
 }) {
   return (
-    <td className={cn("row-actions-cell px-2 py-2 align-middle whitespace-nowrap", className)}>
+    <td className={cn("row-actions-cell px-2 py-0 align-middle whitespace-nowrap", className)}>
       <div
         className={cn("row-actions-inner", busy && "pointer-events-none")}
         data-busy={busy ? "true" : undefined}

@@ -815,15 +815,11 @@
 td.row-actions-cell {
   position: absolute;
   left: 0.5rem;
-  bottom: 0.1875rem;
+  bottom: 0.125rem;
   width: auto !important;
   padding: 0 !important;
   border: 0 !important;
-  z-index: 2;
-}
-/* Reserve the strip the floating pill occupies so row height never shifts. */
-.stacked-table tbody > tr:has(td.row-actions-cell) > td:not(.row-actions-cell) {
-  padding-bottom: 2.25rem;
+  z-index: 5;
 }
 .row-actions-inner {
   display: inline-flex;
@@ -833,10 +829,11 @@ td.row-actions-cell {
   padding: 0.1875rem 0.25rem;
   border-radius: 9999px;
   border: 1px solid var(--border);
+  /* The pill overlaps the row, so it needs an opaque surface + a lifted shadow. */
   background: var(--card);
   box-shadow:
-    0 1px 2px color-mix(in oklab, var(--foreground) 8%, transparent),
-    0 4px 12px color-mix(in oklab, var(--foreground) 6%, transparent);
+    0 1px 2px color-mix(in oklab, var(--foreground) 12%, transparent),
+    0 8px 20px color-mix(in oklab, var(--foreground) 12%, transparent);
   opacity: 0;
   transform: translateY(2px) scale(0.98);
   pointer-events: none;
@@ -845,6 +842,7 @@ td.row-actions-cell {
     transform 150ms cubic-bezier(0.2, 0, 0, 1),
     box-shadow 150ms cubic-bezier(0.2, 0, 0, 1);
 }
+
 .row-actions-inner[data-busy="true"] {
   opacity: 1;
   transform: none;
@@ -964,5 +962,73 @@ tr:focus-within .row-actions-inner {
     animation: none;
     background-image: none;
     background-color: var(--muted);
+  }
+}
+
+/* ---------------------------------------------------------------
+   Status / PO chips: icon-only by default so records stay on one
+   line; the label slides open on hover or keyboard focus using the
+   same 150ms curve as the sidebar and row actions.
+   --------------------------------------------------------------- */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  border-width: 1px;
+  padding: 0.1875rem 0.3125rem;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  vertical-align: middle;
+  max-width: 100%;
+  transition:
+    padding 150ms cubic-bezier(0.2, 0, 0, 1),
+    background-color 150ms cubic-bezier(0.2, 0, 0, 1),
+    border-color 150ms cubic-bezier(0.2, 0, 0, 1);
+}
+.status-chip:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+.status-chip .status-chip-label {
+  display: grid;
+  grid-template-columns: 0fr;
+  overflow: hidden;
+  transition: grid-template-columns 150ms cubic-bezier(0.2, 0, 0, 1);
+}
+.status-chip .status-chip-label > span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.status-chip:hover,
+.status-chip:focus-visible,
+tr:hover .status-chip {
+  padding-right: 0.5rem;
+}
+.status-chip:hover .status-chip-label,
+.status-chip:focus-visible .status-chip-label,
+tr:hover .status-chip .status-chip-label,
+.status-chip-static .status-chip-label {
+  grid-template-columns: 1fr;
+}
+.status-chip-static {
+  padding-right: 0.5rem;
+}
+@media (hover: none) {
+  .status-chip .status-chip-label {
+    grid-template-columns: 1fr;
+  }
+  .status-chip {
+    padding-right: 0.5rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .status-chip,
+  .status-chip .status-chip-label {
+    transition: none !important;
   }
 }
