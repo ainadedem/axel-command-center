@@ -1,5 +1,5 @@
 import type { ReactNode, CSSProperties } from "react";
-import { Columns3, RotateCcw, MoveHorizontal, ArrowLeftRight } from "lucide-react";
+import { Columns3, RotateCcw, MoveHorizontal, ArrowLeftRight, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
