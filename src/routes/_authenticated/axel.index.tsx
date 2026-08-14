@@ -1,13 +1,18 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect } from "react";
 import { Sparkles } from "lucide-react";
 import { createAxelThread } from "@/lib/axel.functions";
 import { useQueryClient } from "@tanstack/react-query";
+import { AXEL_AI_ENABLED } from "@/lib/features";
 
 export const Route = createFileRoute("/_authenticated/axel/")({
+  beforeLoad: () => {
+    if (!AXEL_AI_ENABLED) throw redirect({ to: "/" });
+  },
   component: AxelIndex,
 });
+
 
 function AxelIndex() {
   const navigate = useNavigate();
