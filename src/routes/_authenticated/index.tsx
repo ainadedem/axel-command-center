@@ -13,7 +13,7 @@ import {
   BarChart, Bar,
 } from "recharts";
 import {
-  ChartFrame, ChartTooltip, CHART_SEMANTIC, chartGridProps, chartAxisProps, chartMargin, chartCursor,
+  ChartFrame, ChartTooltip, CHART_SEMANTIC, chartGridProps, chartAxisProps, chartMargin, chartCursor, chartBarProps, chartBarStackBaseProps,
 } from "@/components/charts";
 import { format, subDays, subMonths, startOfMonth, endOfMonth, startOfYear, parseISO } from "date-fns";
 import { useState, useMemo } from "react";

@@ -56,7 +56,7 @@ import { StatusBadge, PoBadge } from "@/components/status-badge";
 import { useLineReorder, DragHandle, moveItem, ReorderLiveRegion } from "@/components/sortable-row";
 import { useFilterPresets } from "@/lib/filter-presets";
 import { FilterPresetBar } from "@/components/filter-presets";
-import { ChartFrame, CHART_SEMANTIC, chartAxisProps, chartGridProps, chartMargin, chartCursor, ChartTooltip } from "@/components/charts";
+import { ChartFrame, CHART_SEMANTIC, chartAxisProps, chartGridProps, chartMargin, chartCursor, chartBarProps, ChartTooltip } from "@/components/charts";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { StatusFilterBar, type PoState } from "@/components/status-filter-bar";
 import { TableExportMenu } from "@/components/table-export-menu";

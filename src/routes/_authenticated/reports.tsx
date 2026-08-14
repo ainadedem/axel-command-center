@@ -7,7 +7,7 @@ import { PeriodPicker, defaultPeriod, type Period } from "@/components/period-pi
 import { exportCsvRows } from "@/lib/export-csv";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import {
-  ChartFrame, ChartTooltip, CHART_SEMANTIC, chartGridProps, chartAxisProps, chartMargin, chartCursor,
+  ChartFrame, ChartTooltip, CHART_SEMANTIC, chartGridProps, chartAxisProps, chartMargin, chartCursor, chartBarProps, chartBarStackBaseProps,
 } from "@/components/charts";
 import { parseISO } from "date-fns";
 import { useState, useMemo } from "react";
