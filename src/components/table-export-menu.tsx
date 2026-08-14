@@ -45,8 +45,9 @@ export function TableExportMenu({
     try {
       await exportTablePdf(`${filename}.pdf`, title, subtitle ?? `${rows.length} rows`, columns, rows);
       toast.success("PDF downloaded", { id: t });
-    } catch {
-      toast.error("Could not build the PDF", { id: t });
+    } catch (e) {
+      toast.error(`Could not build the PDF: ${e instanceof Error ? e.message : String(e)}`, { id: t });
+
     } finally {
       setBusy(false);
     }
