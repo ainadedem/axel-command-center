@@ -87,6 +87,22 @@ function Body() {
             <span className="text-[10px] text-muted-foreground">Profile picture</span>
 
           </div>
+          <div className="flex flex-col items-center gap-2">
+            <AvatarUpload
+              value={signature}
+              onChange={setSignature}
+              name="Signature"
+              size={84}
+              square
+              folder="signatures"
+            />
+            <span className="text-[10px] text-muted-foreground">Signature</span>
+            {signature ? (
+              <button type="button" onClick={() => setSignature(undefined)} className="text-[10px] text-muted-foreground underline focus-ring">
+                Remove
+              </button>
+            ) : null}
+          </div>
           <div className="flex-1 min-w-[240px] grid sm:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="display-name" className="text-[10px] uppercase tracking-wider text-muted-foreground">Name</Label>
