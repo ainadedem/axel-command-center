@@ -18,6 +18,37 @@ export const focusSearch = (search: Record<string, unknown>): FocusSearch => ({
 
 const RING = ["ring-2", "ring-primary", "ring-offset-2", "ring-offset-background", "rounded-lg"];
 
+/**
+ * Imperative version of {@link useFocusRow}: scroll a row into view and pulse
+ * its ring. Returns a cleanup that removes the ring early.
+ */
+export function focusRowById(id: string): () => void {
+  if (typeof document === "undefined") return () => {};
+  let cancelled = false;
+  let cleanup: (() => void) | undefined;
+  const start = Date.now();
+  const tick = () => {
+    if (cancelled) return;
+    const el = document.querySelector<HTMLElement>(`[data-focus-id="${CSS.escape(id)}"]`);
+    if (!el) {
+      if (Date.now() - start < 4000) window.setTimeout(tick, 200);
+      return;
+    }
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.add(...RING);
+    const t = window.setTimeout(() => el.classList.remove(...RING), 2600);
+    cleanup = () => {
+      window.clearTimeout(t);
+      el.classList.remove(...RING);
+    };
+  };
+  tick();
+  return () => {
+    cancelled = true;
+    cleanup?.();
+  };
+}
+
 export function useFocusRow(id?: string) {
   useEffect(() => {
     if (!id || typeof document === "undefined") return;
