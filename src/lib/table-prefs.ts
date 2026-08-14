@@ -60,6 +60,14 @@ export interface TablePrefs {
     onDragEnd: () => void;
     "data-drag-over"?: "left" | "right";
   };
+  /** Live-region text describing the last keyboard reorder/resize. */
+  announcement: string;
+  /** Keyboard handlers for a header cell (Alt+Arrow reorder, Shift+Arrow resize). */
+  keyboardProps: (key: string) => {
+    tabIndex: number;
+    "aria-label": string;
+    onKeyDown: (e: React.KeyboardEvent) => void;
+  };
   reset: () => void;
   resetWidths: () => void;
   resetOrder: () => void;
@@ -78,6 +86,7 @@ export function useTablePrefs(
   const [loadedFor, setLoadedFor] = useState(storeKey);
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [overKey, setOverKey] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState("");
 
   // The user id resolves asynchronously — re-read once the key changes.
   if (loadedFor !== storeKey) {
