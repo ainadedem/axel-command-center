@@ -43,12 +43,29 @@ export const chartAxisProps = {
 } as const;
 
 
+
 export const chartMargin = { top: 8, right: 12, left: -12, bottom: 0 } as const;
+
+/** Corner radius shared by every bar series (top-rounded columns). */
+export const CHART_BAR_RADIUS = 8;
+
+/** Spread on every <Bar> so bars look identical across pages. */
+export const chartBarProps = {
+  radius: [CHART_BAR_RADIUS, CHART_BAR_RADIUS, 0, 0] as [number, number, number, number],
+  maxBarSize: 44,
+} as const;
+
+/** Bottom segment of a stacked column — rounds the base instead of the top. */
+export const chartBarStackBaseProps = {
+  radius: [0, 0, CHART_BAR_RADIUS, CHART_BAR_RADIUS] as [number, number, number, number],
+  maxBarSize: 44,
+} as const;
 
 export const chartCursor = {
   fill: "color-mix(in oklab, var(--foreground) 5%, transparent)",
-  radius: 8,
+  radius: CHART_BAR_RADIUS,
 } as const;
+
 
 /* ------------------------------------------------------------------ *
  * Tooltip
