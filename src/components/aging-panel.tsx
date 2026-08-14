@@ -49,6 +49,9 @@ export function AgingPanel({
   tilesTitle = "Aging — days past due",
   itemsInBucket,
   onJump,
+  drawerBucket,
+  onDrawerBucketChange,
+  loading,
 }: {
   aging: AgingResult;
   selected: AgingKey | null;
@@ -63,8 +66,18 @@ export function AgingPanel({
   itemsInBucket?: (key: AgingKey) => AgingDrawerItem[];
   /** Called when a drawer row is clicked. */
   onJump?: (item: AgingDrawerItem) => void;
+  /** Controlled drawer bucket — lets routes restore it from the URL. */
+  drawerBucket?: AgingKey | null;
+  onDrawerBucketChange?: (key: AgingKey | null) => void;
+  /** Records still resolving (hydration / fetch) — drawer shows skeletons. */
+  loading?: boolean;
 }) {
-  const [drawerKey, setDrawerKey] = useState<AgingKey | null>(null);
+  const [uncontrolledKey, setUncontrolledKey] = useState<AgingKey | null>(null);
+  const drawerKey = drawerBucket !== undefined ? drawerBucket : uncontrolledKey;
+  const setDrawerKey = (key: AgingKey | null) => {
+    if (drawerBucket === undefined) setUncontrolledKey(key);
+    onDrawerBucketChange?.(key);
+  };
 
   if (!aging.hasData) return null;
 
@@ -174,6 +187,7 @@ export function AgingPanel({
           onOpenChange={(o) => !o && setDrawerKey(null)}
           bucket={AGING_BUCKETS.find((b) => b.key === drawerKey) ?? null}
           items={drawerKey ? itemsInBucket(drawerKey) : []}
+          loading={loading}
           format={format}
           noun={noun}
           onJump={(item) => {
