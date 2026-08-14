@@ -394,6 +394,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
   const [exportStage, setExportStage] = useState<ExportStage | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
 
+
   const printableHtml = useCallback(() => {
     if (!doc) return "";
     return buildPrintableDocument({
