@@ -14,7 +14,9 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Avatar } from "@/components/avatar-upload";
-import { Pencil, Trash2, Target, Handshake } from "lucide-react";
+import { Pencil, Trash2, Target, Handshake, ShieldCheck } from "lucide-react";
+import { useSalesRoleSync } from "@/lib/use-sales-role-sync";
+import { toast } from "sonner";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 
 export const Route = createFileRoute("/_authenticated/sales-team")({ component: SalesTeamPage });
@@ -30,6 +32,7 @@ function SalesTeamPage() {
   const sales = useSalesMembers();
   const clients = useClients();
   const opportunities = useOpportunities();
+  useSalesRoleSync();
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<SalesMember | null>(null);
@@ -71,11 +74,27 @@ function SalesTeamPage() {
                       <div className="min-w-0">
                         <div className="font-medium text-sm truncate">{tm.name}</div>
                         <div className="text-[11px] text-muted-foreground truncate">{tm.jobTitle || tm.email || "-"}</div>
+                        <div className="mt-1 flex items-center gap-1.5">
+                          {tm.userId ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                              <ShieldCheck className="h-2.5 w-2.5" /> App user
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground">Manual entry</span>
+                          )}
+                          <Link to="/team" className="text-[10px] text-primary hover:underline">Team profile</Link>
+                        </div>
                       </div>
                     </div>
                     <div className="flex gap-0.5 opacity-0 group-hover:opacity-100">
                       <button onClick={() => { setEditing(s); setOpen(true); }} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                      <button onClick={() => confirm(`Remove ${tm.name} from the sales team?`) && salesMembersStore.remove(s.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+                      <button onClick={() => {
+                        if (s.source === "role_sync") {
+                          toast.info("This person is on the sales team because their account holds the sales role. Change it in Users & Access.");
+                          return;
+                        }
+                        if (confirm(`Remove ${tm.name} from the sales team?`)) salesMembersStore.remove(s.id);
+                      }} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">

@@ -16,7 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
-import { Pencil, Trash2, Users } from "lucide-react";
+import { Pencil, Trash2, Users, ShieldCheck } from "lucide-react";
+import { useSalesRoleSync } from "@/lib/use-sales-role-sync";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCompany } from "@/lib/company-context";
@@ -35,6 +36,7 @@ function TeamPage() {
 
   const companyById = new Map(accessibleCompanies.map((c) => [c.id, c]));
   const sales = useSalesMembers();
+  useSalesRoleSync();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<TeamMember | null>(null);
   const openCreate = () => { setEditing(null); setOpen(true); };
@@ -81,7 +83,14 @@ function TeamPage() {
           <div className="text-sm font-medium truncate">{m.firstName || m.name}</div>
         </div>
         <div className="col-span-2 text-sm truncate">{m.lastName || "-"}</div>
-        <div className="col-span-2 text-xs text-muted-foreground truncate">{m.email || "-"}</div>
+        <div className="col-span-2 text-xs text-muted-foreground truncate flex items-center gap-1.5">
+          <span className="truncate">{m.email || "-"}</span>
+          {m.userId && (
+            <span title="Linked app user account" className="shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+              <ShieldCheck className="h-2.5 w-2.5" /> App user
+            </span>
+          )}
+        </div>
         <div className="col-span-2 text-xs text-muted-foreground truncate font-tnum">{m.phone || "-"}</div>
         <div className="col-span-1 text-xs text-muted-foreground truncate">{m.jobTitle || "-"}</div>
         <div className="col-span-1 text-xs truncate">

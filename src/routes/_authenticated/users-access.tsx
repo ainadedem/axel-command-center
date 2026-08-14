@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { useServerFn } from "@tanstack/react-start";
 import { createAppUser, logRoleChange } from "@/lib/users-admin.functions";
+import { useSalesRoleSync } from "@/lib/use-sales-role-sync";
 import { AccessDiagnosticsPanel } from "@/components/access-diagnostics-panel";
 import { Loader2, ShieldAlert, Search, UserPlus } from "lucide-react";
 import { toast } from "sonner";
@@ -87,6 +88,7 @@ function UsersAccessPage() {
   const [addOpen, setAddOpen] = useState(false);
   useCreateAction(() => setAddOpen(true));
   const audit = useServerFn(logRoleChange);
+  const syncSalesTeam = useSalesRoleSync(false);
   /** Audit is best-effort: it must never block or fail the role change itself. */
   const recordRoleChange = (entry: Parameters<typeof audit>[0]["data"]) =>
     audit({ data: entry }).catch(() => undefined);
@@ -145,6 +147,8 @@ function UsersAccessPage() {
   /** Reload from the database and refresh our own session when we changed ourselves. */
   const afterWrite = async (targetUserId: string) => {
     await load();
+    // Sales role grants/removals mirror onto the Sales team page.
+    await syncSalesTeam();
     if (targetUserId === currentUser?.id) await refresh();
   };
 
@@ -299,7 +303,7 @@ function UsersAccessPage() {
           onOpenChange={setAddOpen}
           companies={companies}
           isSuperAdmin={isSuperAdmin}
-          onCreated={load}
+          onCreated={async () => { await load(); await syncSalesTeam(); }}
         />
 
         <div className="rounded-lg border border-border bg-card overflow-hidden">

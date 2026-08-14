@@ -110,6 +110,8 @@ interface Ctx {
   hasCompanyRole: (companyId: string, allowed: CompanyRole[]) => boolean;
   /** Effective role inside the currently selected scope (group admins act as company admin). */
   currentRole: CompanyRole | undefined;
+  /** Re-pulls team + sales (and other "extras") for the active scope. */
+  refreshTeamData: () => Promise<void>;
 
 }
 
@@ -634,9 +636,13 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       roleFor,
       hasCompanyRole,
       currentRole,
+      refreshTeamData: async () => {
+        const hydrationScope = getHydrationScope(scope, isGroupAdmin, accessibleDbCompanyIds, companyIdMapEntries);
+        await hydrateExtras(hydrationScope).catch((e) => console.warn("[hydrateExtras]", e));
+      },
     };
 
-  }, [scope, accessibleCompanies, accessLoading, dataLoading, bootstrapReady, bootstrapError, isGroupAdmin, roleByCompanyId, companyIdMapEntries]);
+  }, [scope, accessibleCompanies, accessLoading, dataLoading, bootstrapReady, bootstrapError, isGroupAdmin, roleByCompanyId, companyIdMapEntries, accessibleDbCompanyIds]);
 
 
   return <CompanyCtx.Provider value={value}>{children}</CompanyCtx.Provider>;

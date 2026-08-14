@@ -720,6 +720,8 @@ export interface TeamMember {
   department?: string;
   /** Profile picture (data URL or remote URL). */
   avatarUrl?: string;
+  /** Linked app user account (auth user id), when this person signs in to Axel. */
+  userId?: string;
 }
 
 
@@ -730,6 +732,8 @@ export interface SalesMember {
   id: string;
   teamMemberId: string;
   role: SalesRole;
+  /** "role_sync" rows are kept in sync with the app user's sales role. */
+  source?: "manual" | "role_sync";
 }
 
 /* ─── Stores (start empty) ──────────────────────────────────────────── */
