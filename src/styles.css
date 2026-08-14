@@ -306,13 +306,24 @@
 /* ---------- Motion utilities ---------- */
 
 @utility hover-lift {
-  transition: transform var(--dur-slow) var(--ease-out-soft),
-              box-shadow var(--dur-slow) var(--ease-out-soft),
-              border-color var(--dur-slow) var(--ease-out-soft);
-  &:hover {
-    transform: translateY(-3px);
+  transition: transform 150ms ease-in-out,
+              box-shadow 150ms ease-in-out,
+              background-color 150ms ease-in-out,
+              border-color 150ms ease-in-out;
+  &:hover, &:focus-visible {
+    transform: translateY(-1px);
     box-shadow: var(--shadow-elevated);
-    border-color: color-mix(in oklab, var(--primary) 28%, var(--border));
+    border-color: color-mix(in oklab, var(--primary) 22%, var(--border));
+  }
+}
+
+/* Row / card surface hover used by lists and tables */
+@utility hover-row {
+  transition: background-color 150ms ease-in-out, border-color 150ms ease-in-out;
+  cursor: pointer;
+  &:hover, &:focus-within {
+    background-color: var(--secondary);
+    border-color: color-mix(in oklab, var(--foreground) 8%, var(--border));
   }
 }
 
