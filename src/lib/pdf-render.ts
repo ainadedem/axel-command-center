@@ -166,7 +166,7 @@ export async function renderHtmlToPdfBlob(html: string, opts: RenderOptions = {}
 
       // A slice with no ink is padding at the end of the document — skip it
       // rather than emitting an empty trailing page.
-      if (pageIndex > 0 && isBlankCanvas(slice)) continue;
+      if (pageIndex > 0 && !hasInk(slice)) continue;
 
       const imgHeightMm = (sliceHeight / canvas.width) * mm.w;
       if (pageIndex > 0) pdf.addPage("a4", orientation);
@@ -318,6 +318,20 @@ function trimTrailingWhitespace(canvas: HTMLCanvasElement, pxPerPage: number): n
   // Keep whole pages: never cut below the page the last ink sits on.
   const pages = Math.max(1, Math.ceil(lastInk / pxPerPage));
   return Math.min(canvas.height, pages * pxPerPage);
+}
+
+/** Dense scan: true when the canvas contains any non-white pixel. */
+function hasInk(canvas: HTMLCanvasElement): boolean {
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx || !canvas.width || !canvas.height) return false;
+  const step = Math.max(1, Math.floor(canvas.height / 600));
+  for (let y = 0; y < canvas.height; y += step) {
+    const row = ctx.getImageData(0, y, canvas.width, 1).data;
+    for (let x = 0; x < row.length; x += 4 * 3) {
+      if (row[x + 3] !== 0 && (row[x]! < 245 || row[x + 1]! < 245 || row[x + 2]! < 245)) return true;
+    }
+  }
+  return false;
 }
 
 /** Samples a grid of pixels; all-white means the snapshot failed. */
