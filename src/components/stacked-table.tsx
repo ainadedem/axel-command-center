@@ -1,62 +1,59 @@
-import { useEffect, useRef, type ReactNode } from "react";
-import { cn } from "@/lib/utils";
+import { useEffect } from "react";
 
 /**
- * Wraps a regular <table> and makes it readable on phones.
+ * Mounted once in the app shell.
  *
- * Desktop (md+): unchanged horizontal table.
- * Mobile: every row renders as a card, each cell prefixed with its column
- * label (read from the <thead>) — no more horizontal scrolling to reach
- * amounts, statuses or actions.
+ * Any table wrapped in an element with the `stacked-table` class gets its
+ * body cells annotated with `data-label` (taken from the matching <thead>
+ * cell). The CSS in styles.css then turns each row into a readable card on
+ * phones instead of a horizontally scrolling desktop table.
  */
-export function StackedTable({
-  children,
-  className,
-  stack = true,
-}: {
-  children: ReactNode;
-  className?: string;
-  /** Set false for numeric ledgers that should stay tabular and scroll. */
-  stack?: boolean;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-
+export function TableStackLabeler() {
   useEffect(() => {
-    if (!stack) return;
-    const root = ref.current;
-    if (!root) return;
+    let raf = 0;
 
     const label = () => {
-      const table = root.querySelector("table");
-      if (!table) return;
-      const heads = Array.from(table.querySelectorAll("thead th")).map((th) =>
-        (th.textContent ?? "").trim(),
-      );
-      if (!heads.length) return;
-      table.querySelectorAll("tbody tr").forEach((tr) => {
-        const cells = Array.from(tr.children) as HTMLTableCellElement[];
-        // Skip group/spanning rows — they already read fine stacked.
-        if (cells.length === 1 && cells[0].colSpan > 1) {
-          tr.setAttribute("data-stack-full", "");
-          return;
-        }
-        cells.forEach((td, i) => {
-          const text = heads[i] ?? "";
-          if (text) td.setAttribute("data-label", text);
-          else td.setAttribute("data-label-empty", "");
+      raf = 0;
+      document.querySelectorAll<HTMLElement>(".stacked-table").forEach((root) => {
+        const table = root.querySelector("table");
+        if (!table) return;
+        const headRow = table.querySelector("thead tr:last-child");
+        if (!headRow) return;
+        const heads = Array.from(headRow.children).map((th) => (th.textContent ?? "").trim());
+        table.querySelectorAll("tbody tr").forEach((tr) => {
+          const cells = Array.from(tr.children) as HTMLTableCellElement[];
+          if (cells.length <= 1 && (cells[0]?.colSpan ?? 1) > 1) {
+            tr.setAttribute("data-stack-full", "");
+            return;
+          }
+          tr.removeAttribute("data-stack-full");
+          cells.forEach((td, i) => {
+            const text = heads[i] ?? "";
+            if (text) {
+              if (td.getAttribute("data-label") !== text) td.setAttribute("data-label", text);
+              td.removeAttribute("data-label-empty");
+            } else {
+              td.removeAttribute("data-label");
+              td.setAttribute("data-label-empty", "");
+            }
+          });
         });
       });
     };
 
-    label();
-    const obs = new MutationObserver(() => label());
-    obs.observe(root, { childList: true, subtree: true });
-    return () => obs.disconnect();
-  });
+    const schedule = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(label);
+    };
 
-  return (
-    <div ref={ref} className={cn("overflow-x-auto", stack && "stacked-table", className)}>
-      {children}
-    </div>
-  );
+    schedule();
+    const obs = new MutationObserver(schedule);
+    obs.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      obs.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  return null;
 }
