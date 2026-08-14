@@ -1285,6 +1285,7 @@ const tmToDb = (t: TeamMember) => ({
   job_title: t.jobTitle ?? null,
   department: t.department ?? null,
   avatar_url: t.avatarUrl ?? null,
+  user_id: t.userId ?? null,
 });
 const tmFromDb = (r: Record<string, unknown>): TeamMember => ({
   id: r.id as string,
