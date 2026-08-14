@@ -220,36 +220,16 @@ function Body() {
   const totalOverdue = active.filter((i) => i.status === "overdue").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
   const totalPaid = active.filter((i) => i.status === "paid").reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
 
-  const agingBuckets = { "0-30": { count: 0, amount: 0 }, "31-60": { count: 0, amount: 0 }, "61-90": { count: 0, amount: 0 }, "90+": { count: 0, amount: 0 } } as Record<"0-30"|"31-60"|"61-90"|"90+", { count: number; amount: number }>;
-  const _today = new Date();
-  for (const inv of active) {
-    if (inv.status === "paid") continue;
-    const daysLate = differenceInDays(_today, parseISO(inv.dueDate));
-    if (daysLate <= 0) continue;
-    const balance = toMGA(inv.amount - inv.paid, inv.currency);
-    const key: "0-30"|"31-60"|"61-90"|"90+" = daysLate <= 30 ? "0-30" : daysLate <= 60 ? "31-60" : daysLate <= 90 ? "61-90" : "90+";
-    agingBuckets[key].count++;
-    agingBuckets[key].amount += balance;
-  }
-  const hasAging = Object.values(agingBuckets).some((b) => b.count > 0);
-  const currentBucket = active.reduce(
-    (acc, inv) => {
-      if (inv.status === "paid") return acc;
-      if (differenceInDays(_today, parseISO(inv.dueDate)) > 0) return acc;
-      acc.count++;
-      acc.amount += toMGA(inv.amount - inv.paid, inv.currency);
-      return acc;
-    },
-    { count: 0, amount: 0 },
+  const aging = useMemo(
+    () =>
+      buildAging(active, {
+        due: (i) => i.dueDate,
+        balance: (i) => toMGA(i.amount - i.paid, i.currency),
+        include: (i) => i.status !== "paid",
+      }),
+    [active],
   );
-  const agingChartData = [
-    { bucket: "Current", amount: currentBucket.amount, count: currentBucket.count },
-    { bucket: "1-30 d", amount: agingBuckets["0-30"].amount, count: agingBuckets["0-30"].count },
-    { bucket: "31-60 d", amount: agingBuckets["31-60"].amount, count: agingBuckets["31-60"].count },
-    { bucket: "61-90 d", amount: agingBuckets["61-90"].amount, count: agingBuckets["61-90"].count },
-    { bucket: "90+ d", amount: agingBuckets["90+"].amount, count: agingBuckets["90+"].count },
-  ];
-  const hasAgingChart = agingChartData.some((d) => d.count > 0);
+
   const openCreate = () => { setEditing(null); setOpen(true); };
 
 
