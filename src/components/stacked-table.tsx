@@ -36,6 +36,10 @@ export function TableStackLabeler() {
               td.removeAttribute("data-label");
               td.setAttribute("data-label-empty", "");
             }
+            // Hide value-less cells on phones so cards stay short.
+            const value = (td.textContent ?? "").replace(/[\s\u2014-]/g, "");
+            if (!value && !td.querySelector("button, a, input, svg")) td.setAttribute("data-empty", "");
+            else td.removeAttribute("data-empty");
           });
         });
       });

@@ -620,6 +620,15 @@
     color: var(--muted-foreground);
     padding-top: 0.15rem;
   }
+  .stacked-table tbody > tr > td[data-empty] {
+    display: none;
+  }
+  .stacked-table tbody > tr > td:first-child {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--foreground);
+    padding-top: 0.625rem !important;
+  }
   .stacked-table tbody > tr > td[data-label-empty] {
     display: flex;
     justify-content: flex-end;
