@@ -31,6 +31,7 @@ import { GuidedTour, useTourSeen, type TourStep } from "@/components/guided-tour
 import { useOwnerNames } from "@/hooks/use-owner-names";
 import { useEffectiveRole } from "@/lib/use-effective-role";
 import { seedDemoWorkspace, removeDemoWorkspace } from "@/lib/sop-demo.functions";
+import { saveInvoiceEscalation } from "@/lib/db-sync";
 import { toast } from "sonner";
 import {
   ShieldCheck, AlertTriangle, Download, BookText, CheckCircle2, Clock,
