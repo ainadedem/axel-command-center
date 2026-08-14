@@ -4,7 +4,7 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import {
-  CircleDollarSign, FilePlus2, FileUp, Pencil, Send, Tag, Trash2, History, Loader2,
+  CircleDollarSign, FilePlus2, FileUp, Pencil, Send, Tag, Trash2, History, Loader2, Stamp, PenLine,
 } from "lucide-react";
 import { useDocumentActivity, type ActivityAction, type DocType } from "@/lib/document-activity";
 import { useOwnerNames } from "@/hooks/use-owner-names";
@@ -17,6 +17,8 @@ const ICONS: Record<ActivityAction, typeof Pencil> = {
   document_uploaded: FileUp,
   sent: Send,
   deleted: Trash2,
+  stamp_changed: Stamp,
+  signer_changed: PenLine,
 };
 
 const TITLES: Record<ActivityAction, string> = {
@@ -27,7 +29,10 @@ const TITLES: Record<ActivityAction, string> = {
   document_uploaded: "Document uploaded",
   sent: "Sent",
   deleted: "Deleted",
+  stamp_changed: "Stamp changed",
+  signer_changed: "Signer changed",
 };
+
 
 const fmt = (iso: string) =>
   new Date(iso).toLocaleString(undefined, {
