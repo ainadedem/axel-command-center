@@ -121,7 +121,7 @@ function CompanySwitcher() {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-secondary hover:bg-sidebar-accent border border-sidebar-border hover:border-primary/30 text-sm transition-all duration-200 active:scale-[0.98] group/ws"
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-full bg-[var(--surface-container)] hover:bg-[var(--surface-container-high)] border-0 text-sm transition-all duration-150 ease-[cubic-bezier(0.2,0,0,1)] active:scale-[0.99] group/ws"
       >
         <div className="h-7 w-7 rounded-md bg-gradient-to-br from-primary to-chart-2 grid place-items-center text-[10px] font-display font-bold text-primary-foreground">
           {scope.id === "group" ? "GR" : companies.find((c) => c.id === scope.companyId)?.shortName}
@@ -135,7 +135,7 @@ function CompanySwitcher() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute z-50 mt-2 w-full rounded-lg border border-border bg-popover/95 material-panel shadow-[var(--shadow-elevated)] overflow-hidden origin-top animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
+          <div className="absolute z-50 mt-2 w-full rounded-2xl border-0 bg-popover/95 material-panel shadow-[var(--shadow-elevated)] overflow-hidden origin-top animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-150">
             {isGroupAdmin && (
               <>
                 <button
@@ -201,25 +201,20 @@ function SidebarSection({ section, pathname, onNavigate }: { section: NavSection
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "group focus-ring flex items-center gap-3 px-3 py-2 rounded-md text-sm relative overflow-hidden transition-[color,background-color,transform] duration-200 ease-in-out active:scale-[0.98]",
+                  "group focus-ring flex items-center gap-3 pl-4 pr-4 py-2.5 rounded-full text-sm relative transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
                   active
-                    ? "bg-[color-mix(in_oklab,var(--primary)_12%,transparent)] text-primary font-semibold"
-                    : "text-sidebar-foreground hover:text-primary hover:bg-[color-mix(in_oklab,var(--primary)_8%,transparent)]",
+                    ? "bg-[var(--primary-container)] text-[var(--on-primary-container)] font-medium"
+                    : "text-sidebar-foreground hover:text-foreground hover:bg-[var(--surface-container)]",
                 )}
               >
-                <span
-                  className={cn(
-                    "absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-primary origin-center transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
-                    active ? "scale-y-100" : "scale-y-0",
-                  )}
-                />
                 <Icon
                   className={cn(
-                    "h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110",
-                    active && "text-primary",
+                    "h-[18px] w-[18px] transition-colors duration-150",
+                    active ? "text-[var(--on-primary-container)]" : "text-muted-foreground",
                   )}
                   aria-hidden="true"
                 />
+
                 <span>{item.label}</span>
               </Link>
             );
@@ -267,7 +262,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
         <Link
           to="/settings"
           onClick={onNavigate}
-          className="group focus-ring flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-[color-mix(in_oklab,var(--primary)_8%,transparent)] hover:text-primary transition-all duration-200 active:scale-[0.98]"
+          className="group focus-ring flex items-center gap-3 px-4 py-2.5 rounded-full text-sm text-sidebar-foreground hover:bg-[var(--surface-container)] hover:text-foreground transition-all duration-150"
         >
           <Settings className="h-4 w-4 transition-transform duration-500 group-hover:rotate-90" /> Settings
         </Link>
@@ -278,7 +273,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
 
 function Sidebar() {
   return (
-    <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
+    <aside className="hidden lg:flex w-[17rem] shrink-0 flex-col border-r-0 bg-sidebar px-2">
       <SidebarInner />
     </aside>
   );
@@ -308,7 +303,7 @@ function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
         role="dialog"
         aria-modal="true"
         aria-label="Navigation"
-        className="absolute inset-y-0 left-0 w-[min(19rem,86vw)] flex flex-col bg-sidebar border-r border-sidebar-border shadow-[var(--shadow-elevated)] animate-in slide-in-from-left duration-250"
+        className="absolute inset-y-0 left-0 w-[min(19rem,86vw)] flex flex-col bg-sidebar border-r-0 shadow-[var(--shadow-elevated)] rounded-r-2xl animate-in slide-in-from-left duration-250"
       >
         <button
           onClick={onClose}
@@ -432,17 +427,17 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
 
 
   return (
-    <header className="h-14 shrink-0 border-b border-border/70 material-bar px-3 sm:px-6 flex items-center gap-2 sm:gap-4 sticky top-0 z-30">
+    <header className="h-16 shrink-0 border-b-0 material-bar px-3 sm:px-6 flex items-center gap-2 sm:gap-4 sticky top-0 z-30">
       <button
         onClick={onOpenNav}
         aria-label="Open navigation"
-        className="lg:hidden h-9 w-9 shrink-0 grid place-items-center rounded-full focus-ring hover:bg-secondary active:scale-90 transition-all duration-200"
+        className="lg:hidden h-9 w-9 shrink-0 grid place-items-center rounded-full focus-ring hover:bg-[var(--surface-container)] active:scale-95 transition-all duration-200"
       >
         <Menu className="h-5 w-5" aria-hidden="true" />
       </button>
       <AxelBraceMark title="AXEL" className="lg:hidden h-5 w-5 shrink-0 text-foreground" />
-      <form onSubmit={submitSearch} className="flex-1 min-w-0 max-w-md relative">
-        <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+      <form onSubmit={submitSearch} className="flex-1 min-w-0 max-w-xl relative">
+        <Search className="h-5 w-5 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2" aria-hidden="true" />
         <input
           ref={searchRef}
           value={query}
@@ -450,7 +445,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
           placeholder="Search..."
           aria-label="Search transactions, invoices and clients"
           type="search"
-          className="w-full h-9 pl-9 pr-3 md:pr-12 rounded-full bg-secondary border border-border/80 text-sm placeholder:text-muted-foreground/60 transition-[border-color,box-shadow,background-color] duration-200 hover:border-primary/35 focus:outline-none focus:border-primary/60 focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_18%,transparent)]"
+          className="w-full h-12 pl-12 pr-3 md:pr-14 rounded-[28px] bg-[var(--surface-container)] border-0 text-sm text-foreground placeholder:text-muted-foreground transition-[background-color,box-shadow] duration-150 ease-[cubic-bezier(0.2,0,0,1)] hover:bg-[var(--surface-container-high)] focus:outline-none focus:bg-surface focus:shadow-[var(--shadow-elevated)]"
         />
         <kbd className="hidden md:block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
       </form>
@@ -461,7 +456,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             disabled={!history.canUndo}
             aria-label={history.undoLabel ? `Undo ${history.undoLabel}` : "Undo"}
             title={history.undoLabel ? `Undo ${history.undoLabel} (⌘Z)` : "Nothing to undo"}
-            className="h-9 w-9 grid place-items-center rounded-full focus-ring tap-target hover:bg-secondary hover:text-primary active:scale-90 transition-all duration-200 disabled:opacity-35 disabled:pointer-events-none"
+            className="h-9 w-9 grid place-items-center rounded-full focus-ring tap-target hover:bg-[var(--surface-container)] hover:text-foreground active:scale-95 transition-all duration-200 disabled:opacity-35 disabled:pointer-events-none"
           >
             <Undo2 className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -470,7 +465,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             disabled={!history.canRedo}
             aria-label={history.redoLabel ? `Redo ${history.redoLabel}` : "Redo"}
             title={history.redoLabel ? `Redo ${history.redoLabel} (⇧⌘Z)` : "Nothing to redo"}
-            className="h-9 w-9 grid place-items-center rounded-full focus-ring tap-target hover:bg-secondary hover:text-primary active:scale-90 transition-all duration-200 disabled:opacity-35 disabled:pointer-events-none"
+            className="h-9 w-9 grid place-items-center rounded-full focus-ring tap-target hover:bg-[var(--surface-container)] hover:text-foreground active:scale-95 transition-all duration-200 disabled:opacity-35 disabled:pointer-events-none"
           >
             <Redo2 className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -482,9 +477,9 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             onClick={handleNew}
             aria-label={newLabel}
             title={newLabel}
-            className="h-9 w-9 sm:w-auto sm:px-4 focus-ring tap-target rounded-full text-sm font-medium bg-primary text-primary-foreground hover:opacity-95 hover:-translate-y-px hover:shadow-[var(--shadow-glow)] active:translate-y-0 active:scale-[0.97] transition-all duration-200 ease-in-out flex items-center justify-center gap-1.5 group"
+            className="h-12 w-12 sm:w-auto sm:px-6 focus-ring tap-target rounded-2xl text-sm font-medium bg-surface text-primary shadow-[var(--shadow-elevated)] hover:shadow-[0_1px_3px_rgba(60,64,67,0.2),0_6px_16px_rgba(60,64,67,0.14)] hover:bg-[var(--surface-container-high)] active:scale-[0.98] transition-all duration-150 ease-[cubic-bezier(0.2,0,0,1)] flex items-center justify-center gap-2 group"
           >
-            <Plus className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:rotate-90" />
+            <Plus className="h-5 w-5 shrink-0 transition-transform duration-200 group-hover:rotate-90" />
             <span className="hidden sm:inline">{newLabel}</span>
           </button>
         )}
@@ -492,7 +487,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
         <div className="relative">
           <button
             onClick={() => setBellOpen((v) => !v)}
-            className="h-9 w-9 grid place-items-center rounded-full focus-ring tap-target hover:bg-secondary hover:text-primary active:scale-90 transition-all duration-200 relative"
+            className="h-9 w-9 grid place-items-center rounded-full focus-ring tap-target hover:bg-[var(--surface-container)] hover:text-foreground active:scale-95 transition-all duration-200 relative"
             aria-label="Notifications"
           >
             <Bell className="h-4 w-4" aria-hidden="true" />
@@ -500,7 +495,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
           {bellOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setBellOpen(false)} />
-              <div className="absolute right-0 mt-2 w-72 rounded-lg border border-border bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
+              <div className="absolute right-0 mt-2 w-72 rounded-2xl border-0 bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-150">
                 <div className="px-3 py-2.5 border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground">Notifications</div>
                 <div className="p-6 text-center text-sm text-muted-foreground">You're all caught up.</div>
               </div>
@@ -524,7 +519,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-              <div role="menu" aria-label="Account" className="absolute right-0 mt-2 w-72 rounded-lg border border-border bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
+              <div role="menu" aria-label="Account" className="absolute right-0 mt-2 w-72 rounded-2xl border-0 bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-150">
                 <div className="px-3 py-3 border-b border-border">
                   <div className="text-sm font-medium truncate">{name}</div>
                   <div className="text-[11px] text-muted-foreground truncate">{user?.email}</div>
@@ -577,7 +572,7 @@ function FxBadge() {
         aria-label={`Foreign exchange rates, updated ${stamp}`}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className="hidden md:flex items-center gap-1.5 h-9 px-3 rounded-full border border-border bg-card hover:bg-surface-elevated hover:border-primary/35 hover:-translate-y-px active:translate-y-0 active:scale-[0.98] transition-all duration-200 text-[11px] font-tnum text-muted-foreground"
+        className="hidden md:flex items-center gap-1.5 h-9 px-3.5 rounded-full border-0 bg-[var(--surface-container)] hover:bg-[var(--surface-container-high)] active:scale-[0.98] transition-all duration-150 text-[11px] font-tnum text-muted-foreground"
       >
         <span className="text-foreground/80">€</span>
         <span>{rates.EUR.toLocaleString()}</span>
@@ -588,7 +583,7 @@ function FxBadge() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 mt-2 w-64 rounded-lg border border-border bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
+          <div className="absolute right-0 mt-2 w-64 rounded-2xl border-0 bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-150">
             <div className="px-3 py-2.5 border-b border-border flex items-center justify-between">
               <div className="text-[11px] uppercase tracking-wider text-muted-foreground">FX rates (per MGA)</div>
               <button
