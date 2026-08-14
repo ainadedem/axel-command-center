@@ -33,7 +33,7 @@ import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightS
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
-import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, RowAction, ColumnPicker } from "@/components/list-table";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 
 const PO_COLUMNS: ColumnDef[] = [
   { key: "number", label: "Number", priority: "always" },
@@ -120,7 +120,8 @@ function Body() {
           <ListTable>
             <thead>
               <ListHeadRow>
-                <ListTh width="11%">Number</ListTh>
+                <ListActionsTh />
+<ListTh width="11%">Number</ListTh>
                 {cp.on("clientRef") && <ListTh width="11%">Client ref</ListTh>}
                 {cp.on("fromQuote") && <ListTh width="11%">From quote</ListTh>}
                 <ListTh width="16%">Client</ListTh>
@@ -145,6 +146,15 @@ function Body() {
                 return (
                   <Fragment key={po.id}>
                   <tr data-focus-id={po.id} className="hover:bg-surface-elevated/40">
+<ListRowActions colSpan={cp.count}>
+                    {po.documentUrl && (
+                      <RowAction icon={<Eye className="h-3.5 w-3.5" />} label="Open file" onClick={() => openStoredFile(po.documentUrl)} title="Open client PO document" />
+                    )}
+                    <RowAction icon={<History className="h-3.5 w-3.5" />} label="History" onClick={() => setHistoryOf(po)} title="Activity history" />
+                    <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(po); setOpen(true); }} />
+                    <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete PO ${po.number}?`)) purchaseOrdersStore.remove(po.id); }} />
+                  </ListRowActions>
+
                     <ListTd className="font-tnum text-xs text-muted-foreground" title={po.number}>{po.number}</ListTd>
                     {cp.on("clientRef") && <ListTd className="text-xs" title={po.clientReference}>{po.clientReference || <span className="text-muted-foreground/50">—</span>}</ListTd>}
                     {cp.on("fromQuote") && <ListTd className="text-xs text-muted-foreground">{q?.number ?? <span className="text-muted-foreground/50">—</span>}</ListTd>}
@@ -173,14 +183,6 @@ function Body() {
                       </ListTd>
                     )}
                   </tr>
-                  <ListRowActions colSpan={cp.count}>
-                    {po.documentUrl && (
-                      <RowAction icon={<Eye className="h-3.5 w-3.5" />} label="Open file" onClick={() => openStoredFile(po.documentUrl)} title="Open client PO document" />
-                    )}
-                    <RowAction icon={<History className="h-3.5 w-3.5" />} label="History" onClick={() => setHistoryOf(po)} title="Activity history" />
-                    <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(po); setOpen(true); }} />
-                    <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete PO ${po.number}?`)) purchaseOrdersStore.remove(po.id); }} />
-                  </ListRowActions>
                   </Fragment>
                 );
               })}

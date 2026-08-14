@@ -28,7 +28,7 @@ import {
 } from "@/lib/reconciliation-export";
 import { cn } from "@/lib/utils";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
-import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, RowAction, ColumnPicker } from "@/components/list-table";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 
 const ACCOUNT_COLUMNS: ColumnDef[] = [
   { key: "account", label: "Account", priority: "always" },
@@ -134,7 +134,8 @@ function Body() {
             <ListTable>
               <thead>
                 <ListHeadRow>
-                  <ListTh width="26%">Account</ListTh>
+                  <ListActionsTh />
+<ListTh width="26%">Account</ListTh>
                   <ListTh width="11%">Company</ListTh>
                   {cp.on("type") && <ListTh width="10%">Type</ListTh>}
                   {cp.on("statement") && <ListTh width="15%">Last statement</ListTh>}
@@ -153,6 +154,13 @@ function Body() {
                       return (
                         <Fragment key={a.id}>
                         <tr className="hover:bg-surface-elevated/50">
+<ListRowActions colSpan={cp.count}>
+                          <RowAction icon={<History className="h-3.5 w-3.5" />} label="History" title="Reconciliation history — past statement checks, with CSV/PDF export" onClick={() => setHistoryFor(a)} />
+                          <RowAction icon={<Upload className="h-3.5 w-3.5" />} label="Reconcile" title="Reconcile bank statement — upload a CSV or Excel statement" onClick={() => setImporting(a)} />
+                          <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => openEdit(a)} />
+                          <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete ${a.name}?`)) accountsStore.remove(a.id); }} />
+                        </ListRowActions>
+
                           <ListTd title={a.name}>
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="h-8 w-8 shrink-0 rounded-md bg-surface-elevated grid place-items-center text-muted-foreground"><Icon className="h-4 w-4" /></div>
@@ -192,12 +200,6 @@ function Body() {
                           </ListTd>
                           {cp.on("mga") && <ListTd align="right" className="font-tnum text-muted-foreground">{fmtCompact(toMGA(balanceOf(a), a.currency), "MGA")}</ListTd>}
                         </tr>
-                        <ListRowActions colSpan={cp.count}>
-                          <RowAction icon={<History className="h-3.5 w-3.5" />} label="History" title="Reconciliation history — past statement checks, with CSV/PDF export" onClick={() => setHistoryFor(a)} />
-                          <RowAction icon={<Upload className="h-3.5 w-3.5" />} label="Reconcile" title="Reconcile bank statement — upload a CSV or Excel statement" onClick={() => setImporting(a)} />
-                          <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => openEdit(a)} />
-                          <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete ${a.name}?`)) accountsStore.remove(a.id); }} />
-                        </ListRowActions>
                         </Fragment>
                       );
                     })}

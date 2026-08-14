@@ -29,7 +29,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
-import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, RowAction, ColumnPicker } from "@/components/list-table";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 
 const PROJECT_COLUMNS: ColumnDef[] = [
   { key: "salesRep", label: "Sales rep" },
@@ -222,7 +222,8 @@ function Body() {
               <ListTable>
                 <thead>
                   <ListHeadRow>
-                    <ListTh width="2.25rem" />
+                    <ListActionsTh />
+<ListTh width="2.25rem" />
                     <ListTh width={salesOnly ? "28%" : "18%"}>Project</ListTh>
                     <ListTh width={salesOnly ? "24%" : "15%"}>Client</ListTh>
                     {cp.on("salesRep") && <ListTh width={salesOnly ? "20%" : "11%"}>Sales rep</ListTh>}
@@ -260,7 +261,20 @@ function Body() {
                           <Fragment key={p.id}>
                             <tr
                               className="hover:bg-surface-elevated/40 cursor-pointer"
-                              onClick={() => toggleExpanded(p.id)}
+                              onClick={() =>
+<ListRowActions colSpan={colCount}>
+                              <span className="text-[11px] text-muted-foreground/70 mr-1">
+                                {projInvoices.length} inv · {projTx.length} tx
+                              </span>
+                              <RowAction
+                                icon={isExp ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                                label={isExp ? "Hide details" : "Details"}
+                                onClick={() => toggleExpanded(p.id)}
+                              />
+                              <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(p); setOpen(true); }} />
+                              <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete ${p.name}?`)) { projectsStore.remove(p.id); void deleteProjectDb(p.id); } }} />
+                            </ListRowActions>
+ toggleExpanded(p.id)}
                             >
                               <ListTd className="px-3 text-muted-foreground">
                                 {isExp ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
@@ -290,18 +304,6 @@ function Body() {
                               )}
                               </>}
                             </tr>
-                            <ListRowActions colSpan={colCount}>
-                              <span className="text-[11px] text-muted-foreground/70 mr-1">
-                                {projInvoices.length} inv · {projTx.length} tx
-                              </span>
-                              <RowAction
-                                icon={isExp ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                                label={isExp ? "Hide details" : "Details"}
-                                onClick={() => toggleExpanded(p.id)}
-                              />
-                              <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(p); setOpen(true); }} />
-                              <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete ${p.name}?`)) { projectsStore.remove(p.id); void deleteProjectDb(p.id); } }} />
-                            </ListRowActions>
                             {isExp && (
                               <tr className="border-b border-border/40 bg-surface-elevated/10">
                                 <td colSpan={colCount} className="p-0">

@@ -51,7 +51,7 @@ import { BulkEditDocDialog } from "@/components/bulk-edit-doc-dialog";
 import { bulkUpdateDocuments, type BulkPatch } from "@/lib/bulk-edit";
 import { type ColumnDef } from "@/lib/column-prefs";
 import { useTablePrefs } from "@/lib/table-prefs";
-import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, RowAction, ColumnPicker } from "@/components/list-table";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 import { StatusBadge, PoBadge } from "@/components/status-badge";
 import { useLineReorder, DragHandle, moveItem } from "@/components/sortable-row";
 import { StatusFilterBar, type PoState } from "@/components/status-filter-bar";
@@ -494,7 +494,8 @@ function Body() {
             <ListTable style={{ minWidth: tableMinWidth }}>
               <thead>
                 <ListHeadRow>
-                  <SelectAllHeaderCell checked={selection.allSelected} onToggle={selection.toggleAll} />
+                  <ListActionsTh />
+<SelectAllHeaderCell checked={selection.allSelected} onToggle={selection.toggleAll} />
                   {tp.visible.map((c) => (
                     <ListTh
                       key={c.key}
@@ -515,18 +516,7 @@ function Body() {
                     {g.items.map((inv) => (
                     <Fragment key={inv.id}>
                     <tr data-focus-id={inv.id} className="hover:bg-surface-elevated/40 transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]">
-                      <SelectRowCell
-                        checked={selection.isSelected(inv.id)}
-                        onToggle={() => selection.toggle(inv.id)}
-                        disabled={!isWritable(inv)}
-                        label={`Select invoice ${inv.number}`}
-                      />
-                      {tp.visible.map((c) => (
-                        <Fragment key={c.key}>{renderCell(c.key, inv)}</Fragment>
-                      ))}
-                    </tr>
-
-                    <ListRowActions colSpan={colCount}>
+<ListRowActions colSpan={colCount}>
                       <RowAction icon={<History className="h-3.5 w-3.5" />} label="History" onClick={() => setHistoryOf(inv)} title="Activity history" />
                       <RowAction icon={<Eye className="h-3.5 w-3.5" />} label="Preview" onClick={() => setPreviewing(inv)} title="Preview & export PDF" />
                       {inv.status !== "paid" && inv.status !== "cancelled" && (
@@ -539,6 +529,18 @@ function Body() {
                       <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(inv); setOpen(true); }} />
                       <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete invoice ${inv.number}?`)) invoicesStore.remove(inv.id); }} />
                     </ListRowActions>
+
+                      <SelectRowCell
+                        checked={selection.isSelected(inv.id)}
+                        onToggle={() => selection.toggle(inv.id)}
+                        disabled={!isWritable(inv)}
+                        label={`Select invoice ${inv.number}`}
+                      />
+                      {tp.visible.map((c) => (
+                        <Fragment key={c.key}>{renderCell(c.key, inv)}</Fragment>
+                      ))}
+                    </tr>
+
                     </Fragment>
                     ))}
 
