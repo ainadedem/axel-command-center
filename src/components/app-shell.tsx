@@ -44,9 +44,10 @@ const sections: NavSection[] = [
     label: "Overview",
     items: [
       { to: "/", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/axel", label: "Axel AI", icon: Sparkles },
+      ...(AXEL_AI_ENABLED ? [{ to: "/axel", label: "Axel AI", icon: Sparkles }] : []),
     ],
   },
+
   {
     label: "Sales",
     items: [
