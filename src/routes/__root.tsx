@@ -12,6 +12,7 @@ import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme-context";
 import { supabase } from "@/integrations/supabase/client";
+import ogImage from "@/assets/axel-og.png.asset.json";
 
 
 function NotFoundComponent() {
@@ -67,8 +68,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "Premium multi-company, multi-currency finance command center." },
       { property: "og:site_name", content: "AXEL" },
       { property: "og:url", content: "https://axel-command-center.lovable.app/" },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/cea62933-31f5-4d43-8fcc-dd1c845d357d/id-preview-d680f478--6d852ac6-4d80-4857-bc8c-05e21302d63c.lovable.app-1779703926078.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/cea62933-31f5-4d43-8fcc-dd1c845d357d/id-preview-d680f478--6d852ac6-4d80-4857-bc8c-05e21302d63c.lovable.app-1779703926078.png" },
+      { property: "og:image", content: `https://axel-command-center.lovable.app${ogImage.url}` },
+      { name: "twitter:image", content: `https://axel-command-center.lovable.app${ogImage.url}` },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
     ],

@@ -17,7 +17,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ThemeControls } from "@/components/theme-controls";
 import { useFileUrl } from "@/hooks/use-file-url";
 
-import axelIcon from "@/assets/axel-icon-purple.png";
+import { AxelWordmark, AxelBraceMark } from "@/components/axel-wordmark";
 
 interface NavItem {
   to: string;
@@ -242,9 +242,9 @@ function Sidebar() {
 
   return (
     <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-sidebar-border/70 bg-sidebar/80 material-bar">
-      <div className="px-5 py-5 flex items-center gap-2.5">
-        <img src={axelIcon} alt="AXEL Business Platform logo" className="h-8 w-8 rounded-[10px] shadow-[var(--shadow-soft)]" />
-        <span className="font-display text-sm font-semibold text-sidebar-foreground">Axel - Unified Business Platform</span>
+      <div className="px-5 py-5 flex flex-col gap-1.5">
+        <AxelWordmark title="AXEL Business Platform" className="h-7 w-auto self-start text-sidebar-foreground" />
+        <span className="text-[11px] font-medium tracking-wide text-sidebar-foreground/60">Unified Business Platform</span>
       </div>
       <div className="px-3 pb-3">
         <CompanySwitcher />
@@ -485,7 +485,7 @@ function AppShellLoading() {
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
       <div className="w-full max-w-md rounded-2xl border border-border bg-[var(--gradient-surface)] p-8 shadow-[var(--shadow-soft)]">
         <div className="flex items-center gap-3">
-          <img src={axelIcon} alt="AXEL Business Platform logo" className="h-10 w-10 rounded-xl shadow-[var(--shadow-glow)]" />
+          <AxelBraceMark title="AXEL Business Platform" className="h-9 w-9 text-primary" />
           <div>
             <div className="font-display text-base font-semibold">Axel Command Center</div>
             <div className="text-sm text-muted-foreground">Loading your workspace access and data...</div>
@@ -506,7 +506,7 @@ function AppShellError({ message, onRetry }: { message: string; onRetry: () => v
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-4">
       <div className="w-full max-w-md rounded-2xl border border-border bg-[var(--gradient-surface)] p-8 shadow-[var(--shadow-soft)]">
         <div className="flex items-center gap-3">
-          <img src={axelIcon} alt="AXEL Business Platform logo" className="h-10 w-10 rounded-xl shadow-[var(--shadow-glow)]" />
+          <AxelBraceMark title="AXEL Business Platform" className="h-9 w-9 text-primary" />
           <div>
             <div className="font-display text-base font-semibold">Couldn't load your workspace</div>
             <div className="text-sm text-muted-foreground">{message}</div>
