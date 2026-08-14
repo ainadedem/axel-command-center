@@ -33,6 +33,7 @@ export function InvoicePreview({ open, onOpenChange, invoice, company, client, p
           po?.number ? { label: "PO", value: po.number } : null,
           quote?.number ? { label: "Quote", value: quote.number } : null,
         ].filter(Boolean) as Array<{ label: string; value: string }>,
+        signerId: invoice.updatedBy ?? invoice.createdBy,
       }
     : null;
   return (
