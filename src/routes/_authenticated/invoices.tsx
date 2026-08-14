@@ -556,7 +556,7 @@ function Body() {
                   <XAxis dataKey="bucket" {...chartAxisProps} />
                   <YAxis {...chartAxisProps} />
                   <Tooltip content={<ChartTooltip formatter={(v: number) => fmtAmount(v, "MGA")} />} cursor={chartCursor} />
-                  <Bar dataKey="amount" name="Open balance" radius={[8, 8, 0, 0]} fill={CHART_SEMANTIC.expense} />
+                  <Bar dataKey="amount" name="Open balance" {...chartBarProps} fill={CHART_SEMANTIC.expense} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartFrame>
