@@ -211,6 +211,11 @@ export function ColumnPicker({ prefs, className }: { prefs: ColumnPrefs; classNa
         <DropdownMenuItem className="text-xs" onSelect={() => prefs.reset()} disabled={prefs.isDefault}>
           <RotateCcw className="h-3.5 w-3.5 mr-2" /> Reset to default
         </DropdownMenuItem>
+        {onResetWidths && (
+          <DropdownMenuItem className="text-xs" onSelect={() => onResetWidths()}>
+            <MoveHorizontal className="h-3.5 w-3.5 mr-2" /> Reset column widths
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
