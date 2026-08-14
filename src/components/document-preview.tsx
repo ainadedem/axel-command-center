@@ -205,6 +205,20 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang });
   }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang]);
 
+  // Track the real (unscaled) sheet height so the scroll area sizes correctly
+  // for multi-page documents.
+  useLayoutEffect(() => {
+    const el = sheetRef.current;
+    if (!el || !open) return;
+    const measure = () => setSheetH(Math.max(SHEET_H, el.offsetHeight));
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [open, html]);
+
+
+
   // ---- Export -------------------------------------------------------------
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
