@@ -1077,15 +1077,50 @@ export interface DocumentHtmlArgs {
 }
 
 
+/**
+ * Stamp geometry shared by the on-screen overlay and the exported page, so a
+ * stamp always lands on the same physical millimetre. Coordinates are percents
+ * of the *full* A4 sheet (padding included), never of the content box.
+ */
+export function stampGeometry(
+  company: Company | undefined,
+  place: { x?: number; y?: number; scale?: number },
+) {
+  return {
+    floating: place.x != null && place.y != null,
+    x: clamp(place.x ?? 50, 0, 100),
+    y: clamp(place.y ?? 50, 0, 100),
+    /** CSS px width at 100% zoom (1px = 1/96in, same unit as the sheet). */
+    width: Math.round((company?.stampWidth ?? 140) * clamp(place.scale ?? 1, 0.3, 3)),
+    opacity: clamp(company?.stampOpacity ?? 1, 0.1, 1),
+  };
+}
+
+/** Page-level floating stamp markup used by the export/print document. */
+function floatingStampHtml(args: DocumentHtmlArgs) {
+  const visible = (args.showStamp ?? args.company?.showStamp === true) && !!args.stampUrl;
+  const g = stampGeometry(args.company, { x: args.stampX, y: args.stampY, scale: args.stampScale });
+  if (!visible || !g.floating) return "";
+  return `<img src="${esc(args.stampUrl)}" alt="" style="position:absolute;left:${g.x}%;top:${g.y}%;transform:translate(-50%,-50%);width:${g.width}px;opacity:${g.opacity};object-fit:contain;pointer-events:none;" />`;
+}
+
 export function buildPrintableDocument(args: DocumentHtmlArgs) {
+  // Zero page margin + an inner padded container: the sheet element is a full
+  // A4 box, exactly like the preview, so percent coordinates match 1:1.
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(args.doc.number)}</title>
-    <style>@page { size: A4; margin: 22mm; } body { margin: 0; }</style>
-    </head><body>${buildHTML(args)}</body></html>`;
+    <style>
+      @page { size: A4; margin: 0; }
+      html, body { margin: 0; padding: 0; background: #fff; }
+      .sheet { position: relative; width: 210mm; min-height: 297mm; box-sizing: border-box; background: #fff; }
+      .sheet-pad { padding: ${PAGE_PAD_MM}mm; }
+    </style>
+    </head><body><div class="sheet"><div class="sheet-pad">${buildHTML(args)}</div>${floatingStampHtml(args)}</div></body></html>`;
 }
 
 export function buildDocumentHTML(args: DocumentHtmlArgs) {
   return buildHTML(args);
 }
+
 
 function esc(s: unknown): string {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
