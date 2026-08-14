@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 
 import {
   AGING_BUCKETS,
