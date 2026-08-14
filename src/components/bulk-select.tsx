@@ -104,7 +104,7 @@ export function SelectRowCell({
   label?: string;
 }) {
   return (
-    <td className="px-3 py-3.5 w-10">
+    <td className="px-3 py-1.5 w-10">
       <Checkbox
         checked={checked}
         disabled={disabled}
