@@ -614,13 +614,14 @@ const invoiceToDb = (inv: Invoice) => {
   return {
     id: isUuid(inv.id) ? inv.id : undefined,
     company_id: dbCompany,
-    client_id: inv.clientId && isUuid(inv.clientId) ? inv.clientId : null,
-    project_id: inv.projectId && isUuid(inv.projectId) ? inv.projectId : null,
-    po_id: inv.poId && isUuid(inv.poId) ? inv.poId : null,
+    ...link("client_id", inv.clientId),
+    ...link("project_id", inv.projectId),
+    ...link("po_id", inv.poId),
     po_waived: inv.poWaived ?? false,
     po_waiver_reason: inv.poWaiverReason ?? null,
 
-    quote_id: inv.quoteId && isUuid(inv.quoteId) ? inv.quoteId : null,
+    ...link("quote_id", inv.quoteId),
+
     number: inv.number,
     issue_date: inv.issueDate,
     due_date: inv.dueDate,
