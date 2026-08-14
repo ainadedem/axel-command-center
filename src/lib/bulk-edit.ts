@@ -105,3 +105,60 @@ export async function bulkUpdateDocuments<T extends BulkDoc>(opts: {
 
   return rows.length;
 }
+
+/**
+ * Applies an arbitrary field patch (status changes, payment marks, …) to a
+ * batch of documents as a single undo entry, with one activity entry per row.
+ */
+export async function bulkSetFields<T extends BulkDoc>(opts: {
+  collection: Collection<T>;
+  docType: DocType;
+  rows: T[];
+  /** Per-row patch; return null to skip the row. */
+  patch: (row: T) => Partial<T> | null;
+  userId?: string;
+  label: string;
+  summary: string;
+}): Promise<number> {
+  const { collection, docType, rows, userId, label, summary } = opts;
+  const targets = rows
+    .map((r) => ({ row: r, patch: opts.patch(r) }))
+    .filter((t): t is { row: T; patch: Partial<T> } => t.patch !== null);
+  if (targets.length === 0) return 0;
+
+  const before = targets.map(({ row, patch }) => {
+    const prev: Record<string, unknown> = { updatedBy: row.updatedBy, updatedAt: row.updatedAt };
+    for (const k of Object.keys(patch)) prev[k] = (row as Record<string, unknown>)[k];
+    return { id: row.id, previous: prev as Partial<T> };
+  });
+
+  const apply = () => {
+    targets.forEach(({ row, patch }) =>
+      collection.update(row.id, { ...patch, updatedBy: userId, updatedAt: new Date().toISOString() } as Partial<T>, { silent: true }),
+    );
+  };
+
+  await withoutHistory(apply);
+
+  pushHistory({
+    label,
+    undo: () => before.forEach((b) => collection.update(b.id, b.previous, { silent: true })),
+    redo: () => apply(),
+  });
+
+  await Promise.all(
+    targets.map(({ row, patch }) =>
+      logActivity({
+        docType,
+        docId: row.id,
+        docNumber: row.number,
+        companyId: row.companyId,
+        action: "updated",
+        summary,
+        details: { bulk: true, ...(patch as Record<string, unknown>) },
+      }),
+    ),
+  );
+
+  return targets.length;
+}
