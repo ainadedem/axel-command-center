@@ -491,7 +491,9 @@ function EscalationsTab({
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
+
         </div>
       )}
 
