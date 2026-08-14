@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { focusSearch, useFocusRow } from "@/hooks/use-focus-row";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -32,7 +33,7 @@ import { CategoryChips, CategoryMultiSelect, CompanyTag, CompanyTags, defaultCat
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/clients")({ component: ClientsPage });
+export const Route = createFileRoute("/_authenticated/clients")({ component: ClientsPage, validateSearch: focusSearch });
 
 function isWonClient(cl: Client, hasActivity: boolean): boolean {
   if (cl.status === "client") return true;
@@ -41,6 +42,7 @@ function isWonClient(cl: Client, hasActivity: boolean): boolean {
 }
 
 function ClientsPage() {
+  useFocusRow(Route.useSearch().focus);
   const { scope } = useCompany();
   const clients = useClients();
   const companies = useCompanies();
@@ -320,7 +322,7 @@ function ClientCard({
   const isLead = cl.status === "lead";
 
   return (
-    <div className={`relative rounded-lg border ${isLead ? "border-dashed border-amber-500/40 bg-amber-500/[0.03]" : "border-border bg-surface-elevated"} p-3 hover:border-primary/40 transition group`}>
+    <div data-focus-id={cl.id} className={`relative rounded-lg border ${isLead ? "border-dashed border-amber-500/40 bg-amber-500/[0.03]" : "border-border bg-surface-elevated"} p-3 hover:border-primary/40 transition group`}>
       <div className="flex items-start gap-2">
         <div className="relative shrink-0">
           <Avatar src={cl.avatarUrl} name={cl.name} size={32} />
@@ -420,6 +422,7 @@ function ClientListView({
     return (
       <div
         key={cl.id}
+        data-focus-id={cl.id}
         className={`grid grid-cols-[1fr_120px_100px_100px_40px] md:grid-cols-[1fr_140px_120px_120px_40px] gap-3 px-4 py-2.5 items-center border-b border-border/50 last:border-b-0 hover:bg-accent/40 transition group ${isLead ? "bg-amber-500/[0.03]" : ""}`}
       >
         <div className="flex items-center gap-2.5 min-w-0">

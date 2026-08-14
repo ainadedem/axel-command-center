@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { focusSearch, useFocusRow } from "@/hooks/use-focus-row";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -33,7 +34,7 @@ import { withSelected } from "@/lib/select-options";
 
 type DocVersion = { url: string; name?: string; type?: string; uploadedAt: string };
 
-export const Route = createFileRoute("/_authenticated/purchase-orders")({ component: POPage });
+export const Route = createFileRoute("/_authenticated/purchase-orders")({ component: POPage, validateSearch: focusSearch });
 
 const statusStyles: Record<POStatus, string> = {
   draft: "border-muted text-muted-foreground bg-muted/30",
@@ -43,6 +44,7 @@ const statusStyles: Record<POStatus, string> = {
 };
 
 function POPage() {
+  useFocusRow(Route.useSearch().focus);
   return (
     <AppShell>
       <PageHeader title="Purchase Orders" description="Step 2 — record the PO your client issued and upload their document." />
@@ -120,7 +122,7 @@ function Body() {
                 const proj = po.projectId ? projects.find((p) => p.id === po.projectId) : undefined;
                 const q = po.quoteId ? quotes.find((x) => x.id === po.quoteId) : undefined;
                 return (
-                  <tr key={po.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
+                  <tr key={po.id} data-focus-id={po.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
                     <td className="px-5 py-3.5 font-tnum text-xs text-muted-foreground">{po.number}</td>
                     <td className="px-5 py-3.5 text-xs">{po.clientReference || <span className="text-muted-foreground/50">—</span>}</td>
                     <td className="px-5 py-3.5 text-xs text-muted-foreground">{q?.number ?? <span className="text-muted-foreground/50">—</span>}</td>

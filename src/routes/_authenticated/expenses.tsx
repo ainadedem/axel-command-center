@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { focusSearch, useFocusRow } from "@/hooks/use-focus-row";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -23,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 
-export const Route = createFileRoute("/_authenticated/expenses")({ component: ExpensesPage });
+export const Route = createFileRoute("/_authenticated/expenses")({ component: ExpensesPage, validateSearch: focusSearch });
 
 const statusStyles: Record<ExpenseStatus, string> = {
   draft: "border-muted text-muted-foreground bg-muted/30",
@@ -43,6 +44,7 @@ function computeStatus(e: Expense): ExpenseStatus {
 }
 
 function ExpensesPage() {
+  useFocusRow(Route.useSearch().focus);
   return (
     <AppShell>
       <PageHeader title="Expenses" description="Supplier bills and ad-hoc expense entries." />
@@ -153,7 +155,7 @@ function Body() {
             const company = companies.find((c) => c.id === e.companyId);
             const st = computeStatus(e);
             return (
-              <div key={e.id} className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated/60 transition group">
+              <div key={e.id} data-focus-id={e.id} className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated/60 transition group">
                 <div className="col-span-1">
                   <span className="text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider border border-border/60 text-muted-foreground">
                     {e.kind === "bill" ? "Bill" : "Ad-hoc"}

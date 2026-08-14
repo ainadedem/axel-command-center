@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { AppShell } from "@/components/app-shell";
@@ -31,10 +31,11 @@ import { GuidedTour, useTourSeen, type TourStep } from "@/components/guided-tour
 import { useOwnerNames } from "@/hooks/use-owner-names";
 import { useEffectiveRole } from "@/lib/use-effective-role";
 import { seedDemoWorkspace, removeDemoWorkspace } from "@/lib/sop-demo.functions";
+import { saveInvoiceEscalation } from "@/lib/db-sync";
 import { toast } from "sonner";
 import {
   ShieldCheck, AlertTriangle, Download, BookText, CheckCircle2, Clock,
-  PlayCircle, Trash2, Mail, HelpCircle, Loader2,
+  PlayCircle, Trash2, Mail, HelpCircle, Loader2, ExternalLink,
 } from "lucide-react";
 
 const TOUR_STEPS: TourStep[] = [
@@ -225,11 +226,21 @@ function Kpi({ label, value, accent, mono }: { label: string; value: string; acc
 
 /* ─── Compliance tab ────────────────────────────────────────────────── */
 
+/** Route + highlight target for the record a violation belongs to. */
+function docTarget(v: Violation): { to: string; label: string } | null {
+  if (v.entity === "invoice") return { to: "/invoices", label: "Open invoice" };
+  if (v.entity === "purchase_order") return { to: "/purchase-orders", label: "Open purchase order" };
+  if (v.entity === "expense") return { to: "/expenses", label: "Open expense" };
+  return null;
+}
+
 function ComplianceTab({ violations, summary }: { violations: Violation[]; summary: WeeklySummary }) {
   const companies = useCompanies();
+  const clients = useClients();
   const { ownerName } = useOwnerNames(summary.owners.map((o) => o.ownerId));
   const [severity, setSeverity] = useState<"all" | "critical" | "warning">("all");
   const [rule, setRule] = useState("all");
+
 
   const rules = useMemo(() => {
     const m = new Map<string, string>();
@@ -244,12 +255,13 @@ function ComplianceTab({ violations, summary }: { violations: Violation[]; summa
   const exportAll = () => {
     exportCsvRows(
       `sop-compliance-${format(new Date(), "yyyy-MM-dd")}.csv`,
-      ["Severity", "Rule", "Type", "Reference", "Company", "Amount", "Currency", "Detail"],
+      ["Severity", "Rule", "Type", "Reference", "Client", "Company", "Amount", "Currency", "Detail"],
       list.map((v) => [
         v.severity,
         v.ruleLabel,
         v.entity,
         v.reference,
+        clients.find((c) => c.id === v.clientId)?.name ?? "",
         companies.find((c) => c.id === v.companyId)?.shortName ?? "",
         v.amount ?? "",
         v.currency ?? "",
@@ -257,6 +269,7 @@ function ComplianceTab({ violations, summary }: { violations: Violation[]; summa
       ]),
     );
   };
+
 
   return (
     <div className="space-y-4">
@@ -295,35 +308,69 @@ function ComplianceTab({ violations, summary }: { violations: Violation[]; summa
           <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
             <div className="col-span-2">Rule</div>
             <div className="col-span-2">Reference</div>
+            <div className="col-span-2">Client</div>
             <div className="col-span-1">Company</div>
-            <div className="col-span-4">Detail</div>
-            <div className="col-span-2 text-right">Exposure</div>
+            <div className="col-span-3">Detail</div>
+            <div className="col-span-1 text-right">Exposure</div>
             <div className="col-span-1 text-right">Severity</div>
           </div>
-          {list.map((v, idx) => (
-            <div key={`${v.ruleId}-${v.entityId}-${idx}`} className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated/60 transition">
-              <div className="col-span-2 text-sm font-medium truncate">{v.ruleLabel}</div>
-              <div className="col-span-2 text-sm font-tnum truncate">{v.reference}</div>
-              <div className="col-span-1 text-[11px] font-mono text-muted-foreground truncate">
-                {companies.find((c) => c.id === v.companyId)?.shortName ?? "—"}
+          {list.map((v, idx) => {
+            const target = docTarget(v);
+            const client = clients.find((c) => c.id === v.clientId);
+            return (
+              <div key={`${v.ruleId}-${v.entityId}-${idx}`} className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated/60 transition">
+                <div className="col-span-2 text-sm font-medium truncate">{v.ruleLabel}</div>
+                <div className="col-span-2 text-sm font-tnum truncate">
+                  {target ? (
+                    <Link
+                      to={target.to}
+                      search={{ focus: v.entityId }}
+                      title={`${target.label} ${v.reference}`}
+                      className="text-primary hover:underline underline-offset-2 inline-flex items-center gap-1"
+                    >
+                      {v.reference}
+                      <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
+                    </Link>
+                  ) : (
+                    v.reference
+                  )}
+                </div>
+                <div className="col-span-2 text-sm truncate">
+                  {client ? (
+                    <Link
+                      to="/clients"
+                      search={{ focus: client.id }}
+                      title={`Open ${client.name}`}
+                      className="text-primary hover:underline underline-offset-2"
+                    >
+                      {client.name}
+                    </Link>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </div>
+                <div className="col-span-1 text-[11px] font-mono text-muted-foreground truncate">
+                  {companies.find((c) => c.id === v.companyId)?.shortName ?? "—"}
+                </div>
+                <div className="col-span-3 text-xs text-muted-foreground">{v.detail}</div>
+                <div className="col-span-1 text-right text-sm font-tnum">
+                  {v.amount != null && v.currency ? fmtAmount(v.amount, v.currency as never) : "—"}
+                </div>
+                <div className="col-span-1 flex justify-end">
+                  <span className={cn(
+                    "text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider border inline-flex items-center gap-1",
+                    v.severity === "critical"
+                      ? "border-destructive/40 text-destructive bg-destructive/10"
+                      : "border-warning/40 text-warning bg-warning/10",
+                  )}>
+                    <AlertTriangle className="h-3 w-3" />
+                    {v.severity}
+                  </span>
+                </div>
               </div>
-              <div className="col-span-4 text-xs text-muted-foreground">{v.detail}</div>
-              <div className="col-span-2 text-right text-sm font-tnum">
-                {v.amount != null && v.currency ? fmtAmount(v.amount, v.currency as never) : "—"}
-              </div>
-              <div className="col-span-1 flex justify-end">
-                <span className={cn(
-                  "text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider border inline-flex items-center gap-1",
-                  v.severity === "critical"
-                    ? "border-destructive/40 text-destructive bg-destructive/10"
-                    : "border-warning/40 text-warning bg-warning/10",
-                )}>
-                  <AlertTriangle className="h-3 w-3" />
-                  {v.severity}
-                </span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
+
         </div>
       )}
     </div>
@@ -343,15 +390,25 @@ function EscalationsTab({
   const clients = useClients();
   const companies = useCompanies();
   const { profile } = useAuth() as { profile?: { displayName?: string } | null };
-  const [logging, setLogging] = useState<{ invoice: Invoice; stage: number } | null>(null);
+  const [logging, setLogging] = useState<{ invoice: Invoice; stage: number; existing?: InvoiceEscalation } | null>(null);
   const [drafting, setDrafting] = useState<{ invoice: Invoice; stage: number } | null>(null);
 
   const rows = useMemo(() => {
     return invoices
       .filter((i) => i.status !== "cancelled" && i.status !== "draft" && i.amount - i.paid > 0.5)
       .map((i) => {
-        const done = new Set(escalations.filter((e) => e.invoiceId === i.id).map((e) => e.stage));
-        return { inv: i, days: agingDays(i), stage: dueStage(i), done };
+        // Green comes from the saved "done" timestamp: keep the latest log per stage.
+        const done = new Map<number, InvoiceEscalation>();
+        for (const e of escalations) {
+          if (e.invoiceId !== i.id || !e.performedAt) continue;
+          const prev = done.get(e.stage);
+          if (!prev || e.performedAt > prev.performedAt) done.set(e.stage, e);
+        }
+        const lastAt = [...done.values()].reduce<string | null>(
+          (acc, e) => (!acc || e.performedAt > acc ? e.performedAt : acc),
+          null,
+        );
+        return { inv: i, days: agingDays(i), stage: dueStage(i), done, lastAt };
       })
       .filter((r) => r.stage > 0)
       .sort((a, b) => b.days - a.days);
@@ -372,33 +429,58 @@ function EscalationsTab({
             <div className="col-span-1 text-right">Age</div>
             <div className="col-span-4">Ladder</div>
           </div>
-          {rows.map(({ inv, days, stage, done }) => (
+          {rows.map(({ inv, days, stage, done, lastAt }) => {
+            const client = clients.find((c) => c.id === inv.clientId);
+            return (
             <div key={inv.id} className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated/60 transition">
-              <div className="col-span-2 text-sm font-tnum truncate">{inv.number}</div>
-              <div className="col-span-3 text-sm truncate">{clients.find((c) => c.id === inv.clientId)?.name ?? "—"}</div>
+              <div className="col-span-2 text-sm font-tnum truncate">
+                <Link to="/invoices" search={{ focus: inv.id }} title={`Open invoice ${inv.number}`} className="text-primary hover:underline underline-offset-2 inline-flex items-center gap-1">
+                  {inv.number}
+                  <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
+                </Link>
+              </div>
+              <div className="col-span-3 text-sm truncate">
+                {client ? (
+                  <Link to="/clients" search={{ focus: client.id }} title={`Open ${client.name}`} className="text-primary hover:underline underline-offset-2">
+                    {client.name}
+                  </Link>
+                ) : "—"}
+              </div>
               <div className="col-span-2 text-right text-sm font-tnum">{fmtAmount(inv.amount - inv.paid, inv.currency)}</div>
-              <div className={cn("col-span-1 text-right text-sm font-tnum", days >= 60 ? "text-destructive" : days >= 30 ? "text-warning" : "")}>{days}d</div>
+              <div className={cn("col-span-1 text-right text-sm font-tnum", days >= 60 ? "text-destructive" : days >= 30 ? "text-warning" : "")}>
+                {days}d
+                {lastAt && (
+                  <div className="text-[10px] text-muted-foreground font-normal">{format(parseISO(lastAt), "MMM d")}</div>
+                )}
+              </div>
               <div className="col-span-4 flex flex-wrap gap-1">
                 {ESCALATION_STAGES.map((s) => {
-                  const isDone = done.has(s);
+                  const entry = done.get(s);
+                  const isDone = !!entry;
                   const isDue = s <= stage;
                   return (
                     <button
                       key={s}
-                      disabled={isDone || !isDue}
-                      onClick={() => setLogging({ invoice: inv, stage: s })}
-                      title={isDone ? "Logged" : isDue ? `Log day ${s} action` : `Due at day ${s}`}
+                      disabled={!isDone && !isDue}
+                      onClick={() => setLogging({ invoice: inv, stage: s, existing: entry })}
+                      title={
+                        entry
+                          ? `Done ${format(parseISO(entry.performedAt), "MMM d, yyyy")}${entry.performedByName ? ` · ${entry.performedByName}` : ""} — click to review`
+                          : isDue ? `Log day ${s} action` : `Due at day ${s}`
+                      }
                       className={cn(
-                        "text-[10px] px-2 py-0.5 rounded border uppercase tracking-wider transition-all",
-                        isDone && "border-success/40 text-success bg-success/10",
+                        "text-[10px] px-2 py-0.5 rounded border uppercase tracking-wider transition-all inline-flex items-center gap-1",
+                        isDone && "border-success/40 text-success bg-success/10 hover:bg-success/20 press-scale",
                         !isDone && isDue && "border-destructive/40 text-destructive bg-destructive/10 hover:bg-destructive/20 press-scale",
-                        !isDue && "border-border text-muted-foreground opacity-60",
+                        !isDone && !isDue && "border-border text-muted-foreground opacity-60",
                       )}
                     >
+                      {isDone && <CheckCircle2 className="h-3 w-3" aria-hidden />}
                       D{s}
                     </button>
                   );
                 })}
+
                 {stage >= 30 && (
                   <button
                     onClick={() => setDrafting({ invoice: inv, stage })}
@@ -410,7 +492,9 @@ function EscalationsTab({
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
+
         </div>
       )}
 
@@ -454,29 +538,61 @@ function EscalationsTab({
   );
 }
 
-function LogEscalationDialog({ target, onClose }: { target: { invoice: Invoice; stage: number } | null; onClose: () => void }) {
+function LogEscalationDialog({
+  target, onClose,
+}: {
+  target: { invoice: Invoice; stage: number; existing?: InvoiceEscalation } | null;
+  onClose: () => void;
+}) {
   const { user, profile } = useAuth() as { user?: { id?: string } | null; profile?: { displayName?: string; display_name?: string } | null };
   const [action, setAction] = useState("");
   const [notes, setNotes] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const stage = target?.stage ?? 0;
   const preset = STAGE_ACTIONS[stage] ?? "";
+  const existing = target?.existing;
 
-  const submit = () => {
+  // Load the saved values whenever a different step is opened.
+  useEffect(() => {
+    setAction(existing?.action ?? "");
+    setNotes(existing?.notes ?? "");
+    setError(null);
+  }, [existing?.id, target?.invoice.id, stage]);
+
+  const submit = async () => {
     if (!target) return;
-    invoiceEscalationsStore.add({
-      id: newId("esc"),
+    setSaving(true);
+    setError(null);
+    const record: InvoiceEscalation = {
+      id: existing?.id ?? newId("esc"),
       companyId: target.invoice.companyId,
       invoiceId: target.invoice.id,
       stage: target.stage,
       action: action.trim() || preset,
       notes: notes.trim() || undefined,
-      performedAt: new Date().toISOString(),
-      performedBy: user?.id,
-      performedByName: profile?.displayName ?? profile?.display_name ?? undefined,
-    });
-    setAction("");
-    setNotes("");
+      performedAt: existing?.performedAt ?? new Date().toISOString(),
+      performedBy: existing?.performedBy ?? user?.id,
+      performedByName: existing?.performedByName ?? profile?.displayName ?? profile?.display_name ?? undefined,
+    };
+    const res = await saveInvoiceEscalation(record);
+    setSaving(false);
+    if ("error" in res) {
+      setError(res.error);
+      return;
+    }
+    const saved = { ...record, id: res.id };
+    if (existing) invoiceEscalationsStore.update(existing.id, saved);
+    else invoiceEscalationsStore.add(saved);
+    toast.success(`Day ${target.stage} action recorded.`);
+    onClose();
+  };
+
+  const removeEntry = () => {
+    if (!existing) return;
+    invoiceEscalationsStore.remove(existing.id);
+    toast.success(`Day ${stage} action removed.`);
     onClose();
   };
 
@@ -484,9 +600,18 @@ function LogEscalationDialog({ target, onClose }: { target: { invoice: Invoice; 
     <Dialog open={!!target} onOpenChange={(v) => !v && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Log day {stage} action — {target?.invoice.number}</DialogTitle>
+          <DialogTitle>
+            {existing ? "Day" : "Log day"} {stage} action — {target?.invoice.number}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
+          {existing && (
+            <div className="rounded-lg border border-success/30 bg-success/5 px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
+              <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" aria-hidden />
+              Done {format(parseISO(existing.performedAt), "MMM d, yyyy 'at' HH:mm")}
+              {existing.performedByName ? ` · ${existing.performedByName}` : ""}
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label htmlFor="esc-action">Action taken</Label>
             <Input id="esc-action" value={action} onChange={(e) => setAction(e.target.value)} placeholder={preset} />
@@ -495,15 +620,29 @@ function LogEscalationDialog({ target, onClose }: { target: { invoice: Invoice; 
             <Label htmlFor="esc-notes">Notes</Label>
             <Textarea id="esc-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Who was contacted, response received, next step…" />
           </div>
+          {error && (
+            <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              {error}
+            </div>
+          )}
         </div>
         <DialogFooter>
+          {existing && (
+            <Button variant="ghost" className="text-destructive mr-auto" onClick={removeEntry}>
+              <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Remove
+            </Button>
+          )}
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button onClick={submit}>Log action</Button>
+          <Button onClick={submit} disabled={saving}>
+            {saving && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+            {existing ? "Save changes" : "Log action"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
 
 /* ─── SOP library tab ───────────────────────────────────────────────── */
 

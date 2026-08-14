@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { focusSearch, useFocusRow } from "@/hooks/use-focus-row";
 import { BankAccountSelect } from "@/components/bank-account-select";
 import { defaultBankAccount } from "@/lib/payment-details";
 import { AppShell } from "@/components/app-shell";
@@ -42,7 +43,7 @@ import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightS
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
 
-export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage });
+export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage, validateSearch: focusSearch });
 
 const statusStyles: Record<string, string> = {
   draft: "border-muted text-muted-foreground bg-muted/30",
@@ -54,6 +55,7 @@ const statusStyles: Record<string, string> = {
 };
 
 function InvoicesPage() {
+  useFocusRow(Route.useSearch().focus);
   return (
     <AppShell>
       <PageHeader title="Invoices" description="What's owed and when it lands." />
@@ -313,7 +315,7 @@ function Body() {
                     ? differenceInDays(parseISO(inv.paidDate), parseISO(inv.dueDate))
                     : null;
                   return (
-                    <tr key={inv.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
+                    <tr key={inv.id} data-focus-id={inv.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
                       <td className="px-5 py-3.5 font-tnum text-xs text-muted-foreground">{inv.number}</td>
                       <td className="px-5 py-3.5 font-medium">{cl?.name ?? "—"}</td>
                       <td className="px-5 py-3.5 text-xs">
