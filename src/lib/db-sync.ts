@@ -1093,6 +1093,11 @@ const poToDb = (p: PurchaseOrder) => {
     subject: p.subject ?? null,
     bank_account_id: p.bankAccountId ?? null,
     buying_entity: p.buyingEntity ?? null,
+    signer_id: p.signerId && isUuid(p.signerId) ? p.signerId : null,
+    stamp_x: p.stampX ?? null,
+    stamp_y: p.stampY ?? null,
+    stamp_scale: p.stampScale ?? null,
+    stamp_dirty: p.stampDirty ?? false,
     ...(p.createdBy && isUuid(p.createdBy) ? { created_by: p.createdBy } : {}),
     ...(p.updatedBy && isUuid(p.updatedBy) ? { updated_by: p.updatedBy } : {}),
   };
@@ -1122,6 +1127,11 @@ const poFromDb = (r: Record<string, unknown>): PurchaseOrder => ({
   buyingEntity: (r.buying_entity as string) ?? undefined,
   updatedBy: (r.updated_by as string) ?? undefined,
   updatedAt: (r.updated_at as string) ?? undefined,
+  signerId: (r.signer_id as string) ?? undefined,
+  stampX: r.stamp_x != null ? Number(r.stamp_x) : undefined,
+  stampY: r.stamp_y != null ? Number(r.stamp_y) : undefined,
+  stampScale: r.stamp_scale != null ? Number(r.stamp_scale) : undefined,
+  stampDirty: Boolean(r.stamp_dirty),
 });
 
 export async function upsertPurchaseOrder(p: PurchaseOrder): Promise<string | null> {
