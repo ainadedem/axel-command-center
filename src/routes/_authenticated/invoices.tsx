@@ -574,7 +574,6 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   useEffect(() => {
     if (!open) return;
     if (editing) {
-      console.debug("[dbg] invoice edit init", { number: editing.number, companyId: editing.companyId, clientId: editing.clientId, companies: companies.map((c) => c.id) });
       numberTouched.current = false; setNumber(editing.number); setCompanyId(editing.companyId); setClientId(editing.clientId);
 
       setProjectId(editing.projectId ?? ""); setPoId(editing.poId ?? "");
@@ -791,7 +790,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               <Label><RequiredLabel>Company</RequiredLabel></Label>
               <Select value={companyId} onValueChange={(v) => { setCompanyId(v); setClientId(""); setPoId(""); }}>
                 <SelectTrigger className={invalidFieldClassName(showErrors && !companyId)} aria-invalid={showErrors && !companyId}><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}{companyId && !companies.some((c) => c.id === companyId) && <SelectItem value={companyId}>Current company</SelectItem>}</SelectContent>
               </Select>
             </div>
             <div>
