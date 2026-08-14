@@ -116,7 +116,7 @@ function CompanySwitcher() {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-secondary hover:bg-sidebar-accent border border-sidebar-border hover:border-primary/30 text-sm transition-all duration-200 active:scale-[0.98] group/ws"
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-secondary hover:bg-sidebar-accent border border-sidebar-border hover:border-primary/30 text-sm transition-all duration-200 active:scale-[0.98] group/ws"
       >
         <div className="h-7 w-7 rounded-md bg-gradient-to-br from-primary to-chart-2 grid place-items-center text-[10px] font-display font-bold text-primary-foreground">
           {scope.id === "group" ? "GR" : companies.find((c) => c.id === scope.companyId)?.shortName}
@@ -130,7 +130,7 @@ function CompanySwitcher() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute z-50 mt-2 w-full rounded-2xl border border-border bg-popover/95 material-panel shadow-[var(--shadow-elevated)] overflow-hidden origin-top animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
+          <div className="absolute z-50 mt-2 w-full rounded-lg border border-border bg-popover/95 material-panel shadow-[var(--shadow-elevated)] overflow-hidden origin-top animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
             {isGroupAdmin && (
               <>
                 <button
@@ -196,10 +196,10 @@ function SidebarSection({ section, pathname, onNavigate }: { section: NavSection
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "group focus-ring flex items-center gap-3 px-3 py-2 rounded-full text-sm relative overflow-hidden transition-[color,background-color,transform] duration-200 ease-in-out active:scale-[0.98]",
+                  "group focus-ring flex items-center gap-3 px-3 py-2 rounded-md text-sm relative overflow-hidden transition-[color,background-color,transform] duration-200 ease-in-out active:scale-[0.98]",
                   active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 hover:translate-x-0.5",
+                    ? "bg-[color-mix(in_oklab,var(--primary)_12%,transparent)] text-primary font-semibold"
+                    : "text-sidebar-foreground hover:text-primary hover:bg-[color-mix(in_oklab,var(--primary)_8%,transparent)]",
                 )}
               >
                 <span
@@ -262,7 +262,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
         <Link
           to="/settings"
           onClick={onNavigate}
-          className="group focus-ring flex items-center gap-3 px-3 py-2 rounded-full text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200 active:scale-[0.98]"
+          className="group focus-ring flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-[color-mix(in_oklab,var(--primary)_8%,transparent)] hover:text-primary transition-all duration-200 active:scale-[0.98]"
         >
           <Settings className="h-4 w-4 transition-transform duration-500 group-hover:rotate-90" /> Settings
         </Link>
@@ -273,7 +273,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
 
 function Sidebar() {
   return (
-    <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-sidebar-border/70 bg-sidebar/80 material-bar">
+    <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
       <SidebarInner />
     </aside>
   );
@@ -428,7 +428,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
           {bellOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setBellOpen(false)} />
-              <div className="absolute right-0 mt-2 w-72 rounded-2xl border border-border bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
+              <div className="absolute right-0 mt-2 w-72 rounded-lg border border-border bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
                 <div className="px-3 py-2.5 border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground">Notifications</div>
                 <div className="p-6 text-center text-sm text-muted-foreground">You're all caught up.</div>
               </div>
@@ -452,7 +452,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-              <div role="menu" aria-label="Account" className="absolute right-0 mt-2 w-72 rounded-2xl border border-border bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
+              <div role="menu" aria-label="Account" className="absolute right-0 mt-2 w-72 rounded-lg border border-border bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
                 <div className="px-3 py-3 border-b border-border">
                   <div className="text-sm font-medium truncate">{name}</div>
                   <div className="text-[11px] text-muted-foreground truncate">{user?.email}</div>
@@ -516,7 +516,7 @@ function FxBadge() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-border bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
+          <div className="absolute right-0 mt-2 w-64 rounded-lg border border-border bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-200">
             <div className="px-3 py-2.5 border-b border-border flex items-center justify-between">
               <div className="text-[11px] uppercase tracking-wider text-muted-foreground">FX rates (per MGA)</div>
               <button
@@ -548,7 +548,7 @@ function FxBadge() {
 function AppShellLoading() {
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-[var(--gradient-surface)] p-8 shadow-[var(--shadow-soft)]">
+      <div className="w-full max-w-md rounded-lg border border-border bg-[var(--gradient-surface)] p-8 shadow-[var(--shadow-soft)]">
         <div className="flex items-center gap-3">
           <AxelBraceMark title="AXEL Business Platform" className="h-9 w-9 text-primary" />
           <div>
@@ -569,7 +569,7 @@ function AppShellLoading() {
 function AppShellError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-[var(--gradient-surface)] p-8 shadow-[var(--shadow-soft)]">
+      <div className="w-full max-w-md rounded-lg border border-border bg-[var(--gradient-surface)] p-8 shadow-[var(--shadow-soft)]">
         <div className="flex items-center gap-3">
           <AxelBraceMark title="AXEL Business Platform" className="h-9 w-9 text-primary" />
           <div>
@@ -600,10 +600,10 @@ function AppShellFrame({ children }: { children: ReactNode }) {
 
 
   return (
-    <div className="min-h-dvh bg-background text-foreground p-0 lg:p-3">
+    <div className="min-h-dvh bg-background text-foreground p-0">
       <a href="#main-content" className="skip-link">Skip to content</a>
       <MobileNav open={navOpen} onClose={() => setNavOpen(false)} />
-      <div className="min-h-dvh lg:min-h-[calc(100dvh-1.5rem)] flex overflow-hidden rounded-none lg:rounded-[28px] border border-border/70 bg-card shadow-[var(--shadow-elevated)]">
+      <div className="min-h-dvh lg:min-h-[calc(100dvh-1.5rem)] flex overflow-hidden rounded-none border-0 lg:border lg:border-border bg-background">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar onOpenNav={() => setNavOpen(true)} />
