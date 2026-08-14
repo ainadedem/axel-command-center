@@ -179,7 +179,7 @@ function SidebarSection({ section, pathname, onNavigate }: { section: NavSection
         <ChevronDown
           aria-hidden="true"
           className={cn(
-            "h-3 w-3 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+            "h-3 w-3 transition-transform duration-300 ease-in-out",
             open ? "rotate-0" : "-rotate-90",
           )}
         />
@@ -196,7 +196,7 @@ function SidebarSection({ section, pathname, onNavigate }: { section: NavSection
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "group focus-ring flex items-center gap-3 px-3 py-2 rounded-full text-sm relative overflow-hidden transition-[color,background-color,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98]",
+                  "group focus-ring flex items-center gap-3 px-3 py-2 rounded-full text-sm relative overflow-hidden transition-[color,background-color,transform] duration-200 ease-in-out active:scale-[0.98]",
                   active
                     ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                     : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 hover:translate-x-0.5",
@@ -412,7 +412,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
           onClick={handleNew}
           aria-label={newLabel}
           title={newLabel}
-          className="h-9 w-9 sm:w-auto sm:px-4 focus-ring tap-target rounded-full text-sm font-medium bg-primary text-primary-foreground hover:opacity-95 hover:-translate-y-px hover:shadow-[var(--shadow-glow)] active:translate-y-0 active:scale-[0.97] transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] flex items-center justify-center gap-1.5 group"
+          className="h-9 w-9 sm:w-auto sm:px-4 focus-ring tap-target rounded-full text-sm font-medium bg-primary text-primary-foreground hover:opacity-95 hover:-translate-y-px hover:shadow-[var(--shadow-glow)] active:translate-y-0 active:scale-[0.97] transition-all duration-200 ease-in-out flex items-center justify-center gap-1.5 group"
         >
           <Plus className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:rotate-90" />
           <span className="hidden sm:inline">{newLabel}</span>
