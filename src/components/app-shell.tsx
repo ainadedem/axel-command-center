@@ -341,7 +341,10 @@ const NEW_BUTTON_ROUTES: { match: (p: string) => boolean; to: string; label: str
   { match: (p) => p.startsWith("/journal"), to: "/journal", label: "New journal entry" },
   { match: (p) => p.startsWith("/users-access"), to: "/users-access", label: "Add user" },
   { match: (p) => p.startsWith("/sops"), to: "/sops", label: "Log escalation" },
-  { match: (p) => p.startsWith("/axel"), to: "/axel", label: "New conversation" },
+  ...(AXEL_AI_ENABLED
+    ? [{ match: (p: string) => p.startsWith("/axel"), to: "/axel", label: "New conversation" }]
+    : []),
+
   // Dashboard has no entity of its own — invoicing is the primary action.
   { match: (p) => p === "/" || p.startsWith("/dashboard"), to: "/invoices", label: "New invoice" },
 ];
