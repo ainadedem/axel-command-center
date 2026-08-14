@@ -152,6 +152,9 @@ export function logSignerChange(input: {
   void logActivity({ ...input, action: "signer_changed" });
 }
 
+type Diffable = Record<string, unknown>;
+
+
 
 
 const LABELS: Record<string, string> = {
