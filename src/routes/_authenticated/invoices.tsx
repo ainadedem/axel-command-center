@@ -29,7 +29,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
+import { EmptyState } from "@/components/crud-toolbar";
+import { useCreateAction } from "@/lib/create-action";
 import { Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, Ban, BadgeCheck, ToggleLeft, ToggleRight, Plus, X } from "lucide-react";
 import { InvoicePreview } from "@/components/invoice-preview";
 import { RecordPaymentDialog } from "@/components/statement-import-dialog";
@@ -458,6 +459,14 @@ function Body() {
       case "owner": return ownerName(inv.createdBy);
       default: return "";
     }
+  };
+
+  const filtersActive =
+    chipStatuses.length > 0 || chipPo.length > 0 || view.activeFilterCount > 0 || view.state.q.trim().length > 0;
+  const clearAllFilters = () => {
+    setChipStatuses([]);
+    setChipPo([]);
+    view.reset();
   };
 
   return (
