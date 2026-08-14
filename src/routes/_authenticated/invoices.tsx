@@ -488,59 +488,21 @@ function Body() {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Stat label="Open receivables" value={fmtAmount(totalOpen, "MGA")} />
-            <Stat label="Overdue" value={fmtAmount(totalOverdue, "MGA")} danger />
-            <Stat label="Collected (period)" value={fmtAmount(totalPaid, "MGA")} good />
+            <KpiCard label="Open receivables" value={fmtAmount(totalOpen, "MGA")} />
+            <KpiCard label="Overdue" value={fmtAmount(totalOverdue, "MGA")} tone={totalOverdue > 0 ? "danger" : "default"} />
+            <KpiCard label="Collected (period)" value={fmtAmount(totalPaid, "MGA")} tone="success" />
           </div>
 
-          {hasAging && (
-            <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-              <div className="px-5 py-2.5 border-b border-border">
-                <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Receivables aging — days past due</div>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border/40">
-                {(["0-30", "31-60", "61-90", "90+"] as const).map((key, i) => {
-                  const b = agingBuckets[key];
-                  const tone = i === 0 ? "text-primary" : i === 1 ? "text-warning" : "text-destructive";
-                  const dot = i === 0 ? "bg-primary" : i === 1 ? "bg-warning" : "bg-destructive";
-                  return (
-                    <div key={key} className="p-5 relative">
-                      <div className="flex items-center gap-1.5">
-                        <span className={cn("h-1.5 w-1.5 rounded-full", b.count > 0 ? dot : "bg-muted-foreground/30")} />
-                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{key} days</div>
-                      </div>
-                      <div className={`font-display text-2xl font-bold font-tnum mt-2 leading-none ${b.count > 0 ? tone : "text-muted-foreground/40"}`}>
-                        {b.count > 0 ? fmtAmount(b.amount, "MGA") : "—"}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5">{b.count} invoice{b.count !== 1 ? "s" : ""}</div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          <AgingPanel
+            aging={aging}
+            selected={bucket}
+            onSelect={setBucket}
+            format={(v) => fmtAmount(v, "MGA")}
+            noun="invoice"
+            title="Receivables aging"
+            tilesTitle="Receivables aging — days past due"
+          />
 
-          {hasAgingChart && (
-            <ChartFrame
-              title="Receivables aging"
-              description="Open balance by days past due (MGA) — follows the current filters"
-              labelKey="bucket"
-              data={agingChartData}
-              series={[{ key: "amount", label: "Open balance", color: CHART_SEMANTIC.expense }]}
-              formatValue={(v) => fmtAmount(v, "MGA")}
-              height={240}
-            >
-              <ResponsiveContainer>
-                <BarChart data={agingChartData} margin={chartMargin}>
-                  <CartesianGrid {...chartGridProps} />
-                  <XAxis dataKey="bucket" {...chartAxisProps} />
-                  <YAxis {...chartAxisProps} />
-                  <Tooltip content={<ChartTooltip formatter={(v: number) => fmtAmount(v, "MGA")} />} cursor={chartCursor} />
-                  <Bar dataKey="amount" name="Open balance" {...chartBarProps} fill={CHART_SEMANTIC.expense} />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartFrame>
-          )}
 
           <ListTableShell scrollX announcement={tp.announcement}>
             <ListTable style={{ minWidth: tableMinWidth }}>
