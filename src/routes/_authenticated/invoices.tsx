@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/page-header";
 import {
   useInvoices, useCompanies, useClients, useProjects, usePurchaseOrders, useQuotes, useAccounts,
   invoicesStore, transactionsStore, projectsStore, purchaseOrdersStore, quotesStore,
-  fmtAmount, toMGA, FX, type Invoice, type Project, type Currency, type QuoteLine, type Client,
+  fmtAmount, fmtFull, toMGA, FX, type Invoice, type Project, type Currency, type QuoteLine, type Client,
   getNumberFormat, setNumberFormat, type NumberFormatMode,
   contactBelongsTo,
 } from "@/lib/mock-data";
@@ -51,6 +51,8 @@ import { BulkEditDocDialog } from "@/components/bulk-edit-doc-dialog";
 import { bulkUpdateDocuments, type BulkPatch } from "@/lib/bulk-edit";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, RowAction, ColumnPicker } from "@/components/list-table";
+import { useResizableColumns } from "@/components/resizable-columns";
+import { StatusBadge, PoBadge } from "@/components/status-badge";
 
 const INVOICE_COLUMNS: ColumnDef[] = [
   { key: "number", label: "Number", priority: "always" },
@@ -68,16 +70,12 @@ const INVOICE_COLUMNS: ColumnDef[] = [
 ];
 
 
-export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage, validateSearch: focusSearch });
-
-const statusStyles: Record<string, string> = {
-  draft: "border-muted text-muted-foreground bg-muted/30",
-  sent: "border-primary/30 text-primary bg-primary/10",
-  partial: "border-warning/40 text-warning bg-warning/10",
-  paid: "border-success/40 text-success bg-success/10",
-  overdue: "border-destructive/40 text-destructive bg-destructive/10",
-  cancelled: "border-muted-foreground/30 text-muted-foreground bg-muted/20 line-through",
+const INVOICE_COL_WIDTHS: Record<string, number> = {
+  number: 130, client: 200, project: 160, company: 130, issued: 130, due: 150,
+  paidOn: 130, timing: 120, status: 180, amount: 160, balance: 150, owner: 150,
 };
+
+export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage, validateSearch: focusSearch });
 
 function InvoicesPage() {
   useFocusRow(Route.useSearch().focus);
@@ -104,6 +102,8 @@ function Body() {
   const [marking, setMarking] = useState<Invoice | null>(null);
   const [historyOf, setHistoryOf] = useState<Invoice | null>(null);
   const [numMode, setNumMode] = useState<NumberFormatMode>(getNumberFormat());
+  const { widths, startResize, resetWidths } = useResizableColumns("axel.invoices.colWidths", INVOICE_COL_WIDTHS);
+  const colW = (key: string) => `${widths[key] ?? INVOICE_COL_WIDTHS[key] ?? 140}px`;
 
   const toggleMode = useCallback(() => {
     const next: NumberFormatMode = numMode === "compact" ? "full" : "compact";
@@ -283,7 +283,7 @@ function Body() {
       <div className="flex items-center justify-between gap-4">
         <CrudToolbar createLabel="New invoice" count={list.length} label="invoices" onCreate={openCreate} />
         <div className="flex items-center gap-4">
-          <ColumnPicker prefs={cp} />
+          <ColumnPicker prefs={cp} onResetWidths={resetWidths} />
           <ReconcileButton checks={checks} />
 
           <button
@@ -336,23 +336,23 @@ function Body() {
             </div>
           )}
 
-          <ListTableShell>
-            <ListTable>
+          <ListTableShell scrollX>
+            <ListTable style={{ minWidth: tableMinWidth }}>
               <thead>
                 <ListHeadRow>
                   <SelectAllHeaderCell checked={selection.allSelected} onToggle={selection.toggleAll} />
-                  <ListTh width="10%">Number</ListTh>
-                  <ListTh width="16%">Client</ListTh>
-                  {cp.on("project") && <ListTh width="12%">Project</ListTh>}
-                  {cp.on("company") && <ListTh width="9%">Company</ListTh>}
-                  {cp.on("issued") && <ListTh width="10%">Issued</ListTh>}
-                  {cp.on("due") && <ListTh width="11%">Due</ListTh>}
-                  {cp.on("paidOn") && <ListTh width="10%">Paid on</ListTh>}
-                  {cp.on("timing") && <ListTh width="9%">Timing</ListTh>}
-                  {cp.on("status") && <ListTh width="12%">Status</ListTh>}
-                  <ListTh width="12%" align="right">Amount</ListTh>
-                  {cp.on("balance") && <ListTh width="11%" align="right">Balance</ListTh>}
-                  {cp.on("owner") && <ListTh width="13%">Owner</ListTh>}
+                  <ListTh width={colW("number")} onResizeStart={startResize("number")}>Number</ListTh>
+                  <ListTh width={colW("client")} onResizeStart={startResize("client")}>Client</ListTh>
+                  {cp.on("project") && <ListTh width={colW("project")} onResizeStart={startResize("project")}>Project</ListTh>}
+                  {cp.on("company") && <ListTh width={colW("company")} onResizeStart={startResize("company")}>Company</ListTh>}
+                  {cp.on("issued") && <ListTh width={colW("issued")} onResizeStart={startResize("issued")}>Issued</ListTh>}
+                  {cp.on("due") && <ListTh width={colW("due")} onResizeStart={startResize("due")}>Due</ListTh>}
+                  {cp.on("paidOn") && <ListTh width={colW("paidOn")} onResizeStart={startResize("paidOn")}>Paid on</ListTh>}
+                  {cp.on("timing") && <ListTh width={colW("timing")} onResizeStart={startResize("timing")}>Timing</ListTh>}
+                  {cp.on("status") && <ListTh width={colW("status")} onResizeStart={startResize("status")}>Status</ListTh>}
+                  <ListTh width={colW("amount")} align="right" onResizeStart={startResize("amount")}>Amount</ListTh>
+                  {cp.on("balance") && <ListTh width={colW("balance")} align="right" onResizeStart={startResize("balance")}>Balance</ListTh>}
+                  {cp.on("owner") && <ListTh width={colW("owner")}>Owner</ListTh>}
                 </ListHeadRow>
               </thead>
               <tbody>
@@ -423,22 +423,26 @@ function Body() {
                       {cp.on("status") && (
                         <ListTd wrap title={inv.status === "cancelled" && inv.cancellationReason ? `Cancelled: ${inv.cancellationReason}` : inv.status}>
                           <div className="flex flex-wrap items-center gap-1.5">
-                            <span className={cn("text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[inv.status])}>{inv.status}</span>
-                            {!inv.poId && inv.status !== "cancelled" && (
-                              <span
-                                className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10"
-                                title={inv.poWaived ? `PO bypassed${inv.poWaiverReason ? `: ${inv.poWaiverReason}` : ""}` : "No client PO linked"}
-                              >
-                                <AlertTriangle className="h-2.5 w-2.5" /> PO
-                              </span>
+                            <StatusBadge
+                              status={inv.status}
+                              title={inv.status === "cancelled" && inv.cancellationReason ? `Cancelled: ${inv.cancellationReason}` : undefined}
+                            />
+                            {inv.status !== "cancelled" && (
+                              inv.poId ? (
+                                <PoBadge state="linked" title="Client PO linked" />
+                              ) : inv.poWaived ? (
+                                <PoBadge state="waived" title={`PO bypassed${inv.poWaiverReason ? `: ${inv.poWaiverReason}` : ""}`} />
+                              ) : (
+                                <PoBadge state="missing" title="No client PO linked" />
+                              )
                             )}
                           </div>
                         </ListTd>
                       )}
-                      <ListTd align="right" className="font-tnum">{fmtAmount(inv.amount, inv.currency)}</ListTd>
+                      <ListTd align="right" className="font-tnum" title={fmtFull(inv.amount, inv.currency)}>{fmtFull(inv.amount, inv.currency)}</ListTd>
                       {cp.on("balance") && (
                         <ListTd align="right" className="font-tnum font-medium">
-                          {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? fmtAmount(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
+                          {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? fmtFull(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
                         </ListTd>
                       )}
                       {cp.on("owner") && (
