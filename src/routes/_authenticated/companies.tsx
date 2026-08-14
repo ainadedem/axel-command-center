@@ -340,6 +340,56 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               )}
             </div>
           </div>
+
+          <div className="rounded-lg border border-border p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Stamp on documents</Label>
+              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                <Checkbox checked={showStamp} onCheckedChange={(v) => setShowStamp(!!v)} />
+                Print the stamp
+              </label>
+            </div>
+            <div className="flex items-start gap-4">
+              <div>
+                <AvatarUpload value={stampUrl} onChange={setStampUrl} name="Stamp" size={72} square folder="stamps" />
+                <p className="text-[10px] text-muted-foreground mt-1 max-w-[120px]">PNG with a transparent background works best.</p>
+              </div>
+              <div className="flex-1 space-y-3">
+                <div>
+                  <div className="text-xs text-muted-foreground mb-2">Position</div>
+                  <div className="flex rounded-md border border-border overflow-hidden w-fit">
+                    {([["bottom-right", "Bottom right"], ["bottom-left", "Bottom left"], ["center", "Centered"]] as const).map(([v, label]) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setStampPosition(v)}
+                        className={`px-3 py-1 text-xs transition ${stampPosition === v ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Width</span><span className="tabular-nums">{stampWidth}px</span></div>
+                    <Slider value={[stampWidth]} min={60} max={280} step={2} onValueChange={([v]) => setStampWidth(v)} className="mt-2" />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Opacity</span><span className="tabular-nums">{Math.round(stampOpacity * 100)}%</span></div>
+                    <Slider value={[Math.round(stampOpacity * 100)]} min={20} max={100} step={5} onValueChange={([v]) => setStampOpacity(v / 100)} className="mt-2" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-md bg-white border border-border p-3 grid place-items-center min-h-[80px]">
+              {stampPreviewUrl ? (
+                <img src={stampPreviewUrl} alt="Stamp preview" style={{ width: stampWidth, opacity: stampOpacity, objectFit: "contain" }} />
+              ) : (
+                <p className="text-[11px] text-neutral-500">Upload a stamp to preview how it prints.</p>
+              )}
+            </div>
+          </div>
           <LogoCropDialog
             open={cropOpen}
             onOpenChange={setCropOpen}
