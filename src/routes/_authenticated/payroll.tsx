@@ -390,7 +390,7 @@ function RunsTab() {
       </div>
 
       <div className="flex justify-end">
-        <Button size="sm" onClick={() => setCreating(true)} className="gap-1.5">
+        <Button size="sm" onClick={() => setCreating(true)} className="btn-new gap-1.5">
           <Plus className="h-4 w-4" /> New monthly run
         </Button>
       </div>
@@ -398,7 +398,7 @@ function RunsTab() {
       {list.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border bg-surface/40 p-12 text-center">
           <p className="text-sm text-muted-foreground mb-4">No payroll runs yet.</p>
-          <Button size="sm" onClick={() => setCreating(true)} className="gap-1.5">
+          <Button size="sm" onClick={() => setCreating(true)} className="btn-new gap-1.5">
             <Plus className="h-4 w-4" /> Create first run
           </Button>
         </div>

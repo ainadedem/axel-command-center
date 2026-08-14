@@ -29,7 +29,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
-import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, RowAction, ColumnPicker } from "@/components/list-table";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 
 const PROJECT_COLUMNS: ColumnDef[] = [
   { key: "salesRep", label: "Sales rep" },
@@ -137,7 +137,7 @@ function Body() {
   const cp = useColumnPrefs("projects", PROJECT_COLUMNS);
   const hiddenForSales = salesOnly ? ["revenue", "cost", "profit", "margin", "invoiced", "collected", "spend", "netpl"] : [];
   // 1 chevron col + Project + Client + toggled columns
-  const colCount = 3 + PROJECT_COLUMNS.filter((c) => !hiddenForSales.includes(c.key) && cp.on(c.key)).length;
+  const colCount = 4 + PROJECT_COLUMNS.filter((c) => !hiddenForSales.includes(c.key) && cp.on(c.key)).length;
 
 
 
@@ -222,7 +222,8 @@ function Body() {
               <ListTable>
                 <thead>
                   <ListHeadRow>
-                    <ListTh width="2.25rem" />
+                    <ListActionsTh />
+<ListTh width="2.25rem" />
                     <ListTh width={salesOnly ? "28%" : "18%"}>Project</ListTh>
                     <ListTh width={salesOnly ? "24%" : "15%"}>Client</ListTh>
                     {cp.on("salesRep") && <ListTh width={salesOnly ? "20%" : "11%"}>Sales rep</ListTh>}
@@ -262,9 +263,19 @@ function Body() {
                               className="hover:bg-surface-elevated/40 cursor-pointer"
                               onClick={() => toggleExpanded(p.id)}
                             >
+                              <ListRowActions colSpan={colCount}>
+                                <RowAction
+                                  icon={isExp ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                                  label={isExp ? "Hide details" : "Details"}
+                                  onClick={() => toggleExpanded(p.id)}
+                                />
+                                <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(p); setOpen(true); }} />
+                                <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete ${p.name}?`)) { projectsStore.remove(p.id); void deleteProjectDb(p.id); } }} />
+                              </ListRowActions>
                               <ListTd className="px-3 text-muted-foreground">
                                 {isExp ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                               </ListTd>
+
                               <ListTd className="font-medium" title={p.name}>{p.name}</ListTd>
                               <ListTd className="text-muted-foreground" title={cl?.name}>{cl?.name ?? "—"}</ListTd>
                               {cp.on("salesRep") && <ListTd className="text-xs text-muted-foreground" title={cl?.acquisition}>{cl?.acquisition ?? <span className="text-muted-foreground/50">—</span>}</ListTd>}
@@ -290,18 +301,6 @@ function Body() {
                               )}
                               </>}
                             </tr>
-                            <ListRowActions colSpan={colCount}>
-                              <span className="text-[11px] text-muted-foreground/70 mr-1">
-                                {projInvoices.length} inv · {projTx.length} tx
-                              </span>
-                              <RowAction
-                                icon={isExp ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                                label={isExp ? "Hide details" : "Details"}
-                                onClick={() => toggleExpanded(p.id)}
-                              />
-                              <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(p); setOpen(true); }} />
-                              <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete ${p.name}?`)) { projectsStore.remove(p.id); void deleteProjectDb(p.id); } }} />
-                            </ListRowActions>
                             {isExp && (
                               <tr className="border-b border-border/40 bg-surface-elevated/10">
                                 <td colSpan={colCount} className="p-0">

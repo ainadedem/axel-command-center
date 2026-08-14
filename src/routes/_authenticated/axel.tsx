@@ -46,7 +46,7 @@ function AxelLayout() {
           <div className="p-3 border-b border-border">
             <button
               onClick={onNew}
-              className="w-full h-9 rounded-md bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90"
+              className="btn-new w-full h-9 rounded-md bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90"
             >
               <Plus className="h-4 w-4" /> New conversation
             </button>

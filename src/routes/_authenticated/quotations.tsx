@@ -53,7 +53,7 @@ import { useSingleFlightSubmit } from "@/components/form-ux";
 import { QuoteAssigneePicker, AssigneeStack } from "@/components/quote-assignee-picker";
 import { QuoteFollowupPanel, followUpTone, followUpToneClass } from "@/components/quote-followup-panel";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
-import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, RowAction, ColumnPicker } from "@/components/list-table";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 
 const QUOTE_COLUMNS: ColumnDef[] = [
   { key: "number", label: "Number", priority: "always" },
@@ -170,7 +170,7 @@ function Body() {
   const groups = view.apply(baseList);
   const list = groups.flatMap((g) => g.items);
   const cp = useColumnPrefs("quotations", QUOTE_COLUMNS);
-  const colCount = 1 + cp.count;
+  const colCount = 2 + cp.count;
 
 
   const isWritable = useCallback(
@@ -257,7 +257,8 @@ function Body() {
           <ListTable>
             <thead>
               <ListHeadRow>
-                <SelectAllHeaderCell checked={selection.allSelected} onToggle={selection.toggleAll} />
+                <ListActionsTh />
+<SelectAllHeaderCell checked={selection.allSelected} onToggle={selection.toggleAll} />
                 <ListTh width="11%">Number</ListTh>
                 <ListTh width="17%">Client</ListTh>
                 {cp.on("project") && <ListTh width="13%">Project</ListTh>}
@@ -281,6 +282,26 @@ function Body() {
                 return (
                   <Fragment key={q.id}>
                   <tr className="hover:bg-surface-elevated/40">
+<ListRowActions colSpan={colCount}>
+                    {!q.sentAt && (
+                      <RowAction
+                        icon={sendingId === q.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                        label="Send"
+                        onClick={() => sendToClient(q)}
+                        disabled={!cl?.email || sendingId === q.id}
+                        title={cl?.email ? `Send to ${cl.email}` : "Client has no email on file"}
+                      />
+                    )}
+                    {q.status !== "accepted" && q.status !== "rejected" && (
+                      <RowAction icon={<FileCheck2 className="h-3.5 w-3.5" />} label="To PO" tone="success" onClick={() => convertToPO(q)} title="Convert to PO" />
+                    )}
+                    <RowAction icon={<History className="h-3.5 w-3.5" />} label="History" onClick={() => setHistoryOf(q)} title="Activity history" />
+                    <RowAction icon={<Copy className="h-3.5 w-3.5" />} label="Duplicate" onClick={() => duplicateQuote(q)} title="Duplicate quote" />
+                    <RowAction icon={<Eye className="h-3.5 w-3.5" />} label="Preview" onClick={() => setPreviewing(q)} title="Preview & export PDF" />
+                    <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(q); setOpen(true); }} />
+                    <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete quote ${q.number}?`)) quotesStore.remove(q.id); }} />
+                  </ListRowActions>
+
                     <SelectRowCell
                       checked={selection.isSelected(q.id)}
                       onToggle={() => selection.toggle(q.id)}
@@ -328,25 +349,6 @@ function Body() {
                     )}
                     <ListTd align="right" className="font-tnum">{fmtCompact(q.totalAmount ?? q.amount, q.currency)}</ListTd>
                   </tr>
-                  <ListRowActions colSpan={colCount}>
-                    {!q.sentAt && (
-                      <RowAction
-                        icon={sendingId === q.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-                        label="Send"
-                        onClick={() => sendToClient(q)}
-                        disabled={!cl?.email || sendingId === q.id}
-                        title={cl?.email ? `Send to ${cl.email}` : "Client has no email on file"}
-                      />
-                    )}
-                    {q.status !== "accepted" && q.status !== "rejected" && (
-                      <RowAction icon={<FileCheck2 className="h-3.5 w-3.5" />} label="To PO" tone="success" onClick={() => convertToPO(q)} title="Convert to PO" />
-                    )}
-                    <RowAction icon={<History className="h-3.5 w-3.5" />} label="History" onClick={() => setHistoryOf(q)} title="Activity history" />
-                    <RowAction icon={<Copy className="h-3.5 w-3.5" />} label="Duplicate" onClick={() => duplicateQuote(q)} title="Duplicate quote" />
-                    <RowAction icon={<Eye className="h-3.5 w-3.5" />} label="Preview" onClick={() => setPreviewing(q)} title="Preview & export PDF" />
-                    <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(q); setOpen(true); }} />
-                    <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete quote ${q.number}?`)) quotesStore.remove(q.id); }} />
-                  </ListRowActions>
                   </Fragment>
                 );
               })}

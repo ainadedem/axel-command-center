@@ -24,7 +24,7 @@ import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
-import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, RowAction, ColumnPicker } from "@/components/list-table";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 
 const TX_COLUMNS: ColumnDef[] = [
   { key: "date", label: "Date", priority: "always" },
@@ -251,7 +251,8 @@ function Body() {
           <ListTable>
             <thead>
               <ListHeadRow>
-                <ListTh width="11%">Date</ListTh>
+                <ListActionsTh />
+<ListTh width="11%">Date</ListTh>
                 <ListTh width="20%">Description</ListTh>
                 {cp.on("company") && <ListTh width="9%">Company</ListTh>}
                 {cp.on("counterparty") && <ListTh width="14%">Counterparty</ListTh>}
@@ -265,7 +266,7 @@ function Body() {
             <tbody>
               {groups.map((g) => (
                 <Fragment key={g.key}>
-                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={cp.count} />}
+                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={cp.count + 1} />}
                   {g.items.map((t) => {
                     const co = companies.find((c) => c.id === t.companyId);
                     const cli = t.clientId ? clients.find((c) => c.id === t.clientId) : null;
@@ -275,6 +276,11 @@ function Body() {
                     return (
                       <Fragment key={t.id}>
                       <tr className="hover:bg-surface-elevated/40">
+<ListRowActions colSpan={cp.count}>
+                        <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(t); setOpen(true); }} />
+                        <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm("Delete this transaction?")) transactionsStore.remove(t.id); }} />
+                      </ListRowActions>
+
                         <ListTd className="text-muted-foreground font-tnum text-xs">{format(parseISO(t.date), "MMM d, yyyy")}</ListTd>
                         <ListTd className="font-medium" title={t.description}>{t.description}</ListTd>
                         {cp.on("company") && (
@@ -319,10 +325,6 @@ function Body() {
                           {t.type === "income" ? "+" : t.type === "expense" ? "−" : ""}{fmtCompact(t.amount, t.currency)}
                         </ListTd>
                       </tr>
-                      <ListRowActions colSpan={cp.count}>
-                        <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(t); setOpen(true); }} />
-                        <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm("Delete this transaction?")) transactionsStore.remove(t.id); }} />
-                      </ListRowActions>
                       </Fragment>
                     );
                   })}

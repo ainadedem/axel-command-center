@@ -27,7 +27,7 @@ export function CrudToolbar({
       </div>
       <div className="flex items-center gap-2">
         {children}
-        <Button size="sm" onClick={onCreate} className="gap-1.5" aria-label={createLabel}>
+        <Button size="sm" onClick={onCreate} className="btn-new gap-1.5" aria-label={createLabel}>
           <Plus className="h-4 w-4" /> {createLabel}
         </Button>
       </div>
@@ -39,7 +39,7 @@ export function EmptyState({ label, onCreate, createLabel }: { label: string; on
   return (
     <div className="rounded-xl border border-dashed border-border bg-surface/40 p-12 text-center">
       <p className="text-sm text-muted-foreground mb-4">No {label} yet.</p>
-      <Button size="sm" onClick={onCreate} className="gap-1.5">
+      <Button size="sm" onClick={onCreate} className="btn-new gap-1.5">
         <Plus className="h-4 w-4" /> {createLabel ?? `Create your first ${label.replace(/s$/, "")}`}
       </Button>
     </div>
