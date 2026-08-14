@@ -1114,7 +1114,7 @@ export function buildPrintableDocument(args: DocumentHtmlArgs) {
       .sheet { position: relative; width: 210mm; min-height: 297mm; box-sizing: border-box; background: #fff; }
       .sheet-pad { padding: ${PAGE_PAD_MM}mm; }
     </style>
-    </head><body><div class="sheet"><div class="sheet-pad">${buildHTML(args)}</div>${floatingStampHtml(args)}</div></body></html>`;
+    </head><body><div class="sheet" style="position:relative;width:210mm;min-height:297mm;box-sizing:border-box;background:#fff;"><div class="sheet-pad" style="padding:${PAGE_PAD_MM}mm;">${buildHTML(args)}</div>${floatingStampHtml(args)}</div></body></html>`;
 }
 
 export function buildDocumentHTML(args: DocumentHtmlArgs) {
