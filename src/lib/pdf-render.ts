@@ -24,7 +24,45 @@ export type RenderOptions = {
   orientation?: PageOrientation;
   /** Rasterization scale — 2 keeps text crisp without exploding file size. */
   scale?: number;
+  /**
+   * Elements that must never be cut across a page boundary (e.g. `"tr"`).
+   * Page breaks snap to the nearest boundary above the natural cut.
+   */
+  avoidBreakSelector?: string;
 };
+
+/** Bottom edges (in canvas px) of elements that must not be split. */
+function collectBoundaries(doc: Document, selector: string, pxRatio: number): number[] {
+  const els = Array.from(doc.querySelectorAll<HTMLElement>(selector));
+  const edges = els
+    .map((el) => {
+      const r = el.getBoundingClientRect();
+      return (r.bottom + (doc.documentElement.scrollTop || 0)) * pxRatio;
+    })
+    .filter((n) => Number.isFinite(n) && n > 0)
+    .sort((a, b) => a - b);
+  return edges;
+}
+
+/** Page cut offsets (canvas px), snapped to element boundaries when possible. */
+function computeCuts(total: number, pxPerPage: number, boundaries: number[]): number[] {
+  const cuts = [0];
+  let top = 0;
+  let guard = 0;
+  while (top + pxPerPage < total && guard++ < 500) {
+    const natural = top + pxPerPage;
+    // Nearest boundary at or above the natural cut, but still on this page.
+    let snapped = natural;
+    for (const b of boundaries) {
+      if (b > top + pxPerPage * 0.3 && b <= natural) snapped = b;
+      if (b > natural) break;
+    }
+    top = Math.floor(snapped);
+    cuts.push(top);
+  }
+  return cuts;
+}
+
 
 /**
  * Renders a complete HTML document string to a PDF blob.
