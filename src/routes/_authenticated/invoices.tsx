@@ -233,13 +233,14 @@ function Body() {
 
   const aging = useMemo(
     () =>
-      buildAging(active, {
+      buildAging(chipFiltered.filter((i) => i.status !== "cancelled"), {
         due: (i) => i.dueDate,
         balance: (i) => toMGA(i.amount - i.paid, i.currency),
         include: (i) => i.status !== "paid",
       }),
-    [active],
+    [chipFiltered],
   );
+
 
   const openCreate = () => { setEditing(null); setOpen(true); };
 
