@@ -934,8 +934,9 @@ const quoteToDb = (q: Quote) => {
   return {
     id: isUuid(q.id) ? q.id : undefined,
     company_id: dbCompany,
-    client_id: q.clientId && isUuid(q.clientId) ? q.clientId : null,
-    project_id: q.projectId && isUuid(q.projectId) ? q.projectId : null,
+    ...link("client_id", q.clientId),
+    ...link("project_id", q.projectId),
+
     number: q.number,
     issue_date: q.issueDate,
     valid_until: q.validUntil,
