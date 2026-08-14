@@ -249,6 +249,11 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       logo_height: logoHeight,
       logo_max_width: logoMaxWidth,
       logo_crop: (logoCrop ?? null) as unknown as never,
+      stamp_url: stampUrl || null,
+      stamp_position: stampPosition,
+      stamp_width: stampWidth,
+      stamp_opacity: stampOpacity,
+      show_stamp: showStamp,
       default_document_language: docLanguage,
     };
     if (editing) {
