@@ -135,6 +135,15 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     setLang(doc?.language ?? (company?.defaultDocumentLanguage as DocLanguage) ?? "en");
   }, [doc?.number, doc?.language, company?.id, company?.defaultDocumentLanguage]);
 
+  // ---- Column widths / density -------------------------------------------
+  const [colWidths, setColWidths] = useState<ColWidths>({});
+  const [density, setDensity] = useState<Density>("auto");
+  const [autoScale, setAutoScale] = useState(1);
+  const [pages, setPages] = useState(1);
+  const cols = useMemo(() => normalizeCols(colWidths, showUnit), [colWidths, showUnit]);
+  const scale = density === "auto" ? autoScale : DENSITY_SCALE[density];
+
+
   // ---- Zoom / fit ---------------------------------------------------------
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const sheetRef = useRef<HTMLDivElement | null>(null);
