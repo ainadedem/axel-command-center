@@ -294,6 +294,17 @@ export interface Invoice {
   /** ISO timestamp of the last edit. */
   updatedAt?: string;
 
+  /* ── Signature & stamp (per document) ── */
+  /** Auth user id whose signature prints on this document. */
+  signerId?: string;
+  /** Stamp position on the page, in percent of the sheet (top-left origin). */
+  stampX?: number;
+  stampY?: number;
+  /** Stamp size multiplier relative to the company default width. */
+  stampScale?: number;
+  /** Set when the company stamp or a signature changed after the last render. */
+  stampDirty?: boolean;
+
   /* ── SOP-OPS-FIN-002: dating control & handover archive ── */
   /** Business day the invoice actually entered the client's processing system. */
   ingestionDate?: string;
@@ -383,6 +394,18 @@ export interface Quote {
   assignedTo?: string[];
   /** Date (yyyy-mm-dd) of the next planned follow-up. */
   nextFollowUpAt?: string;
+
+  /* ── Signature & stamp (per document) ── */
+  /** Auth user id whose signature prints on this document. */
+  signerId?: string;
+  /** Stamp position on the page, in percent of the sheet (top-left origin). */
+  stampX?: number;
+  stampY?: number;
+  /** Stamp size multiplier relative to the company default width. */
+  stampScale?: number;
+  /** Set when the company stamp or a signature changed after the last render. */
+  stampDirty?: boolean;
+
 }
 
 /** Maximum number of sales people that can follow one quotation. */
