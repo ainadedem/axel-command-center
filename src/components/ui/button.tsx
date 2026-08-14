@@ -6,26 +6,30 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer select-none transition-[color,background-color,border-color,box-shadow,transform,opacity] duration-150 ease-in-out will-change-transform motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 hover:-translate-y-px active:translate-y-0 active:scale-[0.97] active:duration-[90ms] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:transition-transform [&_svg]:duration-150",
+  "relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium cursor-pointer select-none transition-[color,background-color,border-color,box-shadow,transform,opacity] duration-150 ease-[cubic-bezier(0.2,0,0,1)] will-change-transform motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.98] active:duration-[90ms] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:transition-transform [&_svg]:duration-150",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-[var(--shadow-soft)] hover:bg-[var(--primary-hover)] hover:shadow-[var(--shadow-glow)]",
+          "bg-primary text-primary-foreground shadow-none hover:bg-[var(--primary-hover)] hover:shadow-[var(--shadow-soft)]",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:shadow-[0_10px_24px_-12px_var(--destructive)]",
+          "bg-destructive text-destructive-foreground shadow-none hover:brightness-110 hover:shadow-[var(--shadow-soft)]",
         outline:
-          "border border-border bg-card shadow-[var(--shadow-soft)] hover:bg-accent hover:text-accent-foreground hover:border-primary/40 hover:shadow-md",
+          "border border-outline bg-transparent text-foreground shadow-none hover:bg-[var(--surface-container)] hover:text-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 hover:shadow-md",
-        ghost: "hover:bg-accent hover:text-accent-foreground hover:-translate-y-0",
-        link: "text-primary underline-offset-4 hover:underline hover:-translate-y-0",
+          "bg-[var(--surface-container)] text-secondary-foreground shadow-none hover:bg-[var(--surface-container-high)]",
+        tonal:
+          "bg-[var(--primary-container)] text-[var(--on-primary-container)] shadow-none hover:shadow-[var(--shadow-soft)] hover:brightness-[0.98]",
+        elevated:
+          "bg-surface text-primary shadow-[var(--shadow-elevated)] hover:brightness-[0.99] hover:shadow-[0_1px_3px_rgba(60,64,67,0.2),0_6px_16px_rgba(60,64,67,0.14)]",
+        ghost: "text-foreground hover:bg-[var(--surface-container)]",
+        link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3.5 text-xs",
-        lg: "h-11 rounded-md px-8",
-        icon: "h-9 w-9 tap-target",
+        default: "h-10 px-5 py-2",
+        sm: "h-8 px-4 text-xs",
+        lg: "h-12 px-7",
+        icon: "h-10 w-10 tap-target",
       },
     },
     defaultVariants: {
