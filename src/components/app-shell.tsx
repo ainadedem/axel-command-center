@@ -212,7 +212,6 @@ function SidebarSection({ section, pathname, onNavigate }: { section: NavSection
                     "h-[18px] w-[18px] transition-colors duration-150",
                     active ? "text-[var(--on-primary-container)]" : "text-muted-foreground",
                   )}
-                  strokeWidth={1.75}
                   aria-hidden="true"
                 />
 
