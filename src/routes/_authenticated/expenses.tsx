@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { focusSearch, useFocusRow } from "@/hooks/use-focus-row";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -23,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 
-export const Route = createFileRoute("/_authenticated/expenses")({ component: ExpensesPage });
+export const Route = createFileRoute("/_authenticated/expenses")({ component: ExpensesPage, validateSearch: focusSearch });
 
 const statusStyles: Record<ExpenseStatus, string> = {
   draft: "border-muted text-muted-foreground bg-muted/30",

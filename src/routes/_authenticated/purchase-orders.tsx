@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { focusSearch, useFocusRow } from "@/hooks/use-focus-row";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -33,7 +34,7 @@ import { withSelected } from "@/lib/select-options";
 
 type DocVersion = { url: string; name?: string; type?: string; uploadedAt: string };
 
-export const Route = createFileRoute("/_authenticated/purchase-orders")({ component: POPage });
+export const Route = createFileRoute("/_authenticated/purchase-orders")({ component: POPage, validateSearch: focusSearch });
 
 const statusStyles: Record<POStatus, string> = {
   draft: "border-muted text-muted-foreground bg-muted/30",

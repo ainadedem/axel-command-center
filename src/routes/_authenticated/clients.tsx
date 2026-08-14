@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { focusSearch, useFocusRow } from "@/hooks/use-focus-row";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -32,7 +33,7 @@ import { CategoryChips, CategoryMultiSelect, CompanyTag, CompanyTags, defaultCat
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/clients")({ component: ClientsPage });
+export const Route = createFileRoute("/_authenticated/clients")({ component: ClientsPage, validateSearch: focusSearch });
 
 function isWonClient(cl: Client, hasActivity: boolean): boolean {
   if (cl.status === "client") return true;
