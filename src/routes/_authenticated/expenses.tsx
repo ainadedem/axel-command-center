@@ -69,7 +69,20 @@ function Body() {
   const [editing, setEditing] = useState<Expense | null>(null);
   const [defaultKind, setDefaultKind] = useState<ExpenseKind>("bill");
 
-  const [bucket, setBucket] = useState<AgingKey | null>(null);
+  // Bucket + focused record live in the URL so aging drawer jumps are shareable.
+  const search = Route.useSearch();
+  const navigate = useNavigate();
+  const jumpTo = useJumpToRecord();
+  const urlBucket = (search.aging as AgingKey | undefined) ?? null;
+  const [bucket, setBucket] = useState<AgingKey | null>(urlBucket);
+  useEffect(() => {
+    if (urlBucket && urlBucket !== bucket) setBucket(urlBucket);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlBucket]);
+  const setDrawerBucket = (key: AgingKey | null) => {
+    if (key) setBucket(key);
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, aging: key ?? undefined }), replace: true } as never);
+  };
 
   const tabFiltered = useMemo(
     () => list.filter((e) => tab === "all" || e.kind === tab).sort((a, b) => b.issueDate.localeCompare(a.issueDate)),
@@ -90,10 +103,14 @@ function Body() {
   const filtered = useMemo(
     () =>
       bucket
-        ? tabFiltered.filter((e) => computeStatus(e) !== "paid" && inBucket(e.dueDate, bucket))
+        ? tabFiltered.filter(
+            // The deep-linked record always survives the bucket filter.
+            (e) => e.id === search.focus || (computeStatus(e) !== "paid" && inBucket(e.dueDate, bucket)),
+          )
         : tabFiltered,
-    [tabFiltered, bucket],
+    [tabFiltered, bucket, search.focus],
   );
+
 
   const totals = useMemo(() => {
     const t = { count: filtered.length, unpaid: 0, overdue: 0, paid: 0 };
