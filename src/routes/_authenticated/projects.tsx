@@ -261,24 +261,21 @@ function Body() {
                           <Fragment key={p.id}>
                             <tr
                               className="hover:bg-surface-elevated/40 cursor-pointer"
-                              onClick={() =>
-<ListRowActions colSpan={colCount}>
-                              <span className="text-[11px] text-muted-foreground/70 mr-1">
-                                {projInvoices.length} inv · {projTx.length} tx
-                              </span>
-                              <RowAction
-                                icon={isExp ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                                label={isExp ? "Hide details" : "Details"}
-                                onClick={() => toggleExpanded(p.id)}
-                              />
-                              <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(p); setOpen(true); }} />
-                              <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete ${p.name}?`)) { projectsStore.remove(p.id); void deleteProjectDb(p.id); } }} />
-                            </ListRowActions>
- toggleExpanded(p.id)}
+                              onClick={() => toggleExpanded(p.id)}
                             >
+                              <ListRowActions colSpan={colCount}>
+                                <RowAction
+                                  icon={isExp ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                                  label={isExp ? "Hide details" : "Details"}
+                                  onClick={() => toggleExpanded(p.id)}
+                                />
+                                <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(p); setOpen(true); }} />
+                                <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete ${p.name}?`)) { projectsStore.remove(p.id); void deleteProjectDb(p.id); } }} />
+                              </ListRowActions>
                               <ListTd className="px-3 text-muted-foreground">
                                 {isExp ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                               </ListTd>
+
                               <ListTd className="font-medium" title={p.name}>{p.name}</ListTd>
                               <ListTd className="text-muted-foreground" title={cl?.name}>{cl?.name ?? "—"}</ListTd>
                               {cp.on("salesRep") && <ListTd className="text-xs text-muted-foreground" title={cl?.acquisition}>{cl?.acquisition ?? <span className="text-muted-foreground/50">—</span>}</ListTd>}
