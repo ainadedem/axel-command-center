@@ -17,7 +17,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ThemeControls } from "@/components/theme-controls";
 import { useFileUrl } from "@/hooks/use-file-url";
 
-import axelIcon from "@/assets/axel-icon-purple.png";
+import { AxelWordmark, AxelBraceMark } from "@/components/axel-wordmark";
 
 interface NavItem {
   to: string;

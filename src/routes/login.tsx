@@ -1,7 +1,7 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import axelLogo from "@/assets/axel-logo.png";
+import { AxelWordmark } from "@/components/axel-wordmark";
 
 /**
  * Only same-origin relative paths are allowed as post-login destinations.
@@ -75,11 +75,7 @@ function LoginPage() {
         <div className="w-full max-w-[22rem]">
           {/* Logo */}
           <div className="flex justify-center mb-10">
-            <img
-              src={axelLogo}
-              alt="AXEL Business Platform logo"
-              className="h-16 w-auto"
-            />
+            <AxelWordmark title="AXEL Business Platform" className="h-14 w-auto text-foreground" />
           </div>
 
           {/* Title */}
