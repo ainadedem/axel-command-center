@@ -824,10 +824,10 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
               Another team member credited for bringing this client. Sourced from the <Link to="/team" className="text-primary underline">Team</Link>.
             </p>
           </div>
-        </div>
+        </fieldset>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>{editing ? "Save" : "Create"}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{readOnly ? "Close" : "Cancel"}</Button>
+          {!readOnly && <Button onClick={handleSubmit} disabled={isSubmitting}>{editing ? "Save" : "Create"}</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>
