@@ -537,29 +537,61 @@ function EscalationsTab({
   );
 }
 
-function LogEscalationDialog({ target, onClose }: { target: { invoice: Invoice; stage: number } | null; onClose: () => void }) {
+function LogEscalationDialog({
+  target, onClose,
+}: {
+  target: { invoice: Invoice; stage: number; existing?: InvoiceEscalation } | null;
+  onClose: () => void;
+}) {
   const { user, profile } = useAuth() as { user?: { id?: string } | null; profile?: { displayName?: string; display_name?: string } | null };
   const [action, setAction] = useState("");
   const [notes, setNotes] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const stage = target?.stage ?? 0;
   const preset = STAGE_ACTIONS[stage] ?? "";
+  const existing = target?.existing;
 
-  const submit = () => {
+  // Load the saved values whenever a different step is opened.
+  useEffect(() => {
+    setAction(existing?.action ?? "");
+    setNotes(existing?.notes ?? "");
+    setError(null);
+  }, [existing?.id, target?.invoice.id, stage]);
+
+  const submit = async () => {
     if (!target) return;
-    invoiceEscalationsStore.add({
-      id: newId("esc"),
+    setSaving(true);
+    setError(null);
+    const record: InvoiceEscalation = {
+      id: existing?.id ?? newId("esc"),
       companyId: target.invoice.companyId,
       invoiceId: target.invoice.id,
       stage: target.stage,
       action: action.trim() || preset,
       notes: notes.trim() || undefined,
-      performedAt: new Date().toISOString(),
-      performedBy: user?.id,
-      performedByName: profile?.displayName ?? profile?.display_name ?? undefined,
-    });
-    setAction("");
-    setNotes("");
+      performedAt: existing?.performedAt ?? new Date().toISOString(),
+      performedBy: existing?.performedBy ?? user?.id,
+      performedByName: existing?.performedByName ?? profile?.displayName ?? profile?.display_name ?? undefined,
+    };
+    const res = await saveInvoiceEscalation(record);
+    setSaving(false);
+    if ("error" in res) {
+      setError(res.error);
+      return;
+    }
+    const saved = { ...record, id: res.id };
+    if (existing) invoiceEscalationsStore.update(existing.id, saved);
+    else invoiceEscalationsStore.add(saved);
+    toast.success(`Day ${target.stage} action recorded.`);
+    onClose();
+  };
+
+  const removeEntry = () => {
+    if (!existing) return;
+    invoiceEscalationsStore.remove(existing.id);
+    toast.success(`Day ${stage} action removed.`);
     onClose();
   };
 
@@ -567,9 +599,18 @@ function LogEscalationDialog({ target, onClose }: { target: { invoice: Invoice; 
     <Dialog open={!!target} onOpenChange={(v) => !v && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Log day {stage} action — {target?.invoice.number}</DialogTitle>
+          <DialogTitle>
+            {existing ? "Day" : "Log day"} {stage} action — {target?.invoice.number}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
+          {existing && (
+            <div className="rounded-lg border border-success/30 bg-success/5 px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
+              <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" aria-hidden />
+              Done {format(parseISO(existing.performedAt), "MMM d, yyyy 'at' HH:mm")}
+              {existing.performedByName ? ` · ${existing.performedByName}` : ""}
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label htmlFor="esc-action">Action taken</Label>
             <Input id="esc-action" value={action} onChange={(e) => setAction(e.target.value)} placeholder={preset} />
@@ -578,15 +619,29 @@ function LogEscalationDialog({ target, onClose }: { target: { invoice: Invoice; 
             <Label htmlFor="esc-notes">Notes</Label>
             <Textarea id="esc-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Who was contacted, response received, next step…" />
           </div>
+          {error && (
+            <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              {error}
+            </div>
+          )}
         </div>
         <DialogFooter>
+          {existing && (
+            <Button variant="ghost" className="text-destructive mr-auto" onClick={removeEntry}>
+              <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Remove
+            </Button>
+          )}
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button onClick={submit}>Log action</Button>
+          <Button onClick={submit} disabled={saving}>
+            {saving && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+            {existing ? "Save changes" : "Log action"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
 
 /* ─── SOP library tab ───────────────────────────────────────────────── */
 
