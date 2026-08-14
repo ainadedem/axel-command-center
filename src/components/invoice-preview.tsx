@@ -47,6 +47,7 @@ export function InvoicePreview({ open, onOpenChange, invoice, company, client, p
       company={company} client={client} project={project}
       signers={users.map((u) => ({ userId: u.userId, name: u.name }))}
       onDocChange={(patch) => { if (invoice) invoicesStore.update(invoice.id, patch); }}
+      audit={invoice ? { docType: "invoice", docId: invoice.id, companyId: invoice.companyId } : undefined}
     />
   );
 }
