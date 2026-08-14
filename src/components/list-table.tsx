@@ -207,7 +207,10 @@ export function RowAction({
 
       )}
     >
-      <span className="shrink-0 inline-flex items-center justify-center">{icon}</span>
+      <span className="shrink-0 inline-flex items-center justify-center">
+        {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : icon}
+      </span>
+
       <span className="sr-only">{label}</span>
     </button>
   );
