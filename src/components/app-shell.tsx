@@ -603,7 +603,7 @@ function AppShellFrame({ children }: { children: ReactNode }) {
     <div className="min-h-dvh bg-background text-foreground p-0">
       <a href="#main-content" className="skip-link">Skip to content</a>
       <MobileNav open={navOpen} onClose={() => setNavOpen(false)} />
-      <div className="min-h-dvh lg:min-h-[calc(100dvh-1.5rem)] flex overflow-hidden rounded-none border-0 lg:border lg:border-border bg-background">
+      <div className="min-h-dvh flex overflow-hidden bg-background">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar onOpenNav={() => setNavOpen(true)} />
