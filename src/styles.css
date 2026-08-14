@@ -153,55 +153,61 @@
 }
 
 .dark {
-  --background: oklch(0.17 0.005 275);
-  --foreground: oklch(0.97 0.003 275);
-  --surface: oklch(0.215 0.006 275);
-  --surface-elevated: oklch(0.245 0.007 275);
-  --card: oklch(0.215 0.006 275);
-  --card-foreground: oklch(0.97 0.003 275);
-  --popover: oklch(0.225 0.006 275);
-  --popover-foreground: oklch(0.97 0.003 275);
-  --primary: oklch(0.66 0.18 256);
-  --primary-foreground: oklch(0.14 0.01 275);
-  --secondary: oklch(0.26 0.007 275);
-  --secondary-foreground: oklch(0.93 0.004 275);
-  --accent: oklch(0.3 0.05 258);
-  --accent-foreground: oklch(0.85 0.09 256);
-  --sidebar: oklch(0.195 0.006 275);
-  --sidebar-foreground: oklch(0.88 0.005 275);
-  --sidebar-accent: oklch(0.3 0.05 258);
-  --sidebar-accent-foreground: oklch(0.87 0.08 256);
-  --sidebar-border: oklch(0.31 0.006 275 / 0.7);
-  --border: oklch(0.32 0.006 275 / 0.7);
-  --input: oklch(0.34 0.006 275 / 0.7);
-  --muted: oklch(0.26 0.006 275);
-  --muted-foreground: oklch(0.7 0.008 275);
-  --material-thin: oklch(0.22 0.006 275 / 0.72);
-  --material-regular: oklch(0.22 0.006 275 / 0.88);
-  --shadow-soft: 0 1px 2px oklch(0 0 0 / 0.4), 0 6px 16px -10px oklch(0 0 0 / 0.55);
-  --shadow-elevated: 0 1px 3px oklch(0 0 0 / 0.45), 0 18px 44px -20px oklch(0 0 0 / 0.7);
-  --shadow-card: 0 0 0 0.5px oklch(1 0 0 / 0.06), 0 10px 26px -18px oklch(0 0 0 / 0.6);
+  --background: #16161F;
+  --foreground: #F2F3F5;
+  --surface: #1E1E2A;
+  --surface-elevated: #24243230;
+  --surface-elevated: #242432;
+  --card: #1E1E2A;
+  --card-foreground: #F2F3F5;
+  --popover: #22222F;
+  --popover-foreground: #F2F3F5;
+  --primary: #9385F2;
+  --primary-hover: #A395F7;
+  --primary-foreground: #14141C;
+  --primary-glow: #D уника;
+  --secondary: #262635;
+  --secondary-foreground: #E7E8EC;
+  --accent: rgba(147, 133, 242, 0.18);
+  --accent-foreground: #BDB2FA;
+  --sidebar: #1A1A25;
+  --sidebar-foreground: #A9AEBB;
+  --sidebar-accent: rgba(147, 133, 242, 0.18);
+  --sidebar-accent-foreground: #BDB2FA;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.10);
+  --input: rgba(255, 255, 255, 0.14);
+  --muted: #262635;
+  --muted-foreground: #9BA1AE;
+  --material-thin: rgba(30, 30, 42, 0.78);
+  --material-regular: rgba(30, 30, 42, 0.94);
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-elevated: 0 8px 28px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 4px 12px rgba(147, 133, 242, 0.32);
 
-  /* Charts: lower chroma, higher lightness so series stay legible on dark */
-  --chart-1: oklch(0.7 0.16 258);
-  --chart-2: oklch(0.78 0.12 240);
-  --chart-3: oklch(0.74 0.15 350);
-  --chart-4: oklch(0.76 0.14 152);
-  --chart-5: oklch(0.84 0.13 78);
-  --chart-6: oklch(0.78 0.11 195);
-  --chart-7: oklch(0.68 0.13 292);
-  --chart-8: oklch(0.72 0.02 275);
-  --chart-expense: oklch(0.7 0.16 25);
-  --chart-grid: color-mix(in oklab, var(--foreground) 14%, transparent);
+  /* Charts: lifted for legibility on dark */
+  --chart-1: #9385F2;
+  --chart-2: #6FD9FB;
+  --chart-3: #E06BD3;
+  --chart-4: #56D98D;
+  --chart-5: #FFD24D;
+  --chart-6: #4CD1DA;
+  --chart-7: #FF9EC0;
+  --chart-8: #A7AEBC;
+  --chart-expense: #F0685A;
+  --chart-grid: rgba(255, 255, 255, 0.12);
 
-  --ring: oklch(0.7 0.16 258 / 0.6);
-  --destructive: oklch(0.66 0.19 25);
-  --success: oklch(0.74 0.15 152);
-  --warning: oklch(0.83 0.14 76);
-  --warning-foreground: oklch(0.18 0.02 60);
+  --ring: rgba(147, 133, 242, 0.5);
+  --destructive: #F0685A;
+  --success: #56D98D;
+  --warning: #FFD24D;
+  --warning-foreground: #241C00;
 
-  --gradient-surface: linear-gradient(180deg, oklch(0.225 0.006 275) 0%, oklch(0.2 0.006 275) 100%);
-  --gradient-glow: radial-gradient(ellipse at top, oklch(0.66 0.18 256 / 0.14), transparent 62%);
+  --gradient-surface: linear-gradient(180deg, #22222F 0%, #1C1C27 100%);
+  --gradient-primary: linear-gradient(135deg, #9385F2 0%, #E06BD3 100%);
+  --gradient-mesh: linear-gradient(135deg, #6C5CE7 0%, #8C51D6 50%, #C83CB9 100%);
+  --gradient-glow: radial-gradient(ellipse at top, rgba(147, 133, 242, 0.16), transparent 62%);
 }
 
 
