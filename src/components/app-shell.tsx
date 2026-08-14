@@ -4,7 +4,7 @@ import {
   Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus, Truck,
   ChevronDown, Check, LogOut, Target, UserCog, Handshake,
   BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList, RefreshCw,
-  Sparkles, CreditCard, Repeat, Wallet2, ExternalLink, Info, ShieldCheck,
+  Sparkles, CreditCard, Repeat, Wallet2, ExternalLink, Info, ShieldCheck, Menu, X,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -164,7 +164,7 @@ function CompanySwitcher() {
   );
 }
 
-function SidebarSection({ section, pathname }: { section: NavSection; pathname: string }) {
+function SidebarSection({ section, pathname, onNavigate }: { section: NavSection; pathname: string; onNavigate?: () => void }) {
   const hasActive = section.items.some((item) => pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to)));
   const [open, setOpen] = useState(hasActive);
 
@@ -193,6 +193,7 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
               <Link
                 key={item.to}
                 to={item.to}
+                onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "group focus-ring flex items-center gap-3 px-3 py-2 rounded-full text-sm relative overflow-hidden transition-[color,background-color,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98]",
@@ -225,11 +226,9 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
   );
 }
 
-function Sidebar() {
-  const pathname = useRouterState({ select: (r) => r.location.pathname });
+function useVisibleSections() {
   const { isSalesOnly, isGroupAdmin } = useEffectiveRole();
-
-  const visibleSections = sections
+  return sections
     .map((section) => ({
       ...section,
       items: section.items.filter(
@@ -239,9 +238,14 @@ function Sidebar() {
       ),
     }))
     .filter((section) => section.items.length > 0);
+}
+
+function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const visibleSections = useVisibleSections();
 
   return (
-    <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-sidebar-border/70 bg-sidebar/80 material-bar">
+    <>
       <div className="px-5 py-5 flex flex-col gap-1.5">
         <AxelWordmark title="AXEL Business Platform" className="h-7 w-auto self-start text-sidebar-foreground" />
         <span className="text-[11px] font-medium tracking-wide text-sidebar-foreground/60">Unified Business Platform</span>
@@ -251,15 +255,66 @@ function Sidebar() {
       </div>
       <nav aria-label="Main" className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
         {visibleSections.map((section) => (
-          <SidebarSection key={section.label} section={section} pathname={pathname} />
+          <SidebarSection key={section.label} section={section} pathname={pathname} onNavigate={onNavigate} />
         ))}
       </nav>
       <div className="p-3 border-t border-sidebar-border">
-        <Link to="/settings" className="group focus-ring flex items-center gap-3 px-3 py-2 rounded-full text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200 active:scale-[0.98]">
+        <Link
+          to="/settings"
+          onClick={onNavigate}
+          className="group focus-ring flex items-center gap-3 px-3 py-2 rounded-full text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200 active:scale-[0.98]"
+        >
           <Settings className="h-4 w-4 transition-transform duration-500 group-hover:rotate-90" /> Settings
         </Link>
       </div>
+    </>
+  );
+}
+
+function Sidebar() {
+  return (
+    <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-sidebar-border/70 bg-sidebar/80 material-bar">
+      <SidebarInner />
     </aside>
+  );
+}
+
+function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+  return (
+    <div className="lg:hidden fixed inset-0 z-50">
+      <div
+        className="absolute inset-0 bg-foreground/40 backdrop-blur-[2px] animate-in fade-in-0 duration-200"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation"
+        className="absolute inset-y-0 left-0 w-[min(19rem,86vw)] flex flex-col bg-sidebar border-r border-sidebar-border shadow-[var(--shadow-elevated)] animate-in slide-in-from-left duration-250"
+      >
+        <button
+          onClick={onClose}
+          aria-label="Close navigation"
+          className="absolute right-3 top-3 h-9 w-9 grid place-items-center rounded-full focus-ring hover:bg-sidebar-accent/60 text-muted-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <SidebarInner onNavigate={onClose} />
+      </div>
+    </div>
   );
 }
 
@@ -285,7 +340,7 @@ const NEW_BUTTON_ROUTES: { match: (p: string) => boolean; to: string; label: str
   { match: (p) => p.startsWith("/journal"), to: "/journal", label: "New entry" },
 ];
 
-function Topbar() {
+function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
   const { profile, user, signOut, roles } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
@@ -329,28 +384,38 @@ function Topbar() {
   };
 
   return (
-    <header className="h-14 shrink-0 border-b border-border/70 material-bar px-6 flex items-center gap-4 sticky top-0 z-30">
-      <form onSubmit={submitSearch} className="flex-1 max-w-md relative">
+    <header className="h-14 shrink-0 border-b border-border/70 material-bar px-3 sm:px-6 flex items-center gap-2 sm:gap-4 sticky top-0 z-30">
+      <button
+        onClick={onOpenNav}
+        aria-label="Open navigation"
+        className="lg:hidden h-9 w-9 shrink-0 grid place-items-center rounded-full focus-ring hover:bg-secondary active:scale-90 transition-all duration-200"
+      >
+        <Menu className="h-5 w-5" aria-hidden="true" />
+      </button>
+      <AxelBraceMark title="AXEL" className="lg:hidden h-5 w-5 shrink-0 text-foreground" />
+      <form onSubmit={submitSearch} className="flex-1 min-w-0 max-w-md relative">
         <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
         <input
           ref={searchRef}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search transactions, invoices, clients..."
+          placeholder="Search..."
           aria-label="Search transactions, invoices and clients"
           type="search"
-          className="w-full h-9 pl-9 pr-12 rounded-full bg-secondary border border-border/80 text-sm placeholder:text-muted-foreground/60 transition-[border-color,box-shadow,background-color] duration-200 hover:border-primary/35 focus:outline-none focus:border-primary/60 focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_18%,transparent)]"
+          className="w-full h-9 pl-9 pr-3 md:pr-12 rounded-full bg-secondary border border-border/80 text-sm placeholder:text-muted-foreground/60 transition-[border-color,box-shadow,background-color] duration-200 hover:border-primary/35 focus:outline-none focus:border-primary/60 focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_18%,transparent)]"
         />
-        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
+        <kbd className="hidden md:block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
       </form>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         <FxBadge />
         <button
           onClick={handleNew}
           aria-label={newLabel}
-          className="h-9 px-4 focus-ring tap-target rounded-full text-sm font-medium bg-primary text-primary-foreground hover:opacity-95 hover:-translate-y-px hover:shadow-[var(--shadow-glow)] active:translate-y-0 active:scale-[0.97] transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] flex items-center gap-1.5 group"
+          title={newLabel}
+          className="h-9 w-9 sm:w-auto sm:px-4 focus-ring tap-target rounded-full text-sm font-medium bg-primary text-primary-foreground hover:opacity-95 hover:-translate-y-px hover:shadow-[var(--shadow-glow)] active:translate-y-0 active:scale-[0.97] transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] flex items-center justify-center gap-1.5 group"
         >
-          <Plus className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" /> {newLabel}
+          <Plus className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:rotate-90" />
+          <span className="hidden sm:inline">{newLabel}</span>
         </button>
         <div className="relative">
           <button
@@ -526,6 +591,9 @@ function AppShellError({ message, onRetry }: { message: string; onRetry: () => v
 function AppShellFrame({ children }: { children: ReactNode }) {
   const { bootstrapReady, bootstrapError, retryBootstrap } = useCompany();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const [navOpen, setNavOpen] = useState(false);
+
+  useEffect(() => { setNavOpen(false); }, [pathname]);
 
   if (bootstrapError) return <AppShellError message={bootstrapError} onRetry={retryBootstrap} />;
   if (!bootstrapReady) return <AppShellLoading />;
@@ -534,17 +602,18 @@ function AppShellFrame({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-dvh bg-background text-foreground p-0 lg:p-3">
       <a href="#main-content" className="skip-link">Skip to content</a>
+      <MobileNav open={navOpen} onClose={() => setNavOpen(false)} />
       <div className="min-h-dvh lg:min-h-[calc(100dvh-1.5rem)] flex overflow-hidden rounded-none lg:rounded-[28px] border border-border/70 bg-card shadow-[var(--shadow-elevated)]">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
-        <Topbar />
+        <Topbar onOpenNav={() => setNavOpen(true)} />
         <main id="main-content" tabIndex={-1} className="relative flex-1 overflow-y-auto focus:outline-none">
           <div className="absolute inset-0 pointer-events-none [background:var(--gradient-glow)] opacity-60" />
           <div key={pathname} className="relative rise-in">{children}</div>
         </main>
 
 
-        <footer className="shrink-0 border-t border-border/70 material-bar px-6 py-3 flex items-center justify-between text-[11px] text-muted-foreground">
+        <footer className="shrink-0 border-t border-border/70 material-bar px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
           <span>© {new Date().getFullYear()} AXEL by WeAxiom</span>
           <div className="flex items-center gap-4">
             <Link to="/about" className="hover:text-foreground transition underline-grow">About</Link>

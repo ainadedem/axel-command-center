@@ -136,7 +136,7 @@ function Body() {
   };
 
   return (
-    <div className="p-8 space-y-4">
+    <div className="p-4 sm:p-8 space-y-4">
       {/* Toolbar */}
       <div className="flex items-center gap-3 flex-wrap">
         <PeriodPicker value={period} onChange={setPeriod} />
@@ -205,7 +205,8 @@ function Body() {
             </div>
           </div>
           <div className="max-h-[68vh] overflow-y-auto">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px] text-sm">
               <thead className="sticky top-0 bg-[var(--gradient-surface)] z-10">
                 <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
                   <th className="text-left font-medium px-5 py-2 w-28">Date</th>
@@ -259,6 +260,7 @@ function Body() {
                 </tr>
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       </div>

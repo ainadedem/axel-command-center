@@ -156,7 +156,7 @@ function BilanBody() {
         }
       />
 
-      <div className="px-8 pb-3">
+      <div className="px-4 sm:px-8 pb-3">
         <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-sm ${balanced ? "border-success/30 bg-success/5 text-success" : "border-destructive/30 bg-destructive/5 text-destructive"}`}>
           {balanced
             ? <><CheckCircle2 className="h-4 w-4" /> Bilan équilibré — Actif ({fmtMoney(totalActif, co.baseCurrency)}) = Passif ({fmtMoney(totalPassif, co.baseCurrency)})</>
@@ -165,7 +165,7 @@ function BilanBody() {
         </div>
       </div>
 
-      <div className="p-8 pt-3 grid lg:grid-cols-2 gap-5">
+      <div className="p-4 sm:p-8 pt-3 grid lg:grid-cols-2 gap-5">
         <Panel title="ACTIF">
           <Group title="Actif non courant" total={totalActifImmo} co={co}>
             <Row label="Immobilisations incorporelles" value={immoIncorp} co={co} />

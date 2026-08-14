@@ -71,7 +71,7 @@ function CompaniesPage() {
   return (
     <AppShell>
       <PageHeader title="Companies" description="Group entities under your control." />
-      <div className="p-8 space-y-5">
+      <div className="p-4 sm:p-8 space-y-5">
         <CrudToolbar count={companies.length} label="companies" onCreate={openCreate} />
         {companies.length === 0 ? (
           <EmptyState label="companies" onCreate={openCreate} />
@@ -260,7 +260,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               <div className="mt-2"><AvatarUpload value={logoUrl} onChange={(v) => { setLogoUrl(v); setLogoCrop(undefined); }} name={name || "Logo"} size={72} square /></div>
               <p className="text-[10px] text-muted-foreground mt-1">Shown on invoice / PO / quote PDFs.</p>
             </div>
-            <div className="flex-1 grid grid-cols-3 gap-3">
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="col-span-3"><Label><RequiredLabel>Trading name</RequiredLabel></Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Logia Madagascar" className={invalidFieldClassName(showErrors && !name.trim())} aria-invalid={showErrors && !name.trim()} /></div>
               <div><Label><RequiredLabel>Short name</RequiredLabel></Label><Input value={shortName} onChange={(e) => setShortName(e.target.value.toUpperCase().slice(0, 4))} placeholder="LOG" className={invalidFieldClassName(showErrors && !shortName.trim())} aria-invalid={showErrors && !shortName.trim()} /></div>
               <div>
@@ -285,7 +285,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                 </Button>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Height</span><span className="tabular-nums">{logoHeight}px</span></div>
                 <Slider value={[logoHeight]} min={24} max={140} step={1} onValueChange={([v]) => setLogoHeight(v)} className="mt-2" />
@@ -328,12 +328,12 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
           />
           <div><Label>Legal name (on invoices)</Label><Input value={legalName} onChange={(e) => setLegalName(e.target.value)} placeholder="LOGIA SARL" /></div>
           <div><Label>Registered address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Lot II M 73 ter Antananarivo 101" /></div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Email</Label><Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="contact@logia.mg" /></div>
             <div><Label>Phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+261 20 22 000 00" /></div>
           </div>
           <div><Label>Website</Label><Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://logia.mg" /></div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div><Label>NIF</Label><Input value={nif} onChange={(e) => setNif(e.target.value)} /></div>
             <div><Label>STAT</Label><Input value={stat} onChange={(e) => setStat(e.target.value)} /></div>
             <div><Label>RCS</Label><Input value={rcs} onChange={(e) => setRcs(e.target.value)} /></div>
@@ -352,7 +352,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
             </p>
             <BankAccountsEditor value={bankAccounts} onChange={setBankAccounts} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Base currency</Label>
               <Select value={baseCurrency} onValueChange={(v) => setBaseCurrency(v as Currency)}>

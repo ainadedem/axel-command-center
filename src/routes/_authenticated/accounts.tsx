@@ -83,7 +83,7 @@ function Body() {
   const list = groups.flatMap((g) => g.items);
 
   return (
-    <div className="p-8 space-y-5">
+    <div className="p-4 sm:p-8 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <CrudToolbar count={list.length} label="accounts" onCreate={openCreate} />
         <DataToolbar view={view} items={baseList} />
@@ -113,7 +113,8 @@ function Body() {
           </div>
 
           <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px] text-sm">
               <thead>
                 <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
                   <th className="text-left font-medium px-5 py-3">Account</th>
@@ -192,6 +193,7 @@ function Body() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         </>
       )}
@@ -259,7 +261,7 @@ function AccountDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
             </Select>
           </div>
           <div><Label><RequiredLabel>Account name</RequiredLabel></Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="BNI Madagascar" className={invalidFieldClassName(showErrors && !name.trim())} aria-invalid={showErrors && !name.trim()} /></div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Type</Label>
               <Select value={type} onValueChange={(v) => setType(v as Account["type"])}>
@@ -283,7 +285,7 @@ function AccountDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Opening balance</Label><Input type="number" value={balance} onChange={(e) => setBalance(e.target.value)} /></div>
             <div><Label>Opening balance date</Label><Input type="date" value={openingDate} onChange={(e) => setOpeningDate(e.target.value)} /></div>
           </div>
@@ -402,7 +404,8 @@ function ReconciliationHistoryDialog({ open, onOpenChange, account }: { open: bo
             <>
               <div className="text-[11px] text-muted-foreground mb-2">{filtered.length} of {rows.length} reconciliations</div>
               <div className="rounded-lg border border-border overflow-hidden">
-                <table className="w-full text-xs">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] text-xs">
                   <thead>
                     <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
                       <th className="text-left font-medium px-3 py-2">Period</th>
@@ -448,6 +451,7 @@ function ReconciliationHistoryDialog({ open, onOpenChange, account }: { open: bo
                     })}
                   </tbody>
                 </table>
+                </div>
               </div>
             </>
           )}

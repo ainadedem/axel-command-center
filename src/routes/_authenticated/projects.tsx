@@ -160,7 +160,7 @@ function Body() {
   }, [list, invoices, transactions, clients, companies]);
 
   return (
-    <div className="p-8 space-y-5">
+    <div className="p-4 sm:p-8 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <CrudToolbar count={list.length} label="projects" onCreate={openCreate} />
         <div className="flex items-center gap-2">
@@ -195,7 +195,8 @@ function Body() {
 
           {mainTab === "projects" ? (
             <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px] text-sm">
                 <thead>
                   <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
                     <th className="px-3 py-3 w-8" />
@@ -293,6 +294,7 @@ function Body() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           ) : (
             /* Client P&L rollup */
@@ -302,7 +304,8 @@ function Body() {
               </div>
             ) : (
               <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[900px] text-sm">
                   <thead>
                     <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
                       <th className="text-left font-medium px-5 py-3">Client</th>
@@ -341,6 +344,7 @@ function Body() {
                     })}
                   </tbody>
                 </table>
+                </div>
               </div>
             )
           )}
@@ -382,7 +386,7 @@ function ProjectDetail({
   const grossMargin = totalInvoiced > 0 ? ((totalInvoiced - totalSpend) / totalInvoiced) * 100 : 0;
 
   return (
-    <div className="px-5 py-5 grid grid-cols-3 gap-6 text-sm border-t border-border">
+    <div className="px-5 py-5 grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm border-t border-border">
       {/* Mini P&L */}
       <div>
         <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">P&L summary</div>
@@ -536,7 +540,7 @@ function ProjectDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
             </Select>
           </div>
           <div><Label><RequiredLabel>Project name</RequiredLabel></Label><Input value={name} onChange={(e) => setName(e.target.value)} className={invalidFieldClassName(showErrors && !name.trim())} aria-invalid={showErrors && !name.trim()} /></div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div><Label>Revenue</Label><Input type="number" value={revenue} onChange={(e) => setRevenue(e.target.value)} /></div>
             <div><Label>Cost</Label><Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} /></div>
             <div>

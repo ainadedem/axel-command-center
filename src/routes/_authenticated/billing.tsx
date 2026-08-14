@@ -113,7 +113,7 @@ function Body() {
     : "MGA";
 
   return (
-    <div className="p-8 space-y-5">
+    <div className="p-4 sm:p-8 space-y-5">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Kpi label="Active schedules" value={String(list.filter((b) => b.active).length)} mono />
         <Kpi label="MRR equivalent" value={fmtAmount(totals.mrr, defaultCurrency)} accent="text-primary" />
@@ -320,7 +320,7 @@ function BillingDialog({
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Monthly retainer — Acme" className={invalidFieldClassName(showErrors && !name.trim())} aria-invalid={showErrors && !name.trim()} />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <Label><RequiredLabel>Company</RequiredLabel></Label>
               <Select value={companyId} onValueChange={setCompanyId}>
@@ -351,7 +351,7 @@ function BillingDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <Label><RequiredLabel>Amount per cycle</RequiredLabel></Label>
               <Input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className={invalidFieldClassName(showErrors && !(parseFloat(amount) > 0))} aria-invalid={showErrors && !(parseFloat(amount) > 0)} />
@@ -380,7 +380,7 @@ function BillingDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <Label>Start date</Label>
               <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />

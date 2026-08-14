@@ -80,7 +80,7 @@ function Body() {
   };
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 sm:p-8 space-y-6">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <PeriodPicker value={period} onChange={setPeriod} />
@@ -154,7 +154,8 @@ function Body() {
         <div className="px-5 py-3 border-b border-border text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
           Détail par société · {period.label}
         </div>
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[900px] text-sm">
           <thead>
             <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
               <th className="text-left font-medium px-5 py-2">Société</th>
@@ -194,6 +195,7 @@ function Body() {
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

@@ -86,7 +86,7 @@ function Body() {
   };
 
   return (
-    <div className="p-8 space-y-5">
+    <div className="p-4 sm:p-8 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <PeriodPicker value={period} onChange={setPeriod} />
         <button
@@ -97,7 +97,7 @@ function Body() {
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <StatCard label="Total débit" value={fmtMoney(totD, displayCo.baseCurrency)} />
         <StatCard label="Total crédit" value={fmtMoney(totC, displayCo.baseCurrency)} />
         <StatCard
@@ -126,7 +126,8 @@ function Body() {
               <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Classe {cls}</div>
               <div className="font-display text-base font-semibold">{classNames[cls]}</div>
             </div>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px] text-sm">
               <thead>
                 <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
                   <th className="text-left font-medium px-5 py-2 w-24">Compte</th>
@@ -163,13 +164,15 @@ function Body() {
                 </tr>
               </tbody>
             </table>
+            </div>
           </div>
         );
       })}
 
       {/* Grand total footer */}
       <div className="rounded-xl border border-border bg-surface-elevated/60 overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[900px] text-sm">
           <tbody>
             <tr className="font-bold">
               <td className="px-5 py-3 text-xs uppercase tracking-wider" colSpan={2}>TOTAL GÉNÉRAL</td>
@@ -181,6 +184,7 @@ function Body() {
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

@@ -198,7 +198,7 @@ function Body() {
   };
 
   return (
-    <div className="p-8 space-y-5">
+    <div className="p-4 sm:p-8 space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <CrudToolbar count={list.length} label="quotations" onCreate={openCreate} />
         <DataToolbar view={view} items={baseList} />
@@ -207,7 +207,8 @@ function Body() {
         <EmptyState label="quotations" onCreate={openCreate} />
       ) : (
         <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px] text-sm">
             <thead>
               <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
                 <th className="text-left font-medium px-5 py-3">Number</th>
@@ -283,6 +284,7 @@ function Body() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
       <QuoteDialog open={open} onOpenChange={setOpen} editing={editing} />
@@ -559,7 +561,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{editing ? "Edit quote" : "New quote"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Number</Label>
               <Input value={number} onChange={(e) => { numberTouched.current = true; setNumber(e.target.value); }} aria-invalid={duplicateNumber} />
@@ -579,7 +581,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Company</Label>
               <Select value={companyId} onValueChange={(v) => { setCompanyId(v); setClientId(""); }}>
@@ -595,7 +597,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Project</Label>
               <Select value={projectId || "__none__"} onValueChange={(v) => setProjectId(v === "__none__" ? "" : v)} disabled={!clientId}>
@@ -626,7 +628,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Issue date</Label><Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
             <div><Label>Valid until</Label><Input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} /></div>
           </div>
@@ -658,7 +660,8 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
               <p className="text-xs text-muted-foreground border border-dashed border-border rounded-md py-6 text-center">{mode === "rate-card" ? "No lines yet — add roles from the rate card." : "No lines yet — add a free-form item."}</p>
             ) : (
               <div className="rounded-md border border-border overflow-hidden">
-                <table className="w-full text-xs">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] text-xs">
                   <thead className="bg-surface-elevated/40 text-[10px] uppercase tracking-wider text-muted-foreground">
                     <tr>
                       <th className="text-left font-medium px-2 py-2">Description</th>
@@ -756,6 +759,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                     </tr>
                   </tfoot>
                 </table>
+                </div>
               </div>
             )}
             {mode === "rate-card" ? (

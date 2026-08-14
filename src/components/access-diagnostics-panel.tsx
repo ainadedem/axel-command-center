@@ -152,7 +152,8 @@ export function AccessDiagnosticsPanel({ companies }: { companies: Array<{ id: s
           </div>
           {auditError && <div className="px-4 pb-3 text-xs text-destructive">{auditError}</div>}
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-xs">
               <thead className="bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="text-left font-medium px-4 py-2">When</th>
@@ -202,6 +203,7 @@ export function AccessDiagnosticsPanel({ companies }: { companies: Array<{ id: s
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       )}
