@@ -46,7 +46,7 @@ import { useCompanySalesUsers } from "@/hooks/use-company-users";
 import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } from "@/components/bulk-select";
 import { BulkEditDocDialog } from "@/components/bulk-edit-doc-dialog";
 import { bulkUpdateDocuments, type BulkPatch } from "@/lib/bulk-edit";
-import html2pdf from "html2pdf.js";
+import { renderDocumentPdfBlob } from "@/lib/pdf-export";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
 import { useSingleFlightSubmit } from "@/components/form-ux";
@@ -126,24 +126,12 @@ function Body() {
     try {
       const logoUrl = await resolveFileUrl(co?.logoUrl);
       const html = buildPrintableDocument({ doc: quoteToDoc(q), company: co, client: cl, project: proj, showStatus: true, logoUrl });
-      const container = document.createElement("div");
-      container.style.cssText = "position:fixed;left:-10000px;top:0;width:210mm;background:white;";
-      container.innerHTML = html;
-      document.body.appendChild(container);
-      let pdfBase64: string;
-      try {
-        const blob: Blob = await (html2pdf as unknown as (...a: unknown[]) => { set: (o: unknown) => { from: (el: HTMLElement) => { outputPdf: (t: string) => Promise<Blob> } } })()
-          .set({ margin: 10, filename: `${q.number}.pdf`, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: "mm", format: "a4", orientation: "portrait" } })
-          .from(container)
-          .outputPdf("blob");
-        const buf = await blob.arrayBuffer();
-        let bin = "";
-        const bytes = new Uint8Array(buf);
-        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-        pdfBase64 = btoa(bin);
-      } finally {
-        container.remove();
-      }
+      const blob = await renderDocumentPdfBlob(html);
+      const buf = await blob.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let bin = "";
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      const pdfBase64 = btoa(bin);
       const { data, error } = await supabase.functions.invoke("send-quote-email", {
         body: { quote_id: q.id, recipient_email: cl.email, pdf_base64: pdfBase64 },
       });
