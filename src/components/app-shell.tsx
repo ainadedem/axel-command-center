@@ -13,6 +13,7 @@ import { useFxRates } from "@/lib/fx";
 import { useAuth } from "@/lib/auth-context";
 import { useEffectiveRole } from "@/lib/use-effective-role";
 import { cn } from "@/lib/utils";
+import { TableStackLabeler } from "@/components/stacked-table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ThemeControls } from "@/components/theme-controls";
 import { useFileUrl } from "@/hooks/use-file-url";
