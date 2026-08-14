@@ -29,7 +29,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
+import { EmptyState } from "@/components/crud-toolbar";
+import { useCreateAction } from "@/lib/create-action";
 import { Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, Ban, BadgeCheck, ToggleLeft, ToggleRight, Plus, X } from "lucide-react";
 import { InvoicePreview } from "@/components/invoice-preview";
 import { RecordPaymentDialog } from "@/components/statement-import-dialog";
@@ -260,7 +261,9 @@ function Body() {
   );
 
 
-  const openCreate = () => { setEditing(null); setOpen(true); };
+  const openCreate = useCallback(() => { setEditing(null); setOpen(true); }, []);
+  // Topbar "New" button broadcast (previously handled by CrudToolbar)
+  useCreateAction(openCreate);
 
 
   const scopedInvoices = baseList;
@@ -460,11 +463,23 @@ function Body() {
     }
   };
 
+  const filtersActive =
+    chipStatuses.length > 0 || chipPo.length > 0 || view.activeFilterCount > 0 || view.state.q.trim().length > 0;
+  const clearAllFilters = () => {
+    setChipStatuses([]);
+    setChipPo([]);
+    view.reset();
+  };
+
   return (
-    <div className="p-4 sm:p-8 space-y-5">
-      <div className="flex items-center justify-between gap-4">
-        <CrudToolbar createLabel="New invoice" count={list.length} label="invoices" onCreate={openCreate} />
-        <div className="flex items-center gap-4">
+    <div className="p-4 sm:p-8 space-y-4">
+      {/* Single page action row */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="text-xs text-muted-foreground font-tnum">
+          {list.length} invoice{list.length !== 1 ? "s" : ""}
+          {filtersActive && <span className="text-foreground/70"> · filtered</span>}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           <TableExportMenu
             filename="invoices"
             title="Invoices"
@@ -474,43 +489,60 @@ function Body() {
               rows: list.map((inv) => Object.fromEntries(tp.visible.map((c) => [c.key, exportValue(c.key, inv)]))),
             })}
           />
-
           <ColumnPicker prefs={tp} onResetWidths={tp.resetWidths} onResetOrder={tp.resetOrder} />
           <ReconcileButton checks={checks} />
-
-
           <button
             onClick={toggleMode}
-            className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-border bg-surface text-xs text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
             title={numMode === "compact" ? "Switch to full numbers" : "Switch to compact numbers"}
           >
             {numMode === "compact" ? <ToggleLeft className="h-4 w-4" /> : <ToggleRight className="h-4 w-4" />}
             <span className="hidden sm:inline">{numMode === "compact" ? "Compact" : "Full"}</span>
           </button>
+          <span className="mx-0.5 hidden sm:block h-5 w-px bg-border" aria-hidden />
+          <Button size="sm" onClick={openCreate} className="btn-new gap-1.5" aria-label="New invoice">
+            <Plus className="h-4 w-4" /> New invoice
+          </Button>
         </div>
       </div>
 
-      <DataToolbar view={view} items={baseList} />
+      {/* Unified filter bar */}
+      <div className="rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] p-3 space-y-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <DataToolbar view={view} items={baseList} />
+          <span className="mx-0.5 hidden sm:block h-5 w-px bg-border" aria-hidden />
+          <FilterPresetBar
+            api={presets}
+            statuses={chipStatuses}
+            po={chipPo}
+            onApply={(p) => { setChipStatuses(p.statuses); setChipPo(p.po as PoState[]); }}
+          />
+          {filtersActive && (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              className="ml-auto inline-flex items-center gap-1 h-8 px-2.5 rounded-full text-xs text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+            >
+              <X className="h-3.5 w-3.5" /> Clear all
+            </button>
+          )}
+        </div>
 
-      <FilterPresetBar
-        api={presets}
-        statuses={chipStatuses}
-        po={chipPo}
-        onApply={(p) => { setChipStatuses(p.statuses); setChipPo(p.po as PoState[]); }}
-      />
+        <StatusFilterBar
+          statuses={INVOICE_STATUSES}
+          selected={chipStatuses}
+          statusCount={(s) => baseList.filter((i) => i.status === s).length}
+          onToggleStatus={(s) =>
+            setChipStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))
+          }
+          poSelected={chipPo}
+          poCount={(s) => baseList.filter((i) => poStateOf(i) === s).length}
+          onTogglePo={(s) => setChipPo((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))}
+          onClear={() => { setChipStatuses([]); setChipPo([]); }}
+        />
+      </div>
 
-      <StatusFilterBar
-        statuses={INVOICE_STATUSES}
-        selected={chipStatuses}
-        statusCount={(s) => baseList.filter((i) => i.status === s).length}
-        onToggleStatus={(s) =>
-          setChipStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))
-        }
-        poSelected={chipPo}
-        poCount={(s) => baseList.filter((i) => poStateOf(i) === s).length}
-        onTogglePo={(s) => setChipPo((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))}
-        onClear={() => { setChipStatuses([]); setChipPo([]); }}
-      />
+
 
 
       {list.length === 0 ? (
@@ -529,7 +561,7 @@ function Body() {
             onSelect={setBucket}
             format={(v) => fmtAmount(v, "MGA")}
             noun="invoice"
-            title="Receivables aging"
+            storageKey="receivables"
             tilesTitle="Receivables aging — days past due"
             itemsInBucket={(key) =>
               chipFiltered

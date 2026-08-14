@@ -155,7 +155,7 @@ function Body() {
         onSelect={setBucket}
         format={(v) => fmtAmount(v, defaultCurrency)}
         noun="bill"
-        title="Payables aging"
+        storageKey="payables"
         tilesTitle="Payables aging — days past due"
         description="Open balance by days past due — follows the current tab. Click a bar to filter."
         itemsInBucket={(key) =>
