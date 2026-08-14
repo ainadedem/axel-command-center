@@ -37,6 +37,8 @@ export interface DocumentData {
   clientReference?: string;
   /** Cross-references printed on the doc (e.g. quote # on a PO, PO # on an invoice). */
   references?: Array<{ label: string; value: string }>;
+  /** Document-wide sales discount in percent, applied before tax. */
+  discountPct?: number;
   /** Tax breakdown (used on quotes). */
   taxRate?: number;
   taxAmount?: number;
@@ -582,6 +584,23 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
   const due = doc.dueDate ? format(parseISO(doc.dueDate), df) : null;
   const paidOn = doc.paidDate ? format(parseISO(doc.paidDate), df) : null;
   const subtotalHT = doc.amount ?? 0;
+  // Discounts: gross comes from the lines, the stored amount is already net.
+  const grossLines = (doc.lines ?? []).reduce(
+    (sum, l) => sum + (Number(l.quantity) || 0) * (Number(l.rate) || 0),
+    0,
+  );
+  const lineDiscountTotal = Math.round(
+    (doc.lines ?? []).reduce((sum, l) => {
+      const g = (Number(l.quantity) || 0) * (Number(l.rate) || 0);
+      const d = Math.min(100, Math.max(0, Number(l.discountPct) || 0));
+      return sum + (g * d) / 100;
+    }, 0),
+  );
+  const globalDiscountPct = Math.min(100, Math.max(0, Number(doc.discountPct) || 0));
+  const grossSubtotal = Math.round(grossLines) || subtotalHT + lineDiscountTotal;
+  const afterLineDiscounts = grossSubtotal - lineDiscountTotal;
+  const globalDiscountAmount = Math.round((afterLineDiscounts * globalDiscountPct) / 100);
+  const showDiscountRows = lineDiscountTotal > 0 || globalDiscountAmount > 0;
   // Never invent VAT: only show tax when the document actually carries it.
   const vatRate = doc.taxRate ?? 0;
   const vatAmount = doc.taxAmount ?? subtotalHT * (vatRate / 100);
@@ -653,7 +672,8 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
     ? doc.lines.map((l) => {
         const qty = Number(l.quantity) || 0;
         const rate = Number(l.rate) || 0;
-        const total = qty * rate;
+        const disc = Math.min(100, Math.max(0, Number(l.discountPct) || 0));
+        const total = qty * rate * (1 - disc / 100);
         const descHtml = esc(String(l.description ?? "").trim() || "—");
         const detailHtml = renderRichText(l.details);
         const meta = [l.capability, l.level].filter(Boolean).join(" · ");
@@ -667,7 +687,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
             </td>
             <td class="num">${qty.toLocaleString()}</td>
             ${unitVisible ? `<td class="num">${esc(l.unit)}</td>` : ""}
-            <td class="num">${fmt(rate, doc.currency)}</td>
+            <td class="num">${fmt(rate, doc.currency)}${disc > 0 ? `<div class="sub">−${disc}%</div>` : ""}</td>
             <td class="num">${fmt(total, doc.currency)}</td>
           </tr>
         `;
@@ -796,6 +816,11 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
       </table>
 
       <div class="totals">
+        ${showDiscountRows ? `
+          <div class="line"><span>${esc(t.grossSubtotal)}</span><span>${fmt(grossSubtotal, doc.currency)}</span></div>
+          ${lineDiscountTotal > 0 ? `<div class="line"><span>${esc(t.lineDiscounts)}</span><span>−${fmt(lineDiscountTotal, doc.currency)}</span></div>` : ""}
+          ${globalDiscountAmount > 0 ? `<div class="line"><span>${esc(t.discount)} (${globalDiscountPct}%)</span><span>−${fmt(globalDiscountAmount, doc.currency)}</span></div>` : ""}
+        ` : ""}
         <div class="line"><span>${esc(t.subtotal)}</span><span>${fmt(subtotalHT, doc.currency)}</span></div>
         <div class="line"><span>${esc(t.vat)} (${Number(vatRate).toFixed(2)}%)</span><span>${fmt(vatAmount, doc.currency)}</span></div>
         <div class="line grand"><span>${esc(t.total)}</span><span>${fmt(totalTTC, doc.currency)}</span></div>
