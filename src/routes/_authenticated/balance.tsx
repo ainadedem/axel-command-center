@@ -126,7 +126,7 @@ function Body() {
               <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Classe {cls}</div>
               <div className="font-display text-base font-semibold">{classNames[cls]}</div>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto sticky-first-col">
             <table className="w-full min-w-[900px] text-sm">
               <thead>
                 <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
@@ -171,7 +171,7 @@ function Body() {
 
       {/* Grand total footer */}
       <div className="rounded-xl border border-border bg-surface-elevated/60 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto sticky-first-col">
         <table className="w-full min-w-[900px] text-sm">
           <tbody>
             <tr className="font-bold">

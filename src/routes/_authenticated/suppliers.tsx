@@ -328,25 +328,31 @@ function SupplierListView({
     const Icon = s.kind === "internal" ? User : Building2;
     const fromClient = fromClientIds.has(s.id);
     return (
-      <div key={s.id} className="grid grid-cols-[1fr_140px_100px_120px_40px] gap-3 px-4 py-2.5 items-center border-b border-border/50 last:border-b-0 hover:bg-accent/40 transition group">
-        <div className="flex items-center gap-2.5 min-w-0">
+      <div key={s.id} className="grid grid-cols-2 sm:grid-cols-[1fr_140px_100px_120px_40px] gap-x-3 gap-y-2 px-4 py-3 sm:py-2.5 sm:items-center border-b border-border/50 last:border-b-0 hover:bg-accent/40 transition group">
+        <div className="col-span-2 sm:col-span-1 flex items-center gap-2.5 min-w-0">
           <div className="relative shrink-0">
             <Avatar src={s.avatarUrl} name={s.name} size={28} />
             {co && <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border-2 border-background" style={{ background: co.color }} title={co.name} />}
           </div>
           <div className="min-w-0">
             <div className="font-medium text-[13px] truncate flex items-center gap-1">
-              <Icon className="h-3 w-3 text-muted-foreground" />
-              {s.name}
-              {fromClient && <span className="ml-1 text-[8px] uppercase tracking-wider px-1 py-px rounded bg-accent/60 text-muted-foreground font-mono" title="Linked from Clients">from clients</span>}
+              <Icon className="h-3 w-3 text-muted-foreground shrink-0" />
+              <span className="truncate">{s.name}</span>
+              {fromClient && <span className="ml-1 text-[8px] uppercase tracking-wider px-1 py-px rounded bg-accent/60 text-muted-foreground font-mono shrink-0" title="Linked from Clients">from clients</span>}
             </div>
             <div className="text-[11px] text-muted-foreground truncate">{[s.country, s.email].filter(Boolean).join(" · ")}</div>
           </div>
         </div>
-        <div className="flex items-center gap-1 flex-wrap"><CategoryChips value={s.categories} size="xs" /><CompanyTags ids={contactCompanyIds(s)} companies={companies} size="xs" /></div>
-        <div className="text-right font-tnum text-[13px] text-muted-foreground">{s.account}</div>
-        <div className={`text-right font-tnum text-[13px] ${bal > 0 ? "text-amber-600" : ""}`}>{fmtAr(bal)}</div>
-        <div className="flex justify-end">
+        <div className="col-span-2 sm:col-span-1 flex items-center gap-1 flex-wrap min-w-0"><CategoryChips value={s.categories} size="xs" /><CompanyTags ids={contactCompanyIds(s)} companies={companies} size="xs" /></div>
+        <div className="min-w-0 text-left sm:text-right font-tnum text-[13px] text-muted-foreground">
+          <div className="sm:hidden text-[9px] uppercase tracking-wider font-semibold">PCG</div>
+          {s.account}
+        </div>
+        <div className={`min-w-0 text-left sm:text-right font-tnum text-[13px] ${bal > 0 ? "text-amber-600" : ""}`}>
+          <div className="sm:hidden text-[9px] uppercase tracking-wider text-muted-foreground font-semibold">Outstanding</div>
+          {fmtAr(bal)}
+        </div>
+        <div className="col-span-2 sm:col-span-1 flex justify-end">
           {!fromClient && (
             <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
               <button onClick={() => onEdit(s)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
@@ -355,6 +361,7 @@ function SupplierListView({
           )}
         </div>
       </div>
+
     );
   };
 
@@ -375,7 +382,7 @@ function SupplierListView({
 
   return (
     <div className="rounded-xl border border-border bg-surface-elevated overflow-hidden">
-      <div className="grid grid-cols-[1fr_140px_100px_120px_40px] gap-3 px-4 py-2 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border bg-background/50">
+      <div className="hidden sm:grid grid-cols-[1fr_140px_100px_120px_40px] gap-3 px-4 py-2 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border bg-background/50">
         <div>Contact</div>
         <div>Categories</div>
         <div className="text-right">PCG</div>

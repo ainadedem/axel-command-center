@@ -40,13 +40,13 @@ export function DataToolbar<T>({ view, items, className }: Props<T>) {
   return (
     <div className={cn("flex items-center gap-2 flex-wrap", className)}>
       {/* Search */}
-      <div className="relative">
+      <div className="relative w-full sm:w-auto">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
         <Input
           value={state.q}
           onChange={(e) => setState((p) => ({ ...p, q: e.target.value }))}
           placeholder="Search…"
-          className="h-8 w-44 pl-7 text-xs"
+          className="h-8 w-full sm:w-44 pl-7 text-xs"
         />
       </div>
 

@@ -13,6 +13,7 @@ import { useFxRates } from "@/lib/fx";
 import { useAuth } from "@/lib/auth-context";
 import { useEffectiveRole } from "@/lib/use-effective-role";
 import { cn } from "@/lib/utils";
+import { TableStackLabeler } from "@/components/stacked-table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ThemeControls } from "@/components/theme-controls";
 import { useFileUrl } from "@/hooks/use-file-url";
@@ -602,7 +603,9 @@ function AppShellFrame({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-dvh bg-background text-foreground p-0">
       <a href="#main-content" className="skip-link">Skip to content</a>
+      <TableStackLabeler />
       <MobileNav open={navOpen} onClose={() => setNavOpen(false)} />
+
       <div className="min-h-dvh flex overflow-hidden bg-background">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
