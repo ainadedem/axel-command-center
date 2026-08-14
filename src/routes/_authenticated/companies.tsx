@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2 } from "lucide-react";
+import { markCompanyDocumentsDirty } from "@/lib/stamp-refresh";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { supabase } from "@/integrations/supabase/client";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
@@ -257,9 +258,15 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       default_document_language: docLanguage,
     };
     if (editing) {
+      const stampChanged =
+        editing.stampUrl !== stampUrl || editing.stampWidth !== stampWidth ||
+        editing.stampOpacity !== stampOpacity || editing.stampPosition !== stampPosition ||
+        editing.showStamp !== showStamp;
       companiesStore.update(editing.id, local);
       // Match the DB row by code (the local id may be a mock seed id like "log").
       await supabase.from("companies").update(dbRow).eq("code", finalCode);
+      // Existing documents now carry an outdated stamp — flag them for refresh.
+      if (stampChanged) await markCompanyDocumentsDirty(editing.id);
     } else {
       const { data } = await supabase.from("companies").insert(dbRow).select("id").single();
       const id = data?.id ?? newId("co");
