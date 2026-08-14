@@ -35,11 +35,11 @@ import { seedDemoWorkspace, removeDemoWorkspace } from "@/lib/sop-demo.functions
 import { saveInvoiceEscalation } from "@/lib/db-sync";
 import { toast } from "sonner";
 import {
-import { KpiCard } from "@/components/kpi-card";
   ShieldCheck, AlertTriangle, Download, BookText, CheckCircle2, Clock,
   PlayCircle, Trash2, Mail, HelpCircle, Loader2, ExternalLink,
 } from "lucide-react";
 
+import { KpiCard } from "@/components/kpi-card";
 const TOUR_STEPS: TourStep[] = [
   {
     selector: '[data-tour="kpis"]',
