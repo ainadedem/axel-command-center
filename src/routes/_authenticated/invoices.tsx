@@ -1180,6 +1180,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                     </tr>
                   </tfoot>
                 </table>
+                <ReorderLiveRegion text={lineDnd.announcement} />
                 </div>
               </div>
             )}
