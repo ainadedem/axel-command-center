@@ -172,6 +172,11 @@ function mapCompanyRow(row: Record<string, unknown>, fallbackColorIdx: number): 
     logoHeight: typeof row.logo_height === "number" ? (row.logo_height as number) : undefined,
     logoMaxWidth: typeof row.logo_max_width === "number" ? (row.logo_max_width as number) : undefined,
     logoCrop: (row.logo_crop as Company["logoCrop"]) ?? undefined,
+    stampUrl: (row.stamp_url as string) || undefined,
+    stampPosition: (row.stamp_position as Company["stampPosition"]) ?? "bottom-right",
+    stampWidth: typeof row.stamp_width === "number" ? (row.stamp_width as number) : undefined,
+    stampOpacity: typeof row.stamp_opacity === "number" ? (row.stamp_opacity as number) : Number(row.stamp_opacity ?? 1) || 1,
+    showStamp: row.show_stamp === true,
     defaultDocumentLanguage: row.default_document_language === "fr" ? "fr" : row.default_document_language === "en" ? "en" : undefined,
     isDemo: row.is_demo === true,
   };
