@@ -1178,12 +1178,16 @@ export function buildPrintableDocument(args: DocumentHtmlArgs) {
   // Zero page margin + an inner padded container: the sheet element is a full
   // A4 box, exactly like the preview, so percent coordinates match 1:1.
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(args.doc.number)}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
     <style>
       @page { size: A4; margin: 0; }
-      html, body { margin: 0; padding: 0; background: #fff; }
+      html, body { margin: 0; padding: 0; background: #fff; font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
       .sheet { position: relative; width: 210mm; min-height: 297mm; box-sizing: border-box; background: #fff; }
       .sheet-pad { padding: ${PAGE_PAD_MM}mm; }
     </style>
+
     </head><body><div class="sheet" style="position:relative;width:210mm;min-height:297mm;box-sizing:border-box;background:#fff;"><div class="sheet-pad" style="padding:${PAGE_PAD_MM}mm;">${buildHTML(args)}</div>${floatingStampHtml(args)}</div></body></html>`;
 }
 
