@@ -11,8 +11,12 @@ export function useOwnerNames(ids: (string | undefined)[]): {
 } {
   const [owners, setOwners] = useState<Record<string, string>>({});
 
+  // Only real uuids may be sent to PostgREST — a sentinel like "unassigned"
+  // makes the whole `.in()` query fail with a cast error and wipes every name.
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
   const key = useMemo(
-    () => Array.from(new Set(ids.filter(Boolean) as string[])).sort().join(","),
+    () => Array.from(new Set((ids.filter(Boolean) as string[]).filter((id) => UUID_RE.test(id)))).sort().join(","),
     [ids],
   );
 
