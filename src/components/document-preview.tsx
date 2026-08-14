@@ -50,6 +50,11 @@ export interface DocumentData {
   language?: DocLanguage;
   /** User id whose signature is printed (last editor, else creator). */
   signerId?: string;
+  /** Custom stamp placement, in percent of the page (top-left origin). */
+  stampX?: number;
+  stampY?: number;
+  /** Stamp size multiplier relative to the company default width. */
+  stampScale?: number;
 }
 
 interface Props {
@@ -59,6 +64,16 @@ interface Props {
   company?: Company;
   client?: Client;
   project?: Project;
+  /** People who can sign this document (used by the signer picker). */
+  signers?: Array<{ userId: string; name: string }>;
+  /** Persist per-document signer / stamp placement changes. */
+  onDocChange?: (patch: {
+    signerId?: string;
+    stampX?: number;
+    stampY?: number;
+    stampScale?: number;
+    stampDirty?: boolean;
+  }) => void;
 }
 
 const MM = 96 / 25.4;
@@ -123,7 +138,7 @@ function saveView(kind: DocKind, v: SavedView) {
   } catch { /* storage unavailable — non-fatal */ }
 }
 
-export function DocumentPreview({ open, onOpenChange, doc, company, client, project }: Props) {
+export function DocumentPreview({ open, onOpenChange, doc, company, client, project, signers, onDocChange }: Props) {
   const [showStatus, setShowStatus] = useState(true);
   const [showClientEmail, setShowClientEmail] = useState(true);
   const [showUnit, setShowUnit] = useState(true);
@@ -135,7 +150,17 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
   const [showSignature, setShowSignature] = useState(true);
   useEffect(() => { setShowStamp(company?.showStamp === true); }, [company?.id, company?.showStamp]);
 
-  const signer = useSigner(doc?.signerId);
+  // Per-document signer: defaults to whatever the document stores.
+  const [signerId, setSignerId] = useState<string | undefined>(doc?.signerId);
+  useEffect(() => { setSignerId(doc?.signerId); }, [doc?.signerId]);
+  const signer = useSigner(signerId);
+
+  // Custom stamp placement (percent of the page, top-left origin).
+  const [place, setPlace] = useState<{ x?: number; y?: number; scale?: number }>({});
+  useEffect(() => {
+    setPlace({ x: doc?.stampX, y: doc?.stampY, scale: doc?.stampScale });
+  }, [doc?.number, doc?.stampX, doc?.stampY, doc?.stampScale]);
+  const floating = place.x != null && place.y != null;
   const stampUrl = useFileUrl(company?.stampUrl);
   const signatureUrl = useFileUrl(signer.signatureRef);
 
@@ -262,8 +287,8 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   const html = useMemo(() => {
     if (!doc) return "";
-    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName: signer.name });
-  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signer.name]);
+    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName: signer.name, stampX: place.x, stampY: place.y, stampScale: place.scale });
+  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signer.name, place]);
 
   // Reset the auto-fit search whenever the document content changes.
   useEffect(() => {
@@ -375,7 +400,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
         setExporting(false);
         return;
       }
-      w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName: signer.name }));
+      w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName: signer.name, stampX: place.x, stampY: place.y, stampScale: place.scale }));
       w.document.close();
       setTimeout(() => {
         try { w.focus(); w.print(); }
