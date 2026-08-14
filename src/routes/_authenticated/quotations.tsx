@@ -37,6 +37,10 @@ import { resolveFileUrl } from "@/lib/storage";
 import { nextNumber, nextNumberAsync, isNumberTaken, primeNumbering } from "@/lib/numbering";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { canWriteCompany, dbCompanyId } from "@/lib/db-sync";
+import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } from "@/components/bulk-select";
+import { BulkEditDocDialog } from "@/components/bulk-edit-doc-dialog";
+import { bulkUpdateDocuments, type BulkPatch } from "@/lib/bulk-edit";
 import html2pdf from "html2pdf.js";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
@@ -157,6 +161,29 @@ function Body() {
   const groups = view.apply(baseList);
   const list = groups.flatMap((g) => g.items);
 
+  const isWritable = useCallback(
+    (q: Quote) => canWriteCompany(dbCompanyId(q.companyId) ?? q.companyId),
+    [],
+  );
+  const selection = useBulkSelection(list, isWritable);
+  const [bulkOpen, setBulkOpen] = useState(false);
+
+  const applyBulk = async (patch: BulkPatch) => {
+    const rows = selection.selectedRows;
+    const n = await bulkUpdateDocuments({
+      collection: quotesStore,
+      docType: "quote",
+      rows,
+      patch,
+      userId: user?.id,
+      label: `bulk edit ${rows.length} quote${rows.length !== 1 ? "s" : ""}`,
+      clientName: (id) => clients.find((c) => c.id === id)?.name ?? id,
+      projectName: (id) => projects.find((p) => p.id === id)?.name ?? id,
+    });
+    selection.clear();
+    toast.success(`Updated ${n} quote${n !== 1 ? "s" : ""}`);
+  };
+
   const convertToPO = async (q: Quote) => {
     await primeNumbering("po", q.companyId);
     purchaseOrdersStore.add({
@@ -214,6 +241,7 @@ function Body() {
           <table className="w-full min-w-[900px] text-sm">
             <thead>
               <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                <SelectAllHeaderCell checked={selection.allSelected} onToggle={selection.toggleAll} />
                 <th className="text-left font-medium px-5 py-3">Number</th>
                 <th className="text-left font-medium px-5 py-3">Client</th>
                 <th className="text-left font-medium px-5 py-3">Project</th>
@@ -230,13 +258,19 @@ function Body() {
             <tbody>
               {groups.map((g) => (
                 <Fragment key={g.key}>
-                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={11} />}
+                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={12} />}
                   {g.items.map((q) => {
                 const co = companies.find((c) => c.id === q.companyId);
                 const cl = clients.find((c) => c.id === q.clientId);
                 const proj = q.projectId ? projects.find((p) => p.id === q.projectId) : undefined;
                 return (
                   <tr key={q.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
+                    <SelectRowCell
+                      checked={selection.isSelected(q.id)}
+                      onToggle={() => selection.toggle(q.id)}
+                      disabled={!isWritable(q)}
+                      label={`Select quote ${q.number}`}
+                    />
                     <td className="px-5 py-3.5 font-tnum text-xs text-muted-foreground">{q.number}</td>
                     <td className="px-5 py-3.5 font-medium">{cl?.name ?? "—"}</td>
                     <td className="px-5 py-3.5 text-xs">{proj ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}</td>
