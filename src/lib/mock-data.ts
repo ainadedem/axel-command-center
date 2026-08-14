@@ -460,6 +460,15 @@ export interface PurchaseOrder {
   subject?: string;
   /** Which company bank account prints in the payment details block. */
   bankAccountId?: string;
+  /** Auth user id whose signature prints on this document. */
+  signerId?: string;
+  /** Stamp position on the page, in percent of the sheet (top-left origin). */
+  stampX?: number;
+  stampY?: number;
+  /** Stamp size multiplier relative to the company default width. */
+  stampScale?: number;
+  /** Set when the company stamp or a signature changed after the last render. */
+  stampDirty?: boolean;
   /** User id of whoever created this purchase order. */
   createdBy?: string;
   /** User id of whoever last edited this purchase order. */
