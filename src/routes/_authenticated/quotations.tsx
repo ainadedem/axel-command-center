@@ -306,6 +306,27 @@ function Body() {
         </div>
       )}
       <QuoteDialog open={open} onOpenChange={setOpen} editing={editing} />
+      <Dialog open={!!followingUp} onOpenChange={(v) => { if (!v) setFollowingUp(null); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Follow-up · {followingUp?.number}</DialogTitle></DialogHeader>
+          {followingUp && (
+            <div className="space-y-4">
+              <div>
+                <Label className="text-[11px]">Assigned sales (max 3)</Label>
+                <QuoteAssigneePicker
+                  companyId={followingUp.companyId}
+                  value={followingUp.assignedTo ?? []}
+                  onChange={(next) => {
+                    quotesStore.update(followingUp.id, { assignedTo: next });
+                    setFollowingUp({ ...followingUp, assignedTo: next });
+                  }}
+                />
+              </div>
+              <QuoteFollowupPanel quote={quotes.find((x) => x.id === followingUp.id) ?? followingUp} />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       <DocumentActivityPanel
         open={!!historyOf}
         onOpenChange={(v) => { if (!v) setHistoryOf(null); }}
