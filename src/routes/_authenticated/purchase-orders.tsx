@@ -12,6 +12,7 @@ import { DOCUMENTS_BUCKET, uploadFile, openStoredFile } from "@/lib/storage";
 import { dbCompanyId } from "@/lib/db-sync";
 import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO } from "date-fns";
+import { StatusBadge } from "@/components/status-badge";
 import { cn } from "@/lib/utils";
 import { Fragment, useEffect, useState } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
@@ -151,7 +152,7 @@ function Body() {
                     {cp.on("project") && <ListTd className="text-xs" title={proj?.name}>{proj ? <span className="inline-block max-w-full truncate px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 align-middle">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}</ListTd>}
                     {cp.on("company") && <ListTd title={co?.name}>{co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}</ListTd>}
                     {cp.on("issued") && <ListTd className="text-muted-foreground text-xs font-tnum">{format(parseISO(po.issueDate), "MMM d, yyyy")}</ListTd>}
-                    {cp.on("status") && <ListTd><span className={cn("inline-block text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[po.status])}>{po.status}</span></ListTd>}
+                    {cp.on("status") && <ListTd><StatusBadge status={po.status} /></ListTd>}
                     {cp.on("document") && (
                       <ListTd className="text-xs" title={po.documentName}>
                         {po.documentUrl ? (

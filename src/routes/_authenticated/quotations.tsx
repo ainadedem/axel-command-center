@@ -16,6 +16,7 @@ import { docTotals, lineNet } from "@/lib/discounts";
 import { inScope, useCompany } from "@/lib/company-context";
 import { useAuth } from "@/lib/auth-context";
 import { format, parseISO, addDays } from "date-fns";
+import { StatusBadge } from "@/components/status-badge";
 import { cn } from "@/lib/utils";
 import { Fragment, useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
@@ -333,7 +334,7 @@ function Body() {
                             Sent · {format(parseISO(q.sentAt), "MMM d")}
                           </span>
                         ) : (
-                          <span className={cn("inline-block text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles[q.status])}>{q.status}</span>
+                          <StatusBadge status={q.status} />
                         )}
                       </ListTd>
                     )}
