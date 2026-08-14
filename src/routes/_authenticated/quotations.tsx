@@ -207,7 +207,8 @@ function Body() {
         <EmptyState label="quotations" onCreate={openCreate} />
       ) : (
         <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px] text-sm">
             <thead>
               <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
                 <th className="text-left font-medium px-5 py-3">Number</th>
@@ -283,6 +284,7 @@ function Body() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
       <QuoteDialog open={open} onOpenChange={setOpen} editing={editing} />
@@ -658,7 +660,8 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
               <p className="text-xs text-muted-foreground border border-dashed border-border rounded-md py-6 text-center">{mode === "rate-card" ? "No lines yet — add roles from the rate card." : "No lines yet — add a free-form item."}</p>
             ) : (
               <div className="rounded-md border border-border overflow-hidden">
-                <table className="w-full text-xs">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] text-xs">
                   <thead className="bg-surface-elevated/40 text-[10px] uppercase tracking-wider text-muted-foreground">
                     <tr>
                       <th className="text-left font-medium px-2 py-2">Description</th>
@@ -756,6 +759,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                     </tr>
                   </tfoot>
                 </table>
+                </div>
               </div>
             )}
             {mode === "rate-card" ? (

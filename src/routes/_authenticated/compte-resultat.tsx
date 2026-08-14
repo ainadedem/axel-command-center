@@ -192,7 +192,8 @@ function Section({ title, rows, prevRows, co }: any) {
           {prevRows && <span className="text-right w-20">Var.</span>}
         </div>
       </div>
-      <table className="w-full text-sm">
+      <div className="overflow-x-auto">
+      <table className="w-full min-w-[900px] text-sm">
         <tbody>
           {filtered.length === 0 && (
             <tr><td className="px-5 py-3 text-muted-foreground text-xs" colSpan={5}>—</td></tr>
@@ -222,6 +223,7 @@ function Section({ title, rows, prevRows, co }: any) {
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

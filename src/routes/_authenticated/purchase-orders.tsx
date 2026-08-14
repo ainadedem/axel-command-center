@@ -94,7 +94,8 @@ function Body() {
         <EmptyState label="purchase orders" onCreate={openCreate} />
       ) : (
         <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px] text-sm">
             <thead>
               <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
                 <th className="text-left font-medium px-5 py-3">Number</th>
@@ -172,6 +173,7 @@ function Body() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
       <PODialog open={open} onOpenChange={setOpen} editing={editing} />

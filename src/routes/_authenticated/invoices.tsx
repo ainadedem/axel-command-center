@@ -281,7 +281,8 @@ function Body() {
           )}
 
           <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px] text-sm">
               <thead>
                 <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
                   <th className="text-left font-medium px-5 py-3">Number</th>
@@ -397,6 +398,7 @@ function Body() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         </>
       )}
@@ -814,7 +816,8 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               </p>
             ) : (
               <div className="rounded-md border border-border overflow-hidden">
-                <table className="w-full text-xs">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] text-xs">
                   <thead className="bg-surface-elevated/40 text-[10px] uppercase tracking-wider text-muted-foreground">
                     <tr>
                       <th className="text-left font-medium px-2 py-2">Description</th>
@@ -859,6 +862,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                     </tr>
                   </tfoot>
                 </table>
+                </div>
               </div>
             )}
             <div className="flex items-center justify-between gap-3">

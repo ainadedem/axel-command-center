@@ -113,7 +113,8 @@ function Body() {
           </div>
 
           <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px] text-sm">
               <thead>
                 <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
                   <th className="text-left font-medium px-5 py-3">Account</th>
@@ -192,6 +193,7 @@ function Body() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         </>
       )}
@@ -402,7 +404,8 @@ function ReconciliationHistoryDialog({ open, onOpenChange, account }: { open: bo
             <>
               <div className="text-[11px] text-muted-foreground mb-2">{filtered.length} of {rows.length} reconciliations</div>
               <div className="rounded-lg border border-border overflow-hidden">
-                <table className="w-full text-xs">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] text-xs">
                   <thead>
                     <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
                       <th className="text-left font-medium px-3 py-2">Period</th>
@@ -448,6 +451,7 @@ function ReconciliationHistoryDialog({ open, onOpenChange, account }: { open: bo
                     })}
                   </tbody>
                 </table>
+                </div>
               </div>
             </>
           )}

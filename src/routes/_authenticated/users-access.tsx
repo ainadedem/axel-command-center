@@ -302,7 +302,8 @@ function UsersAccessPage() {
 
         <div className="rounded-lg border border-border bg-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px] text-sm">
               <thead className="bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="text-left font-medium px-4 py-3 sticky left-0 bg-muted/40 min-w-[260px]">
@@ -441,6 +442,7 @@ function UsersAccessPage() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
 

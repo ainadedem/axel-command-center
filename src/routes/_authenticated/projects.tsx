@@ -195,7 +195,8 @@ function Body() {
 
           {mainTab === "projects" ? (
             <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px] text-sm">
                 <thead>
                   <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
                     <th className="px-3 py-3 w-8" />
@@ -293,6 +294,7 @@ function Body() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           ) : (
             /* Client P&L rollup */
@@ -302,7 +304,8 @@ function Body() {
               </div>
             ) : (
               <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[900px] text-sm">
                   <thead>
                     <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
                       <th className="text-left font-medium px-5 py-3">Client</th>
@@ -341,6 +344,7 @@ function Body() {
                     })}
                   </tbody>
                 </table>
+                </div>
               </div>
             )
           )}

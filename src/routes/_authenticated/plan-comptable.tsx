@@ -45,7 +45,8 @@ function PlanComptablePage() {
                 </div>
                 <div className="text-xs text-muted-foreground">{list.length} comptes</div>
               </div>
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px] text-sm">
                 <thead>
                   <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
                     <th className="text-left font-medium px-5 py-2 w-28">Code</th>
@@ -65,6 +66,7 @@ function PlanComptablePage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           );
         })}

@@ -622,7 +622,8 @@ export function StatementImportDialog({
           {/* STEP 3 — review rows */}
           {step === 2 && (
             <div className="max-h-[380px] overflow-y-auto rounded-lg border border-border">
-              <table className="w-full text-xs">
+              <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] text-xs">
                 <thead className="sticky top-0 bg-surface">
                   <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
                     <th className="text-left font-medium px-3 py-2 w-8" />
@@ -676,6 +677,7 @@ export function StatementImportDialog({
                   })}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
 
