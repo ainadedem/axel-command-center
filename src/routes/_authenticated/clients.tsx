@@ -530,6 +530,9 @@ function KpiTile({ icon, label, value, sub, tint, ring }: { icon: React.ReactNod
 }
 
 function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Client | null }) {
+  const { isSalesOnly, roleResolved } = useEffectiveRole();
+  // Sales may create clients, but existing records are view-only for them.
+  const readOnly = !!editing && roleResolved && isSalesOnly;
   const { scope } = useCompany();
   const companies = useCompanies();
   const acqPeople = useSalesPeople("acquisition");
