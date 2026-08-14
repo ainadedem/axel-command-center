@@ -964,3 +964,71 @@ tr:focus-within .row-actions-inner {
     background-color: var(--muted);
   }
 }
+
+/* ---------------------------------------------------------------
+   Status / PO chips: icon-only by default so records stay on one
+   line; the label slides open on hover or keyboard focus using the
+   same 150ms curve as the sidebar and row actions.
+   --------------------------------------------------------------- */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  border-width: 1px;
+  padding: 0.1875rem 0.3125rem;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  vertical-align: middle;
+  max-width: 100%;
+  transition:
+    padding 150ms cubic-bezier(0.2, 0, 0, 1),
+    background-color 150ms cubic-bezier(0.2, 0, 0, 1),
+    border-color 150ms cubic-bezier(0.2, 0, 0, 1);
+}
+.status-chip:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+.status-chip .status-chip-label {
+  display: grid;
+  grid-template-columns: 0fr;
+  overflow: hidden;
+  transition: grid-template-columns 150ms cubic-bezier(0.2, 0, 0, 1);
+}
+.status-chip .status-chip-label > span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.status-chip:hover,
+.status-chip:focus-visible,
+tr:hover .status-chip {
+  padding-right: 0.5rem;
+}
+.status-chip:hover .status-chip-label,
+.status-chip:focus-visible .status-chip-label,
+tr:hover .status-chip .status-chip-label,
+.status-chip-static .status-chip-label {
+  grid-template-columns: 1fr;
+}
+.status-chip-static {
+  padding-right: 0.5rem;
+}
+@media (hover: none) {
+  .status-chip .status-chip-label {
+    grid-template-columns: 1fr;
+  }
+  .status-chip {
+    padding-right: 0.5rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .status-chip,
+  .status-chip .status-chip-label {
+    transition: none !important;
+  }
+}
