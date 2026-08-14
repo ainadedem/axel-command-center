@@ -44,7 +44,6 @@ export function AgingPanel({
   onSelect,
   format,
   noun,
-  title = "Aging",
   description,
   tilesTitle = "Aging — days past due",
   itemsInBucket,
@@ -52,6 +51,7 @@ export function AgingPanel({
   drawerBucket,
   onDrawerBucketChange,
   loading,
+  storageKey,
 }: {
   aging: AgingResult;
   selected: AgingKey | null;
@@ -59,7 +59,6 @@ export function AgingPanel({
   format: (v: number) => string;
   /** Singular noun for counts, e.g. "invoice". */
   noun: string;
-  title?: string;
   description?: string;
   tilesTitle?: string;
   /** Records behind a bucket — enables the click-through drawer. */
@@ -127,12 +126,12 @@ export function AgingPanel({
             )}
             <button
               type="button"
-              onClick={() => setOpen(!open)}
-              aria-expanded={open}
+              onClick={toggleChart}
+              aria-expanded={chartOpen}
               className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
             >
-              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", !open && "-rotate-90")} aria-hidden="true" />
-              {open ? "Hide chart" : "Show chart"}
+              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", !chartOpen && "-rotate-90")} aria-hidden="true" />
+              {chartOpen ? "Hide chart" : "Show chart"}
             </button>
           </div>
         </div>
@@ -174,7 +173,7 @@ export function AgingPanel({
           })}
         </div>
 
-        {open && (
+        {chartOpen && (
           <div className="border-t border-border p-4">
             <p className="text-caption text-muted-foreground mb-2">
               {description ?? "Open balance by days past due (MGA) — follows the current filters. Click a bar to filter."}
