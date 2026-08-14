@@ -1,5 +1,8 @@
 @import "tailwindcss" source(none);
 @source "../src";
+/* Typography tokens must always ship, even when composed dynamically. */
+@source inline("text-display-xl text-display-lg text-display-md text-display-sm text-body text-body-sm text-overline");
+
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
