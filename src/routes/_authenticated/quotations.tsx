@@ -39,6 +39,8 @@ import { nextNumber, nextNumberAsync, isNumberTaken, primeNumbering } from "@/li
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { canWriteCompany, dbCompanyId } from "@/lib/db-sync";
+import { refreshStampsAndSignatures } from "@/lib/stamp-refresh";
+import { useCompanySalesUsers } from "@/hooks/use-company-users";
 import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } from "@/components/bulk-select";
 import { BulkEditDocDialog } from "@/components/bulk-edit-doc-dialog";
 import { bulkUpdateDocuments, type BulkPatch } from "@/lib/bulk-edit";
@@ -187,6 +189,7 @@ function Body() {
   );
   const selection = useBulkSelection(list, isWritable);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const { users: previewSigners } = useCompanySalesUsers(previewing?.companyId);
 
   const applyBulk = async (patch: BulkPatch) => {
     const rows = selection.selectedRows;
@@ -368,6 +371,18 @@ function Body() {
         <Button size="sm" className="h-7 px-3 text-xs" onClick={() => setBulkOpen(true)}>
           Edit client / project
         </Button>
+        <Button
+          size="sm" variant="outline" className="h-7 px-3 text-xs"
+          onClick={async () => {
+            const n = await refreshStampsAndSignatures({
+              collection: quotesStore, docType: "quote", rows: selection.selectedRows,
+            });
+            selection.clear();
+            toast.success(`Stamp & signature refreshed on ${n} quote${n > 1 ? "s" : ""}`);
+          }}
+        >
+          Refresh stamp &amp; signature
+        </Button>
       </BulkActionBar>
       <BulkEditDocDialog
         open={bulkOpen}
@@ -413,6 +428,8 @@ function Body() {
         company={previewing ? companies.find((c) => c.id === previewing.companyId) : undefined}
         client={previewing ? clients.find((c) => c.id === previewing.clientId) : undefined}
         project={previewing?.projectId ? projects.find((p) => p.id === previewing.projectId) : undefined}
+        signers={previewSigners.map((u) => ({ userId: u.userId, name: u.name }))}
+        onDocChange={(patch) => { if (previewing) quotesStore.update(previewing.id, patch); }}
       />
     </div>
   );
@@ -438,7 +455,10 @@ function quoteToDoc(q: Quote): DocumentData {
     taxRate,
     taxAmount: q.taxAmount ?? taxAmount,
     totalAmount: q.totalAmount ?? totalAmount,
-    signerId: q.updatedBy ?? q.createdBy,
+    signerId: q.signerId ?? q.updatedBy ?? q.createdBy,
+    stampX: q.stampX,
+    stampY: q.stampY,
+    stampScale: q.stampScale,
   };
 }
 

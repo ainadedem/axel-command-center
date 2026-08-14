@@ -3,7 +3,7 @@ import { Camera, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AVATARS_BUCKET, uploadFile } from "@/lib/storage";
 import { useFileUrl } from "@/hooks/use-file-url";
-import { validateImageFile } from "@/lib/image-resize";
+import { processMarkImage, validateImageFile } from "@/lib/image-resize";
 import { ImageCropDialog } from "@/components/image-crop-dialog";
 
 interface AvatarUploadProps {
@@ -22,6 +22,13 @@ interface AvatarUploadProps {
   crop?: boolean;
   /** Output size (px) of the cropped image. */
   outputSize?: number;
+  /**
+   * Process the picture as an ink mark (stamp / signature): trim the empty
+   * margins, downsize, compress and keep transparency before uploading.
+   */
+  mark?: boolean;
+  /** Turn a near-white scan background into transparency (marks only). */
+  keyOutWhite?: boolean;
   className?: string;
 }
 
@@ -37,7 +44,7 @@ function initialsOf(name?: string): string {
 }
 
 /** Click-to-upload avatar editor. Uploads to the private `avatars` bucket. */
-export function AvatarUpload({ value, onChange, name, size = 64, square, folder = "misc", crop, outputSize = 512, className }: AvatarUploadProps) {
+export function AvatarUpload({ value, onChange, name, size = 64, square, folder = "misc", crop, outputSize = 512, mark, keyOutWhite, className }: AvatarUploadProps) {
   const ref = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -55,7 +62,8 @@ export function AvatarUpload({ value, onChange, name, size = 64, square, folder 
       if (!check.ok) { setError(check.error ?? "Invalid image"); return; }
       if (crop) { setCropUrl(check.url); return; }
       if (check.url) URL.revokeObjectURL(check.url);
-      onChange(await uploadFile(AVATARS_BUCKET, folder, file));
+      const toUpload = mark ? await processMarkImage(file, { keyOutWhite }) : file;
+      onChange(await uploadFile(AVATARS_BUCKET, folder, toUpload));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed");
     } finally {

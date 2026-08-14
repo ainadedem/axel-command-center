@@ -645,6 +645,11 @@ const invoiceToDb = (inv: Invoice) => {
     handover_stamped_at: inv.handoverStampedAt ?? null,
     handover_by: inv.handoverBy ?? null,
     dating_note: inv.datingNote ?? null,
+    signer_id: inv.signerId && isUuid(inv.signerId) ? inv.signerId : null,
+    stamp_x: inv.stampX ?? null,
+    stamp_y: inv.stampY ?? null,
+    stamp_scale: inv.stampScale ?? null,
+    stamp_dirty: inv.stampDirty ?? false,
     ...(inv.createdBy && isUuid(inv.createdBy) ? { created_by: inv.createdBy } : {}),
     ...(inv.updatedBy && isUuid(inv.updatedBy) ? { updated_by: inv.updatedBy } : {}),
   };
@@ -680,6 +685,11 @@ const invoiceFromDb = (r: Record<string, unknown>, lines: QuoteLine[]): Invoice 
   handoverStampedAt: (r.handover_stamped_at as string) ?? undefined,
   handoverBy: (r.handover_by as string) ?? undefined,
   datingNote: (r.dating_note as string) ?? undefined,
+  signerId: (r.signer_id as string) ?? undefined,
+  stampX: r.stamp_x != null ? Number(r.stamp_x) : undefined,
+  stampY: r.stamp_y != null ? Number(r.stamp_y) : undefined,
+  stampScale: r.stamp_scale != null ? Number(r.stamp_scale) : undefined,
+  stampDirty: Boolean(r.stamp_dirty),
   createdBy: (r.created_by as string) ?? undefined,
   updatedBy: (r.updated_by as string) ?? undefined,
   updatedAt: (r.updated_at as string) ?? undefined,
@@ -963,6 +973,11 @@ const quoteToDb = (q: Quote) => {
     sent_to: q.sentTo ?? null,
     assigned_to: (q.assignedTo ?? []).filter((id) => isUuid(id)).slice(0, 3),
     next_follow_up_at: q.nextFollowUpAt ?? null,
+    signer_id: q.signerId && isUuid(q.signerId) ? q.signerId : null,
+    stamp_x: q.stampX ?? null,
+    stamp_y: q.stampY ?? null,
+    stamp_scale: q.stampScale ?? null,
+    stamp_dirty: q.stampDirty ?? false,
     ...(q.createdBy && isUuid(q.createdBy) ? { created_by: q.createdBy } : {}),
     ...(q.updatedBy && isUuid(q.updatedBy) ? { updated_by: q.updatedBy } : {}),
   };
@@ -997,6 +1012,11 @@ const quoteFromDb = (r: Record<string, unknown>): Quote => ({
   updatedAt: (r.updated_at as string) ?? undefined,
   assignedTo: ((r.assigned_to as string[]) ?? []).filter(Boolean),
   nextFollowUpAt: (r.next_follow_up_at as string) ?? undefined,
+  signerId: (r.signer_id as string) ?? undefined,
+  stampX: r.stamp_x != null ? Number(r.stamp_x) : undefined,
+  stampY: r.stamp_y != null ? Number(r.stamp_y) : undefined,
+  stampScale: r.stamp_scale != null ? Number(r.stamp_scale) : undefined,
+  stampDirty: Boolean(r.stamp_dirty),
 });
 
 /* ───────── QUOTE FOLLOW-UPS ───────── */
@@ -1073,6 +1093,11 @@ const poToDb = (p: PurchaseOrder) => {
     subject: p.subject ?? null,
     bank_account_id: p.bankAccountId ?? null,
     buying_entity: p.buyingEntity ?? null,
+    signer_id: p.signerId && isUuid(p.signerId) ? p.signerId : null,
+    stamp_x: p.stampX ?? null,
+    stamp_y: p.stampY ?? null,
+    stamp_scale: p.stampScale ?? null,
+    stamp_dirty: p.stampDirty ?? false,
     ...(p.createdBy && isUuid(p.createdBy) ? { created_by: p.createdBy } : {}),
     ...(p.updatedBy && isUuid(p.updatedBy) ? { updated_by: p.updatedBy } : {}),
   };
@@ -1102,6 +1127,11 @@ const poFromDb = (r: Record<string, unknown>): PurchaseOrder => ({
   buyingEntity: (r.buying_entity as string) ?? undefined,
   updatedBy: (r.updated_by as string) ?? undefined,
   updatedAt: (r.updated_at as string) ?? undefined,
+  signerId: (r.signer_id as string) ?? undefined,
+  stampX: r.stamp_x != null ? Number(r.stamp_x) : undefined,
+  stampY: r.stamp_y != null ? Number(r.stamp_y) : undefined,
+  stampScale: r.stamp_scale != null ? Number(r.stamp_scale) : undefined,
+  stampDirty: Boolean(r.stamp_dirty),
 });
 
 export async function upsertPurchaseOrder(p: PurchaseOrder): Promise<string | null> {

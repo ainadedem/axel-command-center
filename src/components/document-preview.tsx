@@ -50,6 +50,11 @@ export interface DocumentData {
   language?: DocLanguage;
   /** User id whose signature is printed (last editor, else creator). */
   signerId?: string;
+  /** Custom stamp placement, in percent of the page (top-left origin). */
+  stampX?: number;
+  stampY?: number;
+  /** Stamp size multiplier relative to the company default width. */
+  stampScale?: number;
 }
 
 interface Props {
@@ -59,6 +64,16 @@ interface Props {
   company?: Company;
   client?: Client;
   project?: Project;
+  /** People who can sign this document (used by the signer picker). */
+  signers?: Array<{ userId: string; name: string }>;
+  /** Persist per-document signer / stamp placement changes. */
+  onDocChange?: (patch: {
+    signerId?: string;
+    stampX?: number;
+    stampY?: number;
+    stampScale?: number;
+    stampDirty?: boolean;
+  }) => void;
 }
 
 const MM = 96 / 25.4;
@@ -123,7 +138,7 @@ function saveView(kind: DocKind, v: SavedView) {
   } catch { /* storage unavailable — non-fatal */ }
 }
 
-export function DocumentPreview({ open, onOpenChange, doc, company, client, project }: Props) {
+export function DocumentPreview({ open, onOpenChange, doc, company, client, project, signers, onDocChange }: Props) {
   const [showStatus, setShowStatus] = useState(true);
   const [showClientEmail, setShowClientEmail] = useState(true);
   const [showUnit, setShowUnit] = useState(true);
@@ -135,7 +150,17 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
   const [showSignature, setShowSignature] = useState(true);
   useEffect(() => { setShowStamp(company?.showStamp === true); }, [company?.id, company?.showStamp]);
 
-  const signer = useSigner(doc?.signerId);
+  // Per-document signer: defaults to whatever the document stores.
+  const [signerId, setSignerId] = useState<string | undefined>(doc?.signerId);
+  useEffect(() => { setSignerId(doc?.signerId); }, [doc?.signerId]);
+  const signer = useSigner(signerId);
+
+  // Custom stamp placement (percent of the page, top-left origin).
+  const [place, setPlace] = useState<{ x?: number; y?: number; scale?: number }>({});
+  useEffect(() => {
+    setPlace({ x: doc?.stampX, y: doc?.stampY, scale: doc?.stampScale });
+  }, [doc?.number, doc?.stampX, doc?.stampY, doc?.stampScale]);
+  const floating = place.x != null && place.y != null;
   const stampUrl = useFileUrl(company?.stampUrl);
   const signatureUrl = useFileUrl(signer.signatureRef);
 
@@ -262,8 +287,8 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   const html = useMemo(() => {
     if (!doc) return "";
-    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName: signer.name });
-  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signer.name]);
+    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName: signer.name, stampX: place.x, stampY: place.y, stampScale: place.scale });
+  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signer.name, place]);
 
   // Reset the auto-fit search whenever the document content changes.
   useEffect(() => {
@@ -375,7 +400,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
         setExporting(false);
         return;
       }
-      w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName: signer.name }));
+      w.document.write(buildPrintableDocument({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName: signer.name, stampX: place.x, stampY: place.y, stampScale: place.scale }));
       w.document.close();
       setTimeout(() => {
         try { w.focus(); w.print(); }
@@ -393,6 +418,36 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     }
   };
 
+
+  // ---- Stamp placement (drag on the preview) ------------------------------
+  const commitPlace = useCallback((next: { x?: number; y?: number; scale?: number }) => {
+    setPlace(next);
+    onDocChange?.({
+      stampX: next.x, stampY: next.y, stampScale: next.scale, stampDirty: false,
+    });
+  }, [onDocChange]);
+
+  const startStampDrag = (e: React.PointerEvent) => {
+    if (!stampUrl) return;
+    e.preventDefault();
+    const wrap = (e.currentTarget as HTMLElement).parentElement;
+    if (!wrap) return;
+    const rect = wrap.getBoundingClientRect();
+    const move = (ev: PointerEvent) => {
+      const x = clamp(((ev.clientX - rect.left) / rect.width) * 100, 0, 100);
+      const y = clamp(((ev.clientY - rect.top) / rect.height) * 100, 0, 100);
+      setPlace((p) => ({ ...p, x, y }));
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      setPlace((p) => { commitPlace(p); return p; });
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+
+  const stampBoxW = (company?.stampWidth ?? 140) * clamp(place.scale ?? 1, 0.3, 3) * zoom;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -428,6 +483,55 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
                 <Checkbox checked={showSignature} onCheckedChange={(v) => setShowSignature(!!v)} />
                 Show signature
               </label>
+            ) : null}
+            {signers && signers.length > 0 ? (
+              <label className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span>Signer</span>
+                <select
+                  value={signerId ?? ""}
+                  onChange={(e) => {
+                    const v = e.target.value || undefined;
+                    setSignerId(v);
+                    onDocChange?.({ signerId: v, stampDirty: false });
+                  }}
+                  className="rounded-md border border-border bg-background px-2 py-1 text-[11px] focus-ring"
+                  aria-label="Document signer"
+                >
+                  <option value="">No signature</option>
+                  {signers.map((u) => (
+                    <option key={u.userId} value={u.userId}>{u.name}</option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            {company?.stampUrl && showStamp ? (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span>Stamp</span>
+                <div className="flex rounded-md border border-border overflow-hidden text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => commitPlace(floating ? {} : { x: 76, y: 86, scale: place.scale ?? 1 })}
+                    className={`px-2 py-0.5 transition ${floating ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                    title="Drag the stamp anywhere on the page"
+                  >
+                    {floating ? "Free placement" : "Place freely"}
+                  </button>
+                  <button
+                    type="button" aria-label="Smaller stamp"
+                    onClick={() => commitPlace({ ...place, scale: clamp((place.scale ?? 1) - 0.1, 0.3, 3) })}
+                    className="px-2 py-0.5 hover:bg-muted transition"
+                  >
+                    −
+                  </button>
+                  <button
+                    type="button" aria-label="Bigger stamp"
+                    onClick={() => commitPlace({ ...place, scale: clamp((place.scale ?? 1) + 0.1, 0.3, 3) })}
+                    className="px-2 py-0.5 hover:bg-muted transition"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
             ) : null}
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <span>Language</span>
@@ -555,6 +659,24 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
               }}
               dangerouslySetInnerHTML={{ __html: html }}
             />
+            {/* Draggable stamp: free placement saved per document */}
+            {floating && stampUrl ? (
+              <div
+                role="button"
+                tabIndex={0}
+                aria-label="Drag to position the stamp"
+                onPointerDown={startStampDrag}
+                className="absolute z-20 cursor-grab active:cursor-grabbing rounded-md ring-2 ring-primary/50 hover:ring-primary transition"
+                style={{
+                  left: `${place.x}%`, top: `${place.y}%`,
+                  width: stampBoxW, transform: "translate(-50%, -50%)",
+                  touchAction: "none",
+                }}
+              >
+                <img src={stampUrl} alt="" draggable={false} className="w-full select-none pointer-events-none" />
+              </div>
+            ) : null}
+
             {/* Column resize handles, overlaid on the table header borders */}
             {handles.map((h) => (
               <div
@@ -592,12 +714,14 @@ function headingFor(k: DocKind, lang?: DocLanguage) {
 
 /** Signature (per user) + company stamp block printed above the footer. */
 function signBlockHtml({
-  company, showStamp, stampUrl, showSignature, signatureUrl, signerName, lang,
+  company, showStamp, stampUrl, showSignature, signatureUrl, signerName, lang, floating,
 }: {
   company?: Company; showStamp?: boolean; stampUrl?: string;
   showSignature?: boolean; signatureUrl?: string; signerName?: string; lang: DocLanguage;
+  /** The stamp is drawn as a free-floating overlay instead of inside the block. */
+  floating?: boolean;
 }) {
-  const stampOn = (showStamp ?? company?.showStamp === true) && !!stampUrl;
+  const stampOn = !floating && (showStamp ?? company?.showStamp === true) && !!stampUrl;
   const signOn = showSignature !== false && (!!signatureUrl || !!signerName);
   if (!stampOn && !signOn) return "";
 
@@ -623,7 +747,7 @@ function signBlockHtml({
 }
 
 
-function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName }: DocumentHtmlArgs) {
+function buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName, stampX, stampY, stampScale }: DocumentHtmlArgs) {
   const unitVisible = showUnit !== false;
   const w = normalizeCols(cols, unitVisible);
   const s = clamp(scale ?? 1, 0.5, 1.4);
@@ -634,6 +758,13 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
   const L = (lang ?? doc.language ?? (company?.defaultDocumentLanguage as DocLanguage) ?? "en") as DocLanguage;
   const t = docLabels(L);
   const df = docDateFormat(L);
+  // Free placement: when the document carries coordinates, the stamp is drawn
+  // as an overlay on the page instead of inside the signature block.
+  const stampVisible = (showStamp ?? company?.showStamp === true) && !!stampUrl;
+  const floatStamp = stampVisible && stampX != null && stampY != null;
+  const floatStampHtml = floatStamp
+    ? `<img src="${esc(stampUrl)}" alt="" style="position:absolute;left:${clamp(stampX!, 0, 100)}%;top:${clamp(stampY!, 0, 100)}%;transform:translate(-50%,-50%);width:${Math.round((company?.stampWidth ?? 140) * clamp(stampScale ?? 1, 0.3, 3))}px;opacity:${Math.min(1, Math.max(0.1, company?.stampOpacity ?? 1))};object-fit:contain;pointer-events:none;" />`
+    : "";
   const rawColor = company?.color ?? "#1e293b";
   // Validate against a strict CSS color allowlist to prevent CSS/script injection
   // via the company.color field (it is embedded verbatim in a <style> block below).
@@ -821,7 +952,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
       .doc .bank { margin-top: 16px; padding: 12px 16px; background: #f8fafc; border-left: 3px solid ${accent}; font-size: 11px; }
       .doc .notes { margin-top: 16px; padding: 12px 16px; background: #fffaf0; border-left: 3px solid #ca8a04; font-size: 11px; color: #475569; }
     </style>
-    <div class="doc">
+    <div class="doc" style="position:relative;">
       <div class="row">
         <div>
           ${logoHtml}
@@ -894,7 +1025,8 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
 
       ${doc.notes ? `<div class="notes"><strong>${esc(t.notes)}</strong><div style="margin-top: 4px;">${esc(doc.notes)}</div></div>` : ""}
       ${paymentHtml}
-      ${signBlockHtml({ company, showStamp, stampUrl, showSignature, signatureUrl, signerName, lang: L })}
+      ${signBlockHtml({ company, showStamp, stampUrl, showSignature, signatureUrl, signerName, lang: L, floating: floatStamp })}
+      ${floatStampHtml}
 
       <div class="footer">
         ${esc(doc.kind === "invoice"
@@ -937,6 +1069,11 @@ export interface DocumentHtmlArgs {
   signatureUrl?: string;
   /** Display name printed under the signature. */
   signerName?: string;
+  /** Custom stamp placement in percent of the page; when set the stamp floats. */
+  stampX?: number;
+  stampY?: number;
+  /** Stamp size multiplier relative to the company default width. */
+  stampScale?: number;
 }
 
 
