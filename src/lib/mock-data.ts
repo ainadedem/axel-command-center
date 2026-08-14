@@ -85,6 +85,9 @@ export interface Company {
   isDemo?: boolean;
 }
 
+/** Where the company stamp prints on invoices and quotations. */
+export type StampPosition = "bottom-right" | "bottom-left" | "center";
+
 /** Saved logo crop transform + reference to the original uploaded image. */
 export interface CompanyLogoCrop {
   /** Original (uncropped) logo reference, so "reset" and re-cropping work. */
