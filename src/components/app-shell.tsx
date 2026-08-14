@@ -252,8 +252,8 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       <div className="px-5 py-5 flex flex-col gap-1.5">
-        <AxelWordmark title="AXEL Business Platform" className="h-7 w-auto self-start text-sidebar-foreground" />
-        <span className="text-[11px] font-medium tracking-wide text-sidebar-foreground/60">Unified Business Platform</span>
+        <AxelWordmark title="AXEL Business Platform" className="h-7 w-auto self-start text-foreground" />
+        <span className="text-[11px] font-medium tracking-wide text-foreground/70">AXWG</span>
       </div>
       <div className="px-3 pb-3">
         <CompanySwitcher />
