@@ -49,10 +49,13 @@ import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } f
 import { refreshStampsAndSignatures } from "@/lib/stamp-refresh";
 import { BulkEditDocDialog } from "@/components/bulk-edit-doc-dialog";
 import { bulkUpdateDocuments, type BulkPatch } from "@/lib/bulk-edit";
-import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
+import { type ColumnDef } from "@/lib/column-prefs";
+import { useTablePrefs } from "@/lib/table-prefs";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, RowAction, ColumnPicker } from "@/components/list-table";
-import { useResizableColumns } from "@/components/resizable-columns";
 import { StatusBadge, PoBadge } from "@/components/status-badge";
+import { StatusFilterBar, type PoState } from "@/components/status-filter-bar";
+import { TableExportMenu } from "@/components/table-export-menu";
+
 
 const INVOICE_COLUMNS: ColumnDef[] = [
   { key: "number", label: "Number", priority: "always" },
@@ -74,6 +77,14 @@ const INVOICE_COL_WIDTHS: Record<string, number> = {
   number: 130, client: 200, project: 160, company: 130, issued: 130, due: 150,
   paidOn: 130, timing: 120, status: 180, amount: 160, balance: 150, owner: 150,
 };
+
+const ALIGN: Record<string, "left" | "right" | "center"> = { amount: "right", balance: "right" };
+
+const INVOICE_STATUSES = ["draft", "sent", "partial", "paid", "overdue", "cancelled"];
+
+/** PO handling state of an invoice. */
+const poStateOf = (i: Invoice): PoState => (i.poId ? "linked" : i.poWaived ? "waived" : "missing");
+
 
 export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage, validateSearch: focusSearch });
 
@@ -102,8 +113,8 @@ function Body() {
   const [marking, setMarking] = useState<Invoice | null>(null);
   const [historyOf, setHistoryOf] = useState<Invoice | null>(null);
   const [numMode, setNumMode] = useState<NumberFormatMode>(getNumberFormat());
-  const { widths, startResize, resetWidths } = useResizableColumns("axel.invoices.colWidths", INVOICE_COL_WIDTHS);
-  const colW = (key: string) => `${widths[key] ?? INVOICE_COL_WIDTHS[key] ?? 140}px`;
+  const tp = useTablePrefs("invoices", INVOICE_COLUMNS, INVOICE_COL_WIDTHS);
+
 
   const toggleMode = useCallback(() => {
     const next: NumberFormatMode = numMode === "compact" ? "full" : "compact";
@@ -138,7 +149,20 @@ function Body() {
     { key: "owner", label: "Owner", type: "enum", accessor: (i) => ownerName(i.createdBy) },
   ];
   const view = useDataView<Invoice>("invoices", fields);
-  const groups = view.apply(baseList);
+  // Quick status / PO chips layered on top of the saved view filters.
+  const [chipStatuses, setChipStatuses] = useState<string[]>([]);
+  const [chipPo, setChipPo] = useState<PoState[]>([]);
+  const chipFiltered = useMemo(
+    () =>
+      baseList.filter(
+        (i) =>
+          (chipStatuses.length === 0 || chipStatuses.includes(i.status)) &&
+          (chipPo.length === 0 || chipPo.includes(poStateOf(i))),
+      ),
+    [baseList, chipStatuses, chipPo],
+  );
+  const groups = view.apply(chipFiltered);
+
   const list = groups.flatMap((g) => g.items);
 
   const isWritable = useCallback(
@@ -273,21 +297,133 @@ function Body() {
     },
   ];
 
-  const cp = useColumnPrefs("invoices", INVOICE_COLUMNS);
-  const colCount = 1 + cp.count;
-  const tableMinWidth = 48 + INVOICE_COLUMNS
-    .filter((c) => cp.on(c.key))
-    .reduce((sum, c) => sum + (widths[c.key] ?? INVOICE_COL_WIDTHS[c.key] ?? 140), 0);
+  const colCount = 1 + tp.count;
+  const tableMinWidth = 48 + tp.totalWidth;
 
+  const renderCell = (key: string, inv: Invoice) => {
+    const co = companies.find((c) => c.id === inv.companyId);
+    const cl = clients.find((c) => c.id === inv.clientId);
+    const proj = inv.projectId ? projects.find((p) => p.id === inv.projectId) : undefined;
+    const days = differenceInDays(parseISO(inv.dueDate), new Date());
+    const balance = inv.amount - inv.paid;
+    const timing = inv.paidDate ? differenceInDays(parseISO(inv.paidDate), parseISO(inv.dueDate)) : null;
 
+    switch (key) {
+      case "number":
+        return <ListTd className="font-tnum text-xs text-muted-foreground" title={inv.number}>{inv.number}</ListTd>;
+      case "client":
+        return <ListTd className="font-medium" title={cl?.name}>{cl?.name ?? "—"}</ListTd>;
+      case "project":
+        return (
+          <ListTd className="text-xs" title={proj?.name}>
+            {proj ? <span className="inline-block max-w-full truncate px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 align-middle">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}
+          </ListTd>
+        );
+      case "company":
+        return (
+          <ListTd title={co?.name}>
+            {co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}
+          </ListTd>
+        );
+      case "issued":
+        return <ListTd className="text-muted-foreground text-xs font-tnum">{format(parseISO(inv.issueDate), "MMM d, yyyy")}</ListTd>;
+      case "due":
+        return (
+          <ListTd className="text-muted-foreground text-xs font-tnum">
+            <span className="inline-flex items-center gap-1.5">
+              <span>{format(parseISO(inv.dueDate), "MMM d, yyyy")}</span>
+              {inv.status !== "paid" && inv.status !== "cancelled" && days < 0 && (
+                <span className="text-destructive font-medium">{Math.abs(days)}d late</span>
+              )}
+            </span>
+          </ListTd>
+        );
+      case "paidOn":
+        return (
+          <ListTd className="text-muted-foreground text-xs font-tnum">
+            {inv.paidDate ? format(parseISO(inv.paidDate), "MMM d, yyyy") : <span className="text-muted-foreground/40">—</span>}
+          </ListTd>
+        );
+      case "timing":
+        return (
+          <ListTd className="text-xs font-tnum">
+            {timing === null ? <span className="text-muted-foreground/40">—</span>
+              : timing <= 0 ? <span className="text-success">{Math.abs(timing)}d early</span>
+              : <span className="text-destructive">{timing}d late</span>}
+          </ListTd>
+        );
+      case "status":
+        return (
+          <ListTd wrap title={inv.status === "cancelled" && inv.cancellationReason ? `Cancelled: ${inv.cancellationReason}` : inv.status}>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <StatusBadge
+                status={inv.status}
+                title={inv.status === "cancelled" && inv.cancellationReason ? `Cancelled: ${inv.cancellationReason}` : undefined}
+              />
+              {inv.status !== "cancelled" && <PoBadge state={poStateOf(inv)} />}
+            </div>
+          </ListTd>
+        );
+      case "amount":
+        return <ListTd align="right" className="font-tnum" title={fmtFull(inv.amount, inv.currency)}>{fmtFull(inv.amount, inv.currency)}</ListTd>;
+      case "balance":
+        return (
+          <ListTd align="right" className="font-tnum font-medium">
+            {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? fmtFull(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
+          </ListTd>
+        );
+      case "owner":
+        return (
+          <ListTd className="text-xs text-muted-foreground" title={inv.updatedAt ? `Updated by ${ownerName(inv.updatedBy ?? inv.createdBy)} · ${format(parseISO(inv.updatedAt), "MMM d, HH:mm")}` : ownerName(inv.createdBy)}>
+            {ownerName(inv.createdBy)}
+          </ListTd>
+        );
+      default:
+        return <ListTd />;
+    }
+  };
+
+  /** Plain-text value for CSV/PDF export — always full amounts. */
+  const exportValue = (key: string, inv: Invoice): string => {
+    switch (key) {
+      case "number": return inv.number;
+      case "client": return clients.find((c) => c.id === inv.clientId)?.name ?? "";
+      case "project": return projects.find((p) => p.id === inv.projectId)?.name ?? "";
+      case "company": return companies.find((c) => c.id === inv.companyId)?.shortName ?? "";
+      case "issued": return format(parseISO(inv.issueDate), "yyyy-MM-dd");
+      case "due": return format(parseISO(inv.dueDate), "yyyy-MM-dd");
+      case "paidOn": return inv.paidDate ? format(parseISO(inv.paidDate), "yyyy-MM-dd") : "";
+      case "timing": {
+        if (!inv.paidDate) return "";
+        const t = differenceInDays(parseISO(inv.paidDate), parseISO(inv.dueDate));
+        return t <= 0 ? `${Math.abs(t)}d early` : `${t}d late`;
+      }
+      case "status": return inv.status === "cancelled" ? "cancelled" : `${inv.status} / PO ${poStateOf(inv)}`;
+      case "amount": return fmtFull(inv.amount, inv.currency);
+      case "balance": return inv.status === "cancelled" ? "" : fmtFull(inv.amount - inv.paid, inv.currency);
+      case "owner": return ownerName(inv.createdBy);
+      default: return "";
+    }
+  };
 
   return (
     <div className="p-4 sm:p-8 space-y-5">
       <div className="flex items-center justify-between gap-4">
         <CrudToolbar createLabel="New invoice" count={list.length} label="invoices" onCreate={openCreate} />
         <div className="flex items-center gap-4">
-          <ColumnPicker prefs={cp} onResetWidths={resetWidths} />
+          <TableExportMenu
+            filename="invoices"
+            title="Invoices"
+            subtitle={`${list.length} row${list.length !== 1 ? "s" : ""}`}
+            build={() => ({
+              columns: tp.visible.map((c) => ({ key: c.key, label: c.label, width: tp.width(c.key), align: ALIGN[c.key] ?? "left" })),
+              rows: list.map((inv) => Object.fromEntries(tp.visible.map((c) => [c.key, exportValue(c.key, inv)]))),
+            })}
+          />
+
+          <ColumnPicker prefs={tp} onResetWidths={tp.resetWidths} onResetOrder={tp.resetOrder} />
           <ReconcileButton checks={checks} />
+
 
           <button
             onClick={toggleMode}
@@ -344,116 +480,37 @@ function Body() {
               <thead>
                 <ListHeadRow>
                   <SelectAllHeaderCell checked={selection.allSelected} onToggle={selection.toggleAll} />
-                  <ListTh width={colW("number")} onResizeStart={startResize("number")}>Number</ListTh>
-                  <ListTh width={colW("client")} onResizeStart={startResize("client")}>Client</ListTh>
-                  {cp.on("project") && <ListTh width={colW("project")} onResizeStart={startResize("project")}>Project</ListTh>}
-                  {cp.on("company") && <ListTh width={colW("company")} onResizeStart={startResize("company")}>Company</ListTh>}
-                  {cp.on("issued") && <ListTh width={colW("issued")} onResizeStart={startResize("issued")}>Issued</ListTh>}
-                  {cp.on("due") && <ListTh width={colW("due")} onResizeStart={startResize("due")}>Due</ListTh>}
-                  {cp.on("paidOn") && <ListTh width={colW("paidOn")} onResizeStart={startResize("paidOn")}>Paid on</ListTh>}
-                  {cp.on("timing") && <ListTh width={colW("timing")} onResizeStart={startResize("timing")}>Timing</ListTh>}
-                  {cp.on("status") && <ListTh width={colW("status")} onResizeStart={startResize("status")}>Status</ListTh>}
-                  <ListTh width={colW("amount")} align="right" onResizeStart={startResize("amount")}>Amount</ListTh>
-                  {cp.on("balance") && <ListTh width={colW("balance")} align="right" onResizeStart={startResize("balance")}>Balance</ListTh>}
-                  {cp.on("owner") && <ListTh width={colW("owner")}>Owner</ListTh>}
+                  {tp.visible.map((c) => (
+                    <ListTh
+                      key={c.key}
+                      width={tp.cssWidth(c.key)}
+                      align={ALIGN[c.key] ?? "left"}
+                      onResizeStart={tp.startResize(c.key)}
+                      dragProps={tp.dragProps(c.key)}
+                    >
+                      {c.label}
+                    </ListTh>
+                  ))}
                 </ListHeadRow>
               </thead>
               <tbody>
                 {groups.map((g) => (
                   <Fragment key={g.key}>
                     {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={colCount} />}
-                    {g.items.map((inv) => {
-                  const co = companies.find((c) => c.id === inv.companyId);
-                  const cl = clients.find((c) => c.id === inv.clientId);
-                  const proj = inv.projectId ? projects.find((p) => p.id === inv.projectId) : undefined;
-
-                  const days = differenceInDays(parseISO(inv.dueDate), new Date());
-                  const balance = inv.amount - inv.paid;
-                  const timing = inv.paidDate
-                    ? differenceInDays(parseISO(inv.paidDate), parseISO(inv.dueDate))
-                    : null;
-                  return (
+                    {g.items.map((inv) => (
                     <Fragment key={inv.id}>
-                    <tr data-focus-id={inv.id} className="hover:bg-surface-elevated/40">
+                    <tr data-focus-id={inv.id} className="hover:bg-surface-elevated/40 transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]">
                       <SelectRowCell
                         checked={selection.isSelected(inv.id)}
                         onToggle={() => selection.toggle(inv.id)}
                         disabled={!isWritable(inv)}
                         label={`Select invoice ${inv.number}`}
                       />
-                      <ListTd className="font-tnum text-xs text-muted-foreground" title={inv.number}>{inv.number}</ListTd>
-                      <ListTd className="font-medium" title={cl?.name}>{cl?.name ?? "—"}</ListTd>
-                      {cp.on("project") && (
-                        <ListTd className="text-xs" title={proj?.name}>
-                          {proj ? <span className="inline-block max-w-full truncate px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 align-middle">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}
-                        </ListTd>
-                      )}
-                      {cp.on("company") && (
-                        <ListTd title={co?.name}>
-                          {co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}
-                        </ListTd>
-                      )}
-                      {cp.on("issued") && (
-                        <ListTd className="text-muted-foreground text-xs font-tnum">{format(parseISO(inv.issueDate), "MMM d, yyyy")}</ListTd>
-                      )}
-                      {cp.on("due") && (
-                        <ListTd className="text-muted-foreground text-xs font-tnum">
-                          {format(parseISO(inv.dueDate), "MMM d, yyyy")}
-                          {!inv.paidDate && days < 0 && <span className="ml-1.5 text-destructive">{Math.abs(days)}d late</span>}
-                          {!inv.paidDate && days >= 0 && days < 14 && <span className="ml-1.5 text-warning">in {days}d</span>}
-                        </ListTd>
-                      )}
-                      {cp.on("paidOn") && (
-                        <ListTd className="text-muted-foreground text-xs font-tnum">
-                          {inv.paidDate ? format(parseISO(inv.paidDate), "MMM d, yyyy") : <span className="text-muted-foreground/50">—</span>}
-                        </ListTd>
-                      )}
-                      {cp.on("timing") && (
-                        <ListTd>
-                          {timing === null ? (
-                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Pending</span>
-                          ) : timing <= 0 ? (
-                            <span className="inline-block text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-success/40 text-success bg-success/10">
-                              {timing === 0 ? "On due day" : `Early ${Math.abs(timing)}d`}
-                            </span>
-                          ) : (
-                            <span className="inline-block text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-destructive/40 text-destructive bg-destructive/10">
-                              Late {timing}d
-                            </span>
-                          )}
-                        </ListTd>
-                      )}
-                      {cp.on("status") && (
-                        <ListTd wrap title={inv.status === "cancelled" && inv.cancellationReason ? `Cancelled: ${inv.cancellationReason}` : inv.status}>
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <StatusBadge
-                              status={inv.status}
-                              title={inv.status === "cancelled" && inv.cancellationReason ? `Cancelled: ${inv.cancellationReason}` : undefined}
-                            />
-                            {inv.status !== "cancelled" && (
-                              inv.poId ? (
-                                <PoBadge state="linked" title="Client PO linked" />
-                              ) : inv.poWaived ? (
-                                <PoBadge state="waived" title={`PO bypassed${inv.poWaiverReason ? `: ${inv.poWaiverReason}` : ""}`} />
-                              ) : (
-                                <PoBadge state="missing" title="No client PO linked" />
-                              )
-                            )}
-                          </div>
-                        </ListTd>
-                      )}
-                      <ListTd align="right" className="font-tnum" title={fmtFull(inv.amount, inv.currency)}>{fmtFull(inv.amount, inv.currency)}</ListTd>
-                      {cp.on("balance") && (
-                        <ListTd align="right" className="font-tnum font-medium">
-                          {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? fmtFull(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
-                        </ListTd>
-                      )}
-                      {cp.on("owner") && (
-                        <ListTd className="text-xs text-muted-foreground" title={inv.updatedAt ? `Updated by ${ownerName(inv.updatedBy ?? inv.createdBy)} · ${format(parseISO(inv.updatedAt), "MMM d, HH:mm")}` : ownerName(inv.createdBy)}>
-                          {ownerName(inv.createdBy)}
-                        </ListTd>
-                      )}
+                      {tp.visible.map((c) => (
+                        <Fragment key={c.key}>{renderCell(c.key, inv)}</Fragment>
+                      ))}
                     </tr>
+
                     <ListRowActions colSpan={colCount}>
                       <RowAction icon={<History className="h-3.5 w-3.5" />} label="History" onClick={() => setHistoryOf(inv)} title="Activity history" />
                       <RowAction icon={<Eye className="h-3.5 w-3.5" />} label="Preview" onClick={() => setPreviewing(inv)} title="Preview & export PDF" />
@@ -468,8 +525,8 @@ function Body() {
                       <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete invoice ${inv.number}?`)) invoicesStore.remove(inv.id); }} />
                     </ListRowActions>
                     </Fragment>
-                  );
-                })}
+                    ))}
+
                   </Fragment>
                 ))}
               </tbody>

@@ -68,22 +68,27 @@ export function StatusBadge({
   );
 }
 
+export type PoState = "missing" | "waived" | "linked";
+
+/** Shared PO vocabulary — reused by invoices, receivables, payables and POs. */
+export const PO_META: Record<PoState, { label: string; tone: StatusTone; icon: ReactNode; aria: string }> = {
+  linked: { label: "PO", tone: "success", icon: <FileCheck2 className={ICON} />, aria: "Purchase order linked" },
+  waived: { label: "PO bypassed", tone: "warning", icon: <FileWarning className={ICON} />, aria: "Purchase order bypassed" },
+  missing: { label: "PO missing", tone: "danger", icon: <FileWarning className={ICON} />, aria: "Purchase order missing" },
+};
+
 /** Purchase-order state chip: missing / bypassed / linked. */
 export function PoBadge({
   state,
   title,
   className,
 }: {
-  state: "missing" | "waived" | "linked";
+  state: PoState;
   title?: string;
   className?: string;
 }) {
-  const meta =
-    state === "linked"
-      ? { label: "PO", tone: "success" as StatusTone, icon: <FileCheck2 className={ICON} />, aria: "Purchase order linked" }
-      : state === "waived"
-        ? { label: "PO bypassed", tone: "warning" as StatusTone, icon: <FileWarning className={ICON} />, aria: "Purchase order bypassed" }
-        : { label: "PO missing", tone: "warning" as StatusTone, icon: <FileWarning className={ICON} />, aria: "Purchase order missing" };
+  const meta = PO_META[state];
+
   return (
     <span
       title={title ?? meta.aria}

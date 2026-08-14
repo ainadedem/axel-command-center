@@ -1,5 +1,5 @@
 import type { ReactNode, CSSProperties } from "react";
-import { Columns3, RotateCcw, MoveHorizontal } from "lucide-react";
+import { Columns3, RotateCcw, MoveHorizontal, ArrowLeftRight } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,6 +50,7 @@ export function ListTh({
   width,
   align = "left",
   onResizeStart,
+  dragProps,
 }: {
   children?: ReactNode;
   className?: string;
@@ -58,14 +59,19 @@ export function ListTh({
   align?: "left" | "right" | "center";
   /** When provided, renders a drag handle that resizes this column. */
   onResizeStart?: (e: React.MouseEvent) => void;
+  /** Native drag handlers that reorder this column. */
+  dragProps?: Record<string, unknown>;
 }) {
   const style: CSSProperties | undefined = width ? { width } : undefined;
   return (
     <th
       style={style}
+      {...(dragProps ?? {})}
       className={cn(
-        "font-medium px-4 py-3 truncate",
-        onResizeStart && "relative",
+        "font-medium px-4 py-3 truncate select-none",
+        (onResizeStart || dragProps) && "relative",
+        dragProps && "cursor-grab active:cursor-grabbing hover:text-foreground transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
+        dragProps && "data-[drag-over=right]:shadow-[inset_-2px_0_0_0_var(--primary)]",
         align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
         className,
       )}
@@ -75,6 +81,7 @@ export function ListTh({
     </th>
   );
 }
+
 
 
 export function ListTd({
@@ -130,11 +137,12 @@ export function ListRowActions({
 }
 
 const toneClasses: Record<string, string> = {
-  default: "hover:bg-surface-elevated hover:text-foreground",
-  success: "hover:bg-success/10 hover:text-success hover:border-success/30",
-  warning: "hover:bg-warning/10 hover:text-warning hover:border-warning/30",
-  danger: "hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30",
+  default: "",
+  success: "hover:bg-success/10 hover:text-success",
+  warning: "hover:bg-warning/10 hover:text-warning",
+  danger: "hover:bg-destructive/10 hover:text-destructive",
 };
+
 
 export function RowAction({
   icon,
@@ -159,13 +167,15 @@ export function RowAction({
       title={title ?? label}
       aria-label={label}
       className={cn(
-        "row-action inline-flex items-center h-7 px-2 rounded-full border border-border/60 bg-card/40",
-        "text-[11px] font-medium text-muted-foreground",
-        "transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
-        "hover:-translate-y-px active:scale-[0.97]",
+        "row-action inline-flex items-center h-8 px-2.5 rounded-full border-0 bg-transparent",
+        "text-[11px] font-medium text-foreground/70",
+        // Same motion contract as the sidebar nav items.
+        "transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
+        "hover:bg-[var(--surface-container)] hover:text-foreground",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
         "disabled:opacity-40 disabled:pointer-events-none",
         toneClasses[tone],
+
       )}
     >
       <span className="shrink-0 inline-flex items-center justify-center">{icon}</span>
@@ -176,7 +186,7 @@ export function RowAction({
 
 
 /** Toolbar control that switches optional columns on and off. */
-export function ColumnPicker({ prefs, className, onResetWidths }: { prefs: ColumnPrefs; className?: string; onResetWidths?: () => void }) {
+export function ColumnPicker({ prefs, className, onResetWidths, onResetOrder }: { prefs: ColumnPrefs; className?: string; onResetWidths?: () => void; onResetOrder?: () => void }) {
   const hidden = prefs.columns.filter((c) => !prefs.on(c.key)).length;
   return (
     <DropdownMenu>
@@ -216,6 +226,12 @@ export function ColumnPicker({ prefs, className, onResetWidths }: { prefs: Colum
             <MoveHorizontal className="h-3.5 w-3.5 mr-2" /> Reset column widths
           </DropdownMenuItem>
         )}
+        {onResetOrder && (
+          <DropdownMenuItem className="text-xs" onSelect={() => onResetOrder()}>
+            <ArrowLeftRight className="h-3.5 w-3.5 mr-2" /> Reset column order
+          </DropdownMenuItem>
+        )}
+
       </DropdownMenuContent>
     </DropdownMenu>
   );
