@@ -261,7 +261,9 @@ function Body() {
   );
 
 
-  const openCreate = () => { setEditing(null); setOpen(true); };
+  const openCreate = useCallback(() => { setEditing(null); setOpen(true); }, []);
+  // Topbar "New" button broadcast (previously handled by CrudToolbar)
+  useCreateAction(openCreate);
 
 
   const scopedInvoices = baseList;
