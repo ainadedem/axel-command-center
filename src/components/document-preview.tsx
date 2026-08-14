@@ -47,6 +47,8 @@ export interface DocumentData {
   bankAccountId?: string;
   /** Printed language of the document ("en" | "fr"). */
   language?: DocLanguage;
+  /** User id whose signature is printed (last editor, else creator). */
+  signerId?: string;
 }
 
 interface Props {
