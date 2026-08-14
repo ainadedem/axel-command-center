@@ -661,20 +661,21 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
 
   return `
     <style>
-      .doc { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: #0f172a; font-size: 12px; line-height: 1.5; }
-      .doc h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin: 0; color: ${accent}; }
-      .doc h2 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: #64748b; margin: 0 0 6px; font-weight: 600; }
+      .doc { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: #0f172a; font-size: ${px(12)}; line-height: 1.45; }
+      .doc h1 { font-size: ${px(28)}; font-weight: 800; letter-spacing: -0.02em; margin: 0; color: ${accent}; }
+      .doc h2 { font-size: ${px(10)}; text-transform: uppercase; letter-spacing: 0.12em; color: #64748b; margin: 0 0 6px; font-weight: 600; }
       .doc .row { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
-      .doc .meta { text-align: right; font-size: 11px; }
-      .doc .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: white; background: ${statusColors[doc.status] ?? "#475569"}; }
-      .doc .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 28px; }
+      .doc .meta { text-align: right; font-size: ${px(11)}; }
+      .doc .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: ${px(10)}; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: white; background: ${statusColors[doc.status] ?? "#475569"}; }
+      .doc .grid { display: grid; grid-template-columns: 1fr 1fr; gap: ${px(32)}; margin-top: ${px(28)}; }
       .doc .party div { margin-bottom: 2px; }
-      .doc .legal { margin-top: 6px; color: #64748b; font-size: 10px; }
-      .doc .taxmeta { margin-top: 8px; padding: 8px 10px; background: #f8fafc; border-left: 3px solid ${accent}; font-size: 10px; color: #475569; font-variant-numeric: tabular-nums; }
-      .doc table { width: 100%; border-collapse: collapse; margin-top: 32px; font-size: 11px; table-layout: fixed; }
-      .doc th { text-align: left; padding: 10px 8px; background: #f8fafc; border-bottom: 2px solid ${accent}; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; }
-      .doc td { padding: 12px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; overflow-wrap: anywhere; word-break: break-word; }
+      .doc .legal { margin-top: 6px; color: #64748b; font-size: ${px(10)}; }
+      .doc .taxmeta { margin-top: 8px; padding: 8px 10px; background: #f8fafc; border-left: 3px solid ${accent}; font-size: ${px(10)}; color: #475569; font-variant-numeric: tabular-nums; }
+      .doc table { width: 100%; border-collapse: collapse; margin-top: ${px(32)}; font-size: ${px(11)}; table-layout: fixed; }
+      .doc th { text-align: left; padding: ${px(10)} ${px(8)}; background: #f8fafc; border-bottom: 2px solid ${accent}; font-size: ${px(10)}; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; }
+      .doc td { padding: ${px(12)} ${px(8)}; border-bottom: 1px solid #e2e8f0; vertical-align: top; overflow-wrap: anywhere; word-break: break-word; }
       .doc .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
       .doc .sub { color: #64748b; font-size: 10px; margin-top: 3px; }
       .doc .rt { overflow-wrap: anywhere; }
       .doc .rt ul, .doc .rt ol { margin: 3px 0 0; padding-left: 16px; }
