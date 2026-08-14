@@ -36,10 +36,12 @@ export const chartGridProps = {
 export const chartAxisProps = {
   stroke: "var(--muted-foreground)",
   fontSize: 11,
+  fontFamily: "var(--font-sans)",
   tickLine: false,
   axisLine: false,
-  tick: { fill: "var(--muted-foreground)" },
+  tick: { fill: "var(--muted-foreground)", fontFamily: "var(--font-sans)" },
 } as const;
+
 
 export const chartMargin = { top: 8, right: 12, left: -12, bottom: 0 } as const;
 
