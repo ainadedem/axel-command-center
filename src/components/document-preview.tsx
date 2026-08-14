@@ -213,11 +213,11 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     const persist = () => saveView(kind, {
       zoom: zoomRef.current, mode,
       scrollTop: el?.scrollTop ?? 0, scrollLeft: el?.scrollLeft ?? 0,
-      colWidths, density,
+      colWidths, density, showStamp, showSignature,
     });
     const t = setInterval(persist, 1000);
     return () => { clearInterval(t); persist(); };
-  }, [open, doc?.kind, mode, zoom, colWidths, density]);
+  }, [open, doc?.kind, mode, zoom, colWidths, density, showStamp, showSignature]);
 
 
   const applyZoom = useCallback((next: number, anchor?: { x: number; y: number }) => {
