@@ -835,3 +835,34 @@ tr:focus-within .row-actions-inner {
 }
 
 
+
+/* ---------------------------------------------------------------
+   "New" buttons: identical motion contract to the top-bar action.
+   --------------------------------------------------------------- */
+.btn-new {
+  transition:
+    box-shadow 150ms cubic-bezier(0.2, 0, 0, 1),
+    background-color 150ms cubic-bezier(0.2, 0, 0, 1),
+    transform 150ms cubic-bezier(0.2, 0, 0, 1);
+}
+.btn-new:hover {
+  box-shadow:
+    0 1px 3px rgba(60, 64, 67, 0.2),
+    0 6px 16px rgba(60, 64, 67, 0.14);
+}
+.btn-new:active {
+  transform: scale(0.98);
+}
+.btn-new svg {
+  transition: transform 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+.btn-new:hover svg {
+  transform: rotate(90deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-new,
+  .btn-new svg {
+    transition: none !important;
+    transform: none !important;
+  }
+}
