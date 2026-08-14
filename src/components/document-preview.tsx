@@ -145,9 +145,9 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
             <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)}><X className="h-4 w-4" /></Button>
           </div>
         </div>
-        <div className="overflow-y-auto bg-neutral-200 dark:bg-neutral-900 p-6 flex justify-center">
+        <div className="flex-1 min-h-0 overflow-auto overscroll-contain bg-neutral-200 dark:bg-neutral-900 p-6">
           <div
-            className="bg-white text-neutral-900 shadow-xl"
+            className="bg-white text-neutral-900 shadow-xl mx-auto"
             style={{ width: "210mm", minHeight: "297mm", padding: "22mm" }}
             dangerouslySetInnerHTML={{ __html: html }}
           />
