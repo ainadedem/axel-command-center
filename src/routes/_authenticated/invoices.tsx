@@ -574,7 +574,9 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   useEffect(() => {
     if (!open) return;
     if (editing) {
+      console.debug("[dbg] invoice edit init", { number: editing.number, companyId: editing.companyId, clientId: editing.clientId, companies: companies.map((c) => c.id) });
       numberTouched.current = false; setNumber(editing.number); setCompanyId(editing.companyId); setClientId(editing.clientId);
+
       setProjectId(editing.projectId ?? ""); setPoId(editing.poId ?? "");
       setPoWaived(Boolean(editing.poWaived)); setPoWaiverReason(editing.poWaiverReason ?? "");
       setSubject(editing.subject ?? "");
