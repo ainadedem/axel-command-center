@@ -275,6 +275,9 @@ function Body() {
 
   const cp = useColumnPrefs("invoices", INVOICE_COLUMNS);
   const colCount = 1 + cp.count;
+  const tableMinWidth = 48 + INVOICE_COLUMNS
+    .filter((c) => cp.on(c.key))
+    .reduce((sum, c) => sum + (widths[c.key] ?? INVOICE_COL_WIDTHS[c.key] ?? 140), 0);
 
 
 
