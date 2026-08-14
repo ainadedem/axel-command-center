@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { AvatarUpload } from "@/components/avatar-upload";
+import { markSignerDocumentsDirty } from "@/lib/stamp-refresh";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -59,6 +60,10 @@ function Body() {
     setSaving(false);
     if (error) { toast.error(`Could not save your profile: ${error.message}`); return; }
     await refresh();
+    // A new signature invalidates the mark printed on existing documents.
+    if ((signature ?? null) !== (profile?.signature_url ?? null)) {
+      await markSignerDocumentsDirty(user.id);
+    }
     toast.success("Profile updated");
   };
 
@@ -95,6 +100,8 @@ function Body() {
               size={84}
               square
               folder="signatures"
+              mark
+              keyOutWhite
             />
             <span className="text-[10px] text-muted-foreground">Signature</span>
             {signature ? (

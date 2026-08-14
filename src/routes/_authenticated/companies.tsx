@@ -351,7 +351,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
             </div>
             <div className="flex items-start gap-4">
               <div>
-                <AvatarUpload value={stampUrl} onChange={setStampUrl} name="Stamp" size={72} square folder="stamps" />
+                <AvatarUpload value={stampUrl} onChange={setStampUrl} name="Stamp" size={72} square folder="stamps" mark keyOutWhite />
                 <p className="text-[10px] text-muted-foreground mt-1 max-w-[120px]">PNG with a transparent background works best.</p>
               </div>
               <div className="flex-1 space-y-3">

@@ -46,6 +46,7 @@ import { withSelected } from "@/lib/select-options";
 import { toast } from "sonner";
 import { canWriteCompany, dbCompanyId } from "@/lib/db-sync";
 import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } from "@/components/bulk-select";
+import { refreshStampsAndSignatures } from "@/lib/stamp-refresh";
 import { BulkEditDocDialog } from "@/components/bulk-edit-doc-dialog";
 import { bulkUpdateDocuments, type BulkPatch } from "@/lib/bulk-edit";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
@@ -474,6 +475,18 @@ function Body() {
       <BulkActionBar count={selection.count} noun="invoice" onClear={selection.clear}>
         <Button size="sm" className="h-7 px-3 text-xs" onClick={() => setBulkOpen(true)}>
           Edit client / project
+        </Button>
+        <Button
+          size="sm" variant="outline" className="h-7 px-3 text-xs"
+          onClick={async () => {
+            const n = await refreshStampsAndSignatures({
+              collection: invoicesStore, docType: "invoice", rows: selection.selectedRows,
+            });
+            selection.clear();
+            toast.success(`Stamp & signature refreshed on ${n} invoice${n > 1 ? "s" : ""}`);
+          }}
+        >
+          Refresh stamp &amp; signature
         </Button>
       </BulkActionBar>
       <BulkEditDocDialog
