@@ -485,7 +485,7 @@ function AppShellLoading() {
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
       <div className="w-full max-w-md rounded-2xl border border-border bg-[var(--gradient-surface)] p-8 shadow-[var(--shadow-soft)]">
         <div className="flex items-center gap-3">
-          <img src={axelIcon} alt="AXEL Business Platform logo" className="h-10 w-10 rounded-xl shadow-[var(--shadow-glow)]" />
+          <AxelBraceMark title="AXEL Business Platform" className="h-9 w-9 text-primary" />
           <div>
             <div className="font-display text-base font-semibold">Axel Command Center</div>
             <div className="text-sm text-muted-foreground">Loading your workspace access and data...</div>
@@ -506,7 +506,7 @@ function AppShellError({ message, onRetry }: { message: string; onRetry: () => v
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-4">
       <div className="w-full max-w-md rounded-2xl border border-border bg-[var(--gradient-surface)] p-8 shadow-[var(--shadow-soft)]">
         <div className="flex items-center gap-3">
-          <img src={axelIcon} alt="AXEL Business Platform logo" className="h-10 w-10 rounded-xl shadow-[var(--shadow-glow)]" />
+          <AxelBraceMark title="AXEL Business Platform" className="h-9 w-9 text-primary" />
           <div>
             <div className="font-display text-base font-semibold">Couldn't load your workspace</div>
             <div className="text-sm text-muted-foreground">{message}</div>
