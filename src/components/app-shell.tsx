@@ -4,7 +4,7 @@ import {
   Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus, Truck,
   ChevronDown, Check, LogOut, Target, UserCog, Handshake,
   BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList, RefreshCw,
-  Sparkles, CreditCard, Repeat, Wallet2, ExternalLink, Info, ShieldCheck,
+  Sparkles, CreditCard, Repeat, Wallet2, ExternalLink, Info, ShieldCheck, Menu, X,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -164,7 +164,7 @@ function CompanySwitcher() {
   );
 }
 
-function SidebarSection({ section, pathname }: { section: NavSection; pathname: string }) {
+function SidebarSection({ section, pathname, onNavigate }: { section: NavSection; pathname: string; onNavigate?: () => void }) {
   const hasActive = section.items.some((item) => pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to)));
   const [open, setOpen] = useState(hasActive);
 
@@ -193,6 +193,7 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
               <Link
                 key={item.to}
                 to={item.to}
+                onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "group focus-ring flex items-center gap-3 px-3 py-2 rounded-full text-sm relative overflow-hidden transition-[color,background-color,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98]",
@@ -225,11 +226,9 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
   );
 }
 
-function Sidebar() {
-  const pathname = useRouterState({ select: (r) => r.location.pathname });
+function useVisibleSections() {
   const { isSalesOnly, isGroupAdmin } = useEffectiveRole();
-
-  const visibleSections = sections
+  return sections
     .map((section) => ({
       ...section,
       items: section.items.filter(
@@ -239,9 +238,14 @@ function Sidebar() {
       ),
     }))
     .filter((section) => section.items.length > 0);
+}
+
+function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const visibleSections = useVisibleSections();
 
   return (
-    <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-sidebar-border/70 bg-sidebar/80 material-bar">
+    <>
       <div className="px-5 py-5 flex flex-col gap-1.5">
         <AxelWordmark title="AXEL Business Platform" className="h-7 w-auto self-start text-sidebar-foreground" />
         <span className="text-[11px] font-medium tracking-wide text-sidebar-foreground/60">Unified Business Platform</span>
@@ -251,15 +255,66 @@ function Sidebar() {
       </div>
       <nav aria-label="Main" className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
         {visibleSections.map((section) => (
-          <SidebarSection key={section.label} section={section} pathname={pathname} />
+          <SidebarSection key={section.label} section={section} pathname={pathname} onNavigate={onNavigate} />
         ))}
       </nav>
       <div className="p-3 border-t border-sidebar-border">
-        <Link to="/settings" className="group focus-ring flex items-center gap-3 px-3 py-2 rounded-full text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200 active:scale-[0.98]">
+        <Link
+          to="/settings"
+          onClick={onNavigate}
+          className="group focus-ring flex items-center gap-3 px-3 py-2 rounded-full text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200 active:scale-[0.98]"
+        >
           <Settings className="h-4 w-4 transition-transform duration-500 group-hover:rotate-90" /> Settings
         </Link>
       </div>
+    </>
+  );
+}
+
+function Sidebar() {
+  return (
+    <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-sidebar-border/70 bg-sidebar/80 material-bar">
+      <SidebarInner />
     </aside>
+  );
+}
+
+function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+  return (
+    <div className="lg:hidden fixed inset-0 z-50">
+      <div
+        className="absolute inset-0 bg-foreground/40 backdrop-blur-[2px] animate-in fade-in-0 duration-200"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation"
+        className="absolute inset-y-0 left-0 w-[min(19rem,86vw)] flex flex-col bg-sidebar border-r border-sidebar-border shadow-[var(--shadow-elevated)] animate-in slide-in-from-left duration-250"
+      >
+        <button
+          onClick={onClose}
+          aria-label="Close navigation"
+          className="absolute right-3 top-3 h-9 w-9 grid place-items-center rounded-full focus-ring hover:bg-sidebar-accent/60 text-muted-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <SidebarInner onNavigate={onClose} />
+      </div>
+    </div>
   );
 }
 
