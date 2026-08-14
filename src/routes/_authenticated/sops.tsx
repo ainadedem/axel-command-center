@@ -254,12 +254,13 @@ function ComplianceTab({ violations, summary }: { violations: Violation[]; summa
   const exportAll = () => {
     exportCsvRows(
       `sop-compliance-${format(new Date(), "yyyy-MM-dd")}.csv`,
-      ["Severity", "Rule", "Type", "Reference", "Company", "Amount", "Currency", "Detail"],
+      ["Severity", "Rule", "Type", "Reference", "Client", "Company", "Amount", "Currency", "Detail"],
       list.map((v) => [
         v.severity,
         v.ruleLabel,
         v.entity,
         v.reference,
+        clients.find((c) => c.id === v.clientId)?.name ?? "",
         companies.find((c) => c.id === v.companyId)?.shortName ?? "",
         v.amount ?? "",
         v.currency ?? "",
@@ -267,6 +268,7 @@ function ComplianceTab({ violations, summary }: { violations: Violation[]; summa
       ]),
     );
   };
+
 
   return (
     <div className="space-y-4">
