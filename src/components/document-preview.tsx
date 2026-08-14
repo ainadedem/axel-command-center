@@ -77,7 +77,10 @@ interface Props {
     stampScale?: number;
     stampDirty?: boolean;
   }) => void;
+  /** Identifies the document so stamp/signer changes are written to the audit trail. */
+  audit?: { docType: DocType; docId: string; companyId: string };
 }
+
 
 const MM = 96 / 25.4;
 const SHEET_W = 210 * MM;
