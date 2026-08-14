@@ -131,7 +131,7 @@ function summaryHtml(s: ReconciliationSummary) {
     : "";
 
   return `
-  <div style="font-family:Helvetica,Arial,sans-serif;color:#111;padding:32px;width:720px;">
+  <div style="font-family:'Inter',Helvetica,Arial,sans-serif;color:#111;padding:32px;width:720px;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #2563EB;padding-bottom:12px;">
       <div>
         <div style="font-size:18px;font-weight:700;">${esc(s.companyName ?? "")}</div>
