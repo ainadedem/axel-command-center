@@ -9,7 +9,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const syncSalesTeamFromRoles = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase, userId } = context as {
+    const { supabase, userId } = context as unknown as {
       supabase: { rpc: (fn: string, args: unknown) => Promise<{ data: unknown }> };
       userId: string | null;
     };
