@@ -42,6 +42,11 @@ import { nextNumber, nextNumberAsync, isNumberTaken } from "@/lib/numbering";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
+import { toast } from "sonner";
+import { canWriteCompany, dbCompanyId } from "@/lib/db-sync";
+import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } from "@/components/bulk-select";
+import { BulkEditDocDialog } from "@/components/bulk-edit-doc-dialog";
+import { bulkUpdateDocuments, type BulkPatch } from "@/lib/bulk-edit";
 
 export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage, validateSearch: focusSearch });
 
@@ -115,6 +120,30 @@ function Body() {
   const view = useDataView<Invoice>("invoices", fields);
   const groups = view.apply(baseList);
   const list = groups.flatMap((g) => g.items);
+
+  const isWritable = useCallback(
+    (inv: Invoice) => canWriteCompany(dbCompanyId(inv.companyId) ?? inv.companyId),
+    [],
+  );
+  const selection = useBulkSelection(list, isWritable);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const { user: authUser } = useAuth();
+
+  const applyBulk = async (patch: BulkPatch) => {
+    const rows = selection.selectedRows;
+    const n = await bulkUpdateDocuments({
+      collection: invoicesStore,
+      docType: "invoice",
+      rows,
+      patch,
+      userId: authUser?.id,
+      label: `bulk edit ${rows.length} invoice${rows.length !== 1 ? "s" : ""}`,
+      clientName: (id) => clients.find((c) => c.id === id)?.name ?? id,
+      projectName: (id) => projects.find((p) => p.id === id)?.name ?? id,
+    });
+    selection.clear();
+    toast.success(`Updated ${n} invoice${n !== 1 ? "s" : ""}`);
+  };
 
   const active = list.filter((i) => i.status !== "cancelled");
   const totalOpen = active.filter((i) => i.status !== "paid").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
@@ -285,6 +314,7 @@ function Body() {
             <table className="w-full min-w-[900px] text-sm">
               <thead>
                 <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                  <SelectAllHeaderCell checked={selection.allSelected} onToggle={selection.toggleAll} />
                   <th className="text-left font-medium px-5 py-3">Number</th>
                   <th className="text-left font-medium px-5 py-3">Client</th>
                   <th className="text-left font-medium px-5 py-3">Project</th>
@@ -304,7 +334,7 @@ function Body() {
               <tbody>
                 {groups.map((g) => (
                   <Fragment key={g.key}>
-                    {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={13} />}
+                    {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={14} />}
                     {g.items.map((inv) => {
                   const co = companies.find((c) => c.id === inv.companyId);
                   const cl = clients.find((c) => c.id === inv.clientId);
@@ -317,6 +347,12 @@ function Body() {
                     : null;
                   return (
                     <tr key={inv.id} data-focus-id={inv.id} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 group">
+                      <SelectRowCell
+                        checked={selection.isSelected(inv.id)}
+                        onToggle={() => selection.toggle(inv.id)}
+                        disabled={!isWritable(inv)}
+                        label={`Select invoice ${inv.number}`}
+                      />
                       <td className="px-5 py-3.5 font-tnum text-xs text-muted-foreground">{inv.number}</td>
                       <td className="px-5 py-3.5 font-medium">{cl?.name ?? "—"}</td>
                       <td className="px-5 py-3.5 text-xs">
@@ -402,6 +438,19 @@ function Body() {
           </div>
         </>
       )}
+
+      <BulkActionBar count={selection.count} noun="invoice" onClear={selection.clear}>
+        <Button size="sm" className="h-7 px-3 text-xs" onClick={() => setBulkOpen(true)}>
+          Edit client / project
+        </Button>
+      </BulkActionBar>
+      <BulkEditDocDialog
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        rows={selection.selectedRows}
+        noun="invoice"
+        onApply={applyBulk}
+      />
 
       <InvoiceDialog open={open} onOpenChange={setOpen} editing={editing} />
       <InvoicePreview
