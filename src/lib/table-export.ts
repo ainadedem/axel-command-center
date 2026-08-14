@@ -4,6 +4,7 @@
  * with the current filters / sort / search already applied by the caller.
  */
 import { exportCsvRows } from "@/lib/export-csv";
+import { renderHtmlToPdfBlob, saveBlob, printHtmlFallback } from "@/lib/pdf-render";
 
 export type ExportColumn = {
   key: string;
