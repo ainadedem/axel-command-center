@@ -532,9 +532,9 @@
   transition: box-shadow var(--dur-slow) var(--ease-out-soft),
               transform var(--dur-slow) var(--ease-out-soft),
               border-color var(--dur-base) var(--ease-out-soft);
-  &:hover {
+  &:hover, &:focus-visible {
     box-shadow: var(--shadow-elevated);
-    transform: translateY(-2px);
+    transform: translateY(-1px);
   }
   &:active {
     box-shadow: var(--shadow-soft);
