@@ -1047,9 +1047,10 @@ tr:hover .status-chip .status-chip-label,
     transition: box-shadow 150ms cubic-bezier(0.2, 0, 0, 1);
   }
 
-  /* `overflow-x: auto` alone would blockify overflow-y and kill sticky. */
+  /* No scroll container between the header and the page scroller,
+     otherwise the sticky offset resolves against the wrong box. */
   .stacked-table.sticky-head {
-    overflow-y: clip;
+    overflow: visible;
   }
   .stacked-table.sticky-head thead th {
     position: sticky;

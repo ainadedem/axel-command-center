@@ -26,11 +26,11 @@ import { ResizeHandle } from "@/components/resizable-columns";
 
 export function ListTableShell({ children, className, scrollX, announcement, stickyHeader }: { children: ReactNode; className?: string; scrollX?: boolean; announcement?: string; stickyHeader?: boolean }) {
   return (
-    <div className={cn("rounded-xl border border-border bg-[var(--gradient-surface)] overflow-clip", className)}>
+    <div className={cn("rounded-xl border border-border bg-[var(--gradient-surface)]", stickyHeader ? "md:overflow-visible overflow-clip" : "overflow-clip", className)}>
       {announcement !== undefined && (
         <div aria-live="polite" role="status" className="sr-only">{announcement}</div>
       )}
-      <div className={cn("stacked-table list-aligned", stickyHeader && "sticky-head", scrollX && "md:overflow-x-auto")}>{children}</div>
+      <div className={cn("stacked-table list-aligned", stickyHeader && "sticky-head", scrollX && !stickyHeader && "md:overflow-x-auto")}>{children}</div>
     </div>
   );
 }
