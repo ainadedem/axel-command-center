@@ -62,7 +62,8 @@ export function recordAttempt(input: {
   fields: JournalField[];
 }): JournalHandle {
   const id = `w${++seq}`;
-  entries = [{ ...input, id, state: "pending", at: Date.now() }, ...entries].slice(0, MAX_ENTRIES);
+  const entry: JournalEntry = { ...input, id, state: "pending", at: Date.now() };
+  entries = [entry, ...entries].slice(0, MAX_ENTRIES);
   emit();
 
   const patch = (next: Partial<JournalEntry>) => {
