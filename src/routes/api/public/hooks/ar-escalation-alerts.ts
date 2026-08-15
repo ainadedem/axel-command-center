@@ -153,21 +153,26 @@ async function handle() {
   return Response.json({ scanned: open.length, due: due.length, sent });
 }
 
+/**
+ * Authorises the scheduler. The Supabase anon/publishable key ships in every
+ * browser bundle, so it can never gate this job: we require a server-only
+ * secret (`AR_ALERT_CRON_SECRET`) supplied by the pg_cron job instead.
+ */
+function authorize(request: Request): Response | null {
+  const expected = process.env["AR_ALERT_CRON_SECRET"];
+  if (!expected) return new Response("Unauthorized", { status: 401 });
+  const provided =
+    request.headers.get("x-cron-secret") ??
+    (request.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
+  if (!provided || provided !== expected) return new Response("Unauthorized", { status: 401 });
+  return null;
+}
+
 export const Route = createFileRoute("/api/public/hooks/ar-escalation-alerts")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
-        const key = request.headers.get("apikey");
-        const expected = process.env["SUPABASE_ANON_KEY"] ?? process.env["SUPABASE_PUBLISHABLE_KEY"];
-        if (!expected || key !== expected) return new Response("Unauthorized", { status: 401 });
-        return handle();
-      },
-      GET: async ({ request }) => {
-        const key = request.headers.get("apikey");
-        const expected = process.env["SUPABASE_ANON_KEY"] ?? process.env["SUPABASE_PUBLISHABLE_KEY"];
-        if (!expected || key !== expected) return new Response("Unauthorized", { status: 401 });
-        return handle();
-      },
+      POST: async ({ request }) => authorize(request) ?? handle(),
+      GET: async ({ request }) => authorize(request) ?? handle(),
     },
   },
 });
