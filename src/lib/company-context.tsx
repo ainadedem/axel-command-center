@@ -101,6 +101,8 @@ interface Ctx {
   label: string;
   accessLoading: boolean;
   dataLoading: boolean;
+  /** A background refresh is reconciling cached data with the server. */
+  refreshing: boolean;
   bootstrapReady: boolean;
   /** Set when loading workspace access/data failed; the UI shows a retry instead of a spinner. */
   bootstrapError: string | null;
