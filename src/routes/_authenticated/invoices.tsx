@@ -359,6 +359,18 @@ function Body() {
   const colCount = 2 + tp.count;
   const tableMinWidth = 48 + 136 + tp.totalWidth;
 
+  // Flatten groups so long receivable lists render only the rows in view.
+  const flatRows = useMemo(() => {
+    const rows: ({ kind: "group"; key: string; label: string; count: number } | { kind: "item"; key: string; inv: Invoice })[] = [];
+    groups.forEach((g) => {
+      if (groups.length > 1) rows.push({ kind: "group", key: `g:${g.key}`, label: g.label, count: g.items.length });
+      g.items.forEach((inv) => rows.push({ kind: "item", key: inv.id, inv }));
+    });
+    return rows;
+  }, [groups]);
+  const scrollRef = useScrollRef();
+  const windowed = useRowWindow({ rows: flatRows, scrollRef, rowHeight: 40 });
+
   const renderCell = (key: string, inv: Invoice) => {
     const co = companies.find((c) => c.id === inv.companyId);
     const cl = clients.find((c) => c.id === inv.clientId);
