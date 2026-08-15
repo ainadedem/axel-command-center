@@ -218,14 +218,25 @@ export function createCollection<T extends WithId>(
         if (critical) setStatus(key, item.id, { state: "saving" });
         const attempt = () => {
           if (critical) setStatus(key, currentId, { state: "saving" });
+          const journal: JournalHandle | null = critical
+            ? recordAttempt({
+                collection: key,
+                noun,
+                recordId: currentId,
+                kind: "create",
+                fields: [],
+              })
+            : null;
           sync
             .upsert!(item)
             .then((dbId) => {
               if (dbId) {
                 swapId(currentId, dbId);
                 currentId = dbId;
+                journal?.rebind(dbId);
               }
               if (critical) setStatus(key, currentId, { state: "saved" });
+              journal?.confirm();
               opts?.onSynced?.(dbId ?? currentId);
             })
             .catch((e) => {
@@ -233,6 +244,7 @@ export function createCollection<T extends WithId>(
               if (!critical) return;
               const message = errText(e);
               setStatus(key, currentId, { state: "error", message, retry: attempt });
+              journal?.reject(message, attempt);
               reportFailure(noun, currentId, message);
             });
         };
