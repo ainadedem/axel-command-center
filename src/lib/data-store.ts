@@ -333,7 +333,10 @@ export function createCollection<T extends WithId>(
         items.splice(i, 1);
         emit();
         if (sync.remove) {
-          sync.remove(id).catch((e) => {
+          const journal: JournalHandle | null = critical
+            ? recordAttempt({ collection: key, noun, recordId: id, kind: "delete", fields: [] })
+            : null;
+          sync.remove(id).then(() => journal?.confirm()).catch((e) => {
             console.warn(`[sync ${key}] remove`, e);
             if (!critical) return;
             // Put the row back — it still exists in the database.
