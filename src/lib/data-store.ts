@@ -345,11 +345,9 @@ export function createCollection<T extends WithId>(
               emit();
             }
             const message = errText(e);
-            setStatus(key, id, {
-              state: "error",
-              message,
-              retry: () => collection.remove(id, { silent: true }),
-            });
+            const retry = () => collection.remove(id, { silent: true });
+            setStatus(key, id, { state: "error", message, retry });
+            journal?.reject(message, retry);
             reportFailure(noun, id, message);
           });
         }
