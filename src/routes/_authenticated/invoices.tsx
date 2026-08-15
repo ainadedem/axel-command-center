@@ -696,10 +696,13 @@ function Body() {
                 </ListHeadRow>
               </thead>
               <tbody>
-                {groups.map((g) => (
-                  <Fragment key={g.key}>
-                    {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={colCount} />}
-                    {g.items.map((inv) => (
+                <SpacerRow height={windowed.padTop} colSpan={colCount} />
+                {windowed.items.map((row) => {
+                  if (row.kind === "group") {
+                    return <GroupHeaderRow key={row.key} label={row.label} count={row.count} colSpan={colCount} />;
+                  }
+                  const inv = row.inv;
+                  return (
                     <Fragment key={inv.id}>
                     <tr data-focus-id={inv.id} className="hover:bg-surface-elevated/40 transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]">
 <ListRowActions colSpan={colCount}>
