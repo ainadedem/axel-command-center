@@ -717,6 +717,21 @@ function AppShellFrame({ children }: { children: ReactNode }) {
   );
 }
 
+/** Quiet marker while cached data is being reconciled with the server. */
+function RefreshMarker() {
+  const { refreshing } = useCompany();
+  return (
+    <span
+      aria-live="polite"
+      className="hidden sm:inline-flex items-center gap-1.5 text-[11px] text-muted-foreground transition-opacity duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+      style={{ opacity: refreshing ? 1 : 0 }}
+    >
+      <span className="save-dot" aria-hidden />
+      {refreshing ? "Updating…" : ""}
+    </span>
+  );
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   // Rejected financial writes must never pass silently: the store reverts the
   // value and we surface it here.
