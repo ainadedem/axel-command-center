@@ -731,10 +731,9 @@ function Body() {
                     </tr>
 
                     </Fragment>
-                    ))}
-
-                  </Fragment>
-                ))}
+                  );
+                })}
+                <SpacerRow height={windowed.padBottom} colSpan={colCount} />
               </tbody>
             </ListTable>
           </ListTableShell>
