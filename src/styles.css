@@ -1019,16 +1019,29 @@ tr:focus-within .row-actions-inner {
 }
 .status-chip:hover .status-chip-label,
 .status-chip:focus-visible .status-chip-label,
-tr:hover .status-chip .status-chip-label,
-.status-chip-static .status-chip-label {
+tr:hover .status-chip .status-chip-label {
   opacity: 1;
   transform: translate3d(0, -50%, 0);
 }
-.status-chip-static .status-chip-label,
 .status-chip:hover .status-chip-label,
 tr:hover .status-chip .status-chip-label {
   box-shadow: var(--shadow-sm, 0 1px 2px rgb(0 0 0 / 0.08));
 }
+/* Chips rendered with a permanent label keep it inline (details panels). */
+.status-chip-static {
+  padding-right: 0.5rem;
+}
+.status-chip-static .status-chip-label {
+  position: static;
+  opacity: 1;
+  transform: none;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+  background: transparent;
+  pointer-events: auto;
+}
+
 @media (hover: none) {
   .status-chip .status-chip-label {
     opacity: 1;
