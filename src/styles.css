@@ -1189,3 +1189,9 @@ tr[data-selected="true"] .row-actions-inner,
 tr:hover .row-actions-inner {
   border-color: color-mix(in oklab, var(--foreground) 14%, transparent);
 }
+
+/* Chip cells let the hover label escape the truncated cell box. */
+td:has(> .status-chip),
+td:has(> span > .status-chip) {
+  overflow: visible;
+}
