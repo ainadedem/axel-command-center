@@ -26,6 +26,7 @@ import { AxelWordmark, AxelBraceMark } from "@/components/axel-wordmark";
 import { AXEL_AI_ENABLED } from "@/lib/features";
 import { prewarmExportFonts } from "@/lib/export-fonts";
 import { onWriteFailure } from "@/lib/data-store";
+import { WriteTrailButton } from "@/components/write-trail";
 
 
 
@@ -485,6 +486,8 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             <Redo2 className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
+        <RefreshMarker />
+        <WriteTrailButton />
         <FxBadge />
 
         {newAction && (
@@ -711,6 +714,21 @@ function AppShellFrame({ children }: { children: ReactNode }) {
       </div>
     </div>
 
+  );
+}
+
+/** Quiet marker while cached data is being reconciled with the server. */
+function RefreshMarker() {
+  const { refreshing } = useCompany();
+  return (
+    <span
+      aria-live="polite"
+      className="hidden sm:inline-flex items-center gap-1.5 text-[11px] text-muted-foreground transition-opacity duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+      style={{ opacity: refreshing ? 1 : 0 }}
+    >
+      <span className="save-dot" aria-hidden />
+      {refreshing ? "Updating…" : ""}
+    </span>
   );
 }
 

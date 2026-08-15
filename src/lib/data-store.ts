@@ -10,6 +10,7 @@
 //    left on screen as if it were persisted.
 import { useSyncExternalStore } from "react";
 import { pushHistory } from "./history";
+import { recordAttempt, type JournalField, type JournalHandle } from "./write-journal";
 
 
 type WithId = { id: string };
@@ -217,14 +218,25 @@ export function createCollection<T extends WithId>(
         if (critical) setStatus(key, item.id, { state: "saving" });
         const attempt = () => {
           if (critical) setStatus(key, currentId, { state: "saving" });
+          const journal: JournalHandle | null = critical
+            ? recordAttempt({
+                collection: key,
+                noun,
+                recordId: currentId,
+                kind: "create",
+                fields: [],
+              })
+            : null;
           sync
             .upsert!(item)
             .then((dbId) => {
               if (dbId) {
                 swapId(currentId, dbId);
                 currentId = dbId;
+                journal?.rebind(dbId);
               }
               if (critical) setStatus(key, currentId, { state: "saved" });
+              journal?.confirm();
               opts?.onSynced?.(dbId ?? currentId);
             })
             .catch((e) => {
@@ -232,6 +244,7 @@ export function createCollection<T extends WithId>(
               if (!critical) return;
               const message = errText(e);
               setStatus(key, currentId, { state: "error", message, retry: attempt });
+              journal?.reject(message, attempt);
               reportFailure(noun, currentId, message);
             });
         };
@@ -267,10 +280,24 @@ export function createCollection<T extends WithId>(
             items[idx] = { ...items[idx], ...patch };
             emit();
             if (critical) setStatus(key, id, { state: "saving" });
+            const journal: JournalHandle | null = critical
+              ? recordAttempt({
+                  collection: key,
+                  noun,
+                  recordId: id,
+                  kind: "update",
+                  fields: (Object.keys(patch) as (keyof T)[]).map<JournalField>((k) => ({
+                    field: String(k),
+                    previous: previous[k],
+                    attempted: patch[k],
+                  })),
+                })
+              : null;
             sync
               .upsert!(items[idx])
               .then(() => {
                 if (critical) setStatus(key, id, { state: "saved" });
+                journal?.confirm();
               })
               .catch((e) => {
                 console.warn(`[sync ${key}] upsert`, e);
@@ -283,6 +310,7 @@ export function createCollection<T extends WithId>(
                 }
                 const message = errText(e);
                 setStatus(key, id, { state: "error", message, retry: attempt });
+                journal?.reject(message, attempt);
                 reportFailure(noun, id, message);
               });
           };
@@ -305,7 +333,10 @@ export function createCollection<T extends WithId>(
         items.splice(i, 1);
         emit();
         if (sync.remove) {
-          sync.remove(id).catch((e) => {
+          const journal: JournalHandle | null = critical
+            ? recordAttempt({ collection: key, noun, recordId: id, kind: "delete", fields: [] })
+            : null;
+          sync.remove(id).then(() => journal?.confirm()).catch((e) => {
             console.warn(`[sync ${key}] remove`, e);
             if (!critical) return;
             // Put the row back — it still exists in the database.
@@ -314,11 +345,9 @@ export function createCollection<T extends WithId>(
               emit();
             }
             const message = errText(e);
-            setStatus(key, id, {
-              state: "error",
-              message,
-              retry: () => collection.remove(id, { silent: true }),
-            });
+            const retry = () => collection.remove(id, { silent: true });
+            setStatus(key, id, { state: "error", message, retry });
+            journal?.reject(message, retry);
             reportFailure(noun, id, message);
           });
         }

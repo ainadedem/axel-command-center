@@ -12,6 +12,8 @@ import {
   contactBelongsTo,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
+import { useRowWindow, SpacerRow, useScrollRef } from "@/components/virtual-rows";
+import { LiveAmount, RowSaveState } from "@/components/save-state";
 import { docTotals, lineNet } from "@/lib/discounts";
 import { inScope, useCompany } from "@/lib/company-context";
 import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
@@ -357,6 +359,18 @@ function Body() {
   const colCount = 2 + tp.count;
   const tableMinWidth = 48 + 136 + tp.totalWidth;
 
+  // Flatten groups so long receivable lists render only the rows in view.
+  const flatRows = useMemo(() => {
+    const rows: ({ kind: "group"; key: string; label: string; count: number } | { kind: "item"; key: string; inv: Invoice })[] = [];
+    groups.forEach((g) => {
+      if (groups.length > 1) rows.push({ kind: "group", key: `g:${g.key}`, label: g.label, count: g.items.length });
+      g.items.forEach((inv) => rows.push({ kind: "item", key: inv.id, inv }));
+    });
+    return rows;
+  }, [groups]);
+  const scrollRef = useScrollRef();
+  const windowed = useRowWindow({ rows: flatRows, scrollRef, rowHeight: 40 });
+
   const renderCell = (key: string, inv: Invoice) => {
     const co = companies.find((c) => c.id === inv.companyId);
     const cl = clients.find((c) => c.id === inv.clientId);
@@ -422,11 +436,20 @@ function Body() {
           </ListTd>
         );
       case "amount":
-        return <ListTd align="right" className="font-tnum" title={fmtFull(inv.amount, inv.currency)}>{fmtFull(inv.amount, inv.currency)}</ListTd>;
+        return (
+          <ListTd align="right" className="font-tnum" title={fmtFull(inv.amount, inv.currency)}>
+            <span className="inline-flex items-center justify-end gap-1.5">
+              <RowSaveState collection="invoices" id={inv.id} />
+              <LiveAmount collection="invoices" id={inv.id}>{fmtFull(inv.amount, inv.currency)}</LiveAmount>
+            </span>
+          </ListTd>
+        );
       case "balance":
         return (
           <ListTd align="right" className="font-tnum font-medium">
-            {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? fmtFull(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
+            {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? (
+              <LiveAmount collection="invoices" id={inv.id}>{fmtFull(balance, inv.currency)}</LiveAmount>
+            ) : <span className="text-muted-foreground">—</span>}
           </ListTd>
         );
       case "owner":
@@ -655,7 +678,13 @@ function Body() {
           />
 
 
-          <ListTableShell scrollX stickyHeader announcement={tp.announcement}>
+          <ListTableShell
+            scrollX
+            stickyHeader
+            announcement={tp.announcement}
+            scrollRef={windowed.active ? scrollRef : undefined}
+            maxHeight={windowed.active ? "calc(100dvh - 22rem)" : undefined}
+          >
             <ListTable style={{ minWidth: tableMinWidth }}>
               <thead>
                 <ListHeadRow>
@@ -676,10 +705,13 @@ function Body() {
                 </ListHeadRow>
               </thead>
               <tbody>
-                {groups.map((g) => (
-                  <Fragment key={g.key}>
-                    {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={colCount} />}
-                    {g.items.map((inv) => (
+                <SpacerRow height={windowed.padTop} colSpan={colCount} />
+                {windowed.items.map((row) => {
+                  if (row.kind === "group") {
+                    return <GroupHeaderRow key={row.key} label={row.label} count={row.count} colSpan={colCount} />;
+                  }
+                  const inv = row.inv;
+                  return (
                     <Fragment key={inv.id}>
                     <tr data-focus-id={inv.id} className="hover:bg-surface-elevated/40 transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]">
 <ListRowActions colSpan={colCount}>
@@ -708,10 +740,9 @@ function Body() {
                     </tr>
 
                     </Fragment>
-                    ))}
-
-                  </Fragment>
-                ))}
+                  );
+                })}
+                <SpacerRow height={windowed.padBottom} colSpan={colCount} />
               </tbody>
             </ListTable>
           </ListTableShell>

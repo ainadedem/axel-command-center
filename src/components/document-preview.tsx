@@ -465,19 +465,28 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
 
   // ---- Stamp placement (drag on the preview) ------------------------------
+  // Placement moves instantly on screen; the write lands once the user stops
+  // nudging (repeated +/- clicks would otherwise fire one write each).
+  const placeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (placeTimer.current) clearTimeout(placeTimer.current); }, []);
+
   const commitPlace = useCallback((next: { x?: number; y?: number; scale?: number }) => {
     const before = { x: doc?.stampX, y: doc?.stampY, scale: doc?.stampScale };
     setPlace(next);
-    onDocChange?.({
-      stampX: next.x, stampY: next.y, stampScale: next.scale, stampDirty: false,
-    });
-    if (audit && doc) {
-      logStampChange({
-        ...audit, docNumber: doc.number,
-        summary: describePlacement(before, next),
-        details: { before, after: next },
+    if (placeTimer.current) clearTimeout(placeTimer.current);
+    placeTimer.current = setTimeout(() => {
+      placeTimer.current = null;
+      onDocChange?.({
+        stampX: next.x, stampY: next.y, stampScale: next.scale, stampDirty: false,
       });
-    }
+      if (audit && doc) {
+        logStampChange({
+          ...audit, docNumber: doc.number,
+          summary: describePlacement(before, next),
+          details: { before, after: next },
+        });
+      }
+    }, 500);
   }, [onDocChange, audit, doc]);
 
   const startStampDrag = (e: React.PointerEvent) => {
