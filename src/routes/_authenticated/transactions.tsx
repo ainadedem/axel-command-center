@@ -102,6 +102,20 @@ function Body() {
 
   const cp = useColumnPrefs("transactions", TX_COLUMNS);
 
+  // Flatten groups so long ledgers can render only the rows in view.
+  const flatRows = useMemo(() => {
+    const rows: ({ kind: "group"; key: string; label: string; count: number } | { kind: "item"; key: string; tx: Transaction })[] = [];
+    groups.forEach((g) => {
+      if (groups.length > 1) rows.push({ kind: "group", key: `g:${g.key}`, label: g.label, count: g.items.length });
+      g.items.forEach((t) => rows.push({ kind: "item", key: t.id, tx: t }));
+    });
+    return rows;
+  }, [groups]);
+
+  const scrollRef = useScrollRef();
+  const windowed = useRowWindow({ rows: flatRows, scrollRef });
+
+
   const openCreate = () => { setEditing(null); setOpen(true); };
 
   return (
