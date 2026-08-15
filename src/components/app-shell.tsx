@@ -713,5 +713,17 @@ function AppShellFrame({ children }: { children: ReactNode }) {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
+  // Rejected financial writes must never pass silently: the store reverts the
+  // value and we surface it here.
+  useEffect(
+    () =>
+      onWriteFailure(({ collection, message }) => {
+        toast.error(`Could not save ${collection}`, {
+          description: `${message}. The previous value was restored — retry from the row.`,
+        });
+      }),
+    [],
+  );
   return <AppShellFrame>{children}</AppShellFrame>;
 }
+
