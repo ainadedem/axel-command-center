@@ -2,6 +2,8 @@ import { Plus } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { useCreateAction } from "@/lib/create-action";
+import { ListEmptyState } from "@/components/list-state";
+
 
 export function CrudToolbar({
   count,
@@ -36,12 +38,6 @@ export function CrudToolbar({
 }
 
 export function EmptyState({ label, onCreate, createLabel }: { label: string; onCreate: () => void; createLabel?: string }) {
-  return (
-    <div className="rounded-xl border border-dashed border-border bg-surface/40 p-12 text-center">
-      <p className="text-sm text-muted-foreground mb-4">No {label} yet.</p>
-      <Button size="sm" onClick={onCreate} className="btn-new gap-1.5">
-        <Plus className="h-4 w-4" /> {createLabel ?? `Create your first ${label.replace(/s$/, "")}`}
-      </Button>
-    </div>
-  );
+  return <ListEmptyState label={label} onCreate={onCreate} createLabel={createLabel} />;
 }
+

@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { EmptyState } from "@/components/crud-toolbar";
+import { ListEmptyState, ListNoMatchState, ListErrorState } from "@/components/list-state";
 import { useCreateAction } from "@/lib/create-action";
 import { Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, Ban, BadgeCheck, ToggleLeft, ToggleRight, Plus, X } from "lucide-react";
 import { InvoicePreview } from "@/components/invoice-preview";
@@ -108,7 +108,7 @@ function InvoicesPage() {
 }
 
 function Body() {
-  const { scope } = useCompany();
+  const { scope, bootstrapError, retryBootstrap } = useCompany();
   const invoices = useInvoices();
   const companies = useCompanies();
   const clients = useClients();
@@ -463,16 +463,62 @@ function Body() {
     }
   };
 
-  const filtersActive =
-    chipStatuses.length > 0 || chipPo.length > 0 || view.activeFilterCount > 0 || view.state.q.trim().length > 0;
+  const activeChips: { key: string; label: string; onRemove: () => void }[] = [
+    ...(view.state.q.trim()
+      ? [{ key: "q", label: `Search: “${view.state.q.trim()}”`, onRemove: () => view.setState((p) => ({ ...p, q: "" })) }]
+      : []),
+    ...chipStatuses.map((s) => ({
+      key: `st:${s}`,
+      label: `Status: ${s}`,
+      onRemove: () => setChipStatuses((prev) => prev.filter((x) => x !== s)),
+    })),
+    ...chipPo.map((s) => ({
+      key: `po:${s}`,
+      label: `PO: ${s}`,
+      onRemove: () => setChipPo((prev) => prev.filter((x) => x !== s)),
+    })),
+    ...Object.entries(view.state.filters)
+      .filter(([, v]) => Boolean(v))
+      .map(([k]) => ({
+        key: `f:${k}`,
+        label: fields.find((f) => f.key === k)?.label ?? k,
+        onRemove: () => view.setState((p) => ({ ...p, filters: { ...p.filters, [k]: undefined } })),
+      })),
+    ...(bucket ? [{ key: "aging", label: `Ageing: ${bucket}`, onRemove: () => setDrawerBucket(null) }] : []),
+    ...(view.state.group
+      ? [{
+          key: "group",
+          label: `Grouped by ${fields.find((f) => f.key === view.state.group!.key)?.label ?? view.state.group!.key}`,
+          onRemove: () => view.setState((p) => ({ ...p, group: null })),
+        }]
+      : []),
+  ];
+  const filtersActive = activeChips.length > 0 || Boolean(view.state.sort);
+  // Keep the sticky table header parked right under the sticky filter card.
+  const pageRef = useRef<HTMLDivElement | null>(null);
+  const filterRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const card = filterRef.current;
+    const page = pageRef.current;
+    if (!card || !page || typeof ResizeObserver === "undefined") return;
+    const sync = () => page.style.setProperty("--list-sticky-top", `${card.offsetHeight}px`);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(card);
+    return () => ro.disconnect();
+  });
+
   const clearAllFilters = () => {
     setChipStatuses([]);
     setChipPo([]);
+    setBucket(null);
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, aging: undefined, focus: undefined }), replace: true } as never);
     view.reset();
   };
 
+
   return (
-    <div className="p-4 sm:p-8 space-y-4">
+    <div ref={pageRef} className="p-4 sm:p-8 space-y-4">
       {/* Single page action row */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="text-xs text-muted-foreground font-tnum">
@@ -506,25 +552,32 @@ function Body() {
         </div>
       </div>
 
-      {/* Unified filter bar */}
-      <div className="rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] p-3 space-y-2.5">
-        <div className="flex flex-wrap items-center gap-2">
-          <DataToolbar view={view} items={baseList} />
-          <span className="mx-0.5 hidden sm:block h-5 w-px bg-border" aria-hidden />
-          <FilterPresetBar
-            api={presets}
-            statuses={chipStatuses}
-            po={chipPo}
-            onApply={(p) => { setChipStatuses(p.statuses); setChipPo(p.po as PoState[]); }}
-          />
+      {/* Unified filter bar — sticks under the top bar while scrolling */}
+      <div ref={filterRef} className="filter-sticky rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] p-3 space-y-2.5">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <DataToolbar view={view} items={baseList} />
+          </div>
+          <span className="mx-1 hidden sm:block h-6 w-px bg-border" aria-hidden />
+          <div className="flex flex-wrap items-center gap-2">
+            <FilterPresetBar
+              api={presets}
+              statuses={chipStatuses}
+              po={chipPo}
+              onApply={(p) => { setChipStatuses(p.statuses); setChipPo(p.po as PoState[]); }}
+            />
+          </div>
           {filtersActive && (
-            <button
-              type="button"
-              onClick={clearAllFilters}
-              className="ml-auto inline-flex items-center gap-1 h-8 px-2.5 rounded-full text-xs text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
-            >
-              <X className="h-3.5 w-3.5" /> Clear all
-            </button>
+            <div className="ml-auto flex items-center gap-2">
+              <span className="mx-1 hidden sm:block h-6 w-px bg-border" aria-hidden />
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                className="inline-flex items-center gap-1 h-8 px-3 rounded-full border border-border bg-surface text-xs text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+              >
+                <X className="h-3.5 w-3.5" /> Clear all
+              </button>
+            </div>
           )}
         </div>
 
@@ -540,14 +593,28 @@ function Body() {
           onTogglePo={(s) => setChipPo((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))}
           onClear={() => { setChipStatuses([]); setChipPo([]); }}
         />
+
+        {activeChips.length > 0 && (
+          <p className="text-[11px] text-muted-foreground">
+            Showing {list.length} of {baseList.length} invoices · {activeChips.map((c) => c.label).join(" · ")}
+          </p>
+        )}
       </div>
 
-
-
-
-      {list.length === 0 ? (
-        <EmptyState label="invoices" onCreate={openCreate} />
+      {bootstrapError ? (
+        <ListErrorState label="invoices" message={bootstrapError} onRetry={retryBootstrap} />
+      ) : list.length === 0 && (filtersActive || baseList.length > 0) ? (
+        <ListNoMatchState
+          label="invoices"
+          chips={activeChips}
+          onClearAll={clearAllFilters}
+          onCreate={openCreate}
+          createLabel="New invoice"
+        />
+      ) : list.length === 0 ? (
+        <ListEmptyState label="invoices" onCreate={openCreate} createLabel="Create your first invoice" />
       ) : (
+
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <KpiCard label="Open receivables" value={fmtAmount(totalOpen, "MGA")} />
@@ -588,7 +655,7 @@ function Body() {
           />
 
 
-          <ListTableShell scrollX announcement={tp.announcement}>
+          <ListTableShell scrollX stickyHeader announcement={tp.announcement}>
             <ListTable style={{ minWidth: tableMinWidth }}>
               <thead>
                 <ListHeadRow>
