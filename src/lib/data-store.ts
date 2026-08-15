@@ -10,6 +10,7 @@
 //    left on screen as if it were persisted.
 import { useSyncExternalStore } from "react";
 import { pushHistory } from "./history";
+import { recordAttempt, type JournalField, type JournalHandle } from "./write-journal";
 
 
 type WithId = { id: string };
