@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { AlertTriangle, RotateCcw } from "lucide-react";
+import { AlertTriangle, RotateCcw, X } from "lucide-react";
 import { useWriteStatus } from "@/lib/data-store";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { dismissEntry, formatJournalValue, useRejection } from "@/lib/write-journal";
 import { cn } from "@/lib/utils";
 
 /**
