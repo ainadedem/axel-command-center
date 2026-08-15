@@ -1,6 +1,13 @@
 // Lightweight reactive in-memory store with localStorage persistence.
 // Each collection mutates an exported array IN PLACE so non-subscribing
 // readers also see fresh data on next render.
+//
+// Write risk tiers (finance app):
+//  - normal collections stay fully optimistic (UI state, reference data);
+//  - collections created with `{ critical: true }` hold money. Their rows are
+//    marked "saving" until the database acknowledges, flash "saved" on ack, and
+//    REVERT + flag "error" when the write fails. A financial figure is never
+//    left on screen as if it were persisted.
 import { useSyncExternalStore } from "react";
 import { pushHistory } from "./history";
 
@@ -30,6 +37,114 @@ function save(key: string, value: unknown) {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Write status registry                                               */
+/* ------------------------------------------------------------------ */
+
+export type WriteState = "idle" | "saving" | "saved" | "error";
+
+export interface WriteStatus {
+  state: WriteState;
+  message?: string;
+  /** Re-run the failed write. */
+  retry?: () => void;
+}
+
+const IDLE: WriteStatus = { state: "idle" };
+
+const statusMap = new Map<string, WriteStatus>();
+const statusListeners = new Set<() => void>();
+const savedTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+const statusKey = (collectionKey: string, id: string) => `${collectionKey}:${id}`;
+
+function emitStatus() {
+  statusListeners.forEach((l) => l());
+}
+
+function setStatus(collectionKey: string, id: string, status: WriteStatus | null) {
+  const k = statusKey(collectionKey, id);
+  const timer = savedTimers.get(k);
+  if (timer) {
+    clearTimeout(timer);
+    savedTimers.delete(k);
+  }
+  if (!status || status.state === "idle") statusMap.delete(k);
+  else statusMap.set(k, status);
+  emitStatus();
+
+  if (status?.state === "saved") {
+    // Brief confirmation flash, then back to idle.
+    savedTimers.set(
+      k,
+      setTimeout(() => {
+        savedTimers.delete(k);
+        statusMap.delete(k);
+        emitStatus();
+      }, 1200),
+    );
+  }
+}
+
+function moveStatus(collectionKey: string, fromId: string, toId: string) {
+  if (fromId === toId) return;
+  const cur = statusMap.get(statusKey(collectionKey, fromId));
+  statusMap.delete(statusKey(collectionKey, fromId));
+  if (cur) statusMap.set(statusKey(collectionKey, toId), cur);
+  emitStatus();
+}
+
+function subscribeStatus(cb: () => void) {
+  statusListeners.add(cb);
+  return () => statusListeners.delete(cb);
+}
+
+function getStatus(collectionKey: string, id: string): WriteStatus {
+  return statusMap.get(statusKey(collectionKey, id)) ?? IDLE;
+}
+
+/** Subscribe to the persistence state of one record. */
+export function useWriteStatus(collectionKey: string, id: string | undefined): WriteStatus {
+  return useSyncExternalStore(
+    subscribeStatus,
+    () => (id ? getStatus(collectionKey, id) : IDLE),
+    () => IDLE,
+  );
+}
+
+/** True when any record of these collections is still saving. */
+export function useAnyPending(collectionKeys: string[]): boolean {
+  return useSyncExternalStore(
+    subscribeStatus,
+    () => {
+      for (const [k, v] of statusMap) {
+        if (v.state === "saving" && collectionKeys.some((c) => k.startsWith(`${c}:`))) return true;
+      }
+      return false;
+    },
+    () => false,
+  );
+}
+
+export type WriteFailureListener = (info: { collection: string; id: string; message: string }) => void;
+
+const failureListeners = new Set<WriteFailureListener>();
+
+/** Global hook so the shell can surface a toast on any rejected financial write. */
+export function onWriteFailure(cb: WriteFailureListener) {
+  failureListeners.add(cb);
+  return () => failureListeners.delete(cb);
+}
+
+function reportFailure(collection: string, id: string, message: string) {
+  failureListeners.forEach((l) => l({ collection, id, message }));
+}
+
+const errText = (e: unknown) =>
+  e instanceof Error ? e.message : typeof e === "string" ? e : "Could not reach the database";
+
+/* ------------------------------------------------------------------ */
+
 export interface CollectionSync<T extends WithId> {
   /** Insert/upsert to remote. Resolve with canonical (DB) id, or null to skip. */
   upsert?: (item: T) => Promise<string | null>;
@@ -44,6 +159,10 @@ export interface MutationOptions {
 
 export interface Collection<T extends WithId> {
   items: T[];
+  /** Storage/status key of this collection. */
+  key: string;
+  /** Holds financial records — writes are confirmed, not assumed. */
+  critical: boolean;
   /** `onSynced` receives the canonical (DB) id once the remote insert resolves. */
   add: (item: T, opts?: { onSynced?: (id: string) => void } & MutationOptions) => void;
   update: (id: string, patch: Partial<T>, opts?: MutationOptions) => void;
@@ -57,13 +176,18 @@ export interface Collection<T extends WithId> {
 
 const humanize = (key: string) => key.replace(/-/g, " ").replace(/s$/, "");
 
-export function createCollection<T extends WithId>(key: string, initial: T[]): Collection<T> {
+export function createCollection<T extends WithId>(
+  key: string,
+  initial: T[],
+  opts?: { critical?: boolean },
+): Collection<T> {
   const hydrated = load<T>(key, initial);
   const items: T[] = [...hydrated];
   const listeners = new Set<() => void>();
   let snapshot: T[] = [...items];
   let sync: CollectionSync<T> = {};
   const noun = humanize(key);
+  const critical = opts?.critical ?? false;
 
   const emit = () => {
     snapshot = [...items];
@@ -78,19 +202,40 @@ export function createCollection<T extends WithId>(key: string, initial: T[]): C
       items[i] = { ...items[i], id: dbId };
       emit();
     }
+    moveStatus(key, localId, dbId);
   };
 
   const collection: Collection<T> = {
     items,
+    key,
+    critical,
     add(item, opts) {
       items.push(item);
       emit();
       let currentId = item.id;
       if (sync.upsert) {
-        sync.upsert(item).then((dbId) => {
-          if (dbId) { swapId(item.id, dbId); currentId = dbId; }
-          opts?.onSynced?.(dbId ?? item.id);
-        }).catch((e) => console.warn(`[sync ${key}] upsert`, e));
+        if (critical) setStatus(key, item.id, { state: "saving" });
+        const attempt = () => {
+          if (critical) setStatus(key, currentId, { state: "saving" });
+          sync
+            .upsert!(item)
+            .then((dbId) => {
+              if (dbId) {
+                swapId(currentId, dbId);
+                currentId = dbId;
+              }
+              if (critical) setStatus(key, currentId, { state: "saved" });
+              opts?.onSynced?.(dbId ?? currentId);
+            })
+            .catch((e) => {
+              console.warn(`[sync ${key}] upsert`, e);
+              if (!critical) return;
+              const message = errText(e);
+              setStatus(key, currentId, { state: "error", message, retry: attempt });
+              reportFailure(noun, currentId, message);
+            });
+        };
+        attempt();
       } else {
         opts?.onSynced?.(item.id);
       }
@@ -115,8 +260,33 @@ export function createCollection<T extends WithId>(key: string, initial: T[]): C
         items[i] = { ...before, ...patch };
         emit();
         if (sync.upsert) {
-          const snap = items[i];
-          sync.upsert(snap).catch((e) => console.warn(`[sync ${key}] upsert`, e));
+          const attempt = () => {
+            const idx = items.findIndex((x) => x.id === id);
+            if (idx < 0) return;
+            // Re-apply the intended patch in case a failure reverted it.
+            items[idx] = { ...items[idx], ...patch };
+            emit();
+            if (critical) setStatus(key, id, { state: "saving" });
+            sync
+              .upsert!(items[idx])
+              .then(() => {
+                if (critical) setStatus(key, id, { state: "saved" });
+              })
+              .catch((e) => {
+                console.warn(`[sync ${key}] upsert`, e);
+                if (!critical) return;
+                // Revert to the last database-confirmed values.
+                const j = items.findIndex((x) => x.id === id);
+                if (j >= 0) {
+                  items[j] = { ...items[j], ...previous };
+                  emit();
+                }
+                const message = errText(e);
+                setStatus(key, id, { state: "error", message, retry: attempt });
+                reportFailure(noun, id, message);
+              });
+          };
+          attempt();
         }
         if (!opts?.silent) {
           pushHistory({
@@ -131,9 +301,27 @@ export function createCollection<T extends WithId>(key: string, initial: T[]): C
       const i = items.findIndex((x) => x.id === id);
       if (i >= 0) {
         const removed = items[i];
+        const position = i;
         items.splice(i, 1);
         emit();
-        if (sync.remove) sync.remove(id).catch((e) => console.warn(`[sync ${key}] remove`, e));
+        if (sync.remove) {
+          sync.remove(id).catch((e) => {
+            console.warn(`[sync ${key}] remove`, e);
+            if (!critical) return;
+            // Put the row back — it still exists in the database.
+            if (!items.some((x) => x.id === id)) {
+              items.splice(Math.min(position, items.length), 0, removed);
+              emit();
+            }
+            const message = errText(e);
+            setStatus(key, id, {
+              state: "error",
+              message,
+              retry: () => collection.remove(id, { silent: true }),
+            });
+            reportFailure(noun, id, message);
+          });
+        }
         if (!opts?.silent) {
           let currentId = id;
           pushHistory({
