@@ -280,7 +280,7 @@ function FilterField<T>({ field, value, items, onChange }: {
 /** Renders a group header row inside a tbody. */
 export function GroupHeaderRow({ label, count, colSpan }: { label: string; count: number; colSpan: number }) {
   return (
-    <tr className="bg-surface-elevated/40 border-b border-border/60">
+    <tr data-group-header className="bg-surface-elevated/40 border-b border-border/60">
       <td colSpan={colSpan} className="px-5 py-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-medium">
         {label} <span className="text-muted-foreground/60 ml-1.5">· {count}</span>
       </td>
