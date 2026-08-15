@@ -280,10 +280,24 @@ export function createCollection<T extends WithId>(
             items[idx] = { ...items[idx], ...patch };
             emit();
             if (critical) setStatus(key, id, { state: "saving" });
+            const journal: JournalHandle | null = critical
+              ? recordAttempt({
+                  collection: key,
+                  noun,
+                  recordId: id,
+                  kind: "update",
+                  fields: (Object.keys(patch) as (keyof T)[]).map<JournalField>((k) => ({
+                    field: String(k),
+                    previous: previous[k],
+                    attempted: patch[k],
+                  })),
+                })
+              : null;
             sync
               .upsert!(items[idx])
               .then(() => {
                 if (critical) setStatus(key, id, { state: "saved" });
+                journal?.confirm();
               })
               .catch((e) => {
                 console.warn(`[sync ${key}] upsert`, e);
@@ -296,6 +310,7 @@ export function createCollection<T extends WithId>(
                 }
                 const message = errText(e);
                 setStatus(key, id, { state: "error", message, retry: attempt });
+                journal?.reject(message, attempt);
                 reportFailure(noun, id, message);
               });
           };
