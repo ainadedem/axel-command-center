@@ -25,6 +25,8 @@ import { useFileUrl } from "@/hooks/use-file-url";
 import { AxelWordmark, AxelBraceMark } from "@/components/axel-wordmark";
 import { AXEL_AI_ENABLED } from "@/lib/features";
 import { prewarmExportFonts } from "@/lib/export-fonts";
+import { onWriteFailure } from "@/lib/data-store";
+
 
 
 interface NavItem {
@@ -713,5 +715,17 @@ function AppShellFrame({ children }: { children: ReactNode }) {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
+  // Rejected financial writes must never pass silently: the store reverts the
+  // value and we surface it here.
+  useEffect(() => {
+    const off = onWriteFailure(({ collection, message }) => {
+      toast.error(`Could not save ${collection}`, {
+        description: `${message}. The previous value was restored — retry from the row.`,
+      });
+    });
+    return () => { off(); };
+  }, []);
+
   return <AppShellFrame>{children}</AppShellFrame>;
 }
+

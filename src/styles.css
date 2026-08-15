@@ -967,10 +967,12 @@ tr:focus-within .row-actions-inner {
 
 /* ---------------------------------------------------------------
    Status / PO chips: icon-only by default so records stay on one
-   line; the label slides open on hover or keyboard focus using the
-   same 150ms curve as the sidebar and row actions.
+   line; the label fades in on hover or keyboard focus. The label is
+   taken out of flow and revealed with opacity/transform only, so the
+   reveal never triggers a layout pass or shifts neighbouring cells.
    --------------------------------------------------------------- */
 .status-chip {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
@@ -985,7 +987,6 @@ tr:focus-within .row-actions-inner {
   vertical-align: middle;
   max-width: 100%;
   transition:
-    padding 150ms cubic-bezier(0.2, 0, 0, 1),
     background-color 150ms cubic-bezier(0.2, 0, 0, 1),
     border-color 150ms cubic-bezier(0.2, 0, 0, 1);
 }
@@ -994,36 +995,57 @@ tr:focus-within .row-actions-inner {
   outline-offset: 1px;
 }
 .status-chip .status-chip-label {
-  display: grid;
-  grid-template-columns: 0fr;
-  overflow: hidden;
-  transition: grid-template-columns 150ms cubic-bezier(0.2, 0, 0, 1);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  z-index: 5;
+  display: block;
+  padding: 0.1875rem 0.5rem 0.1875rem 0.375rem;
+  margin-left: -0.375rem;
+  border-radius: 9999px;
+  background-color: var(--card);
+  color: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(-4px, -50%, 0);
+  transition:
+    opacity 150ms cubic-bezier(0.2, 0, 0, 1),
+    transform 150ms cubic-bezier(0.2, 0, 0, 1);
 }
 .status-chip .status-chip-label > span {
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
 }
-.status-chip:hover,
-.status-chip:focus-visible,
-tr:hover .status-chip {
-  padding-right: 0.5rem;
-}
 .status-chip:hover .status-chip-label,
 .status-chip:focus-visible .status-chip-label,
-tr:hover .status-chip .status-chip-label,
-.status-chip-static .status-chip-label {
-  grid-template-columns: 1fr;
+tr:hover .status-chip .status-chip-label {
+  opacity: 1;
+  transform: translate3d(0, -50%, 0);
 }
+.status-chip:hover .status-chip-label,
+tr:hover .status-chip .status-chip-label {
+  box-shadow: var(--shadow-sm, 0 1px 2px rgb(0 0 0 / 0.08));
+}
+/* Chips rendered with a permanent label keep it inline (details panels). */
 .status-chip-static {
   padding-right: 0.5rem;
 }
+.status-chip-static .status-chip-label {
+  position: static;
+  opacity: 1;
+  transform: none;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+  background: transparent;
+  pointer-events: auto;
+}
+
 @media (hover: none) {
   .status-chip .status-chip-label {
-    grid-template-columns: 1fr;
-  }
-  .status-chip {
-    padding-right: 0.5rem;
+    opacity: 1;
+    transform: translate3d(0, -50%, 0);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1032,6 +1054,57 @@ tr:hover .status-chip .status-chip-label,
     transition: none !important;
   }
 }
+
+/* ---------------------------------------------------------------
+   Persistence feedback for financial rows. Opacity/colour only —
+   figures never resize, so columns never jitter.
+   --------------------------------------------------------------- */
+.live-amount {
+  font-variant-numeric: tabular-nums;
+  transition:
+    opacity 180ms cubic-bezier(0.2, 0, 0, 1),
+    color 180ms cubic-bezier(0.2, 0, 0, 1);
+}
+.live-amount.is-pending {
+  opacity: 0.55;
+}
+.live-amount.is-failed {
+  color: var(--destructive);
+}
+.live-amount.is-confirmed {
+  animation: amount-confirm 600ms cubic-bezier(0.2, 0, 0, 1);
+}
+@keyframes amount-confirm {
+  0% { opacity: 0.6; color: var(--success); }
+  35% { opacity: 1; color: var(--success); }
+  100% { opacity: 1; }
+}
+
+.save-dot {
+  display: inline-block;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: var(--primary);
+  animation: save-pulse 900ms cubic-bezier(0.2, 0, 0, 1) infinite alternate;
+}
+.save-dot-done {
+  background: var(--success);
+  animation: none;
+  opacity: 0.9;
+}
+@keyframes save-pulse {
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-amount,
+  .save-dot {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
 
 
 /* ---------------------------------------------------------------
@@ -1115,4 +1188,10 @@ tr:hover .status-chip .status-chip-label,
 tr[data-selected="true"] .row-actions-inner,
 tr:hover .row-actions-inner {
   border-color: color-mix(in oklab, var(--foreground) 14%, transparent);
+}
+
+/* Chip cells let the hover label escape the truncated cell box. */
+td:has(> .status-chip),
+td:has(> span > .status-chip) {
+  overflow: visible;
 }

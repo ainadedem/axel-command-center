@@ -10,7 +10,7 @@ import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
 import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
 import { format, parseISO } from "date-fns";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,8 @@ import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightS
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
+import { useRowWindow, SpacerRow, useScrollRef } from "@/components/virtual-rows";
+import { LiveAmount, RowSaveState } from "@/components/save-state";
 
 const TX_COLUMNS: ColumnDef[] = [
   { key: "date", label: "Date", priority: "always" },
@@ -99,6 +101,20 @@ function Body() {
   const list = groups.flatMap((g) => g.items);
 
   const cp = useColumnPrefs("transactions", TX_COLUMNS);
+
+  // Flatten groups so long ledgers can render only the rows in view.
+  const flatRows = useMemo(() => {
+    const rows: ({ kind: "group"; key: string; label: string; count: number } | { kind: "item"; key: string; tx: Transaction })[] = [];
+    groups.forEach((g) => {
+      if (groups.length > 1) rows.push({ kind: "group", key: `g:${g.key}`, label: g.label, count: g.items.length });
+      g.items.forEach((t) => rows.push({ kind: "item", key: t.id, tx: t }));
+    });
+    return rows;
+  }, [groups]);
+
+  const scrollRef = useScrollRef();
+  const windowed = useRowWindow({ rows: flatRows, scrollRef });
+
 
   const openCreate = () => { setEditing(null); setOpen(true); };
 
@@ -247,7 +263,11 @@ function Body() {
       {list.length === 0 ? (
         <EmptyState label="transactions" onCreate={openCreate} />
       ) : (
-        <ListTableShell>
+        <ListTableShell
+          stickyHeader={windowed.active}
+          scrollRef={windowed.active ? scrollRef : undefined}
+          maxHeight={windowed.active ? "calc(100dvh - 22rem)" : undefined}
+        >
           <ListTable>
             <thead>
               <ListHeadRow>
@@ -264,10 +284,13 @@ function Body() {
               </ListHeadRow>
             </thead>
             <tbody>
-              {groups.map((g) => (
-                <Fragment key={g.key}>
-                  {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={cp.count + 1} />}
-                  {g.items.map((t) => {
+              <SpacerRow height={windowed.padTop} colSpan={cp.count + 1} />
+              {windowed.items.map((row) => {
+                if (row.kind === "group") {
+                  return <GroupHeaderRow key={row.key} label={row.label} count={row.count} colSpan={cp.count + 1} />;
+                }
+                const t = row.tx;
+                {
                     const co = companies.find((c) => c.id === t.companyId);
                     const cli = t.clientId ? clients.find((c) => c.id === t.clientId) : null;
                     const sup = t.supplierId ? suppliers.find((s) => s.id === t.supplierId) : null;
@@ -275,14 +298,19 @@ function Body() {
                     const acc = accounts.find((a) => a.id === t.accountId);
                     return (
                       <Fragment key={t.id}>
-                      <tr className="hover:bg-surface-elevated/40">
+                      <tr className="hover:bg-surface-elevated/40" data-row-id={t.id}>
 <ListRowActions colSpan={cp.count}>
                         <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(t); setOpen(true); }} />
                         <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm("Delete this transaction?")) transactionsStore.remove(t.id); }} />
                       </ListRowActions>
 
                         <ListTd className="text-muted-foreground font-tnum text-xs">{format(parseISO(t.date), "MMM d, yyyy")}</ListTd>
-                        <ListTd className="font-medium" title={t.description}>{t.description}</ListTd>
+                        <ListTd className="font-medium" title={t.description}>
+                          <span className="inline-flex items-center gap-1.5 max-w-full">
+                            <span className="truncate">{t.description}</span>
+                            <RowSaveState collection="transactions" id={t.id} />
+                          </span>
+                        </ListTd>
                         {cp.on("company") && (
                           <ListTd title={co?.name}>
                             {co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}
@@ -322,14 +350,16 @@ function Body() {
                           </ListTd>
                         )}
                         <ListTd align="right" className={cn("font-tnum font-medium", t.type === "income" && "text-success", t.type === "expense" && "text-destructive")}>
-                          {t.type === "income" ? "+" : t.type === "expense" ? "−" : ""}{fmtCompact(t.amount, t.currency)}
+                          <LiveAmount collection="transactions" id={t.id}>
+                            {t.type === "income" ? "+" : t.type === "expense" ? "−" : ""}{fmtCompact(t.amount, t.currency)}
+                          </LiveAmount>
                         </ListTd>
                       </tr>
                       </Fragment>
                     );
-                  })}
-                </Fragment>
-              ))}
+                }
+              })}
+              <SpacerRow height={windowed.padBottom} colSpan={cp.count + 1} />
             </tbody>
           </ListTable>
         </ListTableShell>
