@@ -24,16 +24,23 @@ import { ResizeHandle } from "@/components/resizable-columns";
  *  - row actions live on their own padded line under the data row.
  */
 
-export function ListTableShell({ children, className, scrollX, announcement, stickyHeader }: { children: ReactNode; className?: string; scrollX?: boolean; announcement?: string; stickyHeader?: boolean }) {
+export function ListTableShell({ children, className, scrollX, announcement, stickyHeader, scrollRef, maxHeight }: { children: ReactNode; className?: string; scrollX?: boolean; announcement?: string; stickyHeader?: boolean; scrollRef?: React.RefObject<HTMLDivElement | null>; maxHeight?: string }) {
   return (
     <div className={cn("rounded-xl border border-border bg-[var(--gradient-surface)] overflow-clip", className)}>
       {announcement !== undefined && (
         <div aria-live="polite" role="status" className="sr-only">{announcement}</div>
       )}
-      <div className={cn("stacked-table list-aligned", stickyHeader && "sticky-head", scrollX && "md:overflow-x-auto")}>{children}</div>
+      <div
+        ref={scrollRef}
+        style={maxHeight ? { maxHeight, overflowY: "auto" } : undefined}
+        className={cn("stacked-table list-aligned", stickyHeader && "sticky-head", scrollX && "md:overflow-x-auto")}
+      >
+        {children}
+      </div>
     </div>
   );
 }
+
 
 
 export function ListTable({ children, className, style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
