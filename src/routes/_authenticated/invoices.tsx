@@ -669,7 +669,13 @@ function Body() {
           />
 
 
-          <ListTableShell scrollX stickyHeader announcement={tp.announcement}>
+          <ListTableShell
+            scrollX
+            stickyHeader
+            announcement={tp.announcement}
+            scrollRef={windowed.active ? scrollRef : undefined}
+            maxHeight={windowed.active ? "calc(100dvh - 22rem)" : undefined}
+          >
             <ListTable style={{ minWidth: tableMinWidth }}>
               <thead>
                 <ListHeadRow>
