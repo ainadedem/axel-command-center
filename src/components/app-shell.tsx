@@ -485,6 +485,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             <Redo2 className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
+        <WriteTrailButton />
         <FxBadge />
 
         {newAction && (
