@@ -436,11 +436,20 @@ function Body() {
           </ListTd>
         );
       case "amount":
-        return <ListTd align="right" className="font-tnum" title={fmtFull(inv.amount, inv.currency)}>{fmtFull(inv.amount, inv.currency)}</ListTd>;
+        return (
+          <ListTd align="right" className="font-tnum" title={fmtFull(inv.amount, inv.currency)}>
+            <span className="inline-flex items-center justify-end gap-1.5">
+              <RowSaveState collection="invoices" id={inv.id} />
+              <LiveAmount collection="invoices" id={inv.id}>{fmtFull(inv.amount, inv.currency)}</LiveAmount>
+            </span>
+          </ListTd>
+        );
       case "balance":
         return (
           <ListTd align="right" className="font-tnum font-medium">
-            {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? fmtFull(balance, inv.currency) : <span className="text-muted-foreground">—</span>}
+            {inv.status === "cancelled" ? <span className="text-muted-foreground">—</span> : balance > 0 ? (
+              <LiveAmount collection="invoices" id={inv.id}>{fmtFull(balance, inv.currency)}</LiveAmount>
+            ) : <span className="text-muted-foreground">—</span>}
           </ListTd>
         );
       case "owner":
