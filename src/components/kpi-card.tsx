@@ -104,7 +104,7 @@ export function KpiCard({
         tone === "danger" && "text-destructive",
         tone === "warning" && "text-amber-500",
       )}>
-        {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
+        {typeof value === "number" ? <AnimatedNumber value={value} /> : <FlashOnChange value={value} />}
       </div>
       {sub && <div className="relative text-xs text-muted-foreground mt-2 font-tnum">{sub}</div>}
       {children}
