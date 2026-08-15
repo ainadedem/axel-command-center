@@ -25,6 +25,8 @@ import { useFileUrl } from "@/hooks/use-file-url";
 import { AxelWordmark, AxelBraceMark } from "@/components/axel-wordmark";
 import { AXEL_AI_ENABLED } from "@/lib/features";
 import { prewarmExportFonts } from "@/lib/export-fonts";
+import { onWriteFailure } from "@/lib/data-store";
+
 
 
 interface NavItem {
