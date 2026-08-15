@@ -1195,3 +1195,18 @@ td:has(> .status-chip),
 td:has(> span > .status-chip) {
   overflow: visible;
 }
+
+/* ---------------------------------------------------------------
+   Numeric stability, app-wide. Every figure — table cells, KPI
+   values, chart axes and inputs — uses tabular digits so amounts
+   never jitter as they update.
+   --------------------------------------------------------------- */
+table :is(th, td)[align="right"],
+table :is(th, td).text-right,
+.kpi-value,
+.text-metric,
+.recharts-cartesian-axis-tick-value,
+input[type="number"] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
