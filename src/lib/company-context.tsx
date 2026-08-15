@@ -365,6 +365,8 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const [roleByCompanyId, setRoleByCompanyId] = useState<Map<string, CompanyRole>>(new Map());
   const [accessLoading, setAccessLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(true);
+  // Scope switches keep the cached view on screen and reconcile quietly.
+  const [refreshing, setRefreshing] = useState(false);
   const [bootstrapReady, setBootstrapReady] = useState(false);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -565,7 +567,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     async function reloadScopeData() {
-      setDataLoading(true);
+      setRefreshing(true);
       const hydrationScope = getHydrationScope(scope, isGroupAdmin, accessibleDbCompanyIds, companyIdMapEntries);
 
       await Promise.all([
@@ -575,7 +577,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       ]);
 
       if (cancelled || requestId !== scopeReloadSeq.current) return;
-      setDataLoading(false);
+      setRefreshing(false);
     }
 
     reloadScopeData();
@@ -631,6 +633,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       label,
       accessLoading,
       dataLoading,
+      refreshing,
       bootstrapReady,
       bootstrapError,
       retryBootstrap,
@@ -644,7 +647,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       },
     };
 
-  }, [scope, accessibleCompanies, accessLoading, dataLoading, bootstrapReady, bootstrapError, isGroupAdmin, roleByCompanyId, companyIdMapEntries, accessibleDbCompanyIds]);
+  }, [scope, accessibleCompanies, accessLoading, dataLoading, refreshing, bootstrapReady, bootstrapError, isGroupAdmin, roleByCompanyId, companyIdMapEntries, accessibleDbCompanyIds]);
 
 
   return <CompanyCtx.Provider value={value}>{children}</CompanyCtx.Provider>;
