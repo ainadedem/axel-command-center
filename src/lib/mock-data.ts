@@ -753,7 +753,7 @@ export function companyCode(c?: Pick<Company, "code" | "shortName" | "name"> | n
   if (!c) return "";
   return c.code || c.shortName || c.name;
 }
-export const accountsStore = createCollection<Account>("accounts", []);
+export const accountsStore = createCollection<Account>("accounts", [], { critical: true });
 export const clientsStore = createCollection<Client>("clients", []);
 export const suppliersStore = createCollection<Supplier>("suppliers", []);
 
@@ -789,8 +789,8 @@ export function contactBelongsTo<T extends { companyId: string; companyIds?: str
   if (migrated) suppliersStore.replaceAll([...suppliersStore.items]);
 }
 export const projectsStore = createCollection<Project>("projects", []);
-export const transactionsStore = createCollection<Transaction>("transactions", []);
-export const invoicesStore = createCollection<Invoice>("invoices", []);
+export const transactionsStore = createCollection<Transaction>("transactions", [], { critical: true });
+export const invoicesStore = createCollection<Invoice>("invoices", [], { critical: true });
 export const opportunitiesStore = createCollection<Opportunity>("opportunities", []);
 // Migrate legacy "Won" stage → "Closed" (mirrors Notion "Logia Sales CRM" status).
 {
@@ -801,17 +801,17 @@ export const opportunitiesStore = createCollection<Opportunity>("opportunities",
   if (migrated) opportunitiesStore.replaceAll([...opportunitiesStore.items]);
 }
 export const categoriesStore = createCollection<Category>("categories", []);
-export const budgetsStore = createCollection<Budget>("budgets", []);
+export const budgetsStore = createCollection<Budget>("budgets", [], { critical: true });
 export const teamMembersStore = createCollection<TeamMember>("team-members", []);
 export const salesMembersStore = createCollection<SalesMember>("sales-members", []);
-export const quotesStore = createCollection<Quote>("quotes", []);
+export const quotesStore = createCollection<Quote>("quotes", [], { critical: true });
 export const quoteFollowupsStore = createCollection<QuoteFollowup>("quote-followups", []);
 
-export const purchaseOrdersStore = createCollection<PurchaseOrder>("purchase-orders", []);
-export const expensesStore = createCollection<Expense>("expenses", []);
-export const recurringBillingsStore = createCollection<RecurringBilling>("recurring-billings", []);
-export const salaryRegisterStore = createCollection<SalaryRegisterEntry>("salary-register", []);
-export const payrollRunsStore = createCollection<PayrollRun>("payroll-runs", []);
+export const purchaseOrdersStore = createCollection<PurchaseOrder>("purchase-orders", [], { critical: true });
+export const expensesStore = createCollection<Expense>("expenses", [], { critical: true });
+export const recurringBillingsStore = createCollection<RecurringBilling>("recurring-billings", [], { critical: true });
+export const salaryRegisterStore = createCollection<SalaryRegisterEntry>("salary-register", [], { critical: true });
+export const payrollRunsStore = createCollection<PayrollRun>("payroll-runs", [], { critical: true });
 
 /* ─── SOP-OPS-FIN-002: PVR records & collection escalations ─────────── */
 
