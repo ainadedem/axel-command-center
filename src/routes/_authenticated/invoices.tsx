@@ -12,6 +12,8 @@ import {
   contactBelongsTo,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
+import { useRowWindow, SpacerRow, useScrollRef } from "@/components/virtual-rows";
+import { LiveAmount, RowSaveState } from "@/components/save-state";
 import { docTotals, lineNet } from "@/lib/discounts";
 import { inScope, useCompany } from "@/lib/company-context";
 import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
