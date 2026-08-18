@@ -149,6 +149,8 @@ function Body() {
 
       <NotificationPrefsCard />
 
+      <DataExportCard />
+
       <section>
         <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">Workspace</div>
         <div className="grid sm:grid-cols-2 gap-3">
