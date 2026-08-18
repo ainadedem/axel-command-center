@@ -15,6 +15,7 @@ import { Building2, Users, Wallet, BookText, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeControls } from "@/components/theme-controls";
 import { NotificationPrefsCard } from "@/components/notification-prefs-card";
+import { DataExportCard } from "@/components/data-export-card";
 
 export const Route = createFileRoute("/_authenticated/settings")({ component: SettingsPage });
 
