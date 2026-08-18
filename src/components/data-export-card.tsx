@@ -49,28 +49,30 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export function DataExportCard() {
   const [busy, setBusy] = useState(false);
 
+  const ds = (name: string, rows: readonly unknown[]) => ({ name, rows: rows as Row[] });
+
   const datasets: { name: string; rows: Row[] }[] = [
-    { name: "companies", rows: useCompanies() as Row[] },
-    { name: "accounts", rows: useAccounts() as Row[] },
-    { name: "clients", rows: useClients() as Row[] },
-    { name: "suppliers", rows: useSuppliers() as Row[] },
-    { name: "projects", rows: useProjects() as Row[] },
-    { name: "transactions", rows: useTransactions() as Row[] },
-    { name: "invoices", rows: useInvoices() as Row[] },
-    { name: "quotations", rows: useQuotes() as Row[] },
-    { name: "quotation-followups", rows: useQuoteFollowups() as Row[] },
-    { name: "purchase-orders", rows: usePurchaseOrders() as Row[] },
-    { name: "expenses", rows: useExpenses() as Row[] },
-    { name: "recurring-billings", rows: useRecurringBillings() as Row[] },
-    { name: "opportunities", rows: useOpportunities() as Row[] },
-    { name: "categories", rows: useCategories() as Row[] },
-    { name: "budgets", rows: useBudgets() as Row[] },
-    { name: "team-members", rows: useTeamMembers() as Row[] },
-    { name: "sales-members", rows: useSalesMembers() as Row[] },
-    { name: "salary-register", rows: useSalaryRegister() as Row[] },
-    { name: "payroll-runs", rows: usePayrollRuns() as Row[] },
-    { name: "pvr-records", rows: usePvrRecords() as Row[] },
-    { name: "invoice-escalations", rows: useInvoiceEscalations() as Row[] },
+    ds("companies", useCompanies()),
+    ds("accounts", useAccounts()),
+    ds("clients", useClients()),
+    ds("suppliers", useSuppliers()),
+    ds("projects", useProjects()),
+    ds("transactions", useTransactions()),
+    ds("invoices", useInvoices()),
+    ds("quotations", useQuotes()),
+    ds("quotation-followups", useQuoteFollowups()),
+    ds("purchase-orders", usePurchaseOrders()),
+    ds("expenses", useExpenses()),
+    ds("recurring-billings", useRecurringBillings()),
+    ds("opportunities", useOpportunities()),
+    ds("categories", useCategories()),
+    ds("budgets", useBudgets()),
+    ds("team-members", useTeamMembers()),
+    ds("sales-members", useSalesMembers()),
+    ds("salary-register", useSalaryRegister()),
+    ds("payroll-runs", usePayrollRuns()),
+    ds("pvr-records", usePvrRecords()),
+    ds("invoice-escalations", useInvoiceEscalations()),
   ];
 
   const nonEmpty = datasets.filter((d) => d.rows.length > 0);
