@@ -352,20 +352,10 @@ function ClientCard({
 }) {
   const { isSalesOnly: salesOnly, roleResolved } = useEffectiveRole();
   const canEdit = !(roleResolved && salesOnly);
-  const linkedIds = contactCompanyIds(cl);
   const co = companies.find((c) => c.id === cl.companyId);
-  const cliProjects = projects.filter((p) => p.clientId === cl.id);
   const cliInvoices = invoices.filter((i) => i.clientId === cl.id);
-  const cliTx = transactions.filter((t) => t.clientId === cl.id);
   const invoicedMGA = cliInvoices.reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
   const paidMGA = cliInvoices.reduce((s, i) => s + toMGA(i.paid, i.currency), 0);
-  const projectRevenue = cliProjects.reduce((s, p) => s + toMGA(p.revenue, p.currency), 0);
-  const incomeTxMGA = cliTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
-  const expenseTxMGA = cliTx.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
-  const revenue = invoicedMGA || projectRevenue || incomeTxMGA;
-  const projectCost = cliProjects.reduce((s, p) => s + toMGA(p.cost, p.currency), 0);
-  const cost = projectCost + expenseTxMGA;
-  const margin = revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0;
   const outstanding = Math.max(0, invoicedMGA - paidMGA);
   const overdue = cliInvoices.some((i) => i.status === "overdue");
   const isLead = cl.status === "lead";
@@ -392,16 +382,7 @@ function ClientCard({
             )}
           </div>
           <div className="text-[11px] text-muted-foreground truncate">
-            {[cl.industry, cl.country].filter(Boolean).join(" · ")}
-          </div>
-          {(cl.email || cl.phone) && (
-            <div className="text-[10px] text-muted-foreground/70 mt-0.5 truncate">
-              {cl.email} {cl.phone && `· ${cl.phone}`}
-            </div>
-          )}
-          <div className="mt-1 flex flex-wrap items-center gap-1">
-            {cl.categories && cl.categories.length > 0 && <CategoryChips value={cl.categories} />}
-            <CompanyTags ids={linkedIds} companies={companies} />
+            {co ? co.name : cl.industry || cl.country || ""}
           </div>
         </div>
         <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -411,26 +392,6 @@ function ClientCard({
           <button onClick={() => onEdit(cl)} title={canEdit ? "Edit" : "View details"} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground">{canEdit ? <Pencil className="h-3 w-3" /> : <Eye className="h-3 w-3" />}</button>
           {canEdit && <button onClick={() => { if (confirm(`Delete ${cl.name}?`)) { clientsStore.remove(cl.id); void deleteClientDb(cl.id); } }} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>}
         </div>
-      </div>
-
-      {isLead ? (
-        <div className="mt-2 text-[11px] text-muted-foreground/80 border-t border-border/50 pt-2">
-          Lead from the pipeline. Promote when the deal is won.
-        </div>
-      ) : salesOnly ? null : (
-        <div className="mt-2 border-t border-border/50 pt-2">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
-            <StatMini label="Revenue" value={fmtCompact(revenue, "MGA")} />
-            <StatMini label="Outstanding" value={fmtCompact(outstanding, "MGA")} tone={outstanding > 0 ? "warn" : "default"} />
-            <StatMini label="Margin" value={`${margin.toFixed(0)}%`} tone={margin >= 30 ? "good" : margin >= 0 ? "default" : "bad"} />
-          </div>
-        </div>
-      )}
-
-      <div className="mt-2 flex gap-2 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-        {!salesOnly && <span>{cliInvoices.length} inv</span>}
-        {!salesOnly && <span>{cliTx.length} txn</span>}
-        <span>{cliProjects.length} proj</span>
       </div>
     </div>
   );
