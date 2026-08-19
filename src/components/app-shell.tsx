@@ -435,7 +435,7 @@ const NAV_MODE_KEY = "axel.navMode";
 
 /** Desktop navigation: labelled sidebar by default, slim icon rail on demand. */
 function DesktopNav() {
-  const [mode, setMode] = useState<"expanded" | "rail">("expanded");
+  const [mode, setMode] = useState<"expanded" | "rail">("rail");
 
   useEffect(() => {
     try {
