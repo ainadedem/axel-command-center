@@ -973,6 +973,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setCurrency(editing.currency); setStatus(editing.status);
       setLines((editing.lines ?? []).map((l) => ({ ...l })));
       setDiscountPct(editing.discountPct ?? 0);
+      setTaxRate(editing.taxRate ?? 0);
     } else {
       const cid = companies[0]?.id ?? "";
       numberTouched.current = false; setNumber(cid ? nextNumber("invoice", cid, today) : ""); setCompanyId(cid); setClientId("");
@@ -980,7 +981,8 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
 
       setIssueDate(today); setDueDate(today); setAmount("0"); setPaid("0");
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
-      setLines([]); setDiscountPct(0);
+      setLines([]); setDiscountPct(0); setTaxRate(defaultTaxRate(companies[0], today));
+
     }
     setShowErrors(false);
     // Only re-initialise when the dialog opens (or switches record).
