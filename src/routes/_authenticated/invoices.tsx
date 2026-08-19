@@ -928,7 +928,7 @@ function deriveStatus(amount: number, paid: number, dueDate: string): Invoice["s
   return "sent";
 }
 
-function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Invoice | null }) {
+function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Invoice | null; prefillPoId?: string }) {
   const { user } = useAuth();
   const companies = useCompanies();
   const clients = useClients();
