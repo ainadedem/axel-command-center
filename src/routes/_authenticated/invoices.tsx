@@ -196,6 +196,17 @@ function Body() {
     if (urlBucket && urlBucket !== bucket) setBucket(urlBucket);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlBucket]);
+  // "Send to Invoice" from a purchase order: open the create dialog pre-linked.
+  const [fromPoId, setFromPoId] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (!search.fromPo) return;
+    setFromPoId(search.fromPo);
+    setEditing(null);
+    setOpen(true);
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, fromPo: undefined }), replace: true } as never);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.fromPo]);
+
   const setDrawerBucket = (key: AgingKey | null) => {
     if (key) setBucket(key);
     void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, aging: key ?? undefined }), replace: true } as never);
