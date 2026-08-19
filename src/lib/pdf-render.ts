@@ -32,6 +32,13 @@ export type RenderOptions = {
    */
   avoidBreakSelector?: string;
   /**
+   * Hard ceiling on the number of emitted pages. With `1`, the whole capture
+   * is placed on a single sheet, scaled down proportionally when needed, so a
+   * "fit one page" export can never spill onto a second page.
+   */
+  maxPages?: number;
+  /**
+
    * Hard ceiling for web-font fetching / loading. When it elapses the export
    * continues with the system fallback stack instead of hanging.
    */
@@ -154,11 +161,42 @@ export async function renderHtmlToPdfBlob(html: string, opts: RenderOptions = {}
     const pxRatio = canvas.height / contentHeight; // canvas px per CSS px
     // Trailing whitespace would otherwise produce an extra empty page.
     const usableHeight = trimTrailingWhitespace(canvas, pxPerPage);
+
+    // Single-page mode: place the whole capture on one sheet, scaled to fit.
+    if (opts.maxPages === 1) {
+      const inkHeight = Math.max(1, Math.min(canvas.height, lastInkRow(canvas) || usableHeight));
+      const naturalH = (inkHeight / canvas.width) * mm.w;
+      const k = naturalH > mm.h ? mm.h / naturalH : 1;
+      const drawW = mm.w * k;
+      const drawH = naturalH * k;
+      const slice = document.createElement("canvas");
+      slice.width = canvas.width;
+      slice.height = inkHeight;
+      const ctx = slice.getContext("2d");
+      if (!ctx) throw new Error("Canvas is unavailable in this browser");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, slice.width, slice.height);
+      ctx.drawImage(canvas, 0, 0, canvas.width, inkHeight, 0, 0, canvas.width, inkHeight);
+      pdf.addImage(
+        slice.toDataURL("image/jpeg", 0.95),
+        "JPEG",
+        (mm.w - drawW) / 2,
+        0,
+        drawW,
+        drawH,
+        undefined,
+        "FAST",
+      );
+      return pdf.output("blob");
+    }
+
+
     const cuts = computeCuts(
       usableHeight,
       pxPerPage,
       opts.avoidBreakSelector ? collectBoundaries(doc, opts.avoidBreakSelector, pxRatio) : [],
     );
+
 
     let pageIndex = 0;
     for (let i = 0; i < cuts.length; i++) {
@@ -200,6 +238,46 @@ export async function renderHtmlToPdfBlob(html: string, opts: RenderOptions = {}
     frame.remove();
   }
 }
+
+/**
+ * Measures how many A4 pages the printable HTML would occupy, using the same
+ * isolated frame + font pipeline as the export, so the answer matches the PDF.
+ */
+export async function measureHtmlPages(
+  html: string,
+  opts: { orientation?: PageOrientation; fontTimeoutMs?: number } = {},
+): Promise<number> {
+  const page = A4_PX[opts.orientation ?? "portrait"];
+  const frame = document.createElement("iframe");
+  frame.setAttribute("aria-hidden", "true");
+  frame.setAttribute("tabindex", "-1");
+  frame.style.cssText = [
+    "position:fixed", "left:0", "top:0",
+    `width:${page.w}px`, `height:${page.h}px`,
+    "border:0", "opacity:0", "pointer-events:none", "z-index:-1",
+  ].join(";");
+  document.body.appendChild(frame);
+  try {
+    const doc = frame.contentDocument;
+    const win = frame.contentWindow;
+    if (!doc || !win) return 1;
+    doc.open();
+    doc.write(html);
+    doc.close();
+    await injectCachedFonts(doc, opts.fontTimeoutMs ?? 4000);
+    await nextFrame(win);
+    await Promise.all([waitForImages(doc), waitForFonts(doc, opts.fontTimeoutMs ?? 4000)]);
+    await nextFrame(win);
+    const h = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight);
+    // 2px slack absorbs sub-pixel rounding in the frame layout.
+    return Math.max(1, Math.ceil((h - 2) / page.h));
+  } catch {
+    return 1;
+  } finally {
+    frame.remove();
+  }
+}
+
 
 /** Renders and downloads the HTML document as `<filename>`. */
 export async function downloadHtmlAsPdf(
@@ -308,30 +386,30 @@ async function waitForFonts(doc: Document, timeoutMs = 4000): Promise<void> {
   await Promise.race([load, timeout]);
 }
 
+/** Last canvas row (px) that contains ink; 0 when the canvas is blank. */
+function lastInkRow(canvas: HTMLCanvasElement): number {
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return canvas.height;
+  const step = Math.max(2, Math.floor(canvas.height / 2000));
+  for (let y = canvas.height - 1; y >= 0; y -= step) {
+    const row = ctx.getImageData(0, y, canvas.width, 1).data;
+    for (let x = 0; x < row.length; x += 4 * 4) {
+      if (row[x + 3] !== 0 && (row[x]! < 245 || row[x + 1]! < 245 || row[x + 2]! < 245)) {
+        return Math.min(canvas.height, y + step);
+      }
+    }
+  }
+  return 0;
+}
+
 /**
  * Height (canvas px) of the content once trailing blank space is dropped,
  * rounded up to at least one full page.
  */
 function trimTrailingWhitespace(canvas: HTMLCanvasElement, pxPerPage: number): number {
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx) return canvas.height;
-  const step = Math.max(2, Math.floor(canvas.height / 2000));
-  let lastInk = 0;
-  for (let y = canvas.height - 1; y >= 0; y -= step) {
-    const row = ctx.getImageData(0, y, canvas.width, 1).data;
-    let ink = false;
-    for (let x = 0; x < row.length; x += 4 * 4) {
-      if (row[x + 3] !== 0 && (row[x]! < 245 || row[x + 1]! < 245 || row[x + 2]! < 245)) {
-        ink = true;
-        break;
-      }
-    }
-    if (ink) {
-      lastInk = Math.min(canvas.height, y + step);
-      break;
-    }
-  }
+  const lastInk = lastInkRow(canvas);
   if (!lastInk) return Math.min(canvas.height, pxPerPage);
+
   // Keep whole pages: never cut below the page the last ink sits on.
   const pages = Math.max(1, Math.ceil(lastInk / pxPerPage));
   return Math.min(canvas.height, pages * pxPerPage);
