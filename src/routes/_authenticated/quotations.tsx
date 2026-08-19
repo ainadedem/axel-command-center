@@ -743,9 +743,13 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>{editing ? "Edit quote" : "New quote"}</DialogTitle></DialogHeader>
+      <DialogContent className="max-w-[min(96vw,1040px)] p-0 gap-0 max-h-[92dvh] overflow-hidden flex flex-col form-compact">
+        <DialogHeader className="shrink-0 border-b border-border px-5 py-3">
+          <DialogTitle className="text-base">{editing ? "Edit quote" : "New quote"}</DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
         <div className="space-y-4 py-2">
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Number</Label>
@@ -846,7 +850,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
             ) : (
               <div className="rounded-md border border-border overflow-hidden">
                 <div className="overflow-x-auto stacked-table">
-                <table className="w-full min-w-[720px] text-xs">
+                <table className="w-full min-w-[720px] md:min-w-0 md:table-fixed text-xs">
                   <thead className="bg-surface-elevated/40 text-[10px] uppercase tracking-wider text-muted-foreground">
                     <tr>
                       <th className="w-10" />
@@ -1019,10 +1023,12 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
             <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes for the client" />
           </div>
         </div>
-        <DialogFooter>
+        </div>
+        <DialogFooter className="shrink-0 border-t border-border px-5 py-3 gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>{editing ? "Save" : "Create"}</Button>
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );

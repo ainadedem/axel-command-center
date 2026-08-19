@@ -1299,6 +1299,31 @@ input[type="number"] {
   border: 0;
 }
 
+/* Compact form scale for dense document dialogs (invoice / quote makers). */
+@utility form-compact {
+  font-size: 0.8125rem;
+  & label {
+    font-size: 0.75rem;
+    line-height: 1.1rem;
+    color: var(--muted-foreground);
+  }
+  & input:not([type="checkbox"]):not([type="radio"]),
+  & select,
+  & button[role="combobox"] {
+    height: 2.25rem;
+    font-size: 0.8125rem;
+  }
+  & textarea {
+    font-size: 0.8125rem;
+  }
+  & input.h-8,
+  & button.h-8[role="combobox"],
+  & input.h-7 {
+    height: 2rem;
+  }
+}
+
+
 /* Panels stop drawing hard rules; separation comes from space and tone. */
 .panel .list-aligned tbody > tr,
 .panel table tbody > tr {

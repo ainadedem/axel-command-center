@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EXPORT_FONT_LINKS, EXPORT_TYPOGRAPHY_CSS } from "@/lib/export-fonts";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Download, Printer, X, ZoomIn, ZoomOut, Maximize2, Loader2, AlertTriangle } from "lucide-react";
+import { Download, Printer, X, ZoomIn, ZoomOut, Maximize2, Loader2, AlertTriangle, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { formatRib, resolveBankAccount } from "@/lib/payment-details";
@@ -516,131 +517,17 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl p-0 gap-0 max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="shrink-0 flex flex-wrap items-center justify-between gap-y-2 border-b border-border px-5 py-3">
-          <div className="text-sm font-medium">{titleFor(doc?.kind)} preview · {doc?.number}</div>
-          <div className="flex flex-wrap items-center gap-3 gap-y-2">
-            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-              <Checkbox checked={showStatus} onCheckedChange={(v) => setShowStatus(!!v)} />
-              Show status
-            </label>
-            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-              <Checkbox checked={showClientEmail} onCheckedChange={(v) => setShowClientEmail(!!v)} />
-              Show client email
-            </label>
-            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-              <Checkbox checked={showUnit} onCheckedChange={(v) => setShowUnit(!!v)} />
-              Show unit column
-            </label>
+      <DialogContent className="max-w-[min(96vw,1180px)] p-0 gap-0 h-[94dvh] max-h-[94dvh] overflow-hidden flex flex-col">
 
-            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-              <Checkbox checked={showPayment} onCheckedChange={(v) => setShowPayment(!!v)} />
-              Show payment details
-            </label>
-            {company?.stampUrl ? (
-              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-                <Checkbox checked={showStamp} onCheckedChange={(v) => setShowStamp(!!v)} />
-                Show stamp
-              </label>
-            ) : null}
-            {signer.signatureRef ? (
-              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-                <Checkbox checked={showSignature} onCheckedChange={(v) => setShowSignature(!!v)} />
-                Show signature
-              </label>
-            ) : null}
-            {signers && signers.length > 0 ? (
-              <label className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span>Signer</span>
-                <select
-                  value={signerId ?? ""}
-                  onChange={(e) => {
-                    const v = e.target.value || undefined;
-                    const prev = signers.find((u) => u.userId === signerId)?.name ?? "nobody";
-                    const next = signers.find((u) => u.userId === v)?.name ?? "nobody";
-                    setSignerId(v);
-                    onDocChange?.({ signerId: v, stampDirty: false });
-                    if (audit && doc && v !== signerId) {
-                      logSignerChange({
-                        ...audit, docNumber: doc.number,
-                        summary: `Signer changed from ${prev} to ${next}`,
-                        details: { before: signerId ?? null, after: v ?? null },
-                      });
-                    }
-                  }}
+        <div className="shrink-0 flex items-center gap-3 border-b border-border px-4 py-2.5">
+          <div className="min-w-0 flex items-baseline gap-2">
+            <span className="truncate text-sm font-medium">{titleFor(doc?.kind)} · {doc?.number}</span>
+            <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">{pages} page{pages > 1 ? "s" : ""}</span>
+          </div>
 
-                  className="rounded-md border border-border bg-background px-2 py-1 text-[11px] focus-ring"
-                  aria-label="Document signer"
-                >
-                  <option value="">No signature</option>
-                  {signers.map((u) => (
-                    <option key={u.userId} value={u.userId}>{u.name}</option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-            {company?.stampUrl && showStamp ? (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span>Stamp</span>
-                <div className="flex rounded-md border border-border overflow-hidden text-[11px]">
-                  <button
-                    type="button"
-                    onClick={() => commitPlace(floating ? {} : { x: 76, y: 86, scale: place.scale ?? 1 })}
-                    className={`px-2 py-0.5 transition ${floating ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
-                    title="Drag the stamp anywhere on the page"
-                  >
-                    {floating ? "Free placement" : "Place freely"}
-                  </button>
-                  <button
-                    type="button" aria-label="Smaller stamp"
-                    onClick={() => commitPlace({ ...place, scale: clamp((place.scale ?? 1) - 0.1, 0.3, 3) })}
-                    className="px-2 py-0.5 hover:bg-muted transition"
-                  >
-                    −
-                  </button>
-                  <button
-                    type="button" aria-label="Bigger stamp"
-                    onClick={() => commitPlace({ ...place, scale: clamp((place.scale ?? 1) + 0.1, 0.3, 3) })}
-                    className="px-2 py-0.5 hover:bg-muted transition"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            ) : null}
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <span>Language</span>
-              <div className="flex rounded-md border border-border overflow-hidden">
-                {DOC_LANGUAGES.map((l) => (
-                  <button
-                    key={l.value}
-                    type="button"
-                    onClick={() => setLang(l.value)}
-                    className={`px-2 py-0.5 text-[11px] transition ${lang === l.value ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
-                  >
-                    {l.value.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <span>Logo</span>
-              <div className="flex rounded-md border border-border overflow-hidden">
-                {([["S", 0.7], ["M", 1], ["L", 1.5]] as const).map(([label, v]) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => setLogoScale(v)}
-                    className={`px-2 py-0.5 text-[11px] transition ${logoScale === v ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
+          <div className="ml-auto flex items-center gap-1.5 shrink-0">
             {/* Zoom */}
-            <div className="flex items-center rounded-md border border-border overflow-hidden">
+            <div className="flex items-center rounded-full border border-border overflow-hidden">
               <button
                 type="button" aria-label="Zoom out"
                 onClick={() => applyZoom(zoom - 0.1)}
@@ -651,7 +538,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
               </button>
               <button
                 type="button" onClick={setActual} title="Actual size (100%)"
-                className="px-2 py-0.5 text-[11px] tabular-nums hover:bg-muted transition min-w-[46px]"
+                className="px-1 py-0.5 text-[11px] tabular-nums hover:bg-muted transition min-w-[44px]"
               >
                 {Math.round(zoom * 100)}%
               </button>
@@ -664,58 +551,185 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
                 <ZoomIn className="h-3.5 w-3.5" />
               </button>
             </div>
-            <div className="flex rounded-md border border-border overflow-hidden text-[11px]">
+            <div className="flex rounded-full border border-border overflow-hidden text-[11px]">
               <button
                 type="button" onClick={setFit}
-                className={`px-2 py-0.5 transition ${mode === "fit" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                className={`px-2.5 py-1 transition ${mode === "fit" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
               >
                 <Maximize2 className="h-3 w-3 inline mr-1" />Fit
               </button>
               <button
                 type="button" onClick={setActual}
-                className={`px-2 py-0.5 transition ${mode === "actual" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                className={`px-2.5 py-1 transition ${mode === "actual" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
               >
                 100%
               </button>
-              {mode === "custom" && <span className="px-2 py-0.5 text-muted-foreground">Custom</span>}
             </div>
 
-            {/* Density / fit to one page */}
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <span>Layout</span>
-              <div className="flex rounded-md border border-border overflow-hidden text-[11px]">
-                {([["Fit 1 page", "auto"], ["Compact", "compact"], ["Normal", "normal"], ["Spacious", "spacious"]] as const).map(([label, v]) => (
+            {/* Everything else lives here so the bar never wraps. */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button size="sm" variant="outline" className="rounded-full">
+                  <SlidersHorizontal className="h-3.5 w-3.5 mr-1.5" />
+                  Display
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-80 max-h-[70vh] overflow-y-auto space-y-3.5 text-xs">
+                <div className="space-y-2">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Content</p>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <Checkbox checked={showStatus} onCheckedChange={(v) => setShowStatus(!!v)} /> Show status
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <Checkbox checked={showClientEmail} onCheckedChange={(v) => setShowClientEmail(!!v)} /> Show client email
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <Checkbox checked={showUnit} onCheckedChange={(v) => setShowUnit(!!v)} /> Show unit column
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <Checkbox checked={showPayment} onCheckedChange={(v) => setShowPayment(!!v)} /> Show payment details
+                  </label>
+                  {company?.stampUrl ? (
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <Checkbox checked={showStamp} onCheckedChange={(v) => setShowStamp(!!v)} /> Show stamp
+                    </label>
+                  ) : null}
+                  {signer.signatureRef ? (
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <Checkbox checked={showSignature} onCheckedChange={(v) => setShowSignature(!!v)} /> Show signature
+                    </label>
+                  ) : null}
+                </div>
+
+                {signers && signers.length > 0 ? (
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Signer</p>
+                    <select
+                      value={signerId ?? ""}
+                      onChange={(e) => {
+                        const v = e.target.value || undefined;
+                        const prev = signers.find((u) => u.userId === signerId)?.name ?? "nobody";
+                        const next = signers.find((u) => u.userId === v)?.name ?? "nobody";
+                        setSignerId(v);
+                        onDocChange?.({ signerId: v, stampDirty: false });
+                        if (audit && doc && v !== signerId) {
+                          logSignerChange({
+                            ...audit, docNumber: doc.number,
+                            summary: `Signer changed from ${prev} to ${next}`,
+                            details: { before: signerId ?? null, after: v ?? null },
+                          });
+                        }
+                      }}
+                      className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-[11px] focus-ring"
+                      aria-label="Document signer"
+                    >
+                      <option value="">No signature</option>
+                      {signers.map((u) => (
+                        <option key={u.userId} value={u.userId}>{u.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
+
+                {company?.stampUrl && showStamp ? (
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Stamp</p>
+                    <div className="flex rounded-md border border-border overflow-hidden text-[11px] w-fit">
+                      <button
+                        type="button"
+                        onClick={() => commitPlace(floating ? {} : { x: 76, y: 86, scale: place.scale ?? 1 })}
+                        className={`px-2 py-1 transition ${floating ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                        title="Drag the stamp anywhere on the page"
+                      >
+                        {floating ? "Free placement" : "Place freely"}
+                      </button>
+                      <button
+                        type="button" aria-label="Smaller stamp"
+                        onClick={() => commitPlace({ ...place, scale: clamp((place.scale ?? 1) - 0.1, 0.3, 3) })}
+                        className="px-2 py-1 hover:bg-muted transition"
+                      >
+                        −
+                      </button>
+                      <button
+                        type="button" aria-label="Bigger stamp"
+                        onClick={() => commitPlace({ ...place, scale: clamp((place.scale ?? 1) + 0.1, 0.3, 3) })}
+                        className="px-2 py-1 hover:bg-muted transition"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="space-y-1.5">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Language</p>
+                  <div className="flex rounded-md border border-border overflow-hidden w-fit">
+                    {DOC_LANGUAGES.map((l) => (
+                      <button
+                        key={l.value}
+                        type="button"
+                        onClick={() => setLang(l.value)}
+                        className={`px-2.5 py-1 text-[11px] transition ${lang === l.value ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                      >
+                        {l.value.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Logo size</p>
+                  <div className="flex rounded-md border border-border overflow-hidden w-fit">
+                    {([["S", 0.7], ["M", 1], ["L", 1.5]] as const).map(([label, v]) => (
+                      <button
+                        key={label}
+                        type="button"
+                        onClick={() => setLogoScale(v)}
+                        className={`px-2.5 py-1 text-[11px] transition ${logoScale === v ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Layout</p>
+                  <div className="flex flex-wrap rounded-md border border-border overflow-hidden text-[11px] w-fit">
+                    {([["Fit 1 page", "auto"], ["Compact", "compact"], ["Normal", "normal"], ["Spacious", "spacious"]] as const).map(([label, v]) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setDensity(v)}
+                        className={`px-2 py-1 transition ${density === v ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                   <button
-                    key={v}
                     type="button"
-                    onClick={() => setDensity(v)}
-                    className={`px-2 py-0.5 transition ${density === v ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                    onClick={() => setColWidths({})}
+                    className="rounded-md border border-border px-2 py-1 text-[11px] hover:bg-muted transition"
                   >
-                    {label}
+                    Reset columns
                   </button>
-                ))}
-              </div>
-              <span className="tabular-nums">{pages} page{pages > 1 ? "s" : ""}</span>
-              <button
-                type="button"
-                onClick={() => setColWidths({})}
-                className="rounded-md border border-border px-2 py-0.5 text-[11px] hover:bg-muted transition"
-              >
-                Reset columns
-              </button>
-            </div>
+                </div>
+              </PopoverContent>
+            </Popover>
 
-            <Button size="sm" variant="outline" onClick={printPdf} disabled={exporting}>
+            <Button size="sm" variant="outline" className="rounded-full" onClick={printPdf} disabled={exporting}>
               <Printer className="h-3.5 w-3.5 mr-1.5" />
               Print
             </Button>
-            <Button size="sm" onClick={downloadPdf} disabled={exporting} aria-live="polite">
+            <Button size="sm" className="rounded-full" onClick={downloadPdf} disabled={exporting} aria-live="polite">
               {exporting ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Download className="h-3.5 w-3.5 mr-1.5" />}
               {exporting ? EXPORT_LABEL[exportStage ?? "preparing"] : "Export PDF"}
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)}><X className="h-4 w-4" /></Button>
+            <Button size="sm" variant="ghost" className="rounded-full" onClick={() => onOpenChange(false)} aria-label="Close preview"><X className="h-4 w-4" /></Button>
           </div>
         </div>
+
         {exportError && (
           <div className="shrink-0 flex items-start gap-2 border-b border-destructive/30 bg-destructive/10 px-5 py-2 text-xs text-destructive">
             <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
