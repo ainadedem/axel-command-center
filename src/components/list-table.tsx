@@ -49,7 +49,7 @@ export function ListTable({ children, className, style }: { children: ReactNode;
 
 export function ListHeadRow({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <tr className={cn("text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border", className)}>
+    <tr className={cn("text-[11px] tracking-[0.04em] text-muted-foreground border-b border-border/70", className)}>
       {children}
     </tr>
   );
