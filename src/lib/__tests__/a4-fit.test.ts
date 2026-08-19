@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   EXPORT_MIN_SCALE,
+  IDENTITY_FLOOR,
+  CONTENT_FLOOR,
+  identityScale,
+  contentScale,
   USABLE_H,
   fitScaleForContent,
   nextScaleDown,
@@ -105,5 +109,32 @@ describe("one-page export scenarios", () => {
     const manual = fitScaleForContent(h, 0.8);
     expect(manual.scale).toBeLessThanOrEqual(auto.scale);
     expect(manual.pages).toBe(1);
+  });
+});
+
+describe("two-tier compression", () => {
+  it("keeps the company identity at or above the readable floor", () => {
+    for (const s of [1, 0.9, 0.8, 0.7, EXPORT_MIN_SCALE]) {
+      expect(identityScale(s)).toBeGreaterThanOrEqual(IDENTITY_FLOOR);
+      expect(identityScale(s)).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("shrinks line-item content more than the company identity", () => {
+    for (const s of [0.9, 0.8, 0.7, 0.62, EXPORT_MIN_SCALE]) {
+      expect(contentScale(s)).toBeLessThan(identityScale(s));
+    }
+  });
+
+  it("never scales content below its floor", () => {
+    expect(contentScale(EXPORT_MIN_SCALE)).toBeGreaterThanOrEqual(CONTENT_FLOOR);
+    expect(contentScale(0.2)).toBe(CONTENT_FLOOR);
+  });
+
+  it("leaves an uncompressed document untouched", () => {
+    expect(identityScale(1)).toBe(1);
+    expect(contentScale(1)).toBe(1);
+    expect(identityScale(1.2)).toBe(1.2);
+    expect(contentScale(1.2)).toBe(1.2);
   });
 });
