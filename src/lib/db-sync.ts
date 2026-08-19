@@ -637,6 +637,10 @@ const invoiceToDb = (inv: Invoice) => {
     cancelled_at: inv.cancelledAt ?? null,
     cancellation_reason: inv.cancellationReason ?? null,
     discount_pct: inv.discountPct ?? null,
+    tax_rate: inv.taxRate ?? 0,
+    tax_amount: inv.taxAmount ?? 0,
+    total_amount: inv.totalAmount ?? inv.amount,
+
     subject: inv.subject ?? null,
     bank_account_id: inv.bankAccountId ?? null,
     ingestion_date: inv.ingestionDate ?? null,
