@@ -60,6 +60,7 @@ const sections: NavSection[] = [
 
   {
     label: "Sales",
+    icon: TrendingUp,
     items: [
       { to: "/pipeline", label: "Pipeline", icon: TrendingUp },
       { to: "/quotations", label: "Quotations", icon: FileSignature },
@@ -70,6 +71,7 @@ const sections: NavSection[] = [
   },
   {
     label: "Billing",
+    icon: FileText,
     items: [
       { to: "/purchase-orders", label: "Purchase orders", icon: ClipboardList },
       { to: "/invoices", label: "Invoices", icon: FileText },
@@ -78,6 +80,7 @@ const sections: NavSection[] = [
   },
   {
     label: "Treasury",
+    icon: Wallet,
     items: [
       { to: "/accounts", label: "Accounts", icon: Wallet },
       { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
@@ -87,6 +90,7 @@ const sections: NavSection[] = [
   },
   {
     label: "Accounting",
+    icon: BookOpen,
     items: [
       { to: "/plan-comptable", label: "Plan comptable", icon: Library },
       { to: "/journal", label: "Journal", icon: BookOpen },
@@ -98,6 +102,7 @@ const sections: NavSection[] = [
   },
   {
     label: "Analysis",
+    icon: BarChart3,
     items: [
       { to: "/budgets", label: "Budgets", icon: Target },
       { to: "/reports", label: "Reports", icon: BarChart3 },
@@ -105,6 +110,7 @@ const sections: NavSection[] = [
   },
   {
     label: "Operations",
+    icon: ShieldCheck,
     items: [
       { to: "/sops", label: "SOPs & Compliance", icon: ShieldCheck },
     ],
@@ -112,6 +118,7 @@ const sections: NavSection[] = [
   {
 
     label: "Administration",
+    icon: Building2,
     items: [
       { to: "/companies", label: "Companies", icon: Building2 },
       { to: "/team", label: "Team", icon: UserCog },
