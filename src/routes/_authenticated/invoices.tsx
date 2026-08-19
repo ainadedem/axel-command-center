@@ -1137,6 +1137,10 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       bankAccountId: bankAccountId || defaultBankAccount(companies.find((c) => c.id === companyId))?.id,
       lines: lines.length ? lines.map((l) => ({ ...l })) : undefined,
       discountPct: (Number(discountPct) || 0) || undefined,
+      taxRate: Number(taxRate) || 0,
+      taxAmount: docTotals(lines, Number(discountPct) || 0, Number(taxRate) || 0, a).taxAmount,
+      totalAmount: a,
+
     };
     if (editing) {
       invoicesStore.update(editing.id, { ...data, updatedBy: user?.id, updatedAt: new Date().toISOString() });
