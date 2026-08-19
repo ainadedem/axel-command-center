@@ -239,7 +239,10 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     setZoom(saved?.mode === "fit" || !saved ? 1 : saved.zoom);
     setColWidths(saved?.colWidths ?? {});
     setDensity(saved?.density ?? "auto");
-    setFitOnePage(saved?.fitOnePage ?? true);
+    // The one-page preference is remembered per document type.
+    setFitOnePage(saved?.fitOnePage ?? (doc?.kind ? DEFAULT_FIT_ONE_PAGE[doc.kind] : true));
+    setManualScale(saved?.manualScale ?? 1);
+    setCompression(null);
     setShowStamp(saved?.showStamp ?? company?.showStamp === true);
     setShowSignature(saved?.showSignature ?? true);
 
