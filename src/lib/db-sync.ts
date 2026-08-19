@@ -637,6 +637,10 @@ const invoiceToDb = (inv: Invoice) => {
     cancelled_at: inv.cancelledAt ?? null,
     cancellation_reason: inv.cancellationReason ?? null,
     discount_pct: inv.discountPct ?? null,
+    tax_rate: inv.taxRate ?? 0,
+    tax_amount: inv.taxAmount ?? 0,
+    total_amount: inv.totalAmount ?? inv.amount,
+
     subject: inv.subject ?? null,
     bank_account_id: inv.bankAccountId ?? null,
     ingestion_date: inv.ingestionDate ?? null,
@@ -678,6 +682,10 @@ const invoiceFromDb = (r: Record<string, unknown>, lines: QuoteLine[]): Invoice 
   cancellationReason: (r.cancellation_reason as string) ?? undefined,
   subject: (r.subject as string) ?? undefined,
   discountPct: r.discount_pct != null ? Number(r.discount_pct) : undefined,
+  taxRate: r.tax_rate != null ? Number(r.tax_rate) : undefined,
+  taxAmount: r.tax_amount != null ? Number(r.tax_amount) : undefined,
+  totalAmount: r.total_amount != null ? Number(r.total_amount) : undefined,
+
   bankAccountId: (r.bank_account_id as string) ?? undefined,
   ingestionDate: (r.ingestion_date as string) ?? undefined,
   handoverProofUrl: (r.handover_proof_url as string) ?? undefined,

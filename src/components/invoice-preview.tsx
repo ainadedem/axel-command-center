@@ -30,6 +30,10 @@ export function InvoicePreview({ open, onOpenChange, invoice, company, client, p
         currency: invoice.currency,
         lines: invoice.lines ?? po?.lines ?? quote?.lines,
         discountPct: invoice.discountPct,
+        taxRate: invoice.taxRate,
+        taxAmount: invoice.taxAmount,
+        totalAmount: invoice.totalAmount ?? invoice.amount,
+
         references: [
           po?.number ? { label: "PO", value: po.number } : null,
           quote?.number ? { label: "Quote", value: quote.number } : null,

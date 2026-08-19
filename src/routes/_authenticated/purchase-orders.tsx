@@ -1,12 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { focusSearch, useFocusRow } from "@/hooks/use-focus-row";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  usePurchaseOrders, useQuotes, useCompanies, useClients, useProjects, purchaseOrdersStore,
+  usePurchaseOrders, useQuotes, useCompanies, useClients, useProjects, useInvoices, purchaseOrdersStore,
   fmtCompact, type PurchaseOrder, type POStatus, type Currency,
   contactBelongsTo,
 } from "@/lib/mock-data";
+
 import { newId } from "@/lib/data-store";
 import { DOCUMENTS_BUCKET, uploadFile, openStoredFile } from "@/lib/storage";
 import { dbCompanyId } from "@/lib/db-sync";
@@ -75,7 +76,10 @@ function POPage() {
 function Body() {
   const { scope } = useCompany();
   const pos = usePurchaseOrders();
+  const invoices = useInvoices();
+  const navigate = useNavigate();
   const quotes = useQuotes();
+
   const companies = useCompanies();
   const clients = useClients();
   const projects = useProjects();
@@ -113,6 +117,18 @@ function Body() {
       onClose={() => setSelectedId(null)}
       actions={
         <>
+          <Button
+            size="sm"
+            onClick={() => {
+              const existing = invoices.find((inv) => inv.poId === selected.id);
+              void navigate({
+                to: "/invoices",
+                search: existing ? { focus: existing.id } : { fromPo: selected.id },
+              });
+            }}
+          >
+            {invoices.some((inv) => inv.poId === selected.id) ? "Open invoice" : "Send to Invoice"}
+          </Button>
           <Button size="sm" variant="secondary" onClick={() => { setEditing(selected); setOpen(true); }}>Edit</Button>
           {selected.documentUrl && (
             <Button size="sm" variant="ghost" onClick={() => openStoredFile(selected.documentUrl)}>Open file</Button>
@@ -120,6 +136,7 @@ function Body() {
           <Button size="sm" variant="ghost" onClick={() => setHistoryOf(selected)}>History</Button>
         </>
       }
+
     >
       <DetailSection>
         <DetailField label="Status" value={<StatusBadge status={selected.status} />} />

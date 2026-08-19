@@ -283,6 +283,13 @@ export interface Invoice {
   lines?: QuoteLine[];
   /** Document-wide sales discount, in percent (0–100), applied before tax. */
   discountPct?: number;
+  /** VAT rate in percent applied after the discount. */
+  taxRate?: number;
+  /** VAT amount in document currency. */
+  taxAmount?: number;
+  /** Total incl. tax — mirrors `amount`, kept for document rendering parity with quotes. */
+  totalAmount?: number;
+
   /** Short object / title printed on the document. */
   subject?: string;
   /** Which company bank account prints in the payment details block. */

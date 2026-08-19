@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { focusSearch, useFocusRow, useJumpToRecord } from "@/hooks/use-focus-row";
+import { focusSearch, useFocusRow, useJumpToRecord, type FocusSearch } from "@/hooks/use-focus-row";
 import { BankAccountSelect } from "@/components/bank-account-select";
 import { defaultBankAccount } from "@/lib/payment-details";
 import { AppShell } from "@/components/app-shell";
@@ -15,6 +15,8 @@ import { newId } from "@/lib/data-store";
 import { useRowWindow, SpacerRow, useScrollRef } from "@/components/virtual-rows";
 import { LiveAmount, RowSaveState } from "@/components/save-state";
 import { docTotals, lineNet } from "@/lib/discounts";
+import { defaultTaxRate } from "@/lib/vat";
+
 import { inScope, useCompany } from "@/lib/company-context";
 import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
 import { format, parseISO, differenceInDays } from "date-fns";
@@ -98,7 +100,15 @@ const INVOICE_STATUSES = ["draft", "sent", "partial", "paid", "overdue", "cancel
 const poStateOf = (i: Invoice): PoState => (i.poId ? "linked" : i.poWaived ? "waived" : "missing");
 
 
-export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage, validateSearch: focusSearch });
+/** `focus`/`aging` deep links plus `fromPo` (start a new invoice from a PO). */
+const invoiceSearch = (search: Record<string, unknown>): FocusSearch & { fromPo?: string } => ({
+  ...focusSearch(search),
+  ...(typeof search.fromPo === "string" && search.fromPo ? { fromPo: search.fromPo } : {}),
+});
+
+
+export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage, validateSearch: invoiceSearch });
+
 
 function InvoicesPage() {
   useFocusRow(Route.useSearch().focus);
@@ -186,6 +196,17 @@ function Body() {
     if (urlBucket && urlBucket !== bucket) setBucket(urlBucket);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlBucket]);
+  // "Send to Invoice" from a purchase order: open the create dialog pre-linked.
+  const [fromPoId, setFromPoId] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (!search.fromPo) return;
+    setFromPoId(search.fromPo);
+    setEditing(null);
+    setOpen(true);
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, fromPo: undefined }), replace: true } as never);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.fromPo]);
+
   const setDrawerBucket = (key: AgingKey | null) => {
     if (key) setBucket(key);
     void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, aging: key ?? undefined }), replace: true } as never);
@@ -838,7 +859,7 @@ function Body() {
         onApply={applyBulk}
       />
 
-      <InvoiceDialog open={open} onOpenChange={setOpen} editing={editing} />
+      <InvoiceDialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setFromPoId(undefined); }} editing={editing} prefillPoId={fromPoId} />
       <InvoicePreview
         open={!!previewing}
         onOpenChange={(v) => { if (!v) setPreviewing(null); }}
@@ -926,7 +947,7 @@ function deriveStatus(amount: number, paid: number, dueDate: string): Invoice["s
   return "sent";
 }
 
-function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Invoice | null }) {
+function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Invoice | null; prefillPoId?: string }) {
   const { user } = useAuth();
   const companies = useCompanies();
   const clients = useClients();
@@ -954,6 +975,8 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [status, setStatus] = useState<Invoice["status"]>("draft");
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [discountPct, setDiscountPct] = useState<number>(0);
+  const [taxRate, setTaxRate] = useState<number>(0);
+
   const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
@@ -971,15 +994,24 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       setCurrency(editing.currency); setStatus(editing.status);
       setLines((editing.lines ?? []).map((l) => ({ ...l })));
       setDiscountPct(editing.discountPct ?? 0);
+      setTaxRate(editing.taxRate ?? 0);
     } else {
-      const cid = companies[0]?.id ?? "";
-      numberTouched.current = false; setNumber(cid ? nextNumber("invoice", cid, today) : ""); setCompanyId(cid); setClientId("");
-      setProjectId(""); setPoId(""); setPoWaived(false); setPoWaiverReason(""); setSubject(""); setBankAccountId("");
+      // Starting from a PO ("Send to Invoice"): inherit its company/client/project.
+      const sourcePo = prefillPoId ? pos.find((p) => p.id === prefillPoId) : undefined;
+      const cid = sourcePo?.companyId ?? companies[0]?.id ?? "";
+      const company = companies.find((c) => c.id === cid);
+      numberTouched.current = false; setNumber(cid ? nextNumber("invoice", cid, today) : ""); setCompanyId(cid);
+      setClientId(sourcePo?.clientId ?? "");
+      setProjectId(sourcePo?.projectId ?? ""); setPoId(sourcePo?.id ?? ""); setPoWaived(false); setPoWaiverReason("");
+      setSubject(sourcePo?.subject ?? ""); setBankAccountId(sourcePo?.bankAccountId ?? "");
 
-      setIssueDate(today); setDueDate(today); setAmount("0"); setPaid("0");
-      setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
-      setLines([]); setDiscountPct(0);
+      setIssueDate(today); setDueDate(today);
+      setAmount(sourcePo ? String(sourcePo.amount) : "0"); setPaid("0");
+      setCurrency(sourcePo?.currency ?? company?.baseCurrency ?? "EUR"); setStatus("draft");
+      setLines((sourcePo?.lines ?? []).map((l) => ({ ...l }))); setDiscountPct(0);
+      setTaxRate(defaultTaxRate(company ?? companies[0], today));
     }
+
     setShowErrors(false);
     // Only re-initialise when the dialog opens (or switches record).
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1091,7 +1123,15 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const removeLine = (id: string) => setLines((prev) => prev.filter((l) => l.id !== id));
   const moveLine = (from: number, to: number) => setLines((prev) => moveItem(prev, from, to));
   const lineDnd = useLineReorder(moveLine);
-  const totals = docTotals(lines, Number(discountPct) || 0, 0);
+  const totals = docTotals(lines, Number(discountPct) || 0, Number(taxRate) || 0);
+
+  // New invoices: follow the company/issue-date VAT rule until the user overrides it.
+  useEffect(() => {
+    if (!open || editing || !companyId) return;
+    setTaxRate(defaultTaxRate(companies.find((c) => c.id === companyId), issueDate));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editing?.id, companyId, issueDate]);
+
   const linesTotal = totals.subtotal;
 
   const processOk = Boolean(poId) || poWaived;
@@ -1123,6 +1163,15 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       bankAccountId: bankAccountId || defaultBankAccount(companies.find((c) => c.id === companyId))?.id,
       lines: lines.length ? lines.map((l) => ({ ...l })) : undefined,
       discountPct: (Number(discountPct) || 0) || undefined,
+      taxRate: Number(taxRate) || 0,
+      // `amount` stays the payable total (tax included) so AR/aging keep working;
+      // the VAT share is derived from it when there are no priced lines.
+      taxAmount: lines.length
+        ? totals.taxAmount
+        : Math.round(a - a / (1 + (Number(taxRate) || 0) / 100)),
+      totalAmount: a,
+
+
     };
     if (editing) {
       invoicesStore.update(editing.id, { ...data, updatedBy: user?.id, updatedAt: new Date().toISOString() });
@@ -1348,8 +1397,31 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                       <td />
                     </tr>
                     <tr className="border-t border-border bg-surface-elevated/30">
-                      <td colSpan={6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Lines total</td>
+                      <td colSpan={6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Subtotal</td>
                       <td className="px-2 py-2 text-right font-tnum">{fmtAmount(linesTotal, currency)}</td>
+                      <td />
+                    </tr>
+                    <tr className="bg-surface-elevated/30">
+                      <td colSpan={6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
+                        <div className="inline-flex items-center gap-2 justify-end">
+                          <span>Tax</span>
+                          <div className="relative">
+                            <Input
+                              type="number" min={0} step={0.01}
+                              className="h-7 w-20 text-xs text-right pr-6"
+                              value={taxRate}
+                              onChange={(e) => setTaxRate(Number(e.target.value))}
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">%</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-2 py-2 text-right font-tnum">{fmtAmount(totals.taxAmount, currency)}</td>
+                      <td />
+                    </tr>
+                    <tr className="border-t border-border bg-surface-elevated/40">
+                      <td colSpan={6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-foreground font-semibold">Total</td>
+                      <td className="px-2 py-2 text-right font-tnum font-semibold">{fmtAmount(totals.total, currency)}</td>
                       <td />
                     </tr>
                   </tfoot>
@@ -1360,11 +1432,12 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
             )}
             <div className="flex items-center justify-between gap-3">
               <p className="text-[11px] text-muted-foreground">{RICH_TEXT_HINT}</p>
-              {lines.length > 0 && Math.round(linesTotal) !== Math.round(Number(amount) || 0) && (
-                <Button type="button" size="sm" variant="ghost" className="text-[11px]" onClick={() => setAmount(String(linesTotal))}>
-                  Use lines total ({fmtAmount(linesTotal, currency)})
+              {lines.length > 0 && Math.round(totals.total) !== Math.round(Number(amount) || 0) && (
+                <Button type="button" size="sm" variant="ghost" className="text-[11px]" onClick={() => setAmount(String(totals.total))}>
+                  Use lines total ({fmtAmount(totals.total, currency)})
                 </Button>
               )}
+
             </div>
           </div>
 
