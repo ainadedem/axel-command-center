@@ -132,7 +132,7 @@ function Body() {
   const rate = checked === 0 ? 100 : Math.round(((checked - flagged) / checked) * 100);
 
   return (
-    <div className="p-5 sm:p-10 lg:p-12 space-y-5">
+    <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
       <div className="flex flex-wrap items-center justify-end gap-2">
         <Button variant="ghost" size="sm" onClick={() => setTourOpen(true)}>
           <HelpCircle className="h-3.5 w-3.5 mr-1.5" /> 60-second walkthrough

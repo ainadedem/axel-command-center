@@ -141,7 +141,7 @@ function Body() {
     : "MGA";
 
   return (
-    <div className="p-5 sm:p-10 lg:p-12 space-y-5">
+    <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <KpiCard label="Entries" value={String(totals.count)} />
         <KpiCard label="Outstanding" value={fmtAmount(totals.unpaid, defaultCurrency)} />

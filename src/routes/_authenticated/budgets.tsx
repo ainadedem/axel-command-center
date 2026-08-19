@@ -86,7 +86,7 @@ function Body() {
   const incomeCats = scopedCategories.filter((c) => c.kind === "income");
 
   return (
-    <div className="p-5 sm:p-10 lg:p-12 space-y-6">
+    <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">Year</Label>
