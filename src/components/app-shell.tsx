@@ -39,6 +39,8 @@ interface NavItem {
 
 interface NavSection {
   label: string;
+  /** Rail icon standing for the whole section. */
+  icon: React.ComponentType<{ className?: string }>;
   items: NavItem[];
 }
 
@@ -48,11 +50,13 @@ export const SALES_ROUTES = ["/quotations", "/clients", "/projects", "/settings"
 const sections: NavSection[] = [
   {
     label: "Overview",
+    icon: LayoutDashboard,
     items: [
       { to: "/", label: "Dashboard", icon: LayoutDashboard },
       ...(AXEL_AI_ENABLED ? [{ to: "/axel", label: "Axel AI", icon: Sparkles }] : []),
     ],
   },
+
 
   {
     label: "Sales",
