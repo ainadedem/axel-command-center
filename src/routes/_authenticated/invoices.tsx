@@ -859,7 +859,7 @@ function Body() {
         onApply={applyBulk}
       />
 
-      <InvoiceDialog open={open} onOpenChange={setOpen} editing={editing} />
+      <InvoiceDialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setFromPoId(undefined); }} editing={editing} prefillPoId={fromPoId} />
       <InvoicePreview
         open={!!previewing}
         onOpenChange={(v) => { if (!v) setPreviewing(null); }}
