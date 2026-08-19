@@ -954,6 +954,8 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const [status, setStatus] = useState<Invoice["status"]>("draft");
   const [lines, setLines] = useState<QuoteLine[]>([]);
   const [discountPct, setDiscountPct] = useState<number>(0);
+  const [taxRate, setTaxRate] = useState<number>(0);
+
   const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
