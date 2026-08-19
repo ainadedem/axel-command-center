@@ -541,7 +541,7 @@ function Body() {
       : []),
   ];
   const filtersActive = activeChips.length > 0 || Boolean(view.state.sort);
-  // Keep the sticky table header parked right under the sticky filter card.
+  // Reserve space for the table toolbar above the table's scroll pane.
   const pageRef = useRef<HTMLDivElement | null>(null);
   const filterRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -602,87 +602,6 @@ function Body() {
     <div ref={pageRef} className="p-5 sm:p-10 lg:p-12">
       <MasterDetail detail={detail}>
       <div className="space-y-4">
-      {/* Single page action row */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="text-xs text-muted-foreground font-tnum">
-          {list.length} invoice{list.length !== 1 ? "s" : ""}
-          {filtersActive && <span className="text-foreground/70"> · filtered</span>}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <TableExportMenu
-            filename="invoices"
-            title="Invoices"
-            subtitle={`${list.length} row${list.length !== 1 ? "s" : ""}`}
-            build={() => ({
-              columns: tp.visible.map((c) => ({ key: c.key, label: c.label, width: tp.width(c.key), align: ALIGN[c.key] ?? "left" })),
-              rows: list.map((inv) => Object.fromEntries(tp.visible.map((c) => [c.key, exportValue(c.key, inv)]))),
-            })}
-          />
-          <ColumnPicker prefs={tp} onResetWidths={tp.resetWidths} onResetOrder={tp.resetOrder} />
-          <ReconcileButton checks={checks} />
-          <button
-            onClick={toggleMode}
-            className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-border bg-surface text-xs text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
-            title={numMode === "compact" ? "Switch to full numbers" : "Switch to compact numbers"}
-          >
-            {numMode === "compact" ? <ToggleLeft className="h-4 w-4" /> : <ToggleRight className="h-4 w-4" />}
-            <span className="hidden sm:inline">{numMode === "compact" ? "Compact" : "Full"}</span>
-          </button>
-          <span className="mx-0.5 hidden sm:block h-5 w-px bg-border" aria-hidden />
-          <Button size="sm" onClick={openCreate} className="btn-new gap-1.5" aria-label="New invoice">
-            <Plus className="h-4 w-4" /> New invoice
-          </Button>
-        </div>
-      </div>
-
-      {/* Unified filter bar — sticks under the top bar while scrolling */}
-      <div ref={filterRef} className="filter-sticky rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] p-3 space-y-2.5">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <DataToolbar view={view} items={baseList} />
-          </div>
-          <span className="mx-1 hidden sm:block h-6 w-px bg-border" aria-hidden />
-          <div className="flex flex-wrap items-center gap-2">
-            <FilterPresetBar
-              api={presets}
-              statuses={chipStatuses}
-              po={chipPo}
-              onApply={(p) => { setChipStatuses(p.statuses); setChipPo(p.po as PoState[]); }}
-            />
-          </div>
-          {filtersActive && (
-            <div className="ml-auto flex items-center gap-2">
-              <span className="mx-1 hidden sm:block h-6 w-px bg-border" aria-hidden />
-              <button
-                type="button"
-                onClick={clearAllFilters}
-                className="inline-flex items-center gap-1 h-8 px-3 rounded-full border border-border bg-surface text-xs text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
-              >
-                <X className="h-3.5 w-3.5" /> Clear all
-              </button>
-            </div>
-          )}
-        </div>
-
-        <StatusFilterBar
-          statuses={INVOICE_STATUSES}
-          selected={chipStatuses}
-          statusCount={(s) => baseList.filter((i) => i.status === s).length}
-          onToggleStatus={(s) =>
-            setChipStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))
-          }
-          poSelected={chipPo}
-          poCount={(s) => baseList.filter((i) => poStateOf(i) === s).length}
-          onTogglePo={(s) => setChipPo((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))}
-          onClear={() => { setChipStatuses([]); setChipPo([]); }}
-        />
-
-        {activeChips.length > 0 && (
-          <p className="text-[11px] text-muted-foreground">
-            Showing {list.length} of {baseList.length} invoices · {activeChips.map((c) => c.label).join(" · ")}
-          </p>
-        )}
-      </div>
 
       {bootstrapError ? (
         <ListErrorState label="invoices" message={bootstrapError} onRetry={retryBootstrap} />
@@ -737,6 +656,82 @@ function Body() {
             onJump={(item) => jumpTo(item.id, bucket)}
           />
 
+          {/* Unified table toolbar — filters and table actions cap the table panel */}
+          <div ref={filterRef} className="rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] p-3 space-y-2.5">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
+              <div className="text-xs text-muted-foreground font-tnum whitespace-nowrap">
+                {list.length} invoice{list.length !== 1 ? "s" : ""}
+                {filtersActive && <span className="text-foreground/70"> · filtered</span>}
+              </div>
+              <span className="mx-1 hidden sm:block h-6 w-px bg-border" aria-hidden />
+              <div className="flex flex-wrap items-center gap-2">
+                <DataToolbar view={view} items={baseList} />
+              </div>
+              <span className="mx-1 hidden sm:block h-6 w-px bg-border" aria-hidden />
+              <div className="flex flex-wrap items-center gap-2">
+                <FilterPresetBar
+                  api={presets}
+                  statuses={chipStatuses}
+                  po={chipPo}
+                  onApply={(p) => { setChipStatuses(p.statuses); setChipPo(p.po as PoState[]); }}
+                />
+              </div>
+              <div className="ml-auto flex flex-wrap items-center gap-2">
+                {filtersActive && (
+                  <button
+                    type="button"
+                    onClick={clearAllFilters}
+                    className="inline-flex items-center gap-1 h-8 px-3 rounded-full border border-border bg-surface text-xs text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+                  >
+                    <X className="h-3.5 w-3.5" /> Clear all
+                  </button>
+                )}
+                <span className="mx-0.5 hidden sm:block h-5 w-px bg-border" aria-hidden />
+                <TableExportMenu
+                  filename="invoices"
+                  title="Invoices"
+                  subtitle={`${list.length} row${list.length !== 1 ? "s" : ""}`}
+                  build={() => ({
+                    columns: tp.visible.map((c) => ({ key: c.key, label: c.label, width: tp.width(c.key), align: ALIGN[c.key] ?? "left" })),
+                    rows: list.map((inv) => Object.fromEntries(tp.visible.map((c) => [c.key, exportValue(c.key, inv)]))),
+                  })}
+                />
+                <ColumnPicker prefs={tp} onResetWidths={tp.resetWidths} onResetOrder={tp.resetOrder} />
+                <ReconcileButton checks={checks} />
+                <button
+                  onClick={toggleMode}
+                  className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-border bg-surface text-xs text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+                  title={numMode === "compact" ? "Switch to full numbers" : "Switch to compact numbers"}
+                >
+                  {numMode === "compact" ? <ToggleLeft className="h-4 w-4" /> : <ToggleRight className="h-4 w-4" />}
+                  <span className="hidden sm:inline">{numMode === "compact" ? "Compact" : "Full"}</span>
+                </button>
+                <span className="mx-0.5 hidden sm:block h-5 w-px bg-border" aria-hidden />
+                <Button size="sm" onClick={openCreate} className="btn-new gap-1.5" aria-label="New invoice">
+                  <Plus className="h-4 w-4" /> New invoice
+                </Button>
+              </div>
+            </div>
+
+            <StatusFilterBar
+              statuses={INVOICE_STATUSES}
+              selected={chipStatuses}
+              statusCount={(s) => baseList.filter((i) => i.status === s).length}
+              onToggleStatus={(s) =>
+                setChipStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))
+              }
+              poSelected={chipPo}
+              poCount={(s) => baseList.filter((i) => poStateOf(i) === s).length}
+              onTogglePo={(s) => setChipPo((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))}
+              onClear={() => { setChipStatuses([]); setChipPo([]); }}
+            />
+
+            {activeChips.length > 0 && (
+              <p className="text-[11px] text-muted-foreground">
+                Showing {list.length} of {baseList.length} invoices · {activeChips.map((c) => c.label).join(" · ")}
+              </p>
+            )}
+          </div>
 
           <ListTableShell
             scrollX
