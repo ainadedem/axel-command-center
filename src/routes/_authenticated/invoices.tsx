@@ -1432,10 +1432,10 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
             )}
             <div className="flex items-center justify-between gap-3">
               <p className="text-[11px] text-muted-foreground">{RICH_TEXT_HINT}</p>
-              {lines.length > 0 && Math.round(totals.total) !== Math.round(Number(amount) || 0) && (
-                <Button type="button" size="sm" variant="ghost" className="text-[11px]" onClick={() => setAmount(String(totals.total))}>
-                  Use lines total ({fmtAmount(totals.total, currency)})
-                </Button>
+              {lines.length > 0 && (
+                <p className="text-[11px] text-muted-foreground">
+                  Amount is computed from the lines: {fmtAmount(totals.subtotal, currency)} HT · {fmtAmount(totals.total, currency)} payable
+                </p>
               )}
 
             </div>
@@ -1448,14 +1448,25 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <Label>Amount</Label>
+              <Label>Amount (excl. tax)</Label>
               <div className="relative">
-                <Input type="number" className="pr-10" value={amount} onChange={(e) => setAmount(e.target.value)} />
+                <Input
+                  type="number" className="pr-10"
+                  value={lines.length ? String(totals.subtotal) : amount}
+                  disabled={lines.length > 0}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">
                   {currency === "EUR" ? "€" : currency === "USD" ? "$" : "Ar"}
                 </span>
               </div>
+              {!lines.length && Number(taxRate) > 0 && (
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  + {fmtAmount(Math.round(((Number(amount) || 0) * (Number(taxRate) || 0)) / 100), currency)} tax · {fmtAmount(Math.round((Number(amount) || 0) * (1 + (Number(taxRate) || 0) / 100)), currency)} payable
+                </p>
+              )}
             </div>
+
             <div>
               <Label>Paid</Label>
               <div className="relative">
