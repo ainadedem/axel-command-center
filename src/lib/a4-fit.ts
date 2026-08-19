@@ -81,3 +81,46 @@ export function fitScaleForContent(
   }
   return { scale, fits: pages <= 1, compressed: compressed || pages > 1, pages };
 }
+
+// ---------------------------------------------------------------------------
+// Two-tier compression
+//
+// When a document is compressed to fit one A4 page, shrinking everything by
+// the same factor makes the company identity (logo, From block, legal ids,
+// payment details) uncomfortably small. Instead the identity tier scales
+// gently with a readable floor, and the line-item content tier absorbs most
+// of the reduction.
+// ---------------------------------------------------------------------------
+
+/** Readable floor for the company identity tier. */
+export const IDENTITY_FLOOR = 0.9;
+
+/** Hard floor for the identity tier once the content tier has bottomed out. */
+export const IDENTITY_HARD_FLOOR = 0.78;
+
+/** Floor for the line-item content tier. */
+export const CONTENT_FLOOR = 0.5;
+
+/** Share of the overall reduction the identity tier absorbs. */
+const IDENTITY_SHARE = 0.35;
+
+/** Extra reduction the content tier absorbs to compensate the identity floor. */
+const CONTENT_SHARE = 1.25;
+
+/**
+ * Scale applied to the company identity block (logo, header, From / Bill To,
+ * legal + tax metadata, payment details, footer).
+ */
+export function identityScale(scale: number): number {
+  if (scale >= 1) return round3(scale);
+  const gentle = 1 - (1 - scale) * IDENTITY_SHARE;
+  const floor = scale >= EXPORT_MIN_SCALE ? IDENTITY_FLOOR : IDENTITY_HARD_FLOOR;
+  return round3(Math.max(floor, Math.min(1, gentle)));
+}
+
+/** Scale applied to the line-item table (descriptions, details, padding). */
+export function contentScale(scale: number): number {
+  if (scale >= 1) return round3(scale);
+  const aggressive = 1 - (1 - scale) * CONTENT_SHARE;
+  return round3(Math.max(CONTENT_FLOOR, aggressive));
+}
