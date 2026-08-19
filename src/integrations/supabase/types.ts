@@ -874,6 +874,9 @@ export type Database = {
           stamp_y: number | null
           status: string
           subject: string | null
+          tax_amount: number
+          tax_rate: number
+          total_amount: number | null
           updated_at: string
           updated_by: string | null
         }
@@ -913,6 +916,9 @@ export type Database = {
           stamp_y?: number | null
           status?: string
           subject?: string | null
+          tax_amount?: number
+          tax_rate?: number
+          total_amount?: number | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -952,6 +958,9 @@ export type Database = {
           stamp_y?: number | null
           status?: string
           subject?: string | null
+          tax_amount?: number
+          tax_rate?: number
+          total_amount?: number | null
           updated_at?: string
           updated_by?: string | null
         }
