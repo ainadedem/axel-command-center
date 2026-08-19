@@ -1107,16 +1107,16 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
       .doc .party div { margin-bottom: 2px; }
       .doc .legal { margin-top: 6px; color: #64748b; font-size: ${px(10)}; }
       .doc .taxmeta { margin-top: 8px; padding: 8px 10px; background: #f8fafc; border-left: 3px solid ${accent}; font-size: ${px(10)}; color: #475569; font-variant-numeric: tabular-nums; }
-      .doc table { width: 100%; border-collapse: collapse; margin-top: ${px(32)}; font-size: ${px(11)}; table-layout: fixed; }
-      .doc th { text-align: left; padding: ${px(10)} ${px(8)}; background: #f8fafc; border-bottom: 2px solid ${accent}; font-size: ${px(10)}; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; }
-      .doc td { padding: ${px(12)} ${px(8)}; border-bottom: 1px solid #e2e8f0; vertical-align: top; overflow-wrap: anywhere; word-break: break-word; }
+      .doc table { width: 100%; border-collapse: collapse; margin-top: ${pxc(32)}; font-size: ${pxc(11)}; table-layout: fixed; }
+      .doc th { text-align: left; padding: ${pxc(10)} ${pxc(8)}; background: #f8fafc; border-bottom: 2px solid ${accent}; font-size: ${pxc(10)}; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; }
+      .doc td { padding: ${pxc(12)} ${pxc(8)}; border-bottom: 1px solid #e2e8f0; vertical-align: top; overflow-wrap: anywhere; word-break: break-word; }
       .doc .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-      .doc .sub { color: #64748b; font-size: 10px; margin-top: 3px; }
+      .doc .sub { color: #64748b; font-size: ${pxc(10)}; margin-top: ${pxc(3)}; }
       .doc .rt { overflow-wrap: anywhere; }
-      .doc .rt ul, .doc .rt ol { margin: 3px 0 0; padding-left: 16px; }
-      .doc .rt li { margin: 1px 0; break-inside: avoid; page-break-inside: avoid; }
-      .doc .rt div + div { margin-top: 3px; }
+      .doc .rt ul, .doc .rt ol { margin: ${pxc(3)} 0 0; padding-left: ${pxc(16)}; }
+      .doc .rt li { margin: ${pxc(1)} 0; break-inside: avoid; page-break-inside: avoid; }
+      .doc .rt div + div { margin-top: ${pxc(3)}; }
       @media print {
         .doc thead { display: table-header-group; }
         .doc tfoot { display: table-footer-group; }
