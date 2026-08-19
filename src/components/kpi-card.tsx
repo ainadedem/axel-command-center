@@ -66,18 +66,18 @@ export function KpiCard({
 }) {
   const toneSurface =
     tone === "danger"
-      ? "bg-destructive/10 border-destructive/40 shadow-[0_0_0_1px_var(--destructive)/0.15]"
+      ? "bg-destructive/8"
       : tone === "warning"
-        ? "bg-amber-500/10 border-amber-500/40"
+        ? "bg-amber-500/8"
         : tone === "success"
-          ? "bg-success/10 border-success/40"
+          ? "bg-success/8"
           : highlight
-            ? "bg-gradient-to-br from-surface-elevated to-surface shadow-[var(--shadow-glow)]"
-            : "bg-card";
+            ? "bg-surface-elevated"
+            : "bg-surface";
 
   return (
     <div className={cn(
-      "group relative rounded-2xl border border-border/70 p-5 overflow-hidden shadow-[var(--shadow-card)] hover-lift rise-in",
+      "group relative panel p-6 sm:p-7 overflow-hidden hover-lift rise-in",
       toneSurface,
     )}>
       {/* soft cursor-agnostic sheen on hover */}
