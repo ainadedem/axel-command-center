@@ -1147,9 +1147,15 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
       setShowErrors(true);
       return;
     }
-    const a = Number(amount) || 0;
+    const taxRateNum = Number(taxRate) || 0;
+    // Same convention as quotations: `amount` is the pre-tax subtotal, with the
+    // VAT and payable total stored alongside it.
+    const manual = Number(amount) || 0;
+    const a = lines.length ? totals.subtotal : manual;
+    const taxAmount = lines.length ? totals.taxAmount : Math.round((manual * taxRateNum) / 100);
+    const payable = a + taxAmount;
     const p = Number(paid) || 0;
-    const finalStatus = status === "draft" ? "draft" : deriveStatus(a, p, dueDate);
+    const finalStatus = status === "draft" ? "draft" : deriveStatus(payable, p, dueDate);
     const data = {
       number, companyId, clientId,
       projectId: projectId || undefined,
@@ -1163,16 +1169,11 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
       bankAccountId: bankAccountId || defaultBankAccount(companies.find((c) => c.id === companyId))?.id,
       lines: lines.length ? lines.map((l) => ({ ...l })) : undefined,
       discountPct: (Number(discountPct) || 0) || undefined,
-      taxRate: Number(taxRate) || 0,
-      // `amount` stays the payable total (tax included) so AR/aging keep working;
-      // the VAT share is derived from it when there are no priced lines.
-      taxAmount: lines.length
-        ? totals.taxAmount
-        : Math.round(a - a / (1 + (Number(taxRate) || 0) / 100)),
-      totalAmount: a,
-
-
+      taxRate: taxRateNum,
+      taxAmount,
+      totalAmount: payable,
     };
+
     if (editing) {
       invoicesStore.update(editing.id, { ...data, updatedBy: user?.id, updatedAt: new Date().toISOString() });
       if (editing.status !== finalStatus) {
