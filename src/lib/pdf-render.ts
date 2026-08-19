@@ -239,6 +239,46 @@ export async function renderHtmlToPdfBlob(html: string, opts: RenderOptions = {}
   }
 }
 
+/**
+ * Measures how many A4 pages the printable HTML would occupy, using the same
+ * isolated frame + font pipeline as the export, so the answer matches the PDF.
+ */
+export async function measureHtmlPages(
+  html: string,
+  opts: { orientation?: PageOrientation; fontTimeoutMs?: number } = {},
+): Promise<number> {
+  const page = A4_PX[opts.orientation ?? "portrait"];
+  const frame = document.createElement("iframe");
+  frame.setAttribute("aria-hidden", "true");
+  frame.setAttribute("tabindex", "-1");
+  frame.style.cssText = [
+    "position:fixed", "left:0", "top:0",
+    `width:${page.w}px`, `height:${page.h}px`,
+    "border:0", "opacity:0", "pointer-events:none", "z-index:-1",
+  ].join(";");
+  document.body.appendChild(frame);
+  try {
+    const doc = frame.contentDocument;
+    const win = frame.contentWindow;
+    if (!doc || !win) return 1;
+    doc.open();
+    doc.write(html);
+    doc.close();
+    await injectCachedFonts(doc, opts.fontTimeoutMs ?? 4000);
+    await nextFrame(win);
+    await Promise.all([waitForImages(doc), waitForFonts(doc, opts.fontTimeoutMs ?? 4000)]);
+    await nextFrame(win);
+    const h = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight);
+    // 2px slack absorbs sub-pixel rounding in the frame layout.
+    return Math.max(1, Math.ceil((h - 2) / page.h));
+  } catch {
+    return 1;
+  } finally {
+    frame.remove();
+  }
+}
+
+
 /** Renders and downloads the HTML document as `<filename>`. */
 export async function downloadHtmlAsPdf(
   html: string,
