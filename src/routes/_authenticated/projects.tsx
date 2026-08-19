@@ -29,6 +29,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
+import { MasterDetail, DetailPanel, DetailSection, DetailField } from "@/components/master-detail";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 
 const PROJECT_COLUMNS: ColumnDef[] = [
@@ -69,6 +70,7 @@ function Body() {
   const [editing, setEditing] = useState<Project | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [mainTab, setMainTab] = useState<"projects" | "clients">("projects");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const openCreate = () => { setEditing(null); setOpen(true); };
 
   const toggleExpanded = (id: string) => {
@@ -181,8 +183,36 @@ function Body() {
       .sort((a, b) => b.invoicedMGA - a.invoicedMGA);
   }, [list, invoices, transactions, clients, companies]);
 
+  const selectedProject = selectedId ? list.find((p) => p.id === selectedId) ?? null : null;
+  const projectDetail = selectedProject ? (
+    <DetailPanel
+      eyebrow={companies.find((c) => c.id === selectedProject.companyId)?.name ?? "Project"}
+      title={selectedProject.name}
+      subtitle={clients.find((c) => c.id === selectedProject.clientId)?.name}
+      onClose={() => setSelectedId(null)}
+      actions={
+        <Button size="sm" onClick={() => { setEditing(selectedProject); setOpen(true); }} className="gap-1.5">
+          <Pencil className="h-4 w-4" /> Edit
+        </Button>
+      }
+    >
+      <DetailSection>
+        <DetailField label="Currency" value={selectedProject.currency} mono />
+      </DetailSection>
+      {!salesOnly && (
+        <DetailSection title="Amounts">
+          <DetailField label="Revenue" value={fmtCompact(selectedProject.revenue, selectedProject.currency)} mono />
+          <DetailField label="Cost" value={fmtCompact(selectedProject.cost, selectedProject.currency)} mono />
+          <DetailField label="Profit" value={fmtCompact(selectedProject.revenue - selectedProject.cost, selectedProject.currency)} mono />
+        </DetailSection>
+      )}
+    </DetailPanel>
+  ) : null;
+
   return (
-    <div className="p-4 sm:p-8 space-y-5">
+    <div className="p-4 sm:p-8">
+      <MasterDetail detail={projectDetail}>
+      <div className="space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <CrudToolbar createLabel="New project" count={list.length} label="projects" onCreate={openCreate} />
         <div className="flex items-center gap-2 flex-wrap">
@@ -260,8 +290,9 @@ function Body() {
                         return (
                           <Fragment key={p.id}>
                             <tr
-                              className="hover:bg-surface-elevated/40 cursor-pointer"
-                              onClick={() => toggleExpanded(p.id)}
+                              data-selected={selectedId === p.id ? "true" : undefined}
+                              className="hover:bg-surface-elevated/40 data-[selected=true]:bg-[var(--primary-container)]/40 cursor-pointer transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+                              onClick={() => { setSelectedId(p.id); toggleExpanded(p.id); }}
                             >
                               <ListRowActions colSpan={colCount}>
                                 <RowAction
@@ -371,6 +402,8 @@ function Body() {
         </>
       )}
       <ProjectDialog open={open} onOpenChange={setOpen} editing={editing} />
+      </div>
+      </MasterDetail>
     </div>
   );
 }

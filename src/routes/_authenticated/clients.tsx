@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { focusSearch, useFocusRow } from "@/hooks/use-focus-row";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
+import { MasterDetail, DetailPanel, DetailSection, DetailField } from "@/components/master-detail";
 import {
   useClients, useCompanies, useProjects, useInvoices, useTransactions,
   useSalesPeople, useTeamMembers,
@@ -54,6 +55,7 @@ function ClientsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
   const [tab, setTab] = useState<"all" | "clients" | "leads">("clients");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [view, setView] = useState<"grid" | "list">("grid");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"name_asc" | "name_desc" | "revenue_desc" | "outstanding_desc" | "margin_desc">("name_asc");
@@ -173,10 +175,47 @@ function ClientsPage() {
   useCreateAction(openCreate);
   const { isSalesOnly: salesOnly } = useEffectiveRole();
 
+  const selectedClient = selectedId ? scopedClients.find((c) => c.id === selectedId) ?? null : null;
+  const clientDetail = selectedClient ? (() => {
+    const cliInvoices = invoices.filter((i) => i.clientId === selectedClient.id);
+    const cliProjects = projects.filter((p) => p.clientId === selectedClient.id);
+    const invoicedMGA = cliInvoices.reduce((s2, i) => s2 + toMGA(i.amount, i.currency), 0);
+    const paidMGA = cliInvoices.reduce((s2, i) => s2 + toMGA(i.paid, i.currency), 0);
+    return (
+      <DetailPanel
+        eyebrow={selectedClient.status === "lead" ? "Lead" : "Client"}
+        title={selectedClient.name}
+        subtitle={[selectedClient.industry, selectedClient.country].filter(Boolean).join(" · ") || undefined}
+        onClose={() => setSelectedId(null)}
+        actions={
+          <Button size="sm" onClick={() => { setEditing(selectedClient); setOpen(true); }} className="gap-1.5">
+            <Pencil className="h-4 w-4" /> {salesOnly ? "View" : "Edit"}
+          </Button>
+        }
+      >
+        <DetailSection>
+          <DetailField label="Email" value={selectedClient.email || "—"} />
+          <DetailField label="Phone" value={selectedClient.phone || "—"} />
+          <DetailField label="Projects" value={String(cliProjects.length)} mono />
+          <DetailField label="Invoices" value={String(cliInvoices.length)} mono />
+        </DetailSection>
+        {!salesOnly && (
+          <DetailSection title="Amounts">
+            <DetailField label="Invoiced" value={fmtCompact(invoicedMGA, "MGA")} mono />
+            <DetailField label="Paid" value={fmtCompact(paidMGA, "MGA")} mono />
+            <DetailField label="Outstanding" value={fmtCompact(Math.max(0, invoicedMGA - paidMGA), "MGA")} mono />
+          </DetailSection>
+        )}
+      </DetailPanel>
+    );
+  })() : null;
+
   return (
     <AppShell>
       <PageHeader title="Clients" description="Leads from the pipeline and won clients — kept separate." />
-      <div className="p-6 space-y-5">
+      <div className="p-6">
+      <MasterDetail detail={clientDetail}>
+      <div className="space-y-5">
         {/* KPI strip — money tiles are hidden for sales-only users */}
         <div className={salesOnly ? "grid grid-cols-1 gap-3" : "grid grid-cols-2 md:grid-cols-4 gap-3"}>
           <KpiTile icon={<UserCheck className="h-4 w-4" />} label="Won clients" value={String(wonClients.length)} sub={`${leadClients.length} lead${leadClients.length === 1 ? "" : "s"}`} tint="from-primary/25 to-primary/5" ring="ring-primary/30" />
@@ -239,12 +278,14 @@ function ClientsPage() {
             {visibleCount === 0 ? (
               <EmptyState label={tab === "leads" ? "leads" : "clients"} onCreate={openCreate} />
             ) : view === "list" ? (
-              <ClientListView clients={sorted.map((s) => s.cl)} companies={companies} invoices={invoices} projects={projects} transactions={transactions} onEdit={(cl) => { setEditing(cl); setOpen(true); }} onPromote={promote} group={group} grouped={grouped} />
+              <ClientListView clients={sorted.map((s) => s.cl)} companies={companies} invoices={invoices} projects={projects} transactions={transactions} onEdit={(cl) => { setEditing(cl); setOpen(true); }} onPromote={promote} group={group} grouped={grouped} selectedId={selectedId} onSelect={setSelectedId} />
             ) : (
-              <ClientGridView clients={sorted.map((s) => s.cl)} companies={companies} invoices={invoices} projects={projects} transactions={transactions} onEdit={(cl) => { setEditing(cl); setOpen(true); }} onPromote={promote} group={group} grouped={grouped} />
+              <ClientGridView clients={sorted.map((s) => s.cl)} companies={companies} invoices={invoices} projects={projects} transactions={transactions} onEdit={(cl) => { setEditing(cl); setOpen(true); }} onPromote={promote} group={group} grouped={grouped} selectedId={selectedId} onSelect={setSelectedId} />
             )}
           </TabsContent>
         </Tabs>
+      </div>
+      </MasterDetail>
       </div>
       <ClientDialog open={open} onOpenChange={setOpen} editing={editing} />
     </AppShell>
@@ -253,7 +294,7 @@ function ClientsPage() {
 
 /* ── Grid View ── */
 function ClientGridView({
-  clients, companies, invoices, projects, transactions, onEdit, onPromote, group, grouped,
+  clients, companies, invoices, projects, transactions, onEdit, onPromote, group, grouped, selectedId, onSelect,
 }: {
   clients: Client[];
   companies: ReturnType<typeof useCompanies>;
@@ -264,6 +305,8 @@ function ClientGridView({
   onPromote: (cl: Client) => void;
   group: string;
   grouped: { key: string; label: string; items: Client[] }[];
+  selectedId?: string | null;
+  onSelect?: (id: string) => void;
 }) {
   if (group !== "none") {
     return (
@@ -276,7 +319,7 @@ function ClientGridView({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
               {g.items.map((cl) => (
-                <ClientCard key={cl.id} cl={cl} companies={companies} invoices={invoices} projects={projects} transactions={transactions} onEdit={onEdit} onPromote={onPromote} />
+                <ClientCard key={cl.id} cl={cl} companies={companies} invoices={invoices} projects={projects} transactions={transactions} onEdit={onEdit} onPromote={onPromote} selected={selectedId === cl.id} onSelect={onSelect} />
               ))}
             </div>
           </div>
@@ -288,14 +331,14 @@ function ClientGridView({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
       {clients.map((cl) => (
-        <ClientCard key={cl.id} cl={cl} companies={companies} invoices={invoices} projects={projects} transactions={transactions} onEdit={onEdit} onPromote={onPromote} />
+        <ClientCard key={cl.id} cl={cl} companies={companies} invoices={invoices} projects={projects} transactions={transactions} onEdit={onEdit} onPromote={onPromote} selected={selectedId === cl.id} onSelect={onSelect} />
       ))}
     </div>
   );
 }
 
 function ClientCard({
-  cl, companies, invoices, projects, transactions, onEdit, onPromote,
+  cl, companies, invoices, projects, transactions, onEdit, onPromote, selected, onSelect,
 }: {
   cl: Client;
   companies: ReturnType<typeof useCompanies>;
@@ -304,6 +347,8 @@ function ClientCard({
   transactions: ReturnType<typeof useTransactions>;
   onEdit: (cl: Client) => void;
   onPromote: (cl: Client) => void;
+  selected?: boolean;
+  onSelect?: (id: string) => void;
 }) {
   const { isSalesOnly: salesOnly, roleResolved } = useEffectiveRole();
   const canEdit = !(roleResolved && salesOnly);
@@ -326,7 +371,7 @@ function ClientCard({
   const isLead = cl.status === "lead";
 
   return (
-    <div data-focus-id={cl.id} className={`relative rounded-lg border ${isLead ? "border-dashed border-amber-500/40 bg-amber-500/[0.03]" : "border-border bg-surface-elevated"} p-3 hover:border-primary/40 transition group`}>
+    <div data-focus-id={cl.id} onClick={() => onSelect?.(cl.id)} className={`relative cursor-pointer rounded-lg border ${selected ? "ring-2 ring-primary/40 " : ""}${isLead ? "border-dashed border-amber-500/40 bg-amber-500/[0.03]" : "border-border bg-surface-elevated"} p-3 hover:border-primary/40 transition group`}>
       <div className="flex items-start gap-2">
         <div className="relative shrink-0">
           <Avatar src={cl.avatarUrl} name={cl.name} size={32} />
@@ -393,7 +438,7 @@ function ClientCard({
 
 /* ── List View ── */
 function ClientListView({
-  clients, companies, invoices, projects, transactions, onEdit, onPromote, group, grouped,
+  clients, companies, invoices, projects, transactions, onEdit, onPromote, group, grouped, selectedId, onSelect,
 }: {
   clients: Client[];
   companies: ReturnType<typeof useCompanies>;
@@ -404,6 +449,8 @@ function ClientListView({
   onPromote: (cl: Client) => void;
   group: string;
   grouped: { key: string; label: string; items: Client[] }[];
+  selectedId?: string | null;
+  onSelect?: (id: string) => void;
 }) {
   const { isSalesOnly: salesOnly, roleResolved } = useEffectiveRole();
   const canEdit = !(roleResolved && salesOnly);
@@ -428,7 +475,8 @@ function ClientListView({
       <div
         key={cl.id}
         data-focus-id={cl.id}
-        className={`grid grid-cols-3 sm:grid-cols-[1fr_120px_100px_100px_40px] md:grid-cols-[1fr_140px_120px_120px_40px] gap-x-3 gap-y-2 px-4 py-3 sm:py-2.5 sm:items-center border-b border-border/50 last:border-b-0 hover:bg-accent/40 transition group ${isLead ? "bg-amber-500/[0.03]" : ""}`}
+        onClick={() => onSelect?.(cl.id)}
+        className={`cursor-pointer ${selectedId === cl.id ? "bg-accent/60 " : ""}grid grid-cols-3 sm:grid-cols-[1fr_120px_100px_100px_40px] md:grid-cols-[1fr_140px_120px_120px_40px] gap-x-3 gap-y-2 px-4 py-3 sm:py-2.5 sm:items-center border-b border-border/50 last:border-b-0 hover:bg-accent/40 transition group ${isLead ? "bg-amber-500/[0.03]" : ""}`}
       >
         <div className="col-span-3 sm:col-span-1 flex items-center gap-2.5 min-w-0">
           <div className="relative shrink-0">
