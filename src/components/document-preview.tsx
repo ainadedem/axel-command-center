@@ -337,11 +337,10 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     const measure = () => {
       const h = el.scrollHeight;
       setSheetH(Math.max(SHEET_H, el.offsetHeight));
-      const contentH = Math.max(0, h - PAGE_PAD_MM * 2 * MM);
-      const p = Math.max(1, Math.ceil((contentH - 2) / USABLE_H));
+      const p = pagesForSheetHeight(h);
       setPages(p);
       if (density === "auto" && p > 1 && autoScale > MIN_AUTO_SCALE) {
-        setAutoScale((s) => Math.max(MIN_AUTO_SCALE, Math.round((s - 0.05) * 1000) / 1000));
+        setAutoScale((s) => nextScaleDown(s, MIN_AUTO_SCALE));
       }
     };
     const id = requestAnimationFrame(measure);
