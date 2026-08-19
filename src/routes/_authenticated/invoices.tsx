@@ -977,15 +977,22 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
       setDiscountPct(editing.discountPct ?? 0);
       setTaxRate(editing.taxRate ?? 0);
     } else {
-      const cid = companies[0]?.id ?? "";
-      numberTouched.current = false; setNumber(cid ? nextNumber("invoice", cid, today) : ""); setCompanyId(cid); setClientId("");
-      setProjectId(""); setPoId(""); setPoWaived(false); setPoWaiverReason(""); setSubject(""); setBankAccountId("");
+      // Starting from a PO ("Send to Invoice"): inherit its company/client/project.
+      const sourcePo = prefillPoId ? pos.find((p) => p.id === prefillPoId) : undefined;
+      const cid = sourcePo?.companyId ?? companies[0]?.id ?? "";
+      const company = companies.find((c) => c.id === cid);
+      numberTouched.current = false; setNumber(cid ? nextNumber("invoice", cid, today) : ""); setCompanyId(cid);
+      setClientId(sourcePo?.clientId ?? "");
+      setProjectId(sourcePo?.projectId ?? ""); setPoId(sourcePo?.id ?? ""); setPoWaived(false); setPoWaiverReason("");
+      setSubject(sourcePo?.subject ?? ""); setBankAccountId(sourcePo?.bankAccountId ?? "");
 
-      setIssueDate(today); setDueDate(today); setAmount("0"); setPaid("0");
-      setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
-      setLines([]); setDiscountPct(0); setTaxRate(defaultTaxRate(companies[0], today));
-
+      setIssueDate(today); setDueDate(today);
+      setAmount(sourcePo ? String(sourcePo.amount) : "0"); setPaid("0");
+      setCurrency(sourcePo?.currency ?? company?.baseCurrency ?? "EUR"); setStatus("draft");
+      setLines((sourcePo?.lines ?? []).map((l) => ({ ...l }))); setDiscountPct(0);
+      setTaxRate(defaultTaxRate(company ?? companies[0], today));
     }
+
     setShowErrors(false);
     // Only re-initialise when the dialog opens (or switches record).
     // eslint-disable-next-line react-hooks/exhaustive-deps
