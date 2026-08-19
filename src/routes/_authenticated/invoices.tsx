@@ -56,6 +56,7 @@ import { type ColumnDef } from "@/lib/column-prefs";
 import { useTablePrefs } from "@/lib/table-prefs";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 import { StatusBadge, PoBadge } from "@/components/status-badge";
+import { MasterDetail, DetailPanel, DetailField, DetailSection } from "@/components/master-detail";
 import { useLineReorder, DragHandle, moveItem, ReorderLiveRegion } from "@/components/sortable-row";
 import { useFilterPresets } from "@/lib/filter-presets";
 import { FilterPresetBar } from "@/components/filter-presets";
@@ -125,6 +126,7 @@ function Body() {
   const [historyOf, setHistoryOf] = useState<Invoice | null>(null);
   const [numMode, setNumMode] = useState<NumberFormatMode>(getNumberFormat());
   const tp = useTablePrefs("invoices", INVOICE_COLUMNS, INVOICE_COL_WIDTHS);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
 
   const toggleMode = useCallback(() => {
@@ -539,9 +541,45 @@ function Body() {
     view.reset();
   };
 
+  const selected = selectedId ? list.find((i) => i.id === selectedId) ?? null : null;
+  const detail = selected ? (
+    <DetailPanel
+      eyebrow={companies.find((c) => c.id === selected.companyId)?.name ?? "Invoice"}
+      title={selected.number}
+      subtitle={clients.find((c) => c.id === selected.clientId)?.name}
+      onClose={() => setSelectedId(null)}
+      actions={
+        <>
+          <Button size="sm" onClick={() => setPreviewing(selected)} className="gap-1.5"><Eye className="h-4 w-4" /> Preview</Button>
+          <Button size="sm" variant="outline" onClick={() => { setEditing(selected); setOpen(true); }} className="gap-1.5"><Pencil className="h-4 w-4" /> Edit</Button>
+          {selected.status !== "paid" && selected.status !== "cancelled" && (
+            <Button size="sm" variant="outline" onClick={() => setPaying(selected)} className="gap-1.5"><Wallet className="h-4 w-4" /> Payment</Button>
+          )}
+          <Button size="sm" variant="outline" onClick={() => setHistoryOf(selected)} className="gap-1.5"><History className="h-4 w-4" /> History</Button>
+        </>
+      }
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <StatusBadge status={selected.status} />
+        <PoBadge state={poStateOf(selected)} />
+      </div>
+      <DetailSection>
+        <DetailField label="Project" value={projects.find((p) => p.id === selected.projectId)?.name ?? "—"} />
+        <DetailField label="Issued" value={selected.issueDate} mono />
+        <DetailField label="Due" value={selected.dueDate} mono />
+      </DetailSection>
+      <DetailSection title="Amounts">
+        <DetailField label="Total" value={fmtFull(selected.amount, selected.currency)} mono />
+        <DetailField label="Paid" value={fmtFull(selected.paid, selected.currency)} mono />
+        <DetailField label="Balance" value={fmtFull(selected.amount - selected.paid, selected.currency)} mono />
+      </DetailSection>
+    </DetailPanel>
+  ) : null;
 
   return (
-    <div ref={pageRef} className="p-4 sm:p-8 space-y-4">
+    <div ref={pageRef} className="p-4 sm:p-8">
+      <MasterDetail detail={detail}>
+      <div className="space-y-4">
       {/* Single page action row */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="text-xs text-muted-foreground font-tnum">
@@ -713,7 +751,12 @@ function Body() {
                   const inv = row.inv;
                   return (
                     <Fragment key={inv.id}>
-                    <tr data-focus-id={inv.id} className="hover:bg-surface-elevated/40 transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]">
+                    <tr
+                      data-focus-id={inv.id}
+                      data-selected={selectedId === inv.id ? "true" : undefined}
+                      onClick={() => setSelectedId(inv.id)}
+                      className="cursor-pointer hover:bg-surface-elevated/40 data-[selected=true]:bg-[var(--primary-container)]/40 transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+                    >
 <ListRowActions colSpan={colCount}>
                       <RowAction icon={<History className="h-3.5 w-3.5" />} label="History" onClick={() => setHistoryOf(inv)} title="Activity history" />
                       <RowAction icon={<Eye className="h-3.5 w-3.5" />} label="Preview" onClick={() => setPreviewing(inv)} title="Preview & export PDF" />
@@ -749,6 +792,9 @@ function Body() {
 
         </>
       )}
+      </div>
+      </MasterDetail>
+
 
       <BulkActionBar count={selection.count} noun="invoice" onClear={selection.clear}>
         <Button size="sm" className="h-7 px-3 text-xs" onClick={() => setBulkOpen(true)}>

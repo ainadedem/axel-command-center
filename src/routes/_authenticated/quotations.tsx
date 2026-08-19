@@ -54,6 +54,7 @@ import { useSingleFlightSubmit } from "@/components/form-ux";
 import { QuoteAssigneePicker, AssigneeStack } from "@/components/quote-assignee-picker";
 import { QuoteFollowupPanel, followUpTone, followUpToneClass } from "@/components/quote-followup-panel";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
+import { MasterDetail, DetailPanel, DetailSection, DetailField } from "@/components/master-detail";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 
 const QUOTE_COLUMNS: ColumnDef[] = [
@@ -111,6 +112,7 @@ function Body() {
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [historyOf, setHistoryOf] = useState<Quote | null>(null);
   const [followingUp, setFollowingUp] = useState<Quote | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const { user } = useAuth();
   const openCreate = () => { setEditing(null); setOpen(true); };
 
@@ -242,8 +244,47 @@ function Body() {
     });
   };
 
+  const selectedQuote = selectedId ? list.find((q) => q.id === selectedId) ?? null : null;
+  const detail = selectedQuote ? (
+    <DetailPanel
+      eyebrow={companies.find((c) => c.id === selectedQuote.companyId)?.name ?? "Quotation"}
+      title={selectedQuote.number}
+      subtitle={clients.find((c) => c.id === selectedQuote.clientId)?.name}
+      onClose={() => setSelectedId(null)}
+      actions={
+        <>
+          <Button size="sm" onClick={() => setPreviewing(selectedQuote)} className="gap-1.5"><Eye className="h-4 w-4" /> Preview</Button>
+          <Button size="sm" variant="outline" onClick={() => { setEditing(selectedQuote); setOpen(true); }} className="gap-1.5"><Pencil className="h-4 w-4" /> Edit</Button>
+          <Button size="sm" variant="outline" onClick={() => setFollowingUp(selectedQuote)} className="gap-1.5"><Send className="h-4 w-4" /> Follow-up</Button>
+          <Button size="sm" variant="outline" onClick={() => setHistoryOf(selectedQuote)} className="gap-1.5"><History className="h-4 w-4" /> History</Button>
+        </>
+      }
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <StatusBadge status={selectedQuote.status} />
+        <AssigneeStack companyId={selectedQuote.companyId} ids={selectedQuote.assignedTo ?? []} />
+      </div>
+      <DetailSection>
+        <DetailField label="Project" value={projects.find((p) => p.id === selectedQuote.projectId)?.name ?? "—"} />
+        <DetailField label="Issued" value={format(parseISO(selectedQuote.issueDate), "MMM d, yyyy")} mono />
+        <DetailField label="Valid until" value={format(parseISO(selectedQuote.validUntil), "MMM d, yyyy")} mono />
+        <DetailField label="Owner" value={ownerName(selectedQuote)} />
+      </DetailSection>
+      <DetailSection title="Amounts">
+        <DetailField label="Total" value={fmtCompact(selectedQuote.totalAmount ?? selectedQuote.amount, selectedQuote.currency)} mono />
+        <DetailField
+          label="Next follow-up"
+          value={selectedQuote.nextFollowUpAt ? format(parseISO(selectedQuote.nextFollowUpAt), "MMM d, yyyy") : "—"}
+          mono
+        />
+      </DetailSection>
+    </DetailPanel>
+  ) : null;
+
   return (
-    <div className="p-4 sm:p-8 space-y-5">
+    <div className="p-4 sm:p-8">
+      <MasterDetail detail={detail}>
+      <div className="space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <CrudToolbar createLabel="New quote" count={list.length} label="quotations" onCreate={openCreate} />
         <div className="flex items-center gap-2 flex-wrap">
@@ -283,7 +324,7 @@ function Body() {
                 const proj = q.projectId ? projects.find((p) => p.id === q.projectId) : undefined;
                 return (
                   <Fragment key={q.id}>
-                  <tr data-focus-id={q.id} className="hover:bg-surface-elevated/40">
+                  <tr data-focus-id={q.id} data-selected={selectedId === q.id ? "true" : undefined} onClick={() => setSelectedId(q.id)} className="cursor-pointer hover:bg-surface-elevated/40 data-[selected=true]:bg-[var(--primary-container)]/40 transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]">
 <ListRowActions colSpan={colCount}>
                     {!q.sentAt && (
                       <RowAction
@@ -426,6 +467,8 @@ function Body() {
         onDocChange={(patch) => { if (previewing) quotesStore.update(previewing.id, patch); }}
         audit={previewing ? { docType: "quote", docId: previewing.id, companyId: previewing.companyId } : undefined}
       />
+      </div>
+      </MasterDetail>
     </div>
   );
 }

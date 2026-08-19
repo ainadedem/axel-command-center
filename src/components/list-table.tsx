@@ -197,7 +197,7 @@ export function RowAction({
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
       disabled={disabled || busy}
       title={title ?? label}
       aria-label={label}
