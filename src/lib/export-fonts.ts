@@ -14,7 +14,7 @@ export const EXPORT_HEADING_FONT = `'Figtree', 'Inter', system-ui, -apple-system
 export const EXPORT_BODY_FONT = `'Inter', system-ui, -apple-system, sans-serif`;
 
 export const EXPORT_FONT_CSS_URL =
-  "https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap";
+  "https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap";
 
 /** `<head>` markup every export document embeds (network path / fallback). */
 export const EXPORT_FONT_LINKS = [
