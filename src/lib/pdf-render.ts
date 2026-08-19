@@ -164,15 +164,11 @@ export async function renderHtmlToPdfBlob(html: string, opts: RenderOptions = {}
 
     // Single-page mode: place the whole capture on one sheet, scaled to fit.
     if (opts.maxPages === 1) {
-      const inkHeight = Math.min(canvas.height, usableHeight);
-      const widthMm = mm.w;
-      let heightMm = (inkHeight / canvas.width) * mm.w;
-      let xMm = 0;
-      if (heightMm > mm.h) {
-        const k = mm.h / heightMm;
-        heightMm = mm.h;
-        xMm = (mm.w - widthMm * k) / 2;
-      }
+      const inkHeight = Math.max(1, Math.min(canvas.height, lastInkRow(canvas) || usableHeight));
+      const naturalH = (inkHeight / canvas.width) * mm.w;
+      const k = naturalH > mm.h ? mm.h / naturalH : 1;
+      const drawW = mm.w * k;
+      const drawH = naturalH * k;
       const slice = document.createElement("canvas");
       slice.width = canvas.width;
       slice.height = inkHeight;
@@ -184,15 +180,16 @@ export async function renderHtmlToPdfBlob(html: string, opts: RenderOptions = {}
       pdf.addImage(
         slice.toDataURL("image/jpeg", 0.95),
         "JPEG",
-        xMm,
+        (mm.w - drawW) / 2,
         0,
-        widthMm * (heightMm === mm.h ? mm.h / ((inkHeight / canvas.width) * mm.w) : 1),
-        heightMm,
+        drawW,
+        drawH,
         undefined,
         "FAST",
       );
       return pdf.output("blob");
     }
+
 
     const cuts = computeCuts(
       usableHeight,
