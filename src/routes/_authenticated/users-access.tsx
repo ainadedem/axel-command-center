@@ -257,7 +257,7 @@ function UsersAccessPage() {
       <>
         <PageHeader title="Users & Access" description="Manage admins and per-company permissions." />
         <div className="px-4 sm:px-8 py-12">
-          <div className="max-w-md mx-auto text-center border border-border rounded-lg p-4 sm:p-8 bg-card">
+          <div className="max-w-md mx-auto text-center border border-border rounded-lg p-5 sm:p-10 lg:p-12 bg-card">
             <ShieldAlert className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
             <h2 className="font-display text-lg font-semibold">Restricted</h2>
             <p className="text-sm text-muted-foreground mt-1">

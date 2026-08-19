@@ -165,7 +165,7 @@ function BilanBody() {
         </div>
       </div>
 
-      <div className="p-4 sm:p-8 pt-3 grid lg:grid-cols-2 gap-5">
+      <div className="p-5 sm:p-10 lg:p-12 pt-3 grid lg:grid-cols-2 gap-5">
         <Panel title="ACTIF">
           <Group title="Actif non courant" total={totalActifImmo} co={co}>
             <Row label="Immobilisations incorporelles" value={immoIncorp} co={co} />

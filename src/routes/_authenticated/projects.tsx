@@ -210,7 +210,7 @@ function Body() {
   ) : null;
 
   return (
-    <div className="p-4 sm:p-8">
+    <div className="p-5 sm:p-10 lg:p-12">
       <MasterDetail detail={projectDetail}>
       <div className="space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">

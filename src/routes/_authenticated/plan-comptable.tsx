@@ -25,7 +25,7 @@ function PlanComptablePage() {
         title="Plan comptable"
         description="PCG Madagascar 2005 — cohérent avec les normes IAS/IFRS. Décret n°2004-272."
       />
-      <div className="p-4 sm:p-8 space-y-5">
+      <div className="p-5 sm:p-10 lg:p-12 space-y-5">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}

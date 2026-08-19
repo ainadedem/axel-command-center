@@ -142,7 +142,7 @@ function TeamPage() {
   return (
     <AppShell>
       <PageHeader title="Team" description="Everyone in the organization - the source of truth for people." />
-      <div className="p-4 sm:p-8 space-y-5">
+      <div className="p-5 sm:p-10 lg:p-12 space-y-5">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           {isAdmin ? (
             <CrudToolbar createLabel="New team member" count={total} label="people" onCreate={openCreate} />
@@ -160,7 +160,7 @@ function TeamPage() {
             </div>
           )
         ) : total === 0 ? (
-          <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4 sm:p-8 text-center text-sm text-muted-foreground">
+          <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 sm:p-10 lg:p-12 text-center text-sm text-muted-foreground">
             No people match the current filters.
           </div>
         ) : grouped ? (

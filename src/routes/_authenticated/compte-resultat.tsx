@@ -134,7 +134,7 @@ function CompteResultatBody() {
           </div>
         }
       />
-      <div className="p-4 sm:p-8 space-y-5">
+      <div className="p-5 sm:p-10 lg:p-12 space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <Stat label="Produits" value={fmtMoney(cur.totProduits, co.baseCurrency)} prev={hasPrior ? prev.totProduits : undefined} tone={cur.totProduits > 0 ? "success" : undefined} co={co} />
           <Stat label="Charges" value={fmtMoney(cur.totCharges, co.baseCurrency)} prev={hasPrior ? prev.totCharges : undefined} tone="destructive" co={co} invertTrend />
