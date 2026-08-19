@@ -633,7 +633,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
           placeholder="Search..."
           aria-label="Search transactions, invoices and clients"
           type="search"
-          className="w-full h-12 pl-12 pr-3 md:pr-14 rounded-[28px] bg-[var(--surface-container)] border-0 text-sm text-foreground placeholder:text-muted-foreground transition-[background-color,box-shadow] duration-150 ease-[cubic-bezier(0.2,0,0,1)] hover:bg-[var(--surface-container-high)] focus:outline-none focus:bg-surface focus:shadow-[var(--shadow-elevated)]"
+          className="w-full h-12 pl-12 pr-3 md:pr-14 rounded-full bg-surface border-0 text-sm text-foreground placeholder:text-muted-foreground shadow-[0_1px_2px_color-mix(in_oklab,var(--foreground)_6%,transparent),0_10px_26px_-20px_color-mix(in_oklab,var(--foreground)_40%,transparent)] transition-[background-color,box-shadow] duration-150 ease-[cubic-bezier(0.2,0,0,1)] focus:outline-none focus:shadow-[0_1px_3px_color-mix(in_oklab,var(--foreground)_10%,transparent),0_16px_36px_-20px_color-mix(in_oklab,var(--foreground)_46%,transparent)]"
         />
         <kbd className="hidden md:block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
       </form>
