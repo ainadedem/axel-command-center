@@ -1,12 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { focusSearch, useFocusRow } from "@/hooks/use-focus-row";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  usePurchaseOrders, useQuotes, useCompanies, useClients, useProjects, purchaseOrdersStore,
+  usePurchaseOrders, useQuotes, useCompanies, useClients, useProjects, useInvoices, purchaseOrdersStore,
   fmtCompact, type PurchaseOrder, type POStatus, type Currency,
   contactBelongsTo,
 } from "@/lib/mock-data";
+
 import { newId } from "@/lib/data-store";
 import { DOCUMENTS_BUCKET, uploadFile, openStoredFile } from "@/lib/storage";
 import { dbCompanyId } from "@/lib/db-sync";
@@ -75,7 +76,10 @@ function POPage() {
 function Body() {
   const { scope } = useCompany();
   const pos = usePurchaseOrders();
+  const invoices = useInvoices();
+  const navigate = useNavigate();
   const quotes = useQuotes();
+
   const companies = useCompanies();
   const clients = useClients();
   const projects = useProjects();
