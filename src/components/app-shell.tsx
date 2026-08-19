@@ -615,7 +615,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
 
 
   return (
-    <header className="h-16 shrink-0 border-b-0 material-bar px-3 sm:px-6 flex items-center gap-2 sm:gap-4 sticky top-0 z-30">
+    <header className="h-20 shrink-0 border-0 bg-transparent px-3 sm:px-8 flex items-center gap-2 sm:gap-4 sticky top-0 z-30">
       <button
         onClick={onOpenNav}
         aria-label="Open navigation"
