@@ -15,6 +15,11 @@ import { useSigner } from "@/hooks/use-signer";
 import { docLabels, docDateFormat, DOC_LANGUAGES, type DocLanguage } from "@/lib/doc-i18n";
 import { exportDocumentPdf, pdfFilename, type ExportStage } from "@/lib/pdf-export";
 import { measureHtmlPages } from "@/lib/pdf-render";
+import {
+  PAGE_PAD_MM, USABLE_H, MIN_AUTO_SCALE, EXPORT_MIN_SCALE, MAX_MANUAL_SCALE,
+  pagesForSheetHeight, nextScaleDown,
+} from "@/lib/a4-fit";
+import { Slider } from "@/components/ui/slider";
 import { describePlacement, logStampChange, logSignerChange, type DocType } from "@/lib/document-activity";
 
 
@@ -99,25 +104,24 @@ const SHEET_H = 297 * MM;
 const MIN_ZOOM = 0.35;
 const MAX_ZOOM = 2.5;
 const VIEW_KEY = "axel:doc-preview:view";
-const PAGE_PAD_MM = 22;
-const USABLE_H = (297 - PAGE_PAD_MM * 2) * MM;
 
 export type ColKey = "desc" | "qty" | "unit" | "rate" | "total";
 export type ColWidths = Partial<Record<ColKey, number>>;
-export type Density = "auto" | "compact" | "normal" | "spacious";
+export type Density = "auto" | "compact" | "normal" | "spacious" | "manual";
 
 const DEFAULT_COLS: Record<ColKey, number> = { desc: 46, qty: 8, unit: 10, rate: 18, total: 18 };
-const DENSITY_SCALE: Record<Exclude<Density, "auto">, number> = { compact: 0.85, normal: 1, spacious: 1.12 };
-const MIN_AUTO_SCALE = 0.62;
-/** Export-time floor — a little tighter than the preview's comfortable floor. */
-const EXPORT_MIN_SCALE = 0.55;
+const DENSITY_SCALE: Record<Exclude<Density, "auto" | "manual">, number> = { compact: 0.85, normal: 1, spacious: 1.12 };
+
+/** Default "force one A4 page" preference per document type. */
+const DEFAULT_FIT_ONE_PAGE: Record<DocKind, boolean> = { invoice: true, quote: true, po: true };
 
 type ZoomMode = "fit" | "actual" | "custom";
 type SavedView = {
   zoom: number; mode: ZoomMode; scrollTop: number; scrollLeft: number;
-  colWidths?: ColWidths; density?: Density; fitOnePage?: boolean;
+  colWidths?: ColWidths; density?: Density; fitOnePage?: boolean; manualScale?: number;
   showStamp?: boolean; showSignature?: boolean;
 };
+
 
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -198,10 +202,15 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
   const [colWidths, setColWidths] = useState<ColWidths>({});
   const [density, setDensity] = useState<Density>("auto");
   const [fitOnePage, setFitOnePage] = useState(true);
+  const [manualScale, setManualScale] = useState(1);
   const [autoScale, setAutoScale] = useState(1);
   const [pages, setPages] = useState(1);
+  /** Set when the exporter had to shrink the document to reach one page. */
+  const [compression, setCompression] = useState<{ scale: number; fits: boolean } | null>(null);
   const cols = useMemo(() => normalizeCols(colWidths, showUnit), [colWidths, showUnit]);
-  const scale = density === "auto" ? autoScale : DENSITY_SCALE[density];
+  const scale =
+    density === "auto" ? autoScale : density === "manual" ? manualScale : DENSITY_SCALE[density];
+
 
 
   // ---- Zoom / fit ---------------------------------------------------------
@@ -230,7 +239,10 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     setZoom(saved?.mode === "fit" || !saved ? 1 : saved.zoom);
     setColWidths(saved?.colWidths ?? {});
     setDensity(saved?.density ?? "auto");
-    setFitOnePage(saved?.fitOnePage ?? true);
+    // The one-page preference is remembered per document type.
+    setFitOnePage(saved?.fitOnePage ?? (doc?.kind ? DEFAULT_FIT_ONE_PAGE[doc.kind] : true));
+    setManualScale(saved?.manualScale ?? 1);
+    setCompression(null);
     setShowStamp(saved?.showStamp ?? company?.showStamp === true);
     setShowSignature(saved?.showSignature ?? true);
 
@@ -260,11 +272,11 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     const persist = () => saveView(kind, {
       zoom: zoomRef.current, mode,
       scrollTop: el?.scrollTop ?? 0, scrollLeft: el?.scrollLeft ?? 0,
-      colWidths, density, fitOnePage, showStamp, showSignature,
+      colWidths, density, fitOnePage, manualScale, showStamp, showSignature,
     });
     const t = setInterval(persist, 1000);
     return () => { clearInterval(t); persist(); };
-  }, [open, doc?.kind, mode, zoom, colWidths, density, fitOnePage, showStamp, showSignature]);
+  }, [open, doc?.kind, mode, zoom, colWidths, density, fitOnePage, manualScale, showStamp, showSignature]);
 
 
   const applyZoom = useCallback((next: number, anchor?: { x: number; y: number }) => {
@@ -317,6 +329,11 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     setAutoScale(1);
   }, [doc?.number, showUnit, showPayment, showClientEmail, showStatus, lang, logoScale, colWidths, density, open]);
 
+  // The compression badge describes the last export — drop it once the layout changes.
+  useEffect(() => { setCompression(null); }, [doc?.number, density, manualScale, fitOnePage, colWidths, showUnit, lang]);
+
+
+
   // Track the real (unscaled) sheet height, the page count, and step the
   // auto-fit scale down until the document fits a single A4 page.
   useLayoutEffect(() => {
@@ -325,11 +342,10 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     const measure = () => {
       const h = el.scrollHeight;
       setSheetH(Math.max(SHEET_H, el.offsetHeight));
-      const contentH = Math.max(0, h - PAGE_PAD_MM * 2 * MM);
-      const p = Math.max(1, Math.ceil((contentH - 2) / USABLE_H));
+      const p = pagesForSheetHeight(h);
       setPages(p);
       if (density === "auto" && p > 1 && autoScale > MIN_AUTO_SCALE) {
-        setAutoScale((s) => Math.max(MIN_AUTO_SCALE, Math.round((s - 0.05) * 1000) / 1000));
+        setAutoScale((s) => nextScaleDown(s, MIN_AUTO_SCALE));
       }
     };
     const id = requestAnimationFrame(measure);
@@ -430,19 +446,22 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
       let html = printableHtml();
       let usedScale = scale;
       let compressed = false;
+      let fits = true;
       if (fitOnePage) {
         setExportStage("preparing");
         // Verify against the real export pipeline; the offscreen frame can lay
         // out a hair taller than the on-screen sheet.
         let pagesNow = await measureHtmlPages(html);
         while (pagesNow > 1 && usedScale > EXPORT_MIN_SCALE) {
-          usedScale = Math.max(EXPORT_MIN_SCALE, Math.round((usedScale - 0.05) * 1000) / 1000);
+          usedScale = nextScaleDown(usedScale, EXPORT_MIN_SCALE);
           html = printableHtml(usedScale);
           pagesNow = await measureHtmlPages(html);
           compressed = true;
         }
-        if (pagesNow > 1) compressed = true;
+        fits = pagesNow <= 1;
+        if (!fits) compressed = true;
       }
+      setCompression(compressed ? { scale: usedScale, fits } : null);
       await exportDocumentPdf(html, filename, setExportStage, { onePage: fitOnePage });
       toast.success(
         compressed ? `Downloaded ${filename} — compressed to fit one page` : `Downloaded ${filename}`,
@@ -547,7 +566,27 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
           <div className="min-w-0 flex items-baseline gap-2">
             <span className="truncate text-sm font-medium">{titleFor(doc?.kind)} · {doc?.number}</span>
             <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">{pages} page{pages > 1 ? "s" : ""}</span>
+            {compression && (
+              <span
+                title={
+                  compression.fits
+                    ? `The exporter reduced the content to ${Math.round(compression.scale * 100)}% so the document fits a single A4 page. Adjust the density slider in Display to fine-tune.`
+                    : `The document still needs more than one A4 page even at the ${Math.round(compression.scale * 100)}% minimum density. Shorten the content or turn off “Force one A4 page”.`
+                }
+                className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium tabular-nums ${
+                  compression.fits
+                    ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                    : "bg-destructive/15 text-destructive"
+                }`}
+              >
+                <AlertTriangle className="h-3 w-3" />
+                {compression.fits
+                  ? `Compressed to ${Math.round(compression.scale * 100)}%`
+                  : `Still ${">"} 1 page at ${Math.round(compression.scale * 100)}%`}
+              </span>
+            )}
           </div>
+
 
           <div className="ml-auto flex items-center gap-1.5 shrink-0">
             {/* Zoom */}
@@ -723,8 +762,11 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
                     <Checkbox checked={fitOnePage} onCheckedChange={(v) => setFitOnePage(!!v)} />
                     Force one A4 page on export
                   </label>
+                  <p className="text-[10px] text-muted-foreground">
+                    Remembered for {titleFor(doc?.kind).toLowerCase()}s.
+                  </p>
                   <div className="flex flex-wrap rounded-md border border-border overflow-hidden text-[11px] w-fit">
-                    {([["Fit 1 page", "auto"], ["Compact", "compact"], ["Normal", "normal"], ["Spacious", "spacious"]] as const).map(([label, v]) => (
+                    {([["Fit 1 page", "auto"], ["Compact", "compact"], ["Normal", "normal"], ["Spacious", "spacious"], ["Manual", "manual"]] as const).map(([label, v]) => (
                       <button
                         key={v}
                         type="button"
@@ -735,6 +777,26 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
                       </button>
                     ))}
                   </div>
+
+                  {/* Manual density: fine-tune how compact the export becomes. */}
+                  <div className="space-y-1 pt-1">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className={density === "manual" ? "" : "text-muted-foreground"}>Density</span>
+                      <span className="tabular-nums text-muted-foreground">{Math.round(scale * 100)}%</span>
+                    </div>
+                    <Slider
+                      aria-label="Export density"
+                      min={Math.round(EXPORT_MIN_SCALE * 100)}
+                      max={Math.round(MAX_MANUAL_SCALE * 100)}
+                      step={1}
+                      value={[Math.round((density === "manual" ? manualScale : scale) * 100)]}
+                      onValueChange={([v]) => { setDensity("manual"); setManualScale((v ?? 100) / 100); }}
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      Dragging switches to manual density. The exporter can still compress further if “force one A4 page” is on.
+                    </p>
+                  </div>
+
                   <button
                     type="button"
                     onClick={() => setColWidths({})}

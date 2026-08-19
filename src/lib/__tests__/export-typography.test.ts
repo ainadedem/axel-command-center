@@ -45,7 +45,7 @@ describe("export typography tokens", () => {
   });
 
   it("loads both families from the same stylesheet", () => {
-    expect(EXPORT_FONT_LINKS).toContain("Plus+Jakarta+Sans");
+    expect(EXPORT_FONT_LINKS).toContain("Figtree");
     expect(EXPORT_FONT_LINKS).toContain("Inter");
   });
 });
@@ -62,7 +62,7 @@ describe("table export document", () => {
   );
 
   it("embeds the shared font links and typography tokens", () => {
-    expect(html).toContain("Plus+Jakarta+Sans");
+    expect(html).toContain("Figtree");
     expect(html).toContain(EXPORT_HEADING_FONT);
     expect(html).toContain(EXPORT_BODY_FONT);
   });
