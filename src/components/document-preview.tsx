@@ -329,6 +329,11 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     setAutoScale(1);
   }, [doc?.number, showUnit, showPayment, showClientEmail, showStatus, lang, logoScale, colWidths, density, open]);
 
+  // The compression badge describes the last export — drop it once the layout changes.
+  useEffect(() => { setCompression(null); }, [doc?.number, density, manualScale, fitOnePage, colWidths, showUnit, lang]);
+
+
+
   // Track the real (unscaled) sheet height, the page count, and step the
   // auto-fit scale down until the document fits a single A4 page.
   useLayoutEffect(() => {
