@@ -1106,27 +1106,27 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
 
   return `
     <style>
-      .doc { font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: #0f172a; font-size: ${px(12)}; line-height: 1.5; }
-      .doc h1 { font-family: "Figtree", "Inter", sans-serif; font-size: ${px(28)}; font-weight: 800; letter-spacing: -0.02em; margin: 0; color: ${accent}; }
+      .doc { font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: #0f172a; font-size: ${fi(12)}; line-height: 1.4; }
+      .doc h1 { font-family: "Figtree", "Inter", sans-serif; font-size: ${px(26)}; font-weight: 800; letter-spacing: -0.02em; margin: 0; color: ${accent}; }
 
-      .doc h2 { font-family: "Figtree", "Inter", sans-serif; font-size: ${px(10)}; text-transform: uppercase; letter-spacing: 0.12em; color: #64748b; margin: 0 0 6px; font-weight: 600; }
-      .doc .row { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
-      .doc .meta { text-align: right; font-size: ${px(11)}; }
-      .doc .pill { display: inline-block; font-family: "Figtree", "Inter", sans-serif; padding: 3px 10px; border-radius: 999px; font-size: ${px(10)}; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: white; background: ${statusColors[doc.status] ?? "#475569"}; }
-      .doc .grid { display: grid; grid-template-columns: 1fr 1fr; gap: ${px(32)}; margin-top: ${px(28)}; }
-      .doc .party div { margin-bottom: 2px; }
-      .doc .legal { margin-top: 6px; color: #64748b; font-size: ${px(10)}; }
-      .doc .taxmeta { margin-top: 8px; padding: 8px 10px; background: #f8fafc; border-left: 3px solid ${accent}; font-size: ${px(10)}; color: #475569; font-variant-numeric: tabular-nums; }
-      .doc table { width: 100%; border-collapse: collapse; margin-top: ${pxc(32)}; font-size: ${pxc(11)}; table-layout: fixed; }
-      .doc th { text-align: left; padding: ${pxc(10)} ${pxc(8)}; background: #f8fafc; border-bottom: 2px solid ${accent}; font-size: ${pxc(10)}; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; }
-      .doc td { padding: ${pxc(12)} ${pxc(8)}; border-bottom: 1px solid #e2e8f0; vertical-align: top; overflow-wrap: anywhere; word-break: break-word; }
+      .doc h2 { font-family: "Figtree", "Inter", sans-serif; font-size: ${fi(10)}; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin: 0 0 ${px(4)}; font-weight: 600; }
+      .doc .row { display: flex; justify-content: space-between; align-items: flex-start; gap: ${px(18)}; }
+      .doc .meta { text-align: right; font-size: ${fi(11)}; }
+      .doc .pill { display: inline-block; font-family: "Figtree", "Inter", sans-serif; padding: 2px 8px; border-radius: 999px; font-size: ${fi(10)}; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: white; background: ${statusColors[doc.status] ?? "#475569"}; }
+      .doc .grid { display: grid; grid-template-columns: 1fr 1fr; gap: ${px(22)}; margin-top: ${px(18)}; }
+      .doc .party div { margin-bottom: 1px; }
+      .doc .legal { margin-top: ${px(4)}; color: #64748b; font-size: ${fi(10)}; }
+      .doc .taxmeta { margin-top: ${px(6)}; padding: ${px(6)} ${px(8)}; background: #f8fafc; border-left: 3px solid ${accent}; font-size: ${fi(10)}; color: #475569; font-variant-numeric: tabular-nums; }
+      .doc table { width: 100%; border-collapse: collapse; margin-top: ${pxc(20)}; font-size: ${fc(11)}; table-layout: fixed; }
+      .doc th { text-align: left; padding: ${pxc(7)} ${pxc(6)}; background: #f8fafc; border-bottom: 2px solid ${accent}; font-size: ${fc(10)}; text-transform: uppercase; letter-spacing: 0.06em; color: #475569; }
+      .doc td { padding: ${pxc(7)} ${pxc(6)}; border-bottom: 1px solid #e2e8f0; vertical-align: top; overflow-wrap: anywhere; word-break: break-word; }
       .doc .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-      .doc .sub { color: #64748b; font-size: ${pxc(10)}; margin-top: ${pxc(3)}; }
+      .doc .sub { color: #64748b; font-size: ${fc(10)}; margin-top: ${pxc(2)}; line-height: 1.35; }
       .doc .rt { overflow-wrap: anywhere; }
-      .doc .rt ul, .doc .rt ol { margin: ${pxc(3)} 0 0; padding-left: ${pxc(16)}; }
+      .doc .rt ul, .doc .rt ol { margin: ${pxc(2)} 0 0; padding-left: ${pxc(14)}; }
       .doc .rt li { margin: ${pxc(1)} 0; break-inside: avoid; page-break-inside: avoid; }
-      .doc .rt div + div { margin-top: ${pxc(3)}; }
+      .doc .rt div + div { margin-top: ${pxc(2)}; }
       @media print {
         .doc thead { display: table-header-group; }
         .doc tfoot { display: table-footer-group; }
@@ -1135,21 +1135,22 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
         .doc .totals, .doc .paycard, .doc .notes, .doc .footer { break-inside: avoid; page-break-inside: avoid; }
       }
 
-      .doc .totals { margin-top: 20px; margin-left: auto; width: 280px; font-size: 11px; font-variant-numeric: tabular-nums; }
-      .doc .totals .line { display: flex; justify-content: space-between; padding: 6px 0; }
-      .doc .totals .grand { font-family: "Figtree", "Inter", sans-serif; border-top: 2px solid ${accent}; margin-top: 6px; padding-top: 10px; font-size: 14px; font-weight: 700; }
+      .doc .totals { margin-top: ${px(14)}; margin-left: auto; width: 280px; font-size: ${fi(11)}; font-variant-numeric: tabular-nums; }
+      .doc .totals .line { display: flex; justify-content: space-between; padding: ${px(4)} 0; }
+      .doc .totals .grand { font-family: "Figtree", "Inter", sans-serif; border-top: 2px solid ${accent}; margin-top: ${px(5)}; padding-top: ${px(7)}; font-size: ${px(13)}; font-weight: 700; }
 
-      .doc .totals .arrete { font-style: italic; color: #475569; font-size: 10px; margin: 8px 0 10px; padding-top: 6px; border-top: 1px dashed #cbd5e1; }
+      .doc .totals .arrete { font-style: italic; color: #475569; font-size: ${fi(10)}; margin: ${px(6)} 0 ${px(8)}; padding-top: ${px(5)}; border-top: 1px dashed #cbd5e1; }
       .doc .totals .due { color: ${balance > 0 ? "#dc2626" : "#16a34a"}; font-weight: 700; }
-      .doc .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #64748b; }
-      .doc .paycard { margin-top: 28px; padding: 14px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid ${accent}; font-size: 11px; }
-      .doc .paygrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
-      .doc .paycol div { margin-bottom: 2px; font-variant-numeric: tabular-nums; }
-      .doc .paytitle { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; font-weight: 700; margin-bottom: 4px; }
-      .doc .paybadge { display: inline-block; padding: 2px 8px; border-radius: 999px; background: ${accent}; color: #fff; font-size: 9px; letter-spacing: 0.06em; }
-      .doc .payref { margin-top: 10px; padding-top: 8px; border-top: 1px dashed #cbd5e1; color: #475569; font-size: 10px; }
-      .doc .bank { margin-top: 16px; padding: 12px 16px; background: #f8fafc; border-left: 3px solid ${accent}; font-size: 11px; }
-      .doc .notes { margin-top: 16px; padding: 12px 16px; background: #fffaf0; border-left: 3px solid #ca8a04; font-size: 11px; color: #475569; }
+      .doc .footer { margin-top: ${px(22)}; padding-top: ${px(12)}; border-top: 1px solid #e2e8f0; font-size: ${fi(10)}; color: #64748b; }
+      .doc .paycard { margin-top: ${px(16)}; padding: ${px(10)} ${px(12)}; background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid ${accent}; font-size: ${fi(11)}; }
+      .doc .paygrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: ${px(18)}; }
+      .doc .paycol div { margin-bottom: 1px; font-variant-numeric: tabular-nums; }
+      .doc .paytitle { font-size: ${fi(10)}; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; font-weight: 700; margin-bottom: ${px(3)}; }
+      .doc .paybadge { display: inline-block; padding: 2px 8px; border-radius: 999px; background: ${accent}; color: #fff; font-size: ${fi(9.5)}; letter-spacing: 0.06em; }
+      .doc .payref { margin-top: ${px(7)}; padding-top: ${px(6)}; border-top: 1px dashed #cbd5e1; color: #475569; font-size: ${fi(10)}; }
+      .doc .bank { margin-top: ${px(12)}; padding: ${px(9)} ${px(12)}; background: #f8fafc; border-left: 3px solid ${accent}; font-size: ${fi(11)}; }
+      .doc .notes { margin-top: ${px(12)}; padding: ${px(9)} ${px(12)}; background: #fffaf0; border-left: 3px solid #ca8a04; font-size: ${fi(11)}; color: #475569; }
+
     </style>
     <div class="doc" style="position:relative;">
       <div class="row">
