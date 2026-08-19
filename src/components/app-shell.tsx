@@ -5,6 +5,7 @@ import {
   ChevronDown, Check, LogOut, Target, UserCog, Handshake,
   BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList, RefreshCw,
   Sparkles, CreditCard, Repeat, Wallet2, ExternalLink, Info, ShieldCheck, Menu, X, Undo2, Redo2,
+  PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -258,20 +259,34 @@ function useVisibleSections() {
     .filter((section) => section.items.length > 0);
 }
 
-function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarInner({ onNavigate, onCollapse }: { onNavigate?: () => void; onCollapse?: () => void }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const visibleSections = useVisibleSections();
 
   return (
     <>
-      <div className="px-5 py-5 flex flex-col gap-1.5">
-        <AxelWordmark title="AXEL Business Platform" className="h-7 w-auto self-start text-foreground" />
-        <span className="text-[11px] font-medium tracking-wide text-foreground/80">The Axiom Winford Group</span>
+      <div className="px-5 py-5 flex items-start justify-between gap-2">
+        <div className="flex flex-col gap-1.5 min-w-0">
+          <AxelWordmark title="AXEL Business Platform" className="h-7 w-auto self-start text-foreground" />
+          <span className="text-[11px] font-medium tracking-wide text-foreground/80">The Axiom Winford Group</span>
+        </div>
+        {onCollapse && (
+          <button
+            type="button"
+            onClick={onCollapse}
+            aria-label="Collapse menu to icons"
+            title="Collapse menu"
+            className="focus-ring h-9 w-9 shrink-0 grid place-items-center rounded-full text-foreground/60 hover:bg-[var(--surface-container)] hover:text-foreground transition-colors duration-150"
+          >
+            <PanelLeftClose className="h-[18px] w-[18px]" aria-hidden="true" />
+          </button>
+        )}
       </div>
       <div className="px-3 pb-3">
         <CompanySwitcher />
       </div>
       <nav aria-label="Main" className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
+
         {visibleSections.map((section) => (
           <SidebarSection key={section.label} section={section} pathname={pathname} onNavigate={onNavigate} />
         ))}
@@ -290,7 +305,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 /** Thin icon rail with a floating flyout of labelled links per section. */
-function RailNav() {
+function RailNav({ onExpand }: { onExpand?: () => void }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const visibleSections = useVisibleSections();
   const { profile, user } = useAuth();
@@ -314,8 +329,21 @@ function RailNav() {
       <Link to="/" aria-label="Axel home" className="focus-ring h-10 w-10 grid place-items-center rounded-full">
         <AxelBraceMark title="AXEL" className="h-6 w-6 text-foreground" />
       </Link>
+      {onExpand && (
+        <button
+          type="button"
+          onClick={onExpand}
+          aria-label="Expand menu"
+          title="Expand menu"
+          className="focus-ring h-9 w-9 grid place-items-center rounded-full text-foreground/60 hover:bg-[var(--surface-container)] hover:text-foreground transition-colors duration-150"
+        >
+          <PanelLeftOpen className="h-[18px] w-[18px]" aria-hidden="true" />
+        </button>
+      )}
       <WorkspaceRailButton />
-      <nav aria-label="Main" className="flex-1 mt-2 flex flex-col items-center gap-1 overflow-y-auto overflow-x-visible">
+      {/* No overflow clipping here: horizontal clipping would hide the section flyouts. */}
+      <nav aria-label="Main" className="flex-1 mt-2 flex flex-col items-center gap-1">
+
         {visibleSections.map((section) => {
           const SectionIcon = section.icon;
           const active = section.items.some(
@@ -403,7 +431,35 @@ function RailNav() {
   );
 }
 
+const NAV_MODE_KEY = "axel.navMode";
+
+/** Desktop navigation: labelled sidebar by default, slim icon rail on demand. */
+function DesktopNav() {
+  const [mode, setMode] = useState<"expanded" | "rail">("expanded");
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(NAV_MODE_KEY);
+      if (saved === "rail" || saved === "expanded") setMode(saved);
+    } catch { /* storage unavailable */ }
+  }, []);
+
+  const change = (next: "expanded" | "rail") => {
+    setMode(next);
+    try { window.localStorage.setItem(NAV_MODE_KEY, next); } catch { /* ignore */ }
+  };
+
+  if (mode === "rail") return <RailNav onExpand={() => change("expanded")} />;
+
+  return (
+    <aside className="hidden lg:flex w-[16.5rem] shrink-0 flex-col py-1 bg-transparent">
+      <SidebarInner onCollapse={() => change("rail")} />
+    </aside>
+  );
+}
+
 /** Workspace switcher condensed to a rail-sized mark. */
+
 function WorkspaceRailButton() {
   const { scope, setScope, label, accessibleCompanies: companies, isGroupAdmin } = useCompany();
   const [open, setOpen] = useState(false);
@@ -865,7 +921,7 @@ function AppShellFrame({ children }: { children: ReactNode }) {
       <MobileNav open={navOpen} onClose={() => setNavOpen(false)} />
 
       <div className="relative h-dvh flex overflow-hidden">
-      <RailNav />
+      <DesktopNav />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar onOpenNav={() => setNavOpen(true)} />
         <main id="main-content" tabIndex={-1} className="relative flex-1 overflow-y-auto focus:outline-none">
