@@ -197,10 +197,15 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
   const [colWidths, setColWidths] = useState<ColWidths>({});
   const [density, setDensity] = useState<Density>("auto");
   const [fitOnePage, setFitOnePage] = useState(true);
+  const [manualScale, setManualScale] = useState(1);
   const [autoScale, setAutoScale] = useState(1);
   const [pages, setPages] = useState(1);
+  /** Set when the exporter had to shrink the document to reach one page. */
+  const [compression, setCompression] = useState<{ scale: number; fits: boolean } | null>(null);
   const cols = useMemo(() => normalizeCols(colWidths, showUnit), [colWidths, showUnit]);
-  const scale = density === "auto" ? autoScale : DENSITY_SCALE[density];
+  const scale =
+    density === "auto" ? autoScale : density === "manual" ? manualScale : DENSITY_SCALE[density];
+
 
 
   // ---- Zoom / fit ---------------------------------------------------------
