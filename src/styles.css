@@ -1304,3 +1304,39 @@ input[type="number"] {
 .panel table tbody > tr {
   border-color: color-mix(in oklab, var(--foreground) 5%, transparent);
 }
+
+/* Calm data panels: air inside the panel, quiet rows, hairline head rule. */
+@media (min-width: 768px) {
+  .panel > .stacked-table {
+    padding: 0.5rem 0.75rem 0.75rem;
+  }
+}
+
+.panel table thead tr {
+  border-color: color-mix(in oklab, var(--foreground) 7%, transparent) !important;
+}
+
+.panel table tbody > tr {
+  transition: background-color 150ms var(--ease-out-soft);
+}
+.panel table tbody > tr:hover {
+  background: color-mix(in oklab, var(--foreground) 3.5%, transparent);
+}
+.panel table tbody > tr[data-selected="true"],
+.panel table tbody > tr[aria-selected="true"] {
+  background: color-mix(in oklab, var(--primary) 7%, transparent);
+}
+.panel table tbody > tr > td:first-child {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+.panel table tbody > tr > td:last-child {
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel table tbody > tr {
+    transition: none !important;
+  }
+}
