@@ -161,11 +161,45 @@ export async function renderHtmlToPdfBlob(html: string, opts: RenderOptions = {}
     const pxRatio = canvas.height / contentHeight; // canvas px per CSS px
     // Trailing whitespace would otherwise produce an extra empty page.
     const usableHeight = trimTrailingWhitespace(canvas, pxPerPage);
+
+    // Single-page mode: place the whole capture on one sheet, scaled to fit.
+    if (opts.maxPages === 1) {
+      const inkHeight = Math.min(canvas.height, usableHeight);
+      const widthMm = mm.w;
+      let heightMm = (inkHeight / canvas.width) * mm.w;
+      let xMm = 0;
+      if (heightMm > mm.h) {
+        const k = mm.h / heightMm;
+        heightMm = mm.h;
+        xMm = (mm.w - widthMm * k) / 2;
+      }
+      const slice = document.createElement("canvas");
+      slice.width = canvas.width;
+      slice.height = inkHeight;
+      const ctx = slice.getContext("2d");
+      if (!ctx) throw new Error("Canvas is unavailable in this browser");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, slice.width, slice.height);
+      ctx.drawImage(canvas, 0, 0, canvas.width, inkHeight, 0, 0, canvas.width, inkHeight);
+      pdf.addImage(
+        slice.toDataURL("image/jpeg", 0.95),
+        "JPEG",
+        xMm,
+        0,
+        widthMm * (heightMm === mm.h ? mm.h / ((inkHeight / canvas.width) * mm.w) : 1),
+        heightMm,
+        undefined,
+        "FAST",
+      );
+      return pdf.output("blob");
+    }
+
     const cuts = computeCuts(
       usableHeight,
       pxPerPage,
       opts.avoidBreakSelector ? collectBoundaries(doc, opts.avoidBreakSelector, pxRatio) : [],
     );
+
 
     let pageIndex = 0;
     for (let i = 0; i < cuts.length; i++) {
