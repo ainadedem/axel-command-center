@@ -441,19 +441,22 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
       let html = printableHtml();
       let usedScale = scale;
       let compressed = false;
+      let fits = true;
       if (fitOnePage) {
         setExportStage("preparing");
         // Verify against the real export pipeline; the offscreen frame can lay
         // out a hair taller than the on-screen sheet.
         let pagesNow = await measureHtmlPages(html);
         while (pagesNow > 1 && usedScale > EXPORT_MIN_SCALE) {
-          usedScale = Math.max(EXPORT_MIN_SCALE, Math.round((usedScale - 0.05) * 1000) / 1000);
+          usedScale = nextScaleDown(usedScale, EXPORT_MIN_SCALE);
           html = printableHtml(usedScale);
           pagesNow = await measureHtmlPages(html);
           compressed = true;
         }
-        if (pagesNow > 1) compressed = true;
+        fits = pagesNow <= 1;
+        if (!fits) compressed = true;
       }
+      setCompression(compressed ? { scale: usedScale, fits } : null);
       await exportDocumentPdf(html, filename, setExportStage, { onePage: fitOnePage });
       toast.success(
         compressed ? `Downloaded ${filename} — compressed to fit one page` : `Downloaded ${filename}`,
