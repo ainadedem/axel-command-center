@@ -757,8 +757,11 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
                     <Checkbox checked={fitOnePage} onCheckedChange={(v) => setFitOnePage(!!v)} />
                     Force one A4 page on export
                   </label>
+                  <p className="text-[10px] text-muted-foreground">
+                    Remembered for {titleFor(doc?.kind).toLowerCase()}s.
+                  </p>
                   <div className="flex flex-wrap rounded-md border border-border overflow-hidden text-[11px] w-fit">
-                    {([["Fit 1 page", "auto"], ["Compact", "compact"], ["Normal", "normal"], ["Spacious", "spacious"]] as const).map(([label, v]) => (
+                    {([["Fit 1 page", "auto"], ["Compact", "compact"], ["Normal", "normal"], ["Spacious", "spacious"], ["Manual", "manual"]] as const).map(([label, v]) => (
                       <button
                         key={v}
                         type="button"
@@ -769,6 +772,26 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
                       </button>
                     ))}
                   </div>
+
+                  {/* Manual density: fine-tune how compact the export becomes. */}
+                  <div className="space-y-1 pt-1">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className={density === "manual" ? "" : "text-muted-foreground"}>Density</span>
+                      <span className="tabular-nums text-muted-foreground">{Math.round(scale * 100)}%</span>
+                    </div>
+                    <Slider
+                      aria-label="Export density"
+                      min={Math.round(EXPORT_MIN_SCALE * 100)}
+                      max={Math.round(MAX_MANUAL_SCALE * 100)}
+                      step={1}
+                      value={[Math.round((density === "manual" ? manualScale : scale) * 100)]}
+                      onValueChange={([v]) => { setDensity("manual"); setManualScale((v ?? 100) / 100); }}
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      Dragging switches to manual density. The exporter can still compress further if “force one A4 page” is on.
+                    </p>
+                  </div>
+
                   <button
                     type="button"
                     onClick={() => setColWidths({})}
