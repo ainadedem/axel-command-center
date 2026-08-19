@@ -24,7 +24,7 @@ type Props<T> = {
 };
 
 function chipBase() {
-  return "inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-xs border border-border bg-surface hover:bg-surface-elevated text-muted-foreground hover:text-foreground transition";
+  return "inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-xs border-0 bg-surface shadow-[0_1px_2px_color-mix(in_oklab,var(--foreground)_6%,transparent)] hover:bg-surface-elevated text-muted-foreground hover:text-foreground transition-all duration-150";
 }
 
 export function DataToolbar<T>({ view, items, className }: Props<T>) {
@@ -63,7 +63,7 @@ export function DataToolbar<T>({ view, items, className }: Props<T>) {
       {/* Sort */}
       <Popover>
         <PopoverTrigger asChild>
-          <button className={cn(chipBase(), sortField && "text-foreground border-primary/40 bg-primary/5")}>
+          <button className={cn(chipBase(), sortField && "text-foreground bg-primary/8")}>
             <ArrowDownUp className="h-3.5 w-3.5" />
             <span>Sort</span>
             {sortField && (
@@ -112,7 +112,7 @@ export function DataToolbar<T>({ view, items, className }: Props<T>) {
       {groupableFields.length > 0 && (
         <Popover>
           <PopoverTrigger asChild>
-            <button className={cn(chipBase(), groupField && "text-foreground border-primary/40 bg-primary/5")}>
+            <button className={cn(chipBase(), groupField && "text-foreground bg-primary/8")}>
               <Group className="h-3.5 w-3.5" />
               <span>Group</span>
               {groupField && <span className="text-foreground font-medium ml-1">{groupField.label}</span>}
@@ -147,7 +147,7 @@ export function DataToolbar<T>({ view, items, className }: Props<T>) {
       {/* Filter */}
       <Popover>
         <PopoverTrigger asChild>
-          <button className={cn(chipBase(), activeFilterCount > 0 && "text-foreground border-primary/40 bg-primary/5")}>
+          <button className={cn(chipBase(), activeFilterCount > 0 && "text-foreground bg-primary/8")}>
             <Filter className="h-3.5 w-3.5" />
             <span>Filter</span>
             {activeFilterCount > 0 && (
