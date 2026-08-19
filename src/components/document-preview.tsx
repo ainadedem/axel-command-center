@@ -933,7 +933,12 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
   const unitVisible = showUnit !== false;
   const w = normalizeCols(cols, unitVisible);
   const s = clamp(scale ?? 1, 0.5, 1.4);
-  const px = (n: number) => `${Math.round(n * s * 100) / 100}px`;
+  // Two tiers: the company identity keeps a readable floor, the line-item
+  // content absorbs most of the compression.
+  const si = identityScale(s);
+  const sc = contentScale(s);
+  const px = (n: number) => `${Math.round(n * si * 100) / 100}px`;
+  const pxc = (n: number) => `${Math.round(n * sc * 100) / 100}px`;
 
 
 
