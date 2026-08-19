@@ -15,6 +15,8 @@ import { newId } from "@/lib/data-store";
 import { useRowWindow, SpacerRow, useScrollRef } from "@/components/virtual-rows";
 import { LiveAmount, RowSaveState } from "@/components/save-state";
 import { docTotals, lineNet } from "@/lib/discounts";
+import { defaultTaxRate } from "@/lib/vat";
+
 import { inScope, useCompany } from "@/lib/company-context";
 import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
 import { format, parseISO, differenceInDays } from "date-fns";
