@@ -1381,7 +1381,7 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                           </div>
                         </div>
                       </td>
-                      <td className="px-2 py-2 text-right font-tnum">{fmtAmount(totals.tax, currency)}</td>
+                      <td className="px-2 py-2 text-right font-tnum">{fmtAmount(totals.taxAmount, currency)}</td>
                       <td />
                     </tr>
                     <tr className="border-t border-border bg-surface-elevated/40">
