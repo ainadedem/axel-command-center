@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { focusSearch, useFocusRow, useJumpToRecord } from "@/hooks/use-focus-row";
+import { focusSearch, useFocusRow, useJumpToRecord, type FocusSearch } from "@/hooks/use-focus-row";
 import { BankAccountSelect } from "@/components/bank-account-select";
 import { defaultBankAccount } from "@/lib/payment-details";
 import { AppShell } from "@/components/app-shell";
