@@ -517,8 +517,8 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl p-0 gap-0 max-h-[90vh] overflow-hidden flex flex-col">
       <DialogContent className="max-w-[min(96vw,1180px)] p-0 gap-0 h-[94dvh] max-h-[94dvh] overflow-hidden flex flex-col">
+
         <div className="shrink-0 flex items-center gap-3 border-b border-border px-4 py-2.5">
           <div className="min-w-0 flex items-baseline gap-2">
             <span className="truncate text-sm font-medium">{titleFor(doc?.kind)} · {doc?.number}</span>
