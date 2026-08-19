@@ -939,6 +939,16 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
   const sc = contentScale(s);
   const px = (n: number) => `${Math.round(n * si * 100) / 100}px`;
   const pxc = (n: number) => `${Math.round(n * sc * 100) / 100}px`;
+  // Readability floor/ceiling for running text: 7pt … 9pt (9.33px … 12px).
+  const FONT_MIN_PX = 9.33;
+  const FONT_MAX_PX = 12;
+  const fsz = (n: number, k: number) =>
+    `${Math.round(clamp(n * k, FONT_MIN_PX, FONT_MAX_PX) * 100) / 100}px`;
+  /** Identity-tier text size, clamped to the 7–9pt readability band. */
+  const fi = (n: number) => fsz(n, si);
+  /** Content-tier text size, clamped to the 7–9pt readability band. */
+  const fc = (n: number) => fsz(n, sc);
+
 
 
 
