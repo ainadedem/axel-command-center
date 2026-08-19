@@ -158,6 +158,15 @@ const clientFromDb = (r: Record<string, unknown>): Client => ({
   nif: (r.nif as string) ?? undefined,
   stat: (r.stat as string) ?? undefined,
   rcs: (r.rcs as string) ?? undefined,
+  categories: (r.categories as Client["categories"]) ?? undefined,
+});
+
+/**
+ * Client banking details live in a separate, finance-restricted table so that
+ * sales users (who legitimately need the client record) never receive bank
+ * account numbers, IBANs or mobile-money numbers.
+ */
+const clientBankFromDb = (r: Record<string, unknown>): Partial<Client> => ({
   bankName: (r.bank_name as string) ?? undefined,
   bankAccount: (r.bank_account as string) ?? undefined,
   bankSwift: (r.bank_swift as string) ?? undefined,
@@ -172,8 +181,38 @@ const clientFromDb = (r: Record<string, unknown>): Client => ({
   mobileProvider: (r.mobile_provider as string) ?? undefined,
   mobileNumber: (r.mobile_number as string) ?? undefined,
   mobileName: (r.mobile_name as string) ?? undefined,
-  categories: (r.categories as Client["categories"]) ?? undefined,
 });
+
+const hasBankData = (c: Client) =>
+  Boolean(
+    c.bankName || c.bankAccount || c.bankSwift || c.bankHolder || c.bankCode ||
+    c.branchCode || c.accountNumber || c.ribKey || c.iban ||
+    c.mobileProvider || c.mobileNumber || c.mobileName || c.intlEnabled || c.mobileEnabled,
+  );
+
+async function upsertClientBankDetails(clientId: string, companyId: string, c: Client) {
+  if (!hasBankData(c)) return;
+  const { error } = await supabase.from("client_bank_details").upsert({
+    client_id: clientId,
+    company_id: companyId,
+    bank_name: c.bankName ?? null,
+    bank_account: c.bankAccount ?? null,
+    bank_swift: c.bankSwift ?? null,
+    bank_holder: c.bankHolder ?? null,
+    bank_code: c.bankCode ?? null,
+    branch_code: c.branchCode ?? null,
+    account_number: c.accountNumber ?? null,
+    rib_key: c.ribKey ?? null,
+    iban: c.iban ?? null,
+    intl_enabled: c.intlEnabled ?? false,
+    mobile_enabled: c.mobileEnabled ?? false,
+    mobile_provider: c.mobileProvider ?? null,
+    mobile_number: c.mobileNumber ?? null,
+    mobile_name: c.mobileName ?? null,
+  }, { onConflict: "client_id" });
+  // Users without finance access simply cannot store banking data.
+  if (error) console.warn("[db-sync] client bank details not saved", error.message);
+}
 
 /** Insert or update a client in DB. Returns the DB uuid if persisted. */
 export async function upsertClient(c: Client): Promise<string | null> {
@@ -199,6 +238,7 @@ export async function upsertClient(c: Client): Promise<string | null> {
     });
     return null;
   }
+  await upsertClientBankDetails(data.id, row.company_id, c);
   return data.id;
 }
 
