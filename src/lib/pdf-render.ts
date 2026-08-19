@@ -32,6 +32,13 @@ export type RenderOptions = {
    */
   avoidBreakSelector?: string;
   /**
+   * Hard ceiling on the number of emitted pages. With `1`, the whole capture
+   * is placed on a single sheet, scaled down proportionally when needed, so a
+   * "fit one page" export can never spill onto a second page.
+   */
+  maxPages?: number;
+  /**
+
    * Hard ceiling for web-font fetching / loading. When it elapses the export
    * continues with the system fallback stack instead of hanging.
    */
