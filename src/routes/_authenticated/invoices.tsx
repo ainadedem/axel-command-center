@@ -100,7 +100,14 @@ const INVOICE_STATUSES = ["draft", "sent", "partial", "paid", "overdue", "cancel
 const poStateOf = (i: Invoice): PoState => (i.poId ? "linked" : i.poWaived ? "waived" : "missing");
 
 
-export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage, validateSearch: focusSearch });
+/** `focus`/`aging` deep links plus `fromPo` (start a new invoice from a PO). */
+const invoiceSearch = (search: Record<string, unknown>) => ({
+  ...focusSearch(search),
+  fromPo: typeof search.fromPo === "string" && search.fromPo ? search.fromPo : undefined,
+});
+
+export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage, validateSearch: invoiceSearch });
+
 
 function InvoicesPage() {
   useFocusRow(Route.useSearch().focus);
