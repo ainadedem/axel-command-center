@@ -1495,7 +1495,21 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
                 ))}
               </div>
             </div>
+            {lines.length === 0 && (
+              <div>
+                <Label>Tax %</Label>
+                <div className="relative">
+                  <Input
+                    type="number" min={0} step={0.01} className="pr-8"
+                    value={taxRate}
+                    onChange={(e) => setTaxRate(Number(e.target.value))}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">%</span>
+                </div>
+              </div>
+            )}
           </div>
+
         </div>
         </div>
         <DialogFooter className="shrink-0 border-t border-border px-5 py-3 gap-2">
