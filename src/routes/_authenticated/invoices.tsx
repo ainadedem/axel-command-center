@@ -1413,10 +1413,12 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
             </div>
           </div>
         </div>
-        <DialogFooter>
+        </div>
+        <DialogFooter className="shrink-0 border-t border-border px-5 py-3 gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={isSubmitting || blocked}>{editing ? "Save" : "Create"}</Button>
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );
