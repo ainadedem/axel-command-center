@@ -33,6 +33,7 @@ import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightS
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
+import { MasterDetail, DetailPanel, DetailSection, DetailField } from "@/components/master-detail";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 
 const PO_COLUMNS: ColumnDef[] = [
@@ -102,9 +103,39 @@ function Body() {
   const groups = view.apply(baseList);
   const list = groups.flatMap((g) => g.items);
   const cp = useColumnPrefs("purchase-orders", PO_COLUMNS);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = selectedId ? list.find((p) => p.id === selectedId) ?? null : null;
+  const detail = selected ? (
+    <DetailPanel
+      eyebrow={selected.number}
+      title={clients.find((c) => c.id === selected.clientId)?.name ?? "Purchase order"}
+      subtitle={fmtCompact(selected.amount, selected.currency)}
+      onClose={() => setSelectedId(null)}
+      actions={
+        <>
+          <Button size="sm" variant="secondary" onClick={() => { setEditing(selected); setOpen(true); }}>Edit</Button>
+          {selected.documentUrl && (
+            <Button size="sm" variant="ghost" onClick={() => openStoredFile(selected.documentUrl)}>Open file</Button>
+          )}
+          <Button size="sm" variant="ghost" onClick={() => setHistoryOf(selected)}>History</Button>
+        </>
+      }
+    >
+      <DetailSection>
+        <DetailField label="Status" value={<StatusBadge status={selected.status} />} />
+        <DetailField label="Client ref" value={selected.clientReference || "—"} />
+        <DetailField label="Project" value={projects.find((pr) => pr.id === selected.projectId)?.name ?? "—"} />
+        <DetailField label="Company" value={companies.find((c) => c.id === selected.companyId)?.name ?? "—"} />
+        <DetailField label="Issued" value={format(parseISO(selected.issueDate), "MMM d, yyyy")} />
+        <DetailField label="Amount" value={fmtCompact(selected.amount, selected.currency)} mono />
+        <DetailField label="Document" value={selected.documentName ?? (selected.documentUrl ? "PO file" : "Missing")} />
+        <DetailField label="Owner" value={ownerName(selected.createdBy)} />
+      </DetailSection>
+    </DetailPanel>
+  ) : null;
 
   return (
-    <div className="p-4 sm:p-8 space-y-5">
+    <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <CrudToolbar createLabel="New PO" count={list.length} label="purchase orders" onCreate={openCreate} />
         <div className="flex items-center gap-2 flex-wrap">
@@ -116,6 +147,7 @@ function Body() {
       {list.length === 0 ? (
         <EmptyState label="purchase orders" onCreate={openCreate} />
       ) : (
+        <MasterDetail detail={detail}>
         <ListTableShell>
           <ListTable>
             <thead>
@@ -145,7 +177,7 @@ function Body() {
                 const q = po.quoteId ? quotes.find((x) => x.id === po.quoteId) : undefined;
                 return (
                   <Fragment key={po.id}>
-                  <tr data-focus-id={po.id} className="hover:bg-surface-elevated/40">
+                  <tr data-focus-id={po.id} data-selected={selectedId === po.id ? "true" : undefined} onClick={() => setSelectedId(po.id)} className="cursor-pointer">
 <ListRowActions colSpan={cp.count}>
                     {po.documentUrl && (
                       <RowAction icon={<Eye className="h-3.5 w-3.5" />} label="Open file" onClick={() => openStoredFile(po.documentUrl)} title="Open client PO document" />
@@ -191,6 +223,7 @@ function Body() {
             </tbody>
           </ListTable>
         </ListTableShell>
+        </MasterDetail>
 
       )}
       <PODialog open={open} onOpenChange={setOpen} editing={editing} />

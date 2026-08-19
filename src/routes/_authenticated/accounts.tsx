@@ -97,7 +97,7 @@ function Body() {
   const cp = useColumnPrefs("accounts", ACCOUNT_COLUMNS);
 
   return (
-    <div className="p-4 sm:p-8 space-y-5">
+    <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <CrudToolbar createLabel="New account" count={list.length} label="accounts" onCreate={openCreate} />
         <div className="flex items-center gap-2 flex-wrap">

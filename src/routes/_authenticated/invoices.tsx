@@ -577,7 +577,7 @@ function Body() {
   ) : null;
 
   return (
-    <div ref={pageRef} className="p-4 sm:p-8">
+    <div ref={pageRef} className="p-5 sm:p-10 lg:p-12">
       <MasterDetail detail={detail}>
       <div className="space-y-4">
       {/* Single page action row */}

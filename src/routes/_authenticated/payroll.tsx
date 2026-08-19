@@ -39,7 +39,7 @@ function PayrollPage() {
 function Body() {
   const [tab, setTab] = useState<"register" | "runs">("runs");
   return (
-    <div className="p-4 sm:p-8 space-y-5">
+    <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
       <div className="inline-flex rounded-md border border-border bg-surface p-0.5 text-xs">
         <button
           onClick={() => setTab("runs")}

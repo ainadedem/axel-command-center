@@ -100,7 +100,7 @@ function Body() {
   const onEdit = (o: Opportunity) => { setEditing(o); setOpen(true); };
 
   return (
-    <div className="p-4 sm:p-8 space-y-6">
+    <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
       <CrudToolbar createLabel="New opportunity" count={list.length} label="opportunities" onCreate={openCreate} />
 
       {list.length === 0 ? (

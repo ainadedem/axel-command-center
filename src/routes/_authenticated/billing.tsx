@@ -114,7 +114,7 @@ function Body() {
     : "MGA";
 
   return (
-    <div className="p-4 sm:p-8 space-y-5">
+    <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Kpi label="Active schedules" value={String(list.filter((b) => b.active).length)} mono />
         <Kpi label="MRR equivalent" value={fmtAmount(totals.mrr, defaultCurrency)} accent="text-primary" />

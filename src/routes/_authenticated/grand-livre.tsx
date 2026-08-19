@@ -141,7 +141,7 @@ function Body() {
   };
 
   return (
-    <div className="p-4 sm:p-8 space-y-4">
+    <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
       {/* Toolbar */}
       <div className="flex items-center gap-3 flex-wrap">
         <PeriodPicker value={period} onChange={setPeriod} />

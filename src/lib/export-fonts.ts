@@ -2,7 +2,7 @@
  * Shared typography contract for every export surface (PDF + printable HTML).
  *
  * All printable documents must resolve to the app pairing:
- *   headings / table headers -> Plus Jakarta Sans
+ *   headings / table headers -> Figtree
  *   body / cells / forms / chart text -> Inter
  *
  * The same constants are asserted by the typography regression check
@@ -10,11 +10,11 @@
  * the pairing fails the test instead of silently printing Helvetica.
  */
 
-export const EXPORT_HEADING_FONT = `'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif`;
+export const EXPORT_HEADING_FONT = `'Figtree', 'Inter', system-ui, -apple-system, sans-serif`;
 export const EXPORT_BODY_FONT = `'Inter', system-ui, -apple-system, sans-serif`;
 
 export const EXPORT_FONT_CSS_URL =
-  "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap";
+  "https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap";
 
 /** `<head>` markup every export document embeds (network path / fallback). */
 export const EXPORT_FONT_LINKS = [
@@ -42,9 +42,9 @@ export const EXPORT_FONT_FACES = [
   '500 12px "Inter"',
   '600 12px "Inter"',
   '700 12px "Inter"',
-  '600 12px "Plus Jakarta Sans"',
-  '700 12px "Plus Jakarta Sans"',
-  '800 28px "Plus Jakarta Sans"',
+  '600 12px "Figtree"',
+  '700 12px "Figtree"',
+  '800 28px "Figtree"',
 ];
 
 /* ------------------------------------------------------------------

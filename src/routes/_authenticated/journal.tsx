@@ -48,7 +48,7 @@ function Body() {
   const openCreate = () => { setEditing(null); setOpen(true); };
 
   return (
-    <div className="p-4 sm:p-8 space-y-5">
+    <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2 flex-wrap">
           <button onClick={() => setJournalFilter("ALL")} className={`h-8 px-3 rounded-md text-xs border ${journalFilter === "ALL" ? "bg-primary text-primary-foreground border-primary" : "bg-surface border-border"}`}>

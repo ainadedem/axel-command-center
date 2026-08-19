@@ -119,7 +119,7 @@ function Body() {
   const openCreate = () => { setEditing(null); setOpen(true); };
 
   return (
-    <div className="p-4 sm:p-8 space-y-5">
+    <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
       {q && (
         <div className="text-xs text-muted-foreground">
           Filtered by <span className="text-foreground font-medium">"{q}"</span> · {list.length} match{list.length === 1 ? "" : "es"}

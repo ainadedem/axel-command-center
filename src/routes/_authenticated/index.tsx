@@ -47,7 +47,7 @@ function DashboardBody() {
 
   if (!bootstrapReady || accessLoading || dataLoading) {
     return (
-      <div className="p-4 sm:p-8 space-y-6">
+      <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 sm:gap-6">
           {Array.from({ length: 4 }).map((_, idx) => (
             <div key={idx} className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 space-y-3">
@@ -282,7 +282,7 @@ function DashboardBody() {
   const runwayAddedMonths = runwayWithPipeline - runwayMonths;
 
   return (
-    <div className="p-4 sm:p-8 space-y-6">
+    <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
       {/* Hero KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 sm:gap-6">
         <KpiCard

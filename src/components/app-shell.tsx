@@ -925,7 +925,7 @@ function AppShellFrame({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar onOpenNav={() => setNavOpen(true)} />
         <main id="main-content" tabIndex={-1} className="relative flex-1 overflow-y-auto focus:outline-none">
-          <div key={pathname} className="relative rise-in">{children}</div>
+          <div key={pathname} className="relative rise-in mx-auto w-full max-w-[1600px]">{children}</div>
         </main>
 
 
