@@ -857,22 +857,23 @@ function AppShellFrame({ children }: { children: ReactNode }) {
 
 
   return (
-    <div className="h-dvh bg-background text-foreground p-0">
+    <div className="relative h-dvh bg-background text-foreground p-0 overflow-hidden">
+      {/* Ambient corner wash — atmosphere only, never on content. */}
+      <div className="canvas-wash" aria-hidden="true" />
       <a href="#main-content" className="skip-link">Skip to content</a>
       <TableStackLabeler />
       <MobileNav open={navOpen} onClose={() => setNavOpen(false)} />
 
-      <div className="h-dvh flex overflow-hidden bg-background">
-      <Sidebar />
+      <div className="relative h-dvh flex overflow-hidden">
+      <RailNav />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar onOpenNav={() => setNavOpen(true)} />
         <main id="main-content" tabIndex={-1} className="relative flex-1 overflow-y-auto focus:outline-none">
-          <div className="absolute inset-0 pointer-events-none [background:var(--gradient-glow)] opacity-60" />
           <div key={pathname} className="relative rise-in">{children}</div>
         </main>
 
 
-        <footer className="shrink-0 border-t border-border/70 material-bar px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+        <footer className="shrink-0 px-5 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
           <span>© {new Date().getFullYear()} AXEL by WeAxiom</span>
           <div className="flex items-center gap-4">
             <Link to="/about" className="hover:text-foreground transition underline-grow">About</Link>
@@ -885,6 +886,7 @@ function AppShellFrame({ children }: { children: ReactNode }) {
       </div>
       </div>
     </div>
+
 
   );
 }
