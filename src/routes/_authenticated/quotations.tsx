@@ -743,9 +743,13 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>{editing ? "Edit quote" : "New quote"}</DialogTitle></DialogHeader>
+      <DialogContent className="max-w-[min(96vw,1040px)] p-0 gap-0 max-h-[92dvh] overflow-hidden flex flex-col form-compact">
+        <DialogHeader className="shrink-0 border-b border-border px-5 py-3">
+          <DialogTitle className="text-base">{editing ? "Edit quote" : "New quote"}</DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
         <div className="space-y-4 py-2">
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Number</Label>
