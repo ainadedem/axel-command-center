@@ -1,6 +1,8 @@
 import { DocumentPreview, type DocumentData } from "./document-preview";
 import { invoicesStore, type Invoice, type Company, type Client, type Project, type PurchaseOrder, type Quote } from "@/lib/mock-data";
 import { useCompanySalesUsers } from "@/hooks/use-company-users";
+import { invoicePayable } from "@/lib/invoice-money";
+
 
 interface Props {
   open: boolean;
