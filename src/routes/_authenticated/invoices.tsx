@@ -541,7 +541,7 @@ function Body() {
       : []),
   ];
   const filtersActive = activeChips.length > 0 || Boolean(view.state.sort);
-  // Keep the sticky table header parked right under the sticky filter card.
+  // Reserve space for the table toolbar above the table's scroll pane.
   const pageRef = useRef<HTMLDivElement | null>(null);
   const filterRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
