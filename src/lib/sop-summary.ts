@@ -8,11 +8,12 @@
 
 import { subDays, parseISO, isAfter } from "date-fns";
 import { toMGA, type Invoice, type Currency } from "@/lib/mock-data";
-import {
 import { invoiceBalance } from "@/lib/invoice-money";
+import {
   evaluateCompliance, agingDays, dueStage, ESCALATION_STAGES,
   type ComplianceInput, type Violation,
 } from "@/lib/sop";
+
 
 export interface AgingBucket {
   label: string;
