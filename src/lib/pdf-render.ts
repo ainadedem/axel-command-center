@@ -346,30 +346,30 @@ async function waitForFonts(doc: Document, timeoutMs = 4000): Promise<void> {
   await Promise.race([load, timeout]);
 }
 
+/** Last canvas row (px) that contains ink; 0 when the canvas is blank. */
+function lastInkRow(canvas: HTMLCanvasElement): number {
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return canvas.height;
+  const step = Math.max(2, Math.floor(canvas.height / 2000));
+  for (let y = canvas.height - 1; y >= 0; y -= step) {
+    const row = ctx.getImageData(0, y, canvas.width, 1).data;
+    for (let x = 0; x < row.length; x += 4 * 4) {
+      if (row[x + 3] !== 0 && (row[x]! < 245 || row[x + 1]! < 245 || row[x + 2]! < 245)) {
+        return Math.min(canvas.height, y + step);
+      }
+    }
+  }
+  return 0;
+}
+
 /**
  * Height (canvas px) of the content once trailing blank space is dropped,
  * rounded up to at least one full page.
  */
 function trimTrailingWhitespace(canvas: HTMLCanvasElement, pxPerPage: number): number {
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx) return canvas.height;
-  const step = Math.max(2, Math.floor(canvas.height / 2000));
-  let lastInk = 0;
-  for (let y = canvas.height - 1; y >= 0; y -= step) {
-    const row = ctx.getImageData(0, y, canvas.width, 1).data;
-    let ink = false;
-    for (let x = 0; x < row.length; x += 4 * 4) {
-      if (row[x + 3] !== 0 && (row[x]! < 245 || row[x + 1]! < 245 || row[x + 2]! < 245)) {
-        ink = true;
-        break;
-      }
-    }
-    if (ink) {
-      lastInk = Math.min(canvas.height, y + step);
-      break;
-    }
-  }
+  const lastInk = lastInkRow(canvas);
   if (!lastInk) return Math.min(canvas.height, pxPerPage);
+
   // Keep whole pages: never cut below the page the last ink sits on.
   const pages = Math.max(1, Math.ceil(lastInk / pxPerPage));
   return Math.min(canvas.height, pages * pxPerPage);
