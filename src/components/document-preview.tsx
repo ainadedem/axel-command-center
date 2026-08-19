@@ -14,6 +14,7 @@ import { useFileUrl } from "@/hooks/use-file-url";
 import { useSigner } from "@/hooks/use-signer";
 import { docLabels, docDateFormat, DOC_LANGUAGES, type DocLanguage } from "@/lib/doc-i18n";
 import { exportDocumentPdf, pdfFilename, type ExportStage } from "@/lib/pdf-export";
+import { measureHtmlPages } from "@/lib/pdf-render";
 import { describePlacement, logStampChange, logSignerChange, type DocType } from "@/lib/document-activity";
 
 
@@ -108,6 +109,8 @@ export type Density = "auto" | "compact" | "normal" | "spacious";
 const DEFAULT_COLS: Record<ColKey, number> = { desc: 46, qty: 8, unit: 10, rate: 18, total: 18 };
 const DENSITY_SCALE: Record<Exclude<Density, "auto">, number> = { compact: 0.85, normal: 1, spacious: 1.12 };
 const MIN_AUTO_SCALE = 0.62;
+/** Export-time floor — a little tighter than the preview's comfortable floor. */
+const EXPORT_MIN_SCALE = 0.55;
 
 type ZoomMode = "fit" | "actual" | "custom";
 type SavedView = {
@@ -194,6 +197,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
   // ---- Column widths / density -------------------------------------------
   const [colWidths, setColWidths] = useState<ColWidths>({});
   const [density, setDensity] = useState<Density>("auto");
+  const [fitOnePage, setFitOnePage] = useState(true);
   const [autoScale, setAutoScale] = useState(1);
   const [pages, setPages] = useState(1);
   const cols = useMemo(() => normalizeCols(colWidths, showUnit), [colWidths, showUnit]);
@@ -226,6 +230,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     setZoom(saved?.mode === "fit" || !saved ? 1 : saved.zoom);
     setColWidths(saved?.colWidths ?? {});
     setDensity(saved?.density ?? "auto");
+    setFitOnePage(saved?.fitOnePage ?? true);
     setShowStamp(saved?.showStamp ?? company?.showStamp === true);
     setShowSignature(saved?.showSignature ?? true);
 
@@ -255,11 +260,11 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     const persist = () => saveView(kind, {
       zoom: zoomRef.current, mode,
       scrollTop: el?.scrollTop ?? 0, scrollLeft: el?.scrollLeft ?? 0,
-      colWidths, density, showStamp, showSignature,
+      colWidths, density, fitOnePage, showStamp, showSignature,
     });
     const t = setInterval(persist, 1000);
     return () => { clearInterval(t); persist(); };
-  }, [open, doc?.kind, mode, zoom, colWidths, density, showStamp, showSignature]);
+  }, [open, doc?.kind, mode, zoom, colWidths, density, fitOnePage, showStamp, showSignature]);
 
 
   const applyZoom = useCallback((next: number, anchor?: { x: number; y: number }) => {
@@ -406,11 +411,11 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
   const [exportError, setExportError] = useState<string | null>(null);
 
 
-  const printableHtml = useCallback(() => {
+  const printableHtml = useCallback((scaleOverride?: number) => {
     if (!doc) return "";
     return buildPrintableDocument({
       doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit,
-      logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl,
+      logoUrl, logoScale, lang, cols, scale: scaleOverride ?? scale, showStamp, stampUrl, showSignature, signatureUrl,
       signerName: signer.name, stampX: place.x, stampY: place.y, stampScale: place.scale,
     });
   }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signer.name, place]);
@@ -422,8 +427,26 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     setExportStage("preparing");
     const filename = pdfFilename(doc.number);
     try {
-      await exportDocumentPdf(printableHtml(), filename, setExportStage);
-      toast.success(`Downloaded ${filename}`);
+      let html = printableHtml();
+      let usedScale = scale;
+      let compressed = false;
+      if (fitOnePage) {
+        setExportStage("preparing");
+        // Verify against the real export pipeline; the offscreen frame can lay
+        // out a hair taller than the on-screen sheet.
+        let pagesNow = await measureHtmlPages(html);
+        while (pagesNow > 1 && usedScale > EXPORT_MIN_SCALE) {
+          usedScale = Math.max(EXPORT_MIN_SCALE, Math.round((usedScale - 0.05) * 1000) / 1000);
+          html = printableHtml(usedScale);
+          pagesNow = await measureHtmlPages(html);
+          compressed = true;
+        }
+        if (pagesNow > 1) compressed = true;
+      }
+      await exportDocumentPdf(html, filename, setExportStage, { onePage: fitOnePage });
+      toast.success(
+        compressed ? `Downloaded ${filename} — compressed to fit one page` : `Downloaded ${filename}`,
+      );
     } catch (e) {
       const msg = `PDF export failed: ${e instanceof Error ? e.message : String(e)}`;
       setExportError(msg);
@@ -432,7 +455,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
       setExporting(false);
       setExportStage(null);
     }
-  }, [doc, exporting, printableHtml]);
+  }, [doc, exporting, printableHtml, fitOnePage, scale]);
 
   const printPdf = () => {
     if (!doc || exporting) return;
@@ -696,6 +719,10 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
                 <div className="space-y-1.5">
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Layout</p>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <Checkbox checked={fitOnePage} onCheckedChange={(v) => setFitOnePage(!!v)} />
+                    Force one A4 page on export
+                  </label>
                   <div className="flex flex-wrap rounded-md border border-border overflow-hidden text-[11px] w-fit">
                     {([["Fit 1 page", "auto"], ["Compact", "compact"], ["Normal", "normal"], ["Spacious", "spacious"]] as const).map(([label, v]) => (
                       <button
