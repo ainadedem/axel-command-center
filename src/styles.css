@@ -76,16 +76,16 @@
 }
 
 :root {
-  /* Material 3: 12px default corner; pills override locally */
-  --radius: 0.75rem;
+  /* Calm canvas: 16px default corner so panels land on ~24px (radius-2xl) */
+  --radius: 1rem;
 
-  /* Google Workspace canvas */
-  --background: #F8FAFD;
+  /* Near-white canvas — content floats above it */
+  --background: #F7F9FC;
   --foreground: #1F1F1F;
 
   --surface: #FFFFFF;
   --surface-elevated: #FFFFFF;
-  --surface-container: #F0F4F9;
+  --surface-container: #F1F4F9;
   --surface-container-high: #EAF1FB;
 
   --card: #FFFFFF;
