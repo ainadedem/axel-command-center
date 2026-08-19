@@ -289,11 +289,172 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function Sidebar() {
+/** Thin icon rail with a floating flyout of labelled links per section. */
+function RailNav() {
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const visibleSections = useVisibleSections();
+  const { profile, user } = useAuth();
+  const avatarUrl = useFileUrl(profile?.avatar_url);
+  const name = profile?.display_name || user?.email || "";
+  const initials = name.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  const [open, setOpen] = useState<string | null>(null);
+  const closeTimer = useRef<number | null>(null);
+
+  const show = (label: string) => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    setOpen(label);
+  };
+  const scheduleClose = () => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => setOpen(null), 160);
+  };
+
   return (
-    <aside className="hidden lg:flex w-[17rem] shrink-0 flex-col border-r-0 bg-sidebar px-2">
-      <SidebarInner />
+    <aside className="hidden lg:flex w-[4.5rem] shrink-0 flex-col items-center gap-1 py-4 bg-transparent">
+      <Link to="/" aria-label="Axel home" className="focus-ring h-10 w-10 grid place-items-center rounded-full">
+        <AxelBraceMark title="AXEL" className="h-6 w-6 text-foreground" />
+      </Link>
+      <WorkspaceRailButton />
+      <nav aria-label="Main" className="flex-1 mt-2 flex flex-col items-center gap-1 overflow-y-auto overflow-x-visible">
+        {visibleSections.map((section) => {
+          const SectionIcon = section.icon;
+          const active = section.items.some(
+            (item) => pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to)),
+          );
+          return (
+            <div
+              key={section.label}
+              className="relative"
+              onMouseEnter={() => show(section.label)}
+              onMouseLeave={scheduleClose}
+            >
+              <button
+                type="button"
+                aria-label={section.label}
+                title={section.label}
+                aria-expanded={open === section.label}
+                aria-haspopup="menu"
+                onClick={() => setOpen((v) => (v === section.label ? null : section.label))}
+                onFocus={() => show(section.label)}
+                className={cn(
+                  "h-11 w-11 grid place-items-center rounded-full focus-ring transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
+                  active
+                    ? "bg-[var(--primary-container)] text-[var(--on-primary-container)]"
+                    : "text-foreground/60 hover:bg-[var(--surface-container)] hover:text-foreground",
+                )}
+              >
+                <SectionIcon className="h-[18px] w-[18px]" aria-hidden="true" />
+              </button>
+              {open === section.label && (
+                <div
+                  role="menu"
+                  aria-label={section.label}
+                  className="absolute left-full top-0 ml-2 z-50 w-60 panel p-2 animate-in fade-in-0 zoom-in-95 slide-in-from-left-1 duration-150"
+                  onMouseEnter={() => show(section.label)}
+                  onMouseLeave={scheduleClose}
+                >
+                  <div className="px-3 pt-1.5 pb-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                    {section.label}
+                  </div>
+                  {section.items.map((item) => {
+                    const Icon = item.icon;
+                    const itemActive = pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to));
+                    return (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        role="menuitem"
+                        onClick={() => setOpen(null)}
+                        aria-current={itemActive ? "page" : undefined}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm focus-ring transition-colors duration-150",
+                          itemActive
+                            ? "bg-[var(--primary-container)] text-[var(--on-primary-container)] font-medium"
+                            : "text-foreground/80 hover:bg-[var(--surface-container)] hover:text-foreground",
+                        )}
+                      >
+                        <Icon className="h-[18px] w-[18px] shrink-0 opacity-70" aria-hidden="true" />
+                        <span className="truncate">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </nav>
+      <Link
+        to="/settings"
+        aria-label="Settings"
+        title="Settings"
+        className="group focus-ring h-11 w-11 grid place-items-center rounded-full text-foreground/60 hover:bg-[var(--surface-container)] hover:text-foreground transition-colors duration-150"
+      >
+        <Settings className="h-[18px] w-[18px] transition-transform duration-500 group-hover:rotate-90" aria-hidden="true" />
+      </Link>
+      <Link
+        to="/settings"
+        aria-label="Your profile"
+        className="focus-ring h-9 w-9 rounded-full overflow-hidden bg-gradient-to-br from-chart-2 to-chart-4 grid place-items-center text-[11px] font-display font-bold text-primary-foreground"
+      >
+        {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initials || "?"}
+      </Link>
     </aside>
+  );
+}
+
+/** Workspace switcher condensed to a rail-sized mark. */
+function WorkspaceRailButton() {
+  const { scope, setScope, label, accessibleCompanies: companies, isGroupAdmin } = useCompany();
+  const [open, setOpen] = useState(false);
+  const mark = scope.id === "group" ? "GR" : companies.find((c) => c.id === scope.companyId)?.shortName ?? "—";
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label={`Workspace: ${label}`}
+        title={label}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="h-9 w-9 rounded-2xl bg-gradient-to-br from-primary to-chart-2 grid place-items-center text-[10px] font-display font-bold text-primary-foreground focus-ring transition-transform duration-150 hover:scale-105 active:scale-95"
+      >
+        {mark}
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div role="menu" className="absolute left-full top-0 ml-2 z-50 w-64 panel p-2 animate-in fade-in-0 zoom-in-95 duration-150">
+            {isGroupAdmin && (
+              <button
+                role="menuitem"
+                onClick={() => { setScope({ id: "group" }); setOpen(false); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-[var(--surface-container)] text-sm transition-colors duration-150"
+              >
+                <span className="h-6 w-6 rounded-lg bg-gradient-to-br from-primary to-chart-2 grid place-items-center text-[9px] font-bold text-primary-foreground">GR</span>
+                <span className="flex-1 text-left">Group · All companies</span>
+                {scope.id === "group" && <Check className="h-4 w-4 text-primary" />}
+              </button>
+            )}
+            {companies.map((company) => (
+              <button
+                key={company.id}
+                role="menuitem"
+                onClick={() => { setScope({ id: "company", companyId: company.id }); setOpen(false); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-[var(--surface-container)] text-sm transition-colors duration-150"
+              >
+                <span className="h-6 w-6 rounded-lg grid place-items-center text-[9px] font-bold text-primary-foreground" style={{ background: company.color }}>
+                  {company.shortName}
+                </span>
+                <span className="flex-1 text-left truncate">{company.name}</span>
+                {scope.id === "company" && scope.companyId === company.id && <Check className="h-4 w-4 text-primary" />}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
