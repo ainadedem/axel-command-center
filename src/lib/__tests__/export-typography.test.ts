@@ -10,7 +10,7 @@ import { tableHtml } from "@/lib/table-export";
 /**
  * Typography regression check.
  *
- * Fails when an export surface stops resolving headings to Plus Jakarta Sans
+ * Fails when an export surface stops resolving headings to Figtree
  * or body / table / form / chart text to Inter.
  */
 
@@ -30,10 +30,10 @@ function familyFor(css: string, selector: string): string | null {
 }
 
 describe("export typography tokens", () => {
-  it("maps every heading selector to Plus Jakarta Sans", () => {
+  it("maps every heading selector to Figtree", () => {
     for (const sel of HEADING_SELECTORS) {
       expect(familyFor(EXPORT_TYPOGRAPHY_CSS, sel), `missing family for ${sel}`).toBe(EXPORT_HEADING_FONT);
-      expect(EXPORT_HEADING_FONT).toContain("Plus Jakarta Sans");
+      expect(EXPORT_HEADING_FONT).toContain("Figtree");
     }
   });
 

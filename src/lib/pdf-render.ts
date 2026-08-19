@@ -277,7 +277,7 @@ async function waitForImages(doc: Document) {
 }
 
 /**
- * The printable documents use the app pairing (Plus Jakarta Sans headings,
+ * The printable documents use the app pairing (Figtree headings,
  * Inter body). Faces must resolve before the snapshot or the PDF silently
  * falls back to Helvetica.
  */
