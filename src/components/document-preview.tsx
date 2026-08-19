@@ -1157,8 +1157,8 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
         <div>
           ${logoHtml}
           <h1>${esc(headingFor(doc.kind, L))}</h1>
-          <div style="margin-top: 8px; font-size: 13px; font-weight: 600;">${esc(doc.number)}</div>
-          ${doc.subject ? `<div style="margin-top: 6px; font-size: 12px; color: #0f172a;"><strong>${esc(t.object)}:</strong> ${esc(doc.subject)}</div>` : ""}
+          <div style="margin-top: 8px; font-size: 12px; font-weight: 600;">${esc(doc.number)}</div>
+          ${doc.subject ? `<div style="margin-top: 5px; font-size: 11.5px; color: #0f172a;"><strong>${esc(t.object)}:</strong> ${esc(doc.subject)}</div>` : ""}
           ${refsHtml ? `<div style="margin-top: 6px; font-size: 11px; color: #475569;">${refsHtml}</div>` : ""}
         </div>
         <div class="meta">
@@ -1178,7 +1178,7 @@ function buildHTML({ doc, company, client, project, showStatus, showPayment, sho
         </div>
         <div class="party">
           <h2>${esc(doc.kind === "po" ? t.issuedBy : t.billTo)}</h2>
-          <div style="font-weight: 700; font-size: 13px;">${esc(client?.name ?? "—")}</div>
+          <div style="font-weight: 700; font-size: 12px;">${esc(client?.name ?? "—")}</div>
           ${[client?.address, showClientEmail === false ? null : client?.email, client?.phone].filter(Boolean).map((l) => `<div>${esc(l as string)}</div>`).join("")}
           ${taxMeta.length ? `<div class="taxmeta">${taxMeta.map((l) => `<div>${esc(l)}</div>`).join("")}</div>` : ""}
         </div>
