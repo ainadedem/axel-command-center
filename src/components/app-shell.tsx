@@ -667,7 +667,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             onClick={handleNew}
             aria-label={newLabel}
             title={newLabel}
-            className="h-12 w-12 sm:w-auto sm:px-6 focus-ring tap-target rounded-2xl text-sm font-medium bg-surface text-primary shadow-[var(--shadow-elevated)] hover:shadow-[0_1px_3px_rgba(60,64,67,0.2),0_6px_16px_rgba(60,64,67,0.14)] hover:bg-[var(--surface-container-high)] active:scale-[0.98] transition-all duration-150 ease-[cubic-bezier(0.2,0,0,1)] flex items-center justify-center gap-2 group"
+            className="h-12 w-12 sm:w-auto sm:px-6 focus-ring tap-target rounded-full text-sm font-medium bg-surface text-primary shadow-[0_1px_2px_color-mix(in_oklab,var(--foreground)_6%,transparent),0_10px_26px_-20px_color-mix(in_oklab,var(--foreground)_40%,transparent)] hover:shadow-[0_1px_3px_color-mix(in_oklab,var(--foreground)_10%,transparent),0_16px_36px_-20px_color-mix(in_oklab,var(--foreground)_46%,transparent)] active:scale-[0.98] transition-all duration-150 ease-[cubic-bezier(0.2,0,0,1)] flex items-center justify-center gap-2 group"
           >
             <Plus className="h-5 w-5 shrink-0 transition-transform duration-200 group-hover:rotate-90" />
             <span className="hidden sm:inline">{newLabel}</span>
