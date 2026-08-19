@@ -113,11 +113,11 @@ function Body() {
       onClose={() => setSelectedId(null)}
       actions={
         <>
-          <button type="button" className="btn-quiet" onClick={() => { setEditing(selected); setOpen(true); }}>Edit</button>
+          <Button size="sm" variant="secondary" onClick={() => { setEditing(selected); setOpen(true); }}>Edit</Button>
           {selected.documentUrl && (
-            <button type="button" className="btn-quiet" onClick={() => openStoredFile(selected.documentUrl)}>Open file</button>
+            <Button size="sm" variant="ghost" onClick={() => openStoredFile(selected.documentUrl)}>Open file</Button>
           )}
-          <button type="button" className="btn-quiet" onClick={() => setHistoryOf(selected)}>History</button>
+          <Button size="sm" variant="ghost" onClick={() => setHistoryOf(selected)}>History</Button>
         </>
       }
     >
