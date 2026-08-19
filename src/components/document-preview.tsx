@@ -15,6 +15,11 @@ import { useSigner } from "@/hooks/use-signer";
 import { docLabels, docDateFormat, DOC_LANGUAGES, type DocLanguage } from "@/lib/doc-i18n";
 import { exportDocumentPdf, pdfFilename, type ExportStage } from "@/lib/pdf-export";
 import { measureHtmlPages } from "@/lib/pdf-render";
+import {
+  PAGE_PAD_MM, USABLE_H, MIN_AUTO_SCALE, EXPORT_MIN_SCALE, MAX_MANUAL_SCALE,
+  pagesForSheetHeight, nextScaleDown,
+} from "@/lib/a4-fit";
+import { Slider } from "@/components/ui/slider";
 import { describePlacement, logStampChange, logSignerChange, type DocType } from "@/lib/document-activity";
 
 
