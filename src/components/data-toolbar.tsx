@@ -40,14 +40,24 @@ export function DataToolbar<T>({ view, items, className }: Props<T>) {
   return (
     <div className={cn("flex items-center gap-2 flex-wrap", className)}>
       {/* Search */}
-      <div className="relative w-full sm:w-auto">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+      <div className="pill-field h-10 w-full sm:w-64 px-4">
+        <Search className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden />
         <Input
           value={state.q}
           onChange={(e) => setState((p) => ({ ...p, q: e.target.value }))}
           placeholder="Search…"
-          className="h-8 w-full sm:w-44 pl-7 text-xs"
+          className="h-8 border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
         />
+        {state.q && (
+          <button
+            type="button"
+            aria-label="Clear search"
+            onClick={() => setState((p) => ({ ...p, q: "" }))}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
 
       {/* Sort */}
