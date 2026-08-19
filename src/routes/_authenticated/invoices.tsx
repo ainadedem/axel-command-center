@@ -1138,8 +1138,13 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       lines: lines.length ? lines.map((l) => ({ ...l })) : undefined,
       discountPct: (Number(discountPct) || 0) || undefined,
       taxRate: Number(taxRate) || 0,
-      taxAmount: docTotals(lines, Number(discountPct) || 0, Number(taxRate) || 0, a).taxAmount,
+      // `amount` stays the payable total (tax included) so AR/aging keep working;
+      // the VAT share is derived from it when there are no priced lines.
+      taxAmount: lines.length
+        ? totals.taxAmount
+        : Math.round(a - a / (1 + (Number(taxRate) || 0) / 100)),
       totalAmount: a,
+
 
     };
     if (editing) {
