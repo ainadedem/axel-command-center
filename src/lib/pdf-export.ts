@@ -9,8 +9,14 @@ import { renderHtmlToPdfBlob, saveBlob, printHtmlFallback } from "@/lib/pdf-rend
 
 export type ExportStage = "preparing" | "rendering" | "saving" | "done";
 
-export async function renderDocumentPdfBlob(html: string, _filename?: string): Promise<Blob> {
-  return renderHtmlToPdfBlob(html, { orientation: "portrait", scale: 2 });
+export type ExportOptions = { /** Force the whole document onto a single A4 sheet. */ onePage?: boolean };
+
+export async function renderDocumentPdfBlob(html: string, opts: ExportOptions = {}): Promise<Blob> {
+  return renderHtmlToPdfBlob(html, {
+    orientation: "portrait",
+    scale: 2,
+    ...(opts.onePage ? { maxPages: 1 } : {}),
+  });
 }
 
 /** Renders and downloads the document as `<name>.pdf`. */
@@ -18,11 +24,12 @@ export async function exportDocumentPdf(
   html: string,
   filename: string,
   onStage?: (stage: ExportStage) => void,
+  opts: ExportOptions = {},
 ): Promise<void> {
   onStage?.("preparing");
   onStage?.("rendering");
   try {
-    const blob = await renderDocumentPdfBlob(html);
+    const blob = await renderDocumentPdfBlob(html, opts);
     onStage?.("saving");
     saveBlob(blob, filename);
     onStage?.("done");
@@ -33,6 +40,7 @@ export async function exportDocumentPdf(
     throw err instanceof Error ? err : new Error("PDF export failed");
   }
 }
+
 
 /** Filesystem-safe PDF filename for a document number. */
 export function pdfFilename(docNumber: string): string {
