@@ -101,10 +101,11 @@ const poStateOf = (i: Invoice): PoState => (i.poId ? "linked" : i.poWaived ? "wa
 
 
 /** `focus`/`aging` deep links plus `fromPo` (start a new invoice from a PO). */
-const invoiceSearch = (search: Record<string, unknown>) => ({
+const invoiceSearch = (search: Record<string, unknown>): FocusSearch & { fromPo?: string } => ({
   ...focusSearch(search),
-  fromPo: typeof search.fromPo === "string" && search.fromPo ? search.fromPo : undefined,
+  ...(typeof search.fromPo === "string" && search.fromPo ? { fromPo: search.fromPo } : {}),
 });
+
 
 export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage, validateSearch: invoiceSearch });
 
