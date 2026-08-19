@@ -8,6 +8,7 @@
 
 import { differenceInDays, parseISO } from "date-fns";
 import type { Invoice, PurchaseOrder, Expense, PvrRecord, InvoiceEscalation } from "@/lib/mock-data";
+import { invoiceBalance } from "@/lib/invoice-money";
 
 /* ─── SOP documents ─────────────────────────────────────────────────── */
 
@@ -167,7 +168,7 @@ export function dueStage(inv: Invoice, today = new Date()): number {
 }
 
 const isOpen = (i: Invoice) =>
-  i.status !== "cancelled" && i.status !== "draft" && i.amount - i.paid > 0.5;
+  i.status !== "cancelled" && i.status !== "draft" && invoiceBalance(i) > 0.5;
 
 export function evaluateCompliance(input: ComplianceInput, today = new Date()): Violation[] {
   const { invoices, purchaseOrders, expenses, pvrs, escalations } = input;
@@ -195,7 +196,7 @@ export function evaluateCompliance(input: ComplianceInput, today = new Date()): 
       reference: inv.number,
       companyId: inv.companyId,
       clientId: inv.clientId,
-      amount: inv.amount - inv.paid,
+      amount: invoiceBalance(inv),
       currency: inv.currency,
     };
 

@@ -40,6 +40,7 @@ import {
 } from "lucide-react";
 
 import { KpiCard } from "@/components/kpi-card";
+import { invoiceBalance } from "@/lib/invoice-money";
 const TOUR_STEPS: TourStep[] = [
   {
     selector: '[data-tour="kpis"]',
@@ -396,7 +397,7 @@ function EscalationsTab({
 
   const rows = useMemo(() => {
     return invoices
-      .filter((i) => i.status !== "cancelled" && i.status !== "draft" && i.amount - i.paid > 0.5)
+      .filter((i) => i.status !== "cancelled" && i.status !== "draft" && invoiceBalance(i) > 0.5)
       .map((i) => {
         // Green comes from the saved "done" timestamp: keep the latest log per stage.
         const done = new Map<number, InvoiceEscalation>();
@@ -447,7 +448,7 @@ function EscalationsTab({
                   </Link>
                 ) : "—"}
               </div>
-              <div className="col-span-2 text-right text-sm font-tnum">{fmtAmount(inv.amount - inv.paid, inv.currency)}</div>
+              <div className="col-span-2 text-right text-sm font-tnum">{fmtAmount(invoiceBalance(inv), inv.currency)}</div>
               <div className={cn("col-span-1 text-right text-sm font-tnum", days >= 60 ? "text-destructive" : days >= 30 ? "text-warning" : "")}>
                 {days}d
                 {lastAt && (

@@ -9,6 +9,7 @@
 import { subDays, parseISO, isAfter } from "date-fns";
 import { toMGA, type Invoice, type Currency } from "@/lib/mock-data";
 import {
+import { invoiceBalance } from "@/lib/invoice-money";
   evaluateCompliance, agingDays, dueStage, ESCALATION_STAGES,
   type ComplianceInput, type Violation,
 } from "@/lib/sop";
@@ -52,7 +53,7 @@ const BUCKETS: Array<Pick<AgingBucket, "label" | "min" | "max">> = [
 ];
 
 const isOpen = (i: Invoice) =>
-  i.status !== "cancelled" && i.status !== "draft" && i.amount - i.paid > 0.5;
+  i.status !== "cancelled" && i.status !== "draft" && invoiceBalance(i) > 0.5;
 
 function exposureOf(v: Violation): number {
   if (v.amount == null || !v.currency) return 0;
@@ -90,7 +91,7 @@ export function weeklySummary(
   for (const inv of openInvoices) {
     const days = agingDays(inv, today);
     if (days < 15) continue;
-    const balance = toMGA(inv.amount - inv.paid, inv.currency);
+    const balance = toMGA(invoiceBalance(inv), inv.currency);
     overdueCount += 1;
     overdueExposureMGA += balance;
     const bucket = buckets.find((b) => days >= b.min && (b.max === null || days <= b.max));

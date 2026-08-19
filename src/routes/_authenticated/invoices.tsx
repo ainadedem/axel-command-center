@@ -68,6 +68,7 @@ import { AgingPanel } from "@/components/aging-panel";
 import { KpiCard } from "@/components/kpi-card";
 import { StatusFilterBar, type PoState } from "@/components/status-filter-bar";
 import { TableExportMenu } from "@/components/table-export-menu";
+import { invoiceBalance } from "@/lib/invoice-money";
 
 
 
@@ -168,7 +169,7 @@ function Body() {
     { key: "issuedMonth", label: "Issued (month)", type: "string", accessor: (i) => monthOf(i.issueDate), noSort: true, noFilter: true },
     { key: "issuedQuarter", label: "Issued (quarter)", type: "string", accessor: (i) => quarterOf(i.issueDate), noSort: true, noFilter: true },
     { key: "amount", label: "Amount", type: "number", accessor: (i) => i.amount, noGroup: true },
-    { key: "balance", label: "Balance", type: "number", accessor: (i) => i.amount - i.paid, noGroup: true },
+    { key: "balance", label: "Balance", type: "number", accessor: (i) => invoiceBalance(i), noGroup: true },
     { key: "owner", label: "Owner", type: "enum", accessor: (i) => ownerName(i.createdBy) },
   ];
   const view = useDataView<Invoice>("invoices", fields);
@@ -271,15 +272,15 @@ function Body() {
   };
 
   const active = list.filter((i) => i.status !== "cancelled");
-  const totalOpen = active.filter((i) => i.status !== "paid").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
-  const totalOverdue = active.filter((i) => i.status === "overdue").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
+  const totalOpen = active.filter((i) => i.status !== "paid").reduce((s, i) => s + toMGA(invoiceBalance(i), i.currency), 0);
+  const totalOverdue = active.filter((i) => i.status === "overdue").reduce((s, i) => s + toMGA(invoiceBalance(i), i.currency), 0);
   const totalPaid = active.filter((i) => i.status === "paid").reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
 
   const aging = useMemo(
     () =>
       buildAging(chipFiltered.filter((i) => i.status !== "cancelled"), {
         due: (i) => i.dueDate,
-        balance: (i) => toMGA(i.amount - i.paid, i.currency),
+        balance: (i) => toMGA(invoiceBalance(i), i.currency),
         include: (i) => i.status !== "paid",
       }),
     [chipFiltered],
@@ -399,7 +400,7 @@ function Body() {
     const cl = clients.find((c) => c.id === inv.clientId);
     const proj = inv.projectId ? projects.find((p) => p.id === inv.projectId) : undefined;
     const days = differenceInDays(parseISO(inv.dueDate), new Date());
-    const balance = inv.amount - inv.paid;
+    const balance = invoiceBalance(inv);
     const timing = inv.paidDate ? differenceInDays(parseISO(inv.paidDate), parseISO(inv.dueDate)) : null;
 
     switch (key) {
@@ -503,7 +504,7 @@ function Body() {
       }
       case "status": return inv.status === "cancelled" ? "cancelled" : `${inv.status} / PO ${poStateOf(inv)}`;
       case "amount": return fmtFull(inv.amount, inv.currency);
-      case "balance": return inv.status === "cancelled" ? "" : fmtFull(inv.amount - inv.paid, inv.currency);
+      case "balance": return inv.status === "cancelled" ? "" : fmtFull(invoiceBalance(inv), inv.currency);
       case "owner": return ownerName(inv.createdBy);
       default: return "";
     }
@@ -592,7 +593,7 @@ function Body() {
       <DetailSection title="Amounts">
         <DetailField label="Total" value={fmtFull(selected.amount, selected.currency)} mono />
         <DetailField label="Paid" value={fmtFull(selected.paid, selected.currency)} mono />
-        <DetailField label="Balance" value={fmtFull(selected.amount - selected.paid, selected.currency)} mono />
+        <DetailField label="Balance" value={fmtFull(invoiceBalance(selected), selected.currency)} mono />
       </DetailSection>
     </DetailPanel>
   ) : null;
@@ -718,7 +719,7 @@ function Body() {
                   (i) =>
                     i.status !== "cancelled" &&
                     i.status !== "paid" &&
-                    i.amount - i.paid > 0 &&
+                    invoiceBalance(i) > 0 &&
                     inBucket(i.dueDate, key),
                 )
                 .sort((a, b) => (a.dueDate ?? "").localeCompare(b.dueDate ?? ""))
@@ -726,7 +727,7 @@ function Body() {
                   id: i.id,
                   title: i.number,
                   subtitle: clients.find((c) => c.id === i.clientId)?.name,
-                  amount: toMGA(i.amount - i.paid, i.currency),
+                  amount: toMGA(invoiceBalance(i), i.currency),
                   due: i.dueDate,
                   status: i.status,
                 }))
@@ -1554,7 +1555,7 @@ function MarkPaidDialog({ open, onOpenChange, invoice }: { open: boolean; onOpen
 
   const coAccounts = invoice ? accounts.filter((a) => a.companyId === invoice.companyId) : [];
   const accountsLoading = !!invoice && dataLoading && coAccounts.length === 0;
-  const expectedMga = invoice ? Math.round(toMGA(invoice.amount - invoice.paid, invoice.currency)) : 0;
+  const expectedMga = invoice ? Math.round(toMGA(invoiceBalance(invoice), invoice.currency)) : 0;
   const isForeign = !!invoice && invoice.currency !== "MGA";
 
   useEffect(() => {
@@ -1592,7 +1593,7 @@ function MarkPaidDialog({ open, onOpenChange, invoice }: { open: boolean; onOpen
   if (!invoice) return null;
 
   const account = coAccounts.find((a) => a.id === accountId);
-  const remaining = invoice.amount - invoice.paid;
+  const remaining = invoiceBalance(invoice);
   const receivedNum = Number(receivedMga) || 0;
   // FX delta in MGA: positive = gain, negative = loss (perte de change)
   const fxDelta = isForeign ? receivedNum - expectedMga : 0;
