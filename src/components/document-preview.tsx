@@ -561,7 +561,27 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
           <div className="min-w-0 flex items-baseline gap-2">
             <span className="truncate text-sm font-medium">{titleFor(doc?.kind)} · {doc?.number}</span>
             <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">{pages} page{pages > 1 ? "s" : ""}</span>
+            {compression && (
+              <span
+                title={
+                  compression.fits
+                    ? `The exporter reduced the content to ${Math.round(compression.scale * 100)}% so the document fits a single A4 page. Adjust the density slider in Display to fine-tune.`
+                    : `The document still needs more than one A4 page even at the ${Math.round(compression.scale * 100)}% minimum density. Shorten the content or turn off “Force one A4 page”.`
+                }
+                className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium tabular-nums ${
+                  compression.fits
+                    ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                    : "bg-destructive/15 text-destructive"
+                }`}
+              >
+                <AlertTriangle className="h-3 w-3" />
+                {compression.fits
+                  ? `Compressed to ${Math.round(compression.scale * 100)}%`
+                  : `Still ${">"} 1 page at ${Math.round(compression.scale * 100)}%`}
+              </span>
+            )}
           </div>
+
 
           <div className="ml-auto flex items-center gap-1.5 shrink-0">
             {/* Zoom */}
