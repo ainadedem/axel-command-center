@@ -388,13 +388,20 @@ export async function deleteProjectDb(id: string) {
 
 /** Pull clients/suppliers/projects from DB and merge into local stores by id. */
 export async function hydrateContacts(scope: HydrationScope = { mode: "all" }) {
-  const [cli, sup, prj] = await Promise.all([
+  const [cli, sup, prj, bank] = await Promise.all([
     fetchScopedRows("clients", scope),
     fetchScopedRows("suppliers", scope),
     fetchScopedRows("projects", scope),
+    // Returns nothing for users without finance access — by design.
+    fetchScopedRows("client_bank_details", scope),
   ]);
 
-  clientsStore.replaceAll(cli.map((r) => clientFromDb(r)));
+  const bankByClient = new Map(bank.map((r) => [r.client_id as string, clientBankFromDb(r)]));
+  clientsStore.replaceAll(cli.map((r) => {
+    const base = clientFromDb(r);
+    const extra = bankByClient.get(base.id);
+    return extra ? { ...base, ...extra } : base;
+  }));
   suppliersStore.replaceAll(sup.map((r) => supplierFromDb(r)));
   projectsStore.replaceAll(prj.map((r) => projectFromDb(r)));
 }
