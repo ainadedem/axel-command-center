@@ -76,16 +76,16 @@
 }
 
 :root {
-  /* Material 3: 12px default corner; pills override locally */
-  --radius: 0.75rem;
+  /* Calm canvas: 16px default corner so panels land on ~24px (radius-2xl) */
+  --radius: 1rem;
 
-  /* Google Workspace canvas */
-  --background: #F8FAFD;
+  /* Near-white canvas — content floats above it */
+  --background: #F7F9FC;
   --foreground: #1F1F1F;
 
   --surface: #FFFFFF;
   --surface-elevated: #FFFFFF;
-  --surface-container: #F0F4F9;
+  --surface-container: #F1F4F9;
   --surface-container-high: #EAF1FB;
 
   --card: #FFFFFF;
@@ -119,9 +119,9 @@
   --warning: #E37400;
   --warning-foreground: #FFFFFF;
 
-  --border: #E3E7EC;
-  --outline: #C4C7C5;
-  --input: #E3E7EC;
+  --border: #EDF0F4;
+  --outline: #D8DCE1;
+  --input: #E7EBF0;
   --ring: rgba(11, 87, 209, 0.4);
 
   /* Material tonal chart spectrum */
@@ -1209,4 +1209,93 @@ table :is(th, td).text-right,
 input[type="number"] {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
+}
+
+/* ---------------------------------------------------------------
+   Calm canvas — content floats as soft rounded panels on a
+   near-white surface with a single ambient corner wash.
+   --------------------------------------------------------------- */
+
+/* Ambient gradient wash, top-left. Never on content. */
+@utility canvas-wash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 40rem at 0% 0%,
+      color-mix(in oklab, var(--primary) 9%, transparent),
+      transparent 62%),
+    radial-gradient(42rem 32rem at 14% 4%,
+      color-mix(in oklab, var(--chart-3) 6%, transparent),
+      transparent 66%);
+  opacity: 0.75;
+}
+
+/* The floating panel surface: large radius, no hard border, soft lift. */
+@utility panel {
+  background: var(--surface);
+  border-radius: 24px;
+  border: 0;
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--foreground) 5%, transparent),
+              0 8px 24px -18px color-mix(in oklab, var(--foreground) 32%, transparent);
+}
+
+@utility panel-pad {
+  padding: 1.5rem;
+  @media (min-width: 768px) {
+    padding: 2rem;
+  }
+}
+
+/* Large rounded pill input / action — the focal element of a screen. */
+@utility pill-field {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  height: 3rem;
+  padding-inline: 1.125rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 0;
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--foreground) 6%, transparent),
+              0 10px 26px -20px color-mix(in oklab, var(--foreground) 40%, transparent);
+  transition: box-shadow 150ms var(--ease-out-soft), background-color 150ms var(--ease-out-soft);
+  &:hover, &:focus-within {
+    box-shadow: 0 1px 3px color-mix(in oklab, var(--foreground) 9%, transparent),
+                0 14px 34px -20px color-mix(in oklab, var(--foreground) 46%, transparent);
+  }
+}
+
+/* Quiet, borderless list row (Gemini task card). */
+@utility quiet-row {
+  border-radius: 16px;
+  border: 0;
+  background: transparent;
+  transition: background-color 150ms var(--ease-out-soft);
+  &:hover {
+    background: color-mix(in oklab, var(--foreground) 4%, transparent);
+  }
+  &[data-selected="true"], &[aria-selected="true"] {
+    background: color-mix(in oklab, var(--primary) 8%, transparent);
+  }
+}
+
+/* Small pill used for header actions and status. */
+@utility pill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2rem;
+  padding-inline: 0.875rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: color-mix(in oklab, var(--foreground) 4%, transparent);
+  color: var(--muted-foreground);
+  border: 0;
+}
+
+/* Panels stop drawing hard rules; separation comes from space and tone. */
+.panel .list-aligned tbody > tr,
+.panel table tbody > tr {
+  border-color: color-mix(in oklab, var(--foreground) 5%, transparent);
 }

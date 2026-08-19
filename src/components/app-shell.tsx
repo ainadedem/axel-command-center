@@ -39,6 +39,8 @@ interface NavItem {
 
 interface NavSection {
   label: string;
+  /** Rail icon standing for the whole section. */
+  icon: React.ComponentType<{ className?: string }>;
   items: NavItem[];
 }
 
@@ -48,14 +50,17 @@ export const SALES_ROUTES = ["/quotations", "/clients", "/projects", "/settings"
 const sections: NavSection[] = [
   {
     label: "Overview",
+    icon: LayoutDashboard,
     items: [
       { to: "/", label: "Dashboard", icon: LayoutDashboard },
       ...(AXEL_AI_ENABLED ? [{ to: "/axel", label: "Axel AI", icon: Sparkles }] : []),
     ],
   },
 
+
   {
     label: "Sales",
+    icon: TrendingUp,
     items: [
       { to: "/pipeline", label: "Pipeline", icon: TrendingUp },
       { to: "/quotations", label: "Quotations", icon: FileSignature },
@@ -66,6 +71,7 @@ const sections: NavSection[] = [
   },
   {
     label: "Billing",
+    icon: FileText,
     items: [
       { to: "/purchase-orders", label: "Purchase orders", icon: ClipboardList },
       { to: "/invoices", label: "Invoices", icon: FileText },
@@ -74,6 +80,7 @@ const sections: NavSection[] = [
   },
   {
     label: "Treasury",
+    icon: Wallet,
     items: [
       { to: "/accounts", label: "Accounts", icon: Wallet },
       { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
@@ -83,6 +90,7 @@ const sections: NavSection[] = [
   },
   {
     label: "Accounting",
+    icon: BookOpen,
     items: [
       { to: "/plan-comptable", label: "Plan comptable", icon: Library },
       { to: "/journal", label: "Journal", icon: BookOpen },
@@ -94,6 +102,7 @@ const sections: NavSection[] = [
   },
   {
     label: "Analysis",
+    icon: BarChart3,
     items: [
       { to: "/budgets", label: "Budgets", icon: Target },
       { to: "/reports", label: "Reports", icon: BarChart3 },
@@ -101,6 +110,7 @@ const sections: NavSection[] = [
   },
   {
     label: "Operations",
+    icon: ShieldCheck,
     items: [
       { to: "/sops", label: "SOPs & Compliance", icon: ShieldCheck },
     ],
@@ -108,6 +118,7 @@ const sections: NavSection[] = [
   {
 
     label: "Administration",
+    icon: Building2,
     items: [
       { to: "/companies", label: "Companies", icon: Building2 },
       { to: "/team", label: "Team", icon: UserCog },
@@ -278,11 +289,172 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function Sidebar() {
+/** Thin icon rail with a floating flyout of labelled links per section. */
+function RailNav() {
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const visibleSections = useVisibleSections();
+  const { profile, user } = useAuth();
+  const avatarUrl = useFileUrl(profile?.avatar_url);
+  const name = profile?.display_name || user?.email || "";
+  const initials = name.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  const [open, setOpen] = useState<string | null>(null);
+  const closeTimer = useRef<number | null>(null);
+
+  const show = (label: string) => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    setOpen(label);
+  };
+  const scheduleClose = () => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => setOpen(null), 160);
+  };
+
   return (
-    <aside className="hidden lg:flex w-[17rem] shrink-0 flex-col border-r-0 bg-sidebar px-2">
-      <SidebarInner />
+    <aside className="hidden lg:flex w-[4.5rem] shrink-0 flex-col items-center gap-1 py-4 bg-transparent">
+      <Link to="/" aria-label="Axel home" className="focus-ring h-10 w-10 grid place-items-center rounded-full">
+        <AxelBraceMark title="AXEL" className="h-6 w-6 text-foreground" />
+      </Link>
+      <WorkspaceRailButton />
+      <nav aria-label="Main" className="flex-1 mt-2 flex flex-col items-center gap-1 overflow-y-auto overflow-x-visible">
+        {visibleSections.map((section) => {
+          const SectionIcon = section.icon;
+          const active = section.items.some(
+            (item) => pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to)),
+          );
+          return (
+            <div
+              key={section.label}
+              className="relative"
+              onMouseEnter={() => show(section.label)}
+              onMouseLeave={scheduleClose}
+            >
+              <button
+                type="button"
+                aria-label={section.label}
+                title={section.label}
+                aria-expanded={open === section.label}
+                aria-haspopup="menu"
+                onClick={() => setOpen((v) => (v === section.label ? null : section.label))}
+                onFocus={() => show(section.label)}
+                className={cn(
+                  "h-11 w-11 grid place-items-center rounded-full focus-ring transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
+                  active
+                    ? "bg-[var(--primary-container)] text-[var(--on-primary-container)]"
+                    : "text-foreground/60 hover:bg-[var(--surface-container)] hover:text-foreground",
+                )}
+              >
+                <SectionIcon className="h-[18px] w-[18px]" aria-hidden="true" />
+              </button>
+              {open === section.label && (
+                <div
+                  role="menu"
+                  aria-label={section.label}
+                  className="absolute left-full top-0 ml-2 z-50 w-60 panel p-2 animate-in fade-in-0 zoom-in-95 slide-in-from-left-1 duration-150"
+                  onMouseEnter={() => show(section.label)}
+                  onMouseLeave={scheduleClose}
+                >
+                  <div className="px-3 pt-1.5 pb-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                    {section.label}
+                  </div>
+                  {section.items.map((item) => {
+                    const Icon = item.icon;
+                    const itemActive = pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to));
+                    return (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        role="menuitem"
+                        onClick={() => setOpen(null)}
+                        aria-current={itemActive ? "page" : undefined}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm focus-ring transition-colors duration-150",
+                          itemActive
+                            ? "bg-[var(--primary-container)] text-[var(--on-primary-container)] font-medium"
+                            : "text-foreground/80 hover:bg-[var(--surface-container)] hover:text-foreground",
+                        )}
+                      >
+                        <Icon className="h-[18px] w-[18px] shrink-0 opacity-70" aria-hidden="true" />
+                        <span className="truncate">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </nav>
+      <Link
+        to="/settings"
+        aria-label="Settings"
+        title="Settings"
+        className="group focus-ring h-11 w-11 grid place-items-center rounded-full text-foreground/60 hover:bg-[var(--surface-container)] hover:text-foreground transition-colors duration-150"
+      >
+        <Settings className="h-[18px] w-[18px] transition-transform duration-500 group-hover:rotate-90" aria-hidden="true" />
+      </Link>
+      <Link
+        to="/settings"
+        aria-label="Your profile"
+        className="focus-ring h-9 w-9 rounded-full overflow-hidden bg-gradient-to-br from-chart-2 to-chart-4 grid place-items-center text-[11px] font-display font-bold text-primary-foreground"
+      >
+        {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initials || "?"}
+      </Link>
     </aside>
+  );
+}
+
+/** Workspace switcher condensed to a rail-sized mark. */
+function WorkspaceRailButton() {
+  const { scope, setScope, label, accessibleCompanies: companies, isGroupAdmin } = useCompany();
+  const [open, setOpen] = useState(false);
+  const mark = scope.id === "group" ? "GR" : companies.find((c) => c.id === scope.companyId)?.shortName ?? "—";
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label={`Workspace: ${label}`}
+        title={label}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="h-9 w-9 rounded-2xl bg-gradient-to-br from-primary to-chart-2 grid place-items-center text-[10px] font-display font-bold text-primary-foreground focus-ring transition-transform duration-150 hover:scale-105 active:scale-95"
+      >
+        {mark}
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div role="menu" className="absolute left-full top-0 ml-2 z-50 w-64 panel p-2 animate-in fade-in-0 zoom-in-95 duration-150">
+            {isGroupAdmin && (
+              <button
+                role="menuitem"
+                onClick={() => { setScope({ id: "group" }); setOpen(false); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-[var(--surface-container)] text-sm transition-colors duration-150"
+              >
+                <span className="h-6 w-6 rounded-lg bg-gradient-to-br from-primary to-chart-2 grid place-items-center text-[9px] font-bold text-primary-foreground">GR</span>
+                <span className="flex-1 text-left">Group · All companies</span>
+                {scope.id === "group" && <Check className="h-4 w-4 text-primary" />}
+              </button>
+            )}
+            {companies.map((company) => (
+              <button
+                key={company.id}
+                role="menuitem"
+                onClick={() => { setScope({ id: "company", companyId: company.id }); setOpen(false); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-[var(--surface-container)] text-sm transition-colors duration-150"
+              >
+                <span className="h-6 w-6 rounded-lg grid place-items-center text-[9px] font-bold text-primary-foreground" style={{ background: company.color }}>
+                  {company.shortName}
+                </span>
+                <span className="flex-1 text-left truncate">{company.name}</span>
+                {scope.id === "company" && scope.companyId === company.id && <Check className="h-4 w-4 text-primary" />}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -443,7 +615,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
 
 
   return (
-    <header className="h-16 shrink-0 border-b-0 material-bar px-3 sm:px-6 flex items-center gap-2 sm:gap-4 sticky top-0 z-30">
+    <header className="h-20 shrink-0 border-0 bg-transparent px-3 sm:px-8 flex items-center gap-2 sm:gap-4 sticky top-0 z-30">
       <button
         onClick={onOpenNav}
         aria-label="Open navigation"
@@ -461,7 +633,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
           placeholder="Search..."
           aria-label="Search transactions, invoices and clients"
           type="search"
-          className="w-full h-12 pl-12 pr-3 md:pr-14 rounded-[28px] bg-[var(--surface-container)] border-0 text-sm text-foreground placeholder:text-muted-foreground transition-[background-color,box-shadow] duration-150 ease-[cubic-bezier(0.2,0,0,1)] hover:bg-[var(--surface-container-high)] focus:outline-none focus:bg-surface focus:shadow-[var(--shadow-elevated)]"
+          className="w-full h-12 pl-12 pr-3 md:pr-14 rounded-full bg-surface border-0 text-sm text-foreground placeholder:text-muted-foreground shadow-[0_1px_2px_color-mix(in_oklab,var(--foreground)_6%,transparent),0_10px_26px_-20px_color-mix(in_oklab,var(--foreground)_40%,transparent)] transition-[background-color,box-shadow] duration-150 ease-[cubic-bezier(0.2,0,0,1)] focus:outline-none focus:shadow-[0_1px_3px_color-mix(in_oklab,var(--foreground)_10%,transparent),0_16px_36px_-20px_color-mix(in_oklab,var(--foreground)_46%,transparent)]"
         />
         <kbd className="hidden md:block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
       </form>
@@ -495,7 +667,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             onClick={handleNew}
             aria-label={newLabel}
             title={newLabel}
-            className="h-12 w-12 sm:w-auto sm:px-6 focus-ring tap-target rounded-2xl text-sm font-medium bg-surface text-primary shadow-[var(--shadow-elevated)] hover:shadow-[0_1px_3px_rgba(60,64,67,0.2),0_6px_16px_rgba(60,64,67,0.14)] hover:bg-[var(--surface-container-high)] active:scale-[0.98] transition-all duration-150 ease-[cubic-bezier(0.2,0,0,1)] flex items-center justify-center gap-2 group"
+            className="h-12 w-12 sm:w-auto sm:px-6 focus-ring tap-target rounded-full text-sm font-medium bg-surface text-primary shadow-[0_1px_2px_color-mix(in_oklab,var(--foreground)_6%,transparent),0_10px_26px_-20px_color-mix(in_oklab,var(--foreground)_40%,transparent)] hover:shadow-[0_1px_3px_color-mix(in_oklab,var(--foreground)_10%,transparent),0_16px_36px_-20px_color-mix(in_oklab,var(--foreground)_46%,transparent)] active:scale-[0.98] transition-all duration-150 ease-[cubic-bezier(0.2,0,0,1)] flex items-center justify-center gap-2 group"
           >
             <Plus className="h-5 w-5 shrink-0 transition-transform duration-200 group-hover:rotate-90" />
             <span className="hidden sm:inline">{newLabel}</span>
@@ -685,22 +857,23 @@ function AppShellFrame({ children }: { children: ReactNode }) {
 
 
   return (
-    <div className="h-dvh bg-background text-foreground p-0">
+    <div className="relative h-dvh bg-background text-foreground p-0 overflow-hidden">
+      {/* Ambient corner wash — atmosphere only, never on content. */}
+      <div className="canvas-wash" aria-hidden="true" />
       <a href="#main-content" className="skip-link">Skip to content</a>
       <TableStackLabeler />
       <MobileNav open={navOpen} onClose={() => setNavOpen(false)} />
 
-      <div className="h-dvh flex overflow-hidden bg-background">
-      <Sidebar />
+      <div className="relative h-dvh flex overflow-hidden">
+      <RailNav />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar onOpenNav={() => setNavOpen(true)} />
         <main id="main-content" tabIndex={-1} className="relative flex-1 overflow-y-auto focus:outline-none">
-          <div className="absolute inset-0 pointer-events-none [background:var(--gradient-glow)] opacity-60" />
           <div key={pathname} className="relative rise-in">{children}</div>
         </main>
 
 
-        <footer className="shrink-0 border-t border-border/70 material-bar px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+        <footer className="shrink-0 px-5 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
           <span>© {new Date().getFullYear()} AXEL by WeAxiom</span>
           <div className="flex items-center gap-4">
             <Link to="/about" className="hover:text-foreground transition underline-grow">About</Link>
@@ -713,6 +886,7 @@ function AppShellFrame({ children }: { children: ReactNode }) {
       </div>
       </div>
     </div>
+
 
   );
 }

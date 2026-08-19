@@ -26,7 +26,7 @@ import { ResizeHandle } from "@/components/resizable-columns";
 
 export function ListTableShell({ children, className, scrollX, announcement, stickyHeader, scrollRef, maxHeight }: { children: ReactNode; className?: string; scrollX?: boolean; announcement?: string; stickyHeader?: boolean; scrollRef?: React.RefObject<HTMLDivElement | null>; maxHeight?: string }) {
   return (
-    <div className={cn("rounded-xl border border-border bg-[var(--gradient-surface)] overflow-clip", className)}>
+    <div className={cn("panel overflow-clip", className)}>
       {announcement !== undefined && (
         <div aria-live="polite" role="status" className="sr-only">{announcement}</div>
       )}
@@ -49,7 +49,7 @@ export function ListTable({ children, className, style }: { children: ReactNode;
 
 export function ListHeadRow({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <tr className={cn("text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border", className)}>
+    <tr className={cn("text-[11px] tracking-[0.04em] text-muted-foreground border-b border-border/70", className)}>
       {children}
     </tr>
   );
