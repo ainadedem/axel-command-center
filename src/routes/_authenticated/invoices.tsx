@@ -68,7 +68,7 @@ import { AgingPanel } from "@/components/aging-panel";
 import { KpiCard } from "@/components/kpi-card";
 import { StatusFilterBar, type PoState } from "@/components/status-filter-bar";
 import { TableExportMenu } from "@/components/table-export-menu";
-import { invoiceBalance } from "@/lib/invoice-money";
+import { invoiceBalance, invoicePayable } from "@/lib/invoice-money";
 
 
 
@@ -168,7 +168,7 @@ function Body() {
     { key: "issuedDay", label: "Issued (day)", type: "string", accessor: (i) => dayOf(i.issueDate), noSort: true, noFilter: true },
     { key: "issuedMonth", label: "Issued (month)", type: "string", accessor: (i) => monthOf(i.issueDate), noSort: true, noFilter: true },
     { key: "issuedQuarter", label: "Issued (quarter)", type: "string", accessor: (i) => quarterOf(i.issueDate), noSort: true, noFilter: true },
-    { key: "amount", label: "Amount", type: "number", accessor: (i) => i.amount, noGroup: true },
+    { key: "amount", label: "Amount", type: "number", accessor: (i) => invoicePayable(i), noGroup: true },
     { key: "balance", label: "Balance", type: "number", accessor: (i) => invoiceBalance(i), noGroup: true },
     { key: "owner", label: "Owner", type: "enum", accessor: (i) => ownerName(i.createdBy) },
   ];
@@ -274,7 +274,7 @@ function Body() {
   const active = list.filter((i) => i.status !== "cancelled");
   const totalOpen = active.filter((i) => i.status !== "paid").reduce((s, i) => s + toMGA(invoiceBalance(i), i.currency), 0);
   const totalOverdue = active.filter((i) => i.status === "overdue").reduce((s, i) => s + toMGA(invoiceBalance(i), i.currency), 0);
-  const totalPaid = active.filter((i) => i.status === "paid").reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
+  const totalPaid = active.filter((i) => i.status === "paid").reduce((s, i) => s + toMGA(invoicePayable(i), i.currency), 0);
 
   const aging = useMemo(
     () =>
@@ -330,11 +330,11 @@ function Body() {
       id: "should-be-paid",
       label: "Invoices fully covered by payments but not marked paid",
       description: "Sets status to paid when balance is zero.",
-      count: scopedInvoices.filter((i) => i.status !== "paid" && i.status !== "cancelled" && i.paid >= i.amount && i.amount > 0).length,
+      count: scopedInvoices.filter((i) => i.status !== "paid" && i.status !== "cancelled" && i.paid >= invoicePayable(i) && invoicePayable(i) > 0).length,
       fix: () => {
         let n = 0;
         scopedInvoices.forEach((i) => {
-          if (i.status !== "paid" && i.status !== "cancelled" && i.paid >= i.amount && i.amount > 0) {
+          if (i.status !== "paid" && i.status !== "cancelled" && i.paid >= invoicePayable(i) && invoicePayable(i) > 0) {
             invoicesStore.update(i.id, { status: "paid", paidDate: i.paidDate ?? new Date().toISOString().slice(0, 10) });
             n++;
           }
@@ -345,11 +345,11 @@ function Body() {
     {
       id: "should-be-partial",
       label: "Invoices with partial payment not marked partial",
-      count: scopedInvoices.filter((i) => i.paid > 0 && i.paid < i.amount && i.status !== "partial" && i.status !== "cancelled").length,
+      count: scopedInvoices.filter((i) => i.paid > 0 && i.paid < invoicePayable(i) && i.status !== "partial" && i.status !== "cancelled").length,
       fix: () => {
         let n = 0;
         scopedInvoices.forEach((i) => {
-          if (i.paid > 0 && i.paid < i.amount && i.status !== "partial" && i.status !== "cancelled") {
+          if (i.paid > 0 && i.paid < invoicePayable(i) && i.status !== "partial" && i.status !== "cancelled") {
             invoicesStore.update(i.id, { status: "partial" }); n++;
           }
         });
@@ -370,7 +370,7 @@ function Body() {
             id: newId("tx"), companyId: i.companyId, accountId: "",
             date: i.paidDate ?? new Date().toISOString().slice(0, 10),
             type: "income", category: "Sales", description: `Payment ${i.number}`,
-            amount: i.amount, currency: i.currency, clientId: i.clientId,
+            amount: invoicePayable(i), currency: i.currency, clientId: i.clientId,
             projectId: i.projectId, invoiceId: i.id, source: "manual",
           });
           n++;
@@ -461,10 +461,10 @@ function Body() {
         );
       case "amount":
         return (
-          <ListTd align="right" className="font-tnum" title={fmtFull(inv.amount, inv.currency)}>
+          <ListTd align="right" className="font-tnum" title={fmtFull(invoicePayable(inv), inv.currency)}>
             <span className="inline-flex items-center justify-end gap-1.5">
               <RowSaveState collection="invoices" id={inv.id} />
-              <LiveAmount collection="invoices" id={inv.id}>{fmtFull(inv.amount, inv.currency)}</LiveAmount>
+              <LiveAmount collection="invoices" id={inv.id}>{fmtFull(invoicePayable(inv), inv.currency)}</LiveAmount>
             </span>
           </ListTd>
         );
@@ -503,7 +503,7 @@ function Body() {
         return t <= 0 ? `${Math.abs(t)}d early` : `${t}d late`;
       }
       case "status": return inv.status === "cancelled" ? "cancelled" : `${inv.status} / PO ${poStateOf(inv)}`;
-      case "amount": return fmtFull(inv.amount, inv.currency);
+      case "amount": return fmtFull(invoicePayable(inv), inv.currency);
       case "balance": return inv.status === "cancelled" ? "" : fmtFull(invoiceBalance(inv), inv.currency);
       case "owner": return ownerName(inv.createdBy);
       default: return "";
@@ -591,7 +591,7 @@ function Body() {
         <DetailField label="Due" value={selected.dueDate} mono />
       </DetailSection>
       <DetailSection title="Amounts">
-        <DetailField label="Total" value={fmtFull(selected.amount, selected.currency)} mono />
+        <DetailField label="Total" value={fmtFull(invoicePayable(selected), selected.currency)} mono />
         <DetailField label="Paid" value={fmtFull(selected.paid, selected.currency)} mono />
         <DetailField label="Balance" value={fmtFull(invoiceBalance(selected), selected.currency)} mono />
       </DetailSection>
@@ -824,7 +824,7 @@ function Body() {
         </Button>
         <Button
           size="sm" variant="outline" className="h-7 px-3 text-xs"
-          onClick={() => bulkStatus("paid", "Marked paid", (inv) => ({ paid: inv.amount, paidDate: inv.paidDate ?? new Date().toISOString().slice(0, 10) }))}
+          onClick={() => bulkStatus("paid", "Marked paid", (inv) => ({ paid: invoicePayable(inv), paidDate: inv.paidDate ?? new Date().toISOString().slice(0, 10) }))}
         >
           Mark paid
         </Button>
@@ -1601,13 +1601,13 @@ function MarkPaidDialog({ open, onOpenChange, invoice }: { open: boolean; onOpen
   const submit = () => {
     if (invoice.status === "cancelled") return;
     invoicesStore.update(invoice.id, {
-      paid: invoice.amount,
+      paid: invoicePayable(invoice),
       paidDate: date,
       status: "paid",
     });
     logActivity({
       docType: "invoice", docId: invoice.id, docNumber: invoice.number, companyId: invoice.companyId,
-      action: "payment", summary: `Marked paid on ${date}`, details: { amount: invoice.amount, currency: invoice.currency },
+      action: "payment", summary: `Marked paid on ${date}`, details: { amount: invoicePayable(invoice), currency: invoice.currency },
     });
     // Payment transaction (in invoice currency, for ledger consistency)
     if (account && remaining > 0) {
@@ -1656,7 +1656,7 @@ function MarkPaidDialog({ open, onOpenChange, invoice }: { open: boolean; onOpen
         <DialogHeader><DialogTitle>Mark as paid · {invoice.number}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
           <div className="rounded-md border border-border bg-surface/40 p-3 text-xs space-y-1">
-            <div className="flex justify-between"><span className="text-muted-foreground">Invoice total</span><span className="font-tnum">{invoice.amount.toLocaleString()} {invoice.currency}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Invoice total</span><span className="font-tnum">{invoicePayable(invoice).toLocaleString()} {invoice.currency}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Remaining</span><span className="font-tnum">{remaining.toLocaleString()} {invoice.currency}</span></div>
             {isForeign && (
               <div className="flex justify-between"><span className="text-muted-foreground">Expected in MGA (rate {FX[invoice.currency].toLocaleString()})</span><span className="font-tnum">{expectedMga.toLocaleString()} MGA</span></div>
