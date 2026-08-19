@@ -272,11 +272,11 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
     const persist = () => saveView(kind, {
       zoom: zoomRef.current, mode,
       scrollTop: el?.scrollTop ?? 0, scrollLeft: el?.scrollLeft ?? 0,
-      colWidths, density, fitOnePage, showStamp, showSignature,
+      colWidths, density, fitOnePage, manualScale, showStamp, showSignature,
     });
     const t = setInterval(persist, 1000);
     return () => { clearInterval(t); persist(); };
-  }, [open, doc?.kind, mode, zoom, colWidths, density, fitOnePage, showStamp, showSignature]);
+  }, [open, doc?.kind, mode, zoom, colWidths, density, fitOnePage, manualScale, showStamp, showSignature]);
 
 
   const applyZoom = useCallback((next: number, anchor?: { x: number; y: number }) => {
