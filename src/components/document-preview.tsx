@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EXPORT_FONT_LINKS, EXPORT_TYPOGRAPHY_CSS } from "@/lib/export-fonts";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
