@@ -1023,10 +1023,12 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
             <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes for the client" />
           </div>
         </div>
-        <DialogFooter>
+        </div>
+        <DialogFooter className="shrink-0 border-t border-border px-5 py-3 gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>{editing ? "Save" : "Create"}</Button>
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );
