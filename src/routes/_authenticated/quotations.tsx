@@ -850,7 +850,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
             ) : (
               <div className="rounded-md border border-border overflow-hidden">
                 <div className="overflow-x-auto stacked-table">
-                <table className="w-full min-w-[720px] text-xs">
+                <table className="w-full min-w-[720px] md:min-w-0 md:table-fixed text-xs">
                   <thead className="bg-surface-elevated/40 text-[10px] uppercase tracking-wider text-muted-foreground">
                     <tr>
                       <th className="w-10" />
