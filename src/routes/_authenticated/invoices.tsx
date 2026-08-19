@@ -1097,7 +1097,15 @@ function InvoiceDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const removeLine = (id: string) => setLines((prev) => prev.filter((l) => l.id !== id));
   const moveLine = (from: number, to: number) => setLines((prev) => moveItem(prev, from, to));
   const lineDnd = useLineReorder(moveLine);
-  const totals = docTotals(lines, Number(discountPct) || 0, 0);
+  const totals = docTotals(lines, Number(discountPct) || 0, Number(taxRate) || 0);
+
+  // New invoices: follow the company/issue-date VAT rule until the user overrides it.
+  useEffect(() => {
+    if (!open || editing || !companyId) return;
+    setTaxRate(defaultTaxRate(companies.find((c) => c.id === companyId), issueDate));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editing?.id, companyId, issueDate]);
+
   const linesTotal = totals.subtotal;
 
   const processOk = Boolean(poId) || poWaived;
