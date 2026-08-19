@@ -4,6 +4,14 @@ The canvas, corner gradient, icon rail, floating panels, pill search/actions and
 
 ## What changes
 
+**0. Gemini palette and type**
+- Retune the tokens to Gemini's atmosphere: a near-white canvas, one step lighter surface for panels, near-black primary text, soft grey secondary text, and hairline dividers only where truly needed.
+- Accent moves to Gemini blue used sparingly (selected row tint, focus ring, primary pill action); the corner wash becomes a blue-to-lavender ambient fade at very low saturation.
+- Status colours stay semantic (paid / overdue / warning) but drop to quieter, desaturated tones shown as text or soft chips rather than loud badges.
+- Typography moves to a Google-Sans-adjacent pairing loaded from Google Fonts, with lighter heading weights, roomier line height, and a slightly larger base size for calm reading. Numbers keep tabular figures.
+
+
+
 **1. Room to breathe everywhere**
 - Raise the page gutter and vertical rhythm on all screens so panels sit inside the canvas instead of touching the edges, with a comfortable max content width on very wide displays.
 - Increase the gap between stacked panels and grid cards app-wide (same treatment already applied to the dashboard).
