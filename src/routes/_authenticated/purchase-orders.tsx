@@ -113,6 +113,18 @@ function Body() {
       onClose={() => setSelectedId(null)}
       actions={
         <>
+          <Button
+            size="sm"
+            onClick={() => {
+              const existing = invoices.find((inv) => inv.poId === selected.id);
+              void navigate({
+                to: "/invoices",
+                search: existing ? { focus: existing.id } : { fromPo: selected.id },
+              });
+            }}
+          >
+            {invoices.some((inv) => inv.poId === selected.id) ? "Open invoice" : "Send to Invoice"}
+          </Button>
           <Button size="sm" variant="secondary" onClick={() => { setEditing(selected); setOpen(true); }}>Edit</Button>
           {selected.documentUrl && (
             <Button size="sm" variant="ghost" onClick={() => openStoredFile(selected.documentUrl)}>Open file</Button>
@@ -120,6 +132,7 @@ function Body() {
           <Button size="sm" variant="ghost" onClick={() => setHistoryOf(selected)}>History</Button>
         </>
       }
+
     >
       <DetailSection>
         <DetailField label="Status" value={<StatusBadge status={selected.status} />} />
