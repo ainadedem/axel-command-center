@@ -38,11 +38,13 @@ async function handle() {
 
   const { data: invoices, error } = await admin
     .from("invoices")
-    .select("id, company_id, client_id, number, amount, paid, currency, status, issue_date, ingestion_date, handover_proof_url, po_id, po_waived")
+    .select("id, company_id, client_id, number, amount, paid, total_amount, tax_amount, currency, status, issue_date, ingestion_date, handover_proof_url, po_id, po_waived")
     .not("status", "in", "(draft,cancelled,paid)");
   if (error) return Response.json({ error: error.message }, { status: 500 });
 
-  const open = (invoices ?? []).filter((i) => Number(i.amount) - Number(i.paid) > 0.5);
+  const payable = (i: { amount: unknown; tax_amount?: unknown; total_amount?: unknown }) =>
+    Number(i.total_amount) > 0 ? Number(i.total_amount) : Number(i.amount) + (Number(i.tax_amount) || 0);
+  const open = (invoices ?? []).filter((i) => payable(i) - Number(i.paid) > 0.5);
   if (open.length === 0) return Response.json({ scanned: 0, sent: 0 });
 
   const { data: logged } = await admin.from("ar_alert_log").select("invoice_id, stage");
@@ -102,7 +104,7 @@ async function handle() {
       .map((a) => emailByUser.get(a.user_id as string))
       .filter((e): e is string => !!e);
 
-    const balance = Number(inv.amount) - Number(inv.paid);
+    const balance = payable(inv) - Number(inv.paid);
     const gaps: string[] = [];
     if (!inv.po_id && !inv.po_waived) gaps.push("no client purchase order recorded");
     if (!inv.handover_proof_url) gaps.push("no stamped handover proof archived");

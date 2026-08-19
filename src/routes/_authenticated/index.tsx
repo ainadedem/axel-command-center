@@ -20,6 +20,7 @@ import { useState, useMemo } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, AlertOctagon, ShieldCheck, Rocket } from "lucide-react";
 import { FX, type Currency } from "@/lib/mock-data";
+import { invoiceBalance } from "@/lib/invoice-money";
 
 const pct = (cur: number, prev: number) => {
   if (prev === 0) return cur === 0 ? 0 : cur > 0 ? 100 : -100;
@@ -84,7 +85,7 @@ function DashboardBody() {
 
   const receivablesMGA = inv
     .filter((i) => i.status !== "paid")
-    .reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
+    .reduce((s, i) => s + toMGA(invoiceBalance(i), i.currency), 0);
 
   const overdueCount = inv.filter((i) => i.status === "overdue").length;
 

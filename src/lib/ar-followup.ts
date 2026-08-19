@@ -7,6 +7,7 @@
 import { format, parseISO, addDays } from "date-fns";
 import { fmtAmount, type Invoice, type Client, type Company, type PurchaseOrder, type PvrRecord } from "@/lib/mock-data";
 import { agingDays, agingStart } from "@/lib/sop";
+import { invoiceBalance } from "@/lib/invoice-money";
 
 export type FollowUpLang = "en" | "fr";
 
@@ -35,7 +36,7 @@ export function buildFollowUp(input: FollowUpInput): FollowUpDraft {
   const { invoice, client, company, po, pvrs, stage, lang } = input;
   const today = input.today ?? new Date();
   const days = agingDays(invoice, today);
-  const balance = fmtAmount(invoice.amount - invoice.paid, invoice.currency);
+  const balance = fmtAmount(invoiceBalance(invoice), invoice.currency);
   const ingested = d(agingStart(invoice));
   const deadline = format(addDays(today, 7), "d MMMM yyyy");
   const signer = input.senderName || company?.name || "";

@@ -20,6 +20,7 @@ import { useSingleFlightSubmit } from "@/components/form-ux";
 import { Upload, CheckCircle2, AlertCircle, FileText, Download, FileDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInDays } from "date-fns";
+import { invoiceBalance } from "@/lib/invoice-money";
 
 /* ─── CSV parsing ───────────────────────────────────────────────────── */
 
@@ -195,7 +196,7 @@ function autoMatchInvoice(
   // the closest match (tolerate ±10% to absorb FX drift).
   const amountInMGA = toMGA(amount, account.currency);
   const scored = candidates.map((i) => {
-    const remaining = Math.max(0, i.amount - i.paid);
+    const remaining = Math.max(0, invoiceBalance(i));
     const remainingInMGA = toMGA(remaining, i.currency);
     const diff = Math.abs(remainingInMGA - amountInMGA);
     const ratio = remainingInMGA > 0 ? diff / remainingInMGA : 1;
@@ -365,7 +366,7 @@ export function StatementImportDialog({
         invoicePaidDelta = total;
       } else {
         const receivedInInvCcy = toMGA(total, account.currency) / FX[inv.currency];
-        const remainingInInvCcy = Math.max(0, inv.amount - inv.paid);
+        const remainingInInvCcy = Math.max(0, invoiceBalance(inv));
         invoicePaidDelta = Math.min(receivedInInvCcy, remainingInInvCcy);
         const settledInAcctCcy = toMGA(invoicePaidDelta, inv.currency) / FX[account.currency];
         fxDelta = total - settledInAcctCcy;
@@ -653,7 +654,7 @@ export function StatementImportDialog({
                                 <CheckCircle2 className="h-3 w-3" /> {inv.number}
                               </span>
                               {account && inv.currency !== account.currency && (() => {
-                                const remainingInv = Math.max(0, inv.amount - inv.paid);
+                                const remainingInv = Math.max(0, invoiceBalance(inv));
                                 const settledInAcct = toMGA(Math.min(toMGA(r.amount, account.currency) / FX[inv.currency], remainingInv), inv.currency) / FX[account.currency];
                                 const fx = r.amount - settledInAcct;
                                 if (Math.abs(fx) < 1) return null;
@@ -760,7 +761,7 @@ export function RecordPaymentDialog({
   // Reset on open
   useEffect(() => {
     if (open && invoice) {
-      setAmount(String(Math.max(0, invoice.amount - invoice.paid)));
+      setAmount(String(Math.max(0, invoiceBalance(invoice))));
       setDate(new Date().toISOString().slice(0, 10));
     }
   }, [open, invoice]);
@@ -799,7 +800,7 @@ export function RecordPaymentDialog({
   };
   const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
 
-  const remaining = invoice ? invoice.amount - invoice.paid : 0;
+  const remaining = invoice ? invoiceBalance(invoice) : 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

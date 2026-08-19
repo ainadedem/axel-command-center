@@ -68,6 +68,7 @@ import { AgingPanel } from "@/components/aging-panel";
 import { KpiCard } from "@/components/kpi-card";
 import { StatusFilterBar, type PoState } from "@/components/status-filter-bar";
 import { TableExportMenu } from "@/components/table-export-menu";
+import { invoiceBalance, invoicePayable } from "@/lib/invoice-money";
 
 
 
@@ -167,8 +168,8 @@ function Body() {
     { key: "issuedDay", label: "Issued (day)", type: "string", accessor: (i) => dayOf(i.issueDate), noSort: true, noFilter: true },
     { key: "issuedMonth", label: "Issued (month)", type: "string", accessor: (i) => monthOf(i.issueDate), noSort: true, noFilter: true },
     { key: "issuedQuarter", label: "Issued (quarter)", type: "string", accessor: (i) => quarterOf(i.issueDate), noSort: true, noFilter: true },
-    { key: "amount", label: "Amount", type: "number", accessor: (i) => i.amount, noGroup: true },
-    { key: "balance", label: "Balance", type: "number", accessor: (i) => i.amount - i.paid, noGroup: true },
+    { key: "amount", label: "Amount", type: "number", accessor: (i) => invoicePayable(i), noGroup: true },
+    { key: "balance", label: "Balance", type: "number", accessor: (i) => invoiceBalance(i), noGroup: true },
     { key: "owner", label: "Owner", type: "enum", accessor: (i) => ownerName(i.createdBy) },
   ];
   const view = useDataView<Invoice>("invoices", fields);
@@ -271,15 +272,15 @@ function Body() {
   };
 
   const active = list.filter((i) => i.status !== "cancelled");
-  const totalOpen = active.filter((i) => i.status !== "paid").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
-  const totalOverdue = active.filter((i) => i.status === "overdue").reduce((s, i) => s + toMGA(i.amount - i.paid, i.currency), 0);
-  const totalPaid = active.filter((i) => i.status === "paid").reduce((s, i) => s + toMGA(i.amount, i.currency), 0);
+  const totalOpen = active.filter((i) => i.status !== "paid").reduce((s, i) => s + toMGA(invoiceBalance(i), i.currency), 0);
+  const totalOverdue = active.filter((i) => i.status === "overdue").reduce((s, i) => s + toMGA(invoiceBalance(i), i.currency), 0);
+  const totalPaid = active.filter((i) => i.status === "paid").reduce((s, i) => s + toMGA(invoicePayable(i), i.currency), 0);
 
   const aging = useMemo(
     () =>
       buildAging(chipFiltered.filter((i) => i.status !== "cancelled"), {
         due: (i) => i.dueDate,
-        balance: (i) => toMGA(i.amount - i.paid, i.currency),
+        balance: (i) => toMGA(invoiceBalance(i), i.currency),
         include: (i) => i.status !== "paid",
       }),
     [chipFiltered],
@@ -329,11 +330,11 @@ function Body() {
       id: "should-be-paid",
       label: "Invoices fully covered by payments but not marked paid",
       description: "Sets status to paid when balance is zero.",
-      count: scopedInvoices.filter((i) => i.status !== "paid" && i.status !== "cancelled" && i.paid >= i.amount && i.amount > 0).length,
+      count: scopedInvoices.filter((i) => i.status !== "paid" && i.status !== "cancelled" && i.paid >= invoicePayable(i) && invoicePayable(i) > 0).length,
       fix: () => {
         let n = 0;
         scopedInvoices.forEach((i) => {
-          if (i.status !== "paid" && i.status !== "cancelled" && i.paid >= i.amount && i.amount > 0) {
+          if (i.status !== "paid" && i.status !== "cancelled" && i.paid >= invoicePayable(i) && invoicePayable(i) > 0) {
             invoicesStore.update(i.id, { status: "paid", paidDate: i.paidDate ?? new Date().toISOString().slice(0, 10) });
             n++;
           }
@@ -344,11 +345,11 @@ function Body() {
     {
       id: "should-be-partial",
       label: "Invoices with partial payment not marked partial",
-      count: scopedInvoices.filter((i) => i.paid > 0 && i.paid < i.amount && i.status !== "partial" && i.status !== "cancelled").length,
+      count: scopedInvoices.filter((i) => i.paid > 0 && i.paid < invoicePayable(i) && i.status !== "partial" && i.status !== "cancelled").length,
       fix: () => {
         let n = 0;
         scopedInvoices.forEach((i) => {
-          if (i.paid > 0 && i.paid < i.amount && i.status !== "partial" && i.status !== "cancelled") {
+          if (i.paid > 0 && i.paid < invoicePayable(i) && i.status !== "partial" && i.status !== "cancelled") {
             invoicesStore.update(i.id, { status: "partial" }); n++;
           }
         });
@@ -369,7 +370,7 @@ function Body() {
             id: newId("tx"), companyId: i.companyId, accountId: "",
             date: i.paidDate ?? new Date().toISOString().slice(0, 10),
             type: "income", category: "Sales", description: `Payment ${i.number}`,
-            amount: i.amount, currency: i.currency, clientId: i.clientId,
+            amount: invoicePayable(i), currency: i.currency, clientId: i.clientId,
             projectId: i.projectId, invoiceId: i.id, source: "manual",
           });
           n++;
@@ -399,7 +400,7 @@ function Body() {
     const cl = clients.find((c) => c.id === inv.clientId);
     const proj = inv.projectId ? projects.find((p) => p.id === inv.projectId) : undefined;
     const days = differenceInDays(parseISO(inv.dueDate), new Date());
-    const balance = inv.amount - inv.paid;
+    const balance = invoiceBalance(inv);
     const timing = inv.paidDate ? differenceInDays(parseISO(inv.paidDate), parseISO(inv.dueDate)) : null;
 
     switch (key) {
@@ -460,10 +461,10 @@ function Body() {
         );
       case "amount":
         return (
-          <ListTd align="right" className="font-tnum" title={fmtFull(inv.amount, inv.currency)}>
+          <ListTd align="right" className="font-tnum" title={fmtFull(invoicePayable(inv), inv.currency)}>
             <span className="inline-flex items-center justify-end gap-1.5">
               <RowSaveState collection="invoices" id={inv.id} />
-              <LiveAmount collection="invoices" id={inv.id}>{fmtFull(inv.amount, inv.currency)}</LiveAmount>
+              <LiveAmount collection="invoices" id={inv.id}>{fmtFull(invoicePayable(inv), inv.currency)}</LiveAmount>
             </span>
           </ListTd>
         );
@@ -502,8 +503,8 @@ function Body() {
         return t <= 0 ? `${Math.abs(t)}d early` : `${t}d late`;
       }
       case "status": return inv.status === "cancelled" ? "cancelled" : `${inv.status} / PO ${poStateOf(inv)}`;
-      case "amount": return fmtFull(inv.amount, inv.currency);
-      case "balance": return inv.status === "cancelled" ? "" : fmtFull(inv.amount - inv.paid, inv.currency);
+      case "amount": return fmtFull(invoicePayable(inv), inv.currency);
+      case "balance": return inv.status === "cancelled" ? "" : fmtFull(invoiceBalance(inv), inv.currency);
       case "owner": return ownerName(inv.createdBy);
       default: return "";
     }
@@ -590,9 +591,9 @@ function Body() {
         <DetailField label="Due" value={selected.dueDate} mono />
       </DetailSection>
       <DetailSection title="Amounts">
-        <DetailField label="Total" value={fmtFull(selected.amount, selected.currency)} mono />
+        <DetailField label="Total" value={fmtFull(invoicePayable(selected), selected.currency)} mono />
         <DetailField label="Paid" value={fmtFull(selected.paid, selected.currency)} mono />
-        <DetailField label="Balance" value={fmtFull(selected.amount - selected.paid, selected.currency)} mono />
+        <DetailField label="Balance" value={fmtFull(invoiceBalance(selected), selected.currency)} mono />
       </DetailSection>
     </DetailPanel>
   ) : null;
@@ -718,7 +719,7 @@ function Body() {
                   (i) =>
                     i.status !== "cancelled" &&
                     i.status !== "paid" &&
-                    i.amount - i.paid > 0 &&
+                    invoiceBalance(i) > 0 &&
                     inBucket(i.dueDate, key),
                 )
                 .sort((a, b) => (a.dueDate ?? "").localeCompare(b.dueDate ?? ""))
@@ -726,7 +727,7 @@ function Body() {
                   id: i.id,
                   title: i.number,
                   subtitle: clients.find((c) => c.id === i.clientId)?.name,
-                  amount: toMGA(i.amount - i.paid, i.currency),
+                  amount: toMGA(invoiceBalance(i), i.currency),
                   due: i.dueDate,
                   status: i.status,
                 }))
@@ -823,7 +824,7 @@ function Body() {
         </Button>
         <Button
           size="sm" variant="outline" className="h-7 px-3 text-xs"
-          onClick={() => bulkStatus("paid", "Marked paid", (inv) => ({ paid: inv.amount, paidDate: inv.paidDate ?? new Date().toISOString().slice(0, 10) }))}
+          onClick={() => bulkStatus("paid", "Marked paid", (inv) => ({ paid: invoicePayable(inv), paidDate: inv.paidDate ?? new Date().toISOString().slice(0, 10) }))}
         >
           Mark paid
         </Button>
@@ -1147,9 +1148,15 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
       setShowErrors(true);
       return;
     }
-    const a = Number(amount) || 0;
+    const taxRateNum = Number(taxRate) || 0;
+    // Same convention as quotations: `amount` is the pre-tax subtotal, with the
+    // VAT and payable total stored alongside it.
+    const manual = Number(amount) || 0;
+    const a = lines.length ? totals.subtotal : manual;
+    const taxAmount = lines.length ? totals.taxAmount : Math.round((manual * taxRateNum) / 100);
+    const payable = a + taxAmount;
     const p = Number(paid) || 0;
-    const finalStatus = status === "draft" ? "draft" : deriveStatus(a, p, dueDate);
+    const finalStatus = status === "draft" ? "draft" : deriveStatus(payable, p, dueDate);
     const data = {
       number, companyId, clientId,
       projectId: projectId || undefined,
@@ -1163,16 +1170,11 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
       bankAccountId: bankAccountId || defaultBankAccount(companies.find((c) => c.id === companyId))?.id,
       lines: lines.length ? lines.map((l) => ({ ...l })) : undefined,
       discountPct: (Number(discountPct) || 0) || undefined,
-      taxRate: Number(taxRate) || 0,
-      // `amount` stays the payable total (tax included) so AR/aging keep working;
-      // the VAT share is derived from it when there are no priced lines.
-      taxAmount: lines.length
-        ? totals.taxAmount
-        : Math.round(a - a / (1 + (Number(taxRate) || 0) / 100)),
-      totalAmount: a,
-
-
+      taxRate: taxRateNum,
+      taxAmount,
+      totalAmount: payable,
     };
+
     if (editing) {
       invoicesStore.update(editing.id, { ...data, updatedBy: user?.id, updatedAt: new Date().toISOString() });
       if (editing.status !== finalStatus) {
@@ -1432,10 +1434,10 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
             )}
             <div className="flex items-center justify-between gap-3">
               <p className="text-[11px] text-muted-foreground">{RICH_TEXT_HINT}</p>
-              {lines.length > 0 && Math.round(totals.total) !== Math.round(Number(amount) || 0) && (
-                <Button type="button" size="sm" variant="ghost" className="text-[11px]" onClick={() => setAmount(String(totals.total))}>
-                  Use lines total ({fmtAmount(totals.total, currency)})
-                </Button>
+              {lines.length > 0 && (
+                <p className="text-[11px] text-muted-foreground">
+                  Amount is computed from the lines: {fmtAmount(totals.subtotal, currency)} HT · {fmtAmount(totals.total, currency)} payable
+                </p>
               )}
 
             </div>
@@ -1448,14 +1450,25 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <Label>Amount</Label>
+              <Label>Amount (excl. tax)</Label>
               <div className="relative">
-                <Input type="number" className="pr-10" value={amount} onChange={(e) => setAmount(e.target.value)} />
+                <Input
+                  type="number" className="pr-10"
+                  value={lines.length ? String(totals.subtotal) : amount}
+                  disabled={lines.length > 0}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">
                   {currency === "EUR" ? "€" : currency === "USD" ? "$" : "Ar"}
                 </span>
               </div>
+              {!lines.length && Number(taxRate) > 0 && (
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  + {fmtAmount(Math.round(((Number(amount) || 0) * (Number(taxRate) || 0)) / 100), currency)} tax · {fmtAmount(Math.round((Number(amount) || 0) * (1 + (Number(taxRate) || 0) / 100)), currency)} payable
+                </p>
+              )}
             </div>
+
             <div>
               <Label>Paid</Label>
               <div className="relative">
@@ -1484,7 +1497,21 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
                 ))}
               </div>
             </div>
+            {lines.length === 0 && (
+              <div>
+                <Label>Tax %</Label>
+                <div className="relative">
+                  <Input
+                    type="number" min={0} step={0.01} className="pr-8"
+                    value={taxRate}
+                    onChange={(e) => setTaxRate(Number(e.target.value))}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">%</span>
+                </div>
+              </div>
+            )}
           </div>
+
         </div>
         </div>
         <DialogFooter className="shrink-0 border-t border-border px-5 py-3 gap-2">
@@ -1528,7 +1555,7 @@ function MarkPaidDialog({ open, onOpenChange, invoice }: { open: boolean; onOpen
 
   const coAccounts = invoice ? accounts.filter((a) => a.companyId === invoice.companyId) : [];
   const accountsLoading = !!invoice && dataLoading && coAccounts.length === 0;
-  const expectedMga = invoice ? Math.round(toMGA(invoice.amount - invoice.paid, invoice.currency)) : 0;
+  const expectedMga = invoice ? Math.round(toMGA(invoiceBalance(invoice), invoice.currency)) : 0;
   const isForeign = !!invoice && invoice.currency !== "MGA";
 
   useEffect(() => {
@@ -1566,7 +1593,7 @@ function MarkPaidDialog({ open, onOpenChange, invoice }: { open: boolean; onOpen
   if (!invoice) return null;
 
   const account = coAccounts.find((a) => a.id === accountId);
-  const remaining = invoice.amount - invoice.paid;
+  const remaining = invoiceBalance(invoice);
   const receivedNum = Number(receivedMga) || 0;
   // FX delta in MGA: positive = gain, negative = loss (perte de change)
   const fxDelta = isForeign ? receivedNum - expectedMga : 0;
@@ -1574,13 +1601,13 @@ function MarkPaidDialog({ open, onOpenChange, invoice }: { open: boolean; onOpen
   const submit = () => {
     if (invoice.status === "cancelled") return;
     invoicesStore.update(invoice.id, {
-      paid: invoice.amount,
+      paid: invoicePayable(invoice),
       paidDate: date,
       status: "paid",
     });
     logActivity({
       docType: "invoice", docId: invoice.id, docNumber: invoice.number, companyId: invoice.companyId,
-      action: "payment", summary: `Marked paid on ${date}`, details: { amount: invoice.amount, currency: invoice.currency },
+      action: "payment", summary: `Marked paid on ${date}`, details: { amount: invoicePayable(invoice), currency: invoice.currency },
     });
     // Payment transaction (in invoice currency, for ledger consistency)
     if (account && remaining > 0) {
@@ -1629,7 +1656,7 @@ function MarkPaidDialog({ open, onOpenChange, invoice }: { open: boolean; onOpen
         <DialogHeader><DialogTitle>Mark as paid · {invoice.number}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
           <div className="rounded-md border border-border bg-surface/40 p-3 text-xs space-y-1">
-            <div className="flex justify-between"><span className="text-muted-foreground">Invoice total</span><span className="font-tnum">{invoice.amount.toLocaleString()} {invoice.currency}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Invoice total</span><span className="font-tnum">{invoicePayable(invoice).toLocaleString()} {invoice.currency}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Remaining</span><span className="font-tnum">{remaining.toLocaleString()} {invoice.currency}</span></div>
             {isForeign && (
               <div className="flex justify-between"><span className="text-muted-foreground">Expected in MGA (rate {FX[invoice.currency].toLocaleString()})</span><span className="font-tnum">{expectedMga.toLocaleString()} MGA</span></div>
