@@ -99,25 +99,24 @@ const SHEET_H = 297 * MM;
 const MIN_ZOOM = 0.35;
 const MAX_ZOOM = 2.5;
 const VIEW_KEY = "axel:doc-preview:view";
-const PAGE_PAD_MM = 22;
-const USABLE_H = (297 - PAGE_PAD_MM * 2) * MM;
 
 export type ColKey = "desc" | "qty" | "unit" | "rate" | "total";
 export type ColWidths = Partial<Record<ColKey, number>>;
-export type Density = "auto" | "compact" | "normal" | "spacious";
+export type Density = "auto" | "compact" | "normal" | "spacious" | "manual";
 
 const DEFAULT_COLS: Record<ColKey, number> = { desc: 46, qty: 8, unit: 10, rate: 18, total: 18 };
-const DENSITY_SCALE: Record<Exclude<Density, "auto">, number> = { compact: 0.85, normal: 1, spacious: 1.12 };
-const MIN_AUTO_SCALE = 0.62;
-/** Export-time floor — a little tighter than the preview's comfortable floor. */
-const EXPORT_MIN_SCALE = 0.55;
+const DENSITY_SCALE: Record<Exclude<Density, "auto" | "manual">, number> = { compact: 0.85, normal: 1, spacious: 1.12 };
+
+/** Default "force one A4 page" preference per document type. */
+const DEFAULT_FIT_ONE_PAGE: Record<DocKind, boolean> = { invoice: true, quote: true, po: true };
 
 type ZoomMode = "fit" | "actual" | "custom";
 type SavedView = {
   zoom: number; mode: ZoomMode; scrollTop: number; scrollLeft: number;
-  colWidths?: ColWidths; density?: Density; fitOnePage?: boolean;
+  colWidths?: ColWidths; density?: Density; fitOnePage?: boolean; manualScale?: number;
   showStamp?: boolean; showSignature?: boolean;
 };
+
 
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
