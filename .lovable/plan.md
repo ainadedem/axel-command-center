@@ -34,10 +34,12 @@ The canvas, corner gradient, icon rail, floating panels, pill search/actions and
 - One shared 150ms soft-ease transition for hover, selection and panel entry; fades and tone changes only, no abrupt movement.
 
 ## Out of scope
-No changes to data model, routes, business logic, icons or design tokens. Colours, fonts and semantic tokens stay exactly as they are.
+No changes to the data model, routes, business logic or icons. Existing icons stay; only visual tokens (colour, type, spacing, radius) are retuned.
 
 ## Technical notes
-- Spacing and panel treatment go through the existing `panel`, `panel-pad`, `quiet-row`, `pill-field` and `pill-chip` utilities in `src/styles.css` — no new colour tokens.
+- Colour, radius and type values stay semantic tokens in `src/styles.css` (the `@theme inline` mapping is preserved), so components keep using `bg-surface` / `text-muted-foreground` and nothing hardcodes a colour. Dark mode is retuned alongside light.
+- Fonts load via `<link>` tags in the root route head and map to `--font-display` / `--font-sans`; no URL `@import` in the stylesheet.
+- Spacing and panel treatment go through the existing `panel`, `panel-pad`, `quiet-row`, `pill-field` and `pill-chip` utilities.
 - Table containment is done once in `src/components/list-table.tsx` (`ListTableShell`) and `src/components/stacked-table.tsx`, so all single-list routes inherit it.
 - Header changes are made once in `src/components/page-header.tsx` plus the shared filter/toolbar components.
 - New master–detail wiring reuses `src/components/master-detail.tsx` exactly as invoices/quotations already do (local `selectedId` state, row click handler).
