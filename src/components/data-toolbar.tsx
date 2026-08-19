@@ -24,7 +24,7 @@ type Props<T> = {
 };
 
 function chipBase() {
-  return "inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-xs border border-border bg-surface hover:bg-surface-elevated text-muted-foreground hover:text-foreground transition";
+  return "inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-xs border-0 bg-surface shadow-[0_1px_2px_color-mix(in_oklab,var(--foreground)_6%,transparent)] hover:bg-surface-elevated text-muted-foreground hover:text-foreground transition-all duration-150";
 }
 
 export function DataToolbar<T>({ view, items, className }: Props<T>) {
@@ -40,20 +40,30 @@ export function DataToolbar<T>({ view, items, className }: Props<T>) {
   return (
     <div className={cn("flex items-center gap-2 flex-wrap", className)}>
       {/* Search */}
-      <div className="relative w-full sm:w-auto">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+      <div className="pill-field h-10 w-full sm:w-64 px-4">
+        <Search className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden />
         <Input
           value={state.q}
           onChange={(e) => setState((p) => ({ ...p, q: e.target.value }))}
           placeholder="Search…"
-          className="h-8 w-full sm:w-44 pl-7 text-xs"
+          className="h-8 border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
         />
+        {state.q && (
+          <button
+            type="button"
+            aria-label="Clear search"
+            onClick={() => setState((p) => ({ ...p, q: "" }))}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
 
       {/* Sort */}
       <Popover>
         <PopoverTrigger asChild>
-          <button className={cn(chipBase(), sortField && "text-foreground border-primary/40 bg-primary/5")}>
+          <button className={cn(chipBase(), sortField && "text-foreground bg-primary/8")}>
             <ArrowDownUp className="h-3.5 w-3.5" />
             <span>Sort</span>
             {sortField && (
@@ -102,7 +112,7 @@ export function DataToolbar<T>({ view, items, className }: Props<T>) {
       {groupableFields.length > 0 && (
         <Popover>
           <PopoverTrigger asChild>
-            <button className={cn(chipBase(), groupField && "text-foreground border-primary/40 bg-primary/5")}>
+            <button className={cn(chipBase(), groupField && "text-foreground bg-primary/8")}>
               <Group className="h-3.5 w-3.5" />
               <span>Group</span>
               {groupField && <span className="text-foreground font-medium ml-1">{groupField.label}</span>}
@@ -137,7 +147,7 @@ export function DataToolbar<T>({ view, items, className }: Props<T>) {
       {/* Filter */}
       <Popover>
         <PopoverTrigger asChild>
-          <button className={cn(chipBase(), activeFilterCount > 0 && "text-foreground border-primary/40 bg-primary/5")}>
+          <button className={cn(chipBase(), activeFilterCount > 0 && "text-foreground bg-primary/8")}>
             <Filter className="h-3.5 w-3.5" />
             <span>Filter</span>
             {activeFilterCount > 0 && (

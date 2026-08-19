@@ -25,7 +25,7 @@ function Frame({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] px-6 py-12 text-center",
+        "panel px-8 py-16 text-center",
         className,
       )}
     >

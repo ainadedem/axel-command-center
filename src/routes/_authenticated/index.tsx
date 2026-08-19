@@ -48,7 +48,7 @@ function DashboardBody() {
   if (!bootstrapReady || accessLoading || dataLoading) {
     return (
       <div className="p-4 sm:p-8 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 sm:gap-6">
           {Array.from({ length: 4 }).map((_, idx) => (
             <div key={idx} className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 space-y-3">
               <div className="h-3 w-24 rounded-full bg-surface animate-pulse" />
@@ -284,7 +284,7 @@ function DashboardBody() {
   return (
     <div className="p-4 sm:p-8 space-y-6">
       {/* Hero KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 sm:gap-6">
         <KpiCard
           label="Total cash (MGA equiv.)"
           value={fmtCompact(totalMGA, "MGA")}
@@ -360,7 +360,7 @@ function DashboardBody() {
       </div>
 
       {/* Charts row */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 sm:gap-6">
         <ChartFrame
           className="xl:col-span-2"
           title={`Cash flow · ${cashViewLabel}`}
@@ -472,7 +472,7 @@ function DashboardBody() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 mb-5">
             <div className="rounded-lg border border-border/60 bg-card p-4">
               <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                 Gross open pipeline
@@ -569,7 +569,7 @@ function DashboardBody() {
 
 
       {/* Pipeline + Recent */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 sm:gap-6">
         <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
           <div className="flex items-center justify-between mb-1">
             <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Pipeline</div>
