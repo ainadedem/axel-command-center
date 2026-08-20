@@ -227,18 +227,35 @@ export function RowAction({
 
 
 /** Toolbar control that switches optional columns on and off. */
-export function ColumnPicker({ prefs, className, onResetWidths, onResetOrder }: { prefs: ColumnPrefs; className?: string; onResetWidths?: () => void; onResetOrder?: () => void }) {
+export function ColumnPicker({ prefs, className, onResetWidths, onResetOrder, iconOnly = false }: { prefs: ColumnPrefs; className?: string; onResetWidths?: () => void; onResetOrder?: () => void; iconOnly?: boolean }) {
   const hidden = prefs.columns.filter((c) => !prefs.on(c.key)).length;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className={cn("h-8 px-2.5 text-xs gap-1.5", className)}>
-          <Columns3 className="h-3.5 w-3.5" />
-          Columns
-          {hidden > 0 && (
-            <span className="ml-0.5 rounded-full bg-primary/10 text-primary px-1.5 text-[10px] leading-4">{hidden}</span>
-          )}
-        </Button>
+        {iconOnly ? (
+          <button
+            type="button"
+            title="Columns"
+            aria-label="Columns"
+            className={cn(
+              "relative inline-flex items-center justify-center h-8 w-8 rounded-full border-0 bg-surface text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+              className,
+            )}
+          >
+            <Columns3 className="h-4 w-4" />
+            {hidden > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 rounded-full bg-primary/10 text-primary px-1 text-[10px] leading-4 border border-surface">{hidden}</span>
+            )}
+          </button>
+        ) : (
+          <Button variant="outline" size="sm" className={cn("h-8 px-2.5 text-xs gap-1.5", className)}>
+            <Columns3 className="h-3.5 w-3.5" />
+            Columns
+            {hidden > 0 && (
+              <span className="ml-0.5 rounded-full bg-primary/10 text-primary px-1.5 text-[10px] leading-4">{hidden}</span>
+            )}
+          </Button>
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60 max-h-[70vh] overflow-y-auto">
         <DropdownMenuLabel className="text-xs">Visible columns</DropdownMenuLabel>

@@ -21,13 +21,27 @@ type Props<T> = {
   /** Optional source items to derive enum filter options from. */
   items?: T[];
   className?: string;
+  /** Collapse every control to an icon button whose name appears on hover. */
+  iconOnly?: boolean;
 };
 
 function chipBase() {
   return "inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs border-0 bg-surface shadow-[0_1px_2px_color-mix(in_oklab,var(--foreground)_6%,transparent)] hover:bg-surface-elevated text-muted-foreground hover:text-foreground transition-all duration-150";
 }
 
-export function DataToolbar<T>({ view, items, className }: Props<T>) {
+/** Square ghost icon button used in iconOnly mode. */
+function iconBtn(active = false) {
+  return cn(
+    "inline-flex items-center justify-center h-8 w-8 rounded-full border-0",
+    "transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+    active
+      ? "bg-primary/10 text-foreground"
+      : "bg-surface text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)]",
+  );
+}
+
+export function DataToolbar<T>({ view, items, className, iconOnly }: Props<T>) {
   const { state, setState, reset, fields, activeFilterCount } = view;
 
   const sortableFields = fields.filter((f) => !f.noSort);
@@ -37,42 +51,96 @@ export function DataToolbar<T>({ view, items, className }: Props<T>) {
   const sortField = state.sort ? fields.find((f) => f.key === state.sort!.key) ?? null : null;
   const groupField = state.group ? fields.find((f) => f.key === state.group!.key) ?? null : null;
 
+  const sortTitle = sortField
+    ? `Sort · ${sortField.label} ${state.sort?.dir === "asc" ? "↑" : "↓"}`
+    : "Sort";
+  const groupTitle = groupField ? `Group by · ${groupField.label}` : "Group by";
+  const filterTitle = activeFilterCount > 0 ? `Filters · ${activeFilterCount} active` : "Filters";
+
   return (
     <div className={cn("flex items-center gap-2 flex-wrap", className)}>
       {/* Search */}
-      <div className="pill-field h-10 w-full sm:w-64 px-4">
-        <Search className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden />
-        <Input
-          value={state.q}
-          onChange={(e) => setState((p) => ({ ...p, q: e.target.value }))}
-          placeholder="Search…"
-          className="h-8 border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
-        />
-        {state.q && (
-          <button
-            type="button"
-            aria-label="Clear search"
-            onClick={() => setState((p) => ({ ...p, q: "" }))}
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        )}
-      </div>
+      {iconOnly ? (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className={iconBtn(!!state.q)}
+              title={state.q ? `Search · "${state.q}"` : "Search"}
+              aria-label="Search"
+            >
+              <Search className="h-4 w-4" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-2" align="start">
+            <div className="pill-field h-10 w-full px-3">
+              <Search className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden />
+              <Input
+                value={state.q}
+                onChange={(e) => setState((p) => ({ ...p, q: e.target.value }))}
+                placeholder="Search…"
+                autoFocus
+                className="h-8 border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
+              />
+              {state.q && (
+                <button
+                  type="button"
+                  aria-label="Clear search"
+                  onClick={() => setState((p) => ({ ...p, q: "" }))}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+      ) : (
+        <div className="pill-field h-10 w-full sm:w-64 px-4">
+          <Search className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden />
+          <Input
+            value={state.q}
+            onChange={(e) => setState((p) => ({ ...p, q: e.target.value }))}
+            placeholder="Search…"
+            className="h-8 border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
+          />
+          {state.q && (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => setState((p) => ({ ...p, q: "" }))}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Sort */}
       <Popover>
         <PopoverTrigger asChild>
-          <button className={cn(chipBase(), sortField && "text-foreground bg-primary/8")}>
-            <ArrowDownUp className="h-3.5 w-3.5" />
-            <span>Sort</span>
-            {sortField && (
-              <span className="text-foreground font-medium ml-1 flex items-center gap-0.5">
-                {sortField.label}
-                {state.sort?.dir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
-              </span>
-            )}
-          </button>
+          {iconOnly ? (
+            <button type="button" className={iconBtn(!!sortField)} title={sortTitle} aria-label="Sort">
+              <ArrowDownUp className="h-4 w-4" />
+              {sortField && (
+                <span className="ml-0.5 text-[10px] leading-none">
+                  {state.sort?.dir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                </span>
+              )}
+            </button>
+          ) : (
+            <button className={cn(chipBase(), sortField && "text-foreground bg-primary/8")}>
+              <ArrowDownUp className="h-3.5 w-3.5" />
+              <span>Sort</span>
+              {sortField && (
+                <span className="text-foreground font-medium ml-1 flex items-center gap-0.5">
+                  {sortField.label}
+                  {state.sort?.dir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                </span>
+              )}
+            </button>
+          )}
         </PopoverTrigger>
         <PopoverContent className="w-60 p-2" align="start">
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground px-2 py-1.5">Sort by</div>
@@ -112,11 +180,17 @@ export function DataToolbar<T>({ view, items, className }: Props<T>) {
       {groupableFields.length > 0 && (
         <Popover>
           <PopoverTrigger asChild>
-            <button className={cn(chipBase(), groupField && "text-foreground bg-primary/8")}>
-              <Group className="h-3.5 w-3.5" />
-              <span>Group</span>
-              {groupField && <span className="text-foreground font-medium ml-1">{groupField.label}</span>}
-            </button>
+            {iconOnly ? (
+              <button type="button" className={iconBtn(!!groupField)} title={groupTitle} aria-label="Group by">
+                <Group className="h-4 w-4" />
+              </button>
+            ) : (
+              <button className={cn(chipBase(), groupField && "text-foreground bg-primary/8")}>
+                <Group className="h-3.5 w-3.5" />
+                <span>Group</span>
+                {groupField && <span className="text-foreground font-medium ml-1">{groupField.label}</span>}
+              </button>
+            )}
           </PopoverTrigger>
           <PopoverContent className="w-60 p-2" align="start">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground px-2 py-1.5">Group by</div>
@@ -147,15 +221,26 @@ export function DataToolbar<T>({ view, items, className }: Props<T>) {
       {/* Filter */}
       <Popover>
         <PopoverTrigger asChild>
-          <button className={cn(chipBase(), activeFilterCount > 0 && "text-foreground bg-primary/8")}>
-            <Filter className="h-3.5 w-3.5" />
-            <span>Filter</span>
-            {activeFilterCount > 0 && (
-              <span className="ml-1 h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] grid place-items-center font-medium">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
+          {iconOnly ? (
+            <button type="button" className={cn(iconBtn(activeFilterCount > 0), "relative")} title={filterTitle} aria-label="Filters">
+              <Filter className="h-4 w-4" />
+              {activeFilterCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] grid place-items-center font-medium border border-surface">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          ) : (
+            <button className={cn(chipBase(), activeFilterCount > 0 && "text-foreground bg-primary/8")}>
+              <Filter className="h-3.5 w-3.5" />
+              <span>Filter</span>
+              {activeFilterCount > 0 && (
+                <span className="ml-1 h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] grid place-items-center font-medium">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          )}
         </PopoverTrigger>
         <PopoverContent className="w-80 p-3 max-h-[70vh] overflow-y-auto" align="start">
           <div className="flex items-center justify-between mb-2">
@@ -176,9 +261,15 @@ export function DataToolbar<T>({ view, items, className }: Props<T>) {
       </Popover>
 
       {activeFilterCount > 0 && (
-        <button onClick={reset} className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground">
-          <X className="h-3 w-3" /> Clear
-        </button>
+        iconOnly ? (
+          <button onClick={reset} className={iconBtn()} title="Clear filters" aria-label="Clear filters">
+            <X className="h-4 w-4" />
+          </button>
+        ) : (
+          <button onClick={reset} className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground">
+            <X className="h-3 w-3" /> Clear
+          </button>
+        )
       )}
     </div>
   );

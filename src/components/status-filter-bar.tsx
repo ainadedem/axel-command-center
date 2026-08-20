@@ -18,6 +18,7 @@ function Chip({
   count,
   active,
   onClick,
+  iconOnly,
 }: {
   label: string;
   icon?: React.ReactNode;
@@ -25,7 +26,33 @@ function Chip({
   count: number;
   active: boolean;
   onClick: () => void;
+  iconOnly?: boolean;
 }) {
+  if (iconOnly) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={active}
+        aria-label={`${label} · ${count}`}
+        title={`${label} · ${count}`}
+        className={cn(
+          "inline-flex items-center justify-center h-8 w-8 rounded-full border text-xs font-medium relative",
+          "transition-[color,background-color,border-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+          active
+            ? activeTone[tone]
+            : "border-border text-muted-foreground bg-surface hover:bg-[var(--surface-container)] hover:text-foreground",
+          count === 0 && !active && "opacity-55",
+        )}
+      >
+        {icon}
+        <span className="absolute -right-0.5 -top-0.5 font-tnum text-[9px] leading-none px-1 rounded-full bg-surface border border-border text-muted-foreground">
+          {count}
+        </span>
+      </button>
+    );
+  }
   return (
     <button
       type="button"
@@ -61,6 +88,7 @@ export function StatusFilterBar({
   onClear,
   className,
   flat = false,
+  iconOnly = false,
 }: {
   statuses: string[];
   selected: string[];
@@ -72,6 +100,7 @@ export function StatusFilterBar({
   onClear: () => void;
   className?: string;
   flat?: boolean;
+  iconOnly?: boolean;
 }) {
   const anyActive = selected.length > 0 || poSelected.length > 0;
   return (
@@ -87,6 +116,7 @@ export function StatusFilterBar({
             count={statusCount(s)}
             active={selected.includes(s)}
             onClick={() => onToggleStatus(s)}
+            iconOnly={iconOnly}
           />
         );
       })}
@@ -102,6 +132,7 @@ export function StatusFilterBar({
             count={poCount(s)}
             active={poSelected.includes(s)}
             onClick={() => onTogglePo(s)}
+            iconOnly={iconOnly}
           />
         );
       })}
@@ -109,9 +140,17 @@ export function StatusFilterBar({
         <button
           type="button"
           onClick={onClear}
-          className="inline-flex items-center gap-1 h-8 px-2.5 rounded-full text-xs text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+          title="Clear filters"
+          aria-label="Clear filters"
+          className={cn(
+            "inline-flex items-center justify-center rounded-full transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
+            iconOnly
+              ? "h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)]"
+              : "gap-1 h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)]",
+          )}
         >
-          <X className="h-3.5 w-3.5" /> Clear filters
+          <X className={iconOnly ? "h-4 w-4" : "h-3.5 w-3.5"} />
+          {!iconOnly && "Clear filters"}
         </button>
       )}
     </div>
