@@ -27,12 +27,14 @@ export function FilterPresetBar({
   po,
   onApply,
   className,
+  flat = false,
 }: {
   api: FilterPresetsApi;
   statuses: string[];
   po: string[];
   onApply: (preset: FilterPreset) => void;
   className?: string;
+  flat?: boolean;
 }) {
   const [name, setName] = useState("");
   const [open, setOpen] = useState(false);
@@ -47,7 +49,7 @@ export function FilterPresetBar({
   };
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
+    <div className={cn(flat ? "[display:contents]" : "flex flex-wrap items-center gap-1.5", className)}>
       {api.presets.length > 0 && (
         <span className="text-[11px] uppercase tracking-wider text-muted-foreground mr-0.5">Presets</span>
       )}
