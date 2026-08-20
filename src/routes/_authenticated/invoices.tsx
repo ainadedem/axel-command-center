@@ -69,6 +69,8 @@ import { AgingPanel } from "@/components/aging-panel";
 import { StatusFilterBar, type PoState } from "@/components/status-filter-bar";
 import { TableExportMenu } from "@/components/table-export-menu";
 import { invoiceBalance, invoicePayable } from "@/lib/invoice-money";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 
 
 
@@ -561,6 +563,8 @@ function Body() {
       : []),
   ];
   const filtersActive = activeChips.length > 0 || Boolean(view.state.sort);
+  const isMobile = useIsMobile();
+
   // Reserve space for the table toolbar above the table's scroll pane.
   const pageRef = useRef<HTMLDivElement | null>(null);
   const filterRef = useRef<HTMLDivElement | null>(null);
@@ -676,18 +680,21 @@ function Body() {
             onJump={(item) => jumpTo(item.id, bucket)}
           />
 
-          {/* Unified table toolbar — filters and table actions on a single line capping the table panel */}
-          <div ref={filterRef} className="rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] p-2.5">
-            <div className="flex flex-wrap items-center gap-1.5">
+          {/* Unified table toolbar — sticky, never wraps: chips overflow into a menu */}
+          <div
+            ref={filterRef}
+            className="sticky top-0 z-30 rounded-2xl border border-border bg-card/95 backdrop-blur-sm shadow-[var(--shadow-card)] p-2.5"
+          >
+            <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto no-scrollbar">
               <span
                 title={`${list.length} of ${baseList.length} invoice${baseList.length !== 1 ? "s" : ""}${filtersActive ? " · filtered" : ""}`}
                 aria-label={`${list.length} of ${baseList.length} invoices`}
-                className="inline-flex items-center gap-1.5 h-8 px-2 rounded-full border border-border bg-surface text-xs text-muted-foreground font-tnum whitespace-nowrap"
+                className="inline-flex shrink-0 items-center gap-1.5 h-8 px-2 rounded-full border border-border bg-surface text-xs text-muted-foreground font-tnum whitespace-nowrap"
               >
                 <ListFilter className="h-4 w-4" />
                 <span>{list.length}/{baseList.length}</span>
               </span>
-              <DataToolbar view={view} items={baseList} iconOnly />
+              <DataToolbar view={view} items={baseList} iconOnly className="shrink-0 flex-nowrap" />
               <FilterPresetBar
                 api={presets}
                 statuses={chipStatuses}
@@ -707,6 +714,8 @@ function Body() {
                 onTogglePo={(s) => setChipPo((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))}
                 onClear={() => { setChipStatuses([]); setChipPo([]); }}
                 iconOnly
+                overflow
+                forceOverflowAll={isMobile}
               />
               {filtersActive && (
                 <button
@@ -714,12 +723,12 @@ function Body() {
                   onClick={clearAllFilters}
                   title="Clear all"
                   aria-label="Clear all filters"
-                  className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-surface text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+                  className="inline-flex shrink-0 items-center justify-center h-8 w-8 rounded-full bg-surface text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
                 >
                   <X className="h-4 w-4" />
                 </button>
               )}
-              <div className="ml-auto flex items-center gap-1 rounded-full bg-[var(--surface-container)]/70 p-1">
+              <div className="ml-auto shrink-0 flex items-center gap-1 rounded-full bg-[var(--surface-container)]/70 p-1">
                 <TableExportMenu
                   filename="invoices"
                   title="Invoices"
@@ -741,12 +750,20 @@ function Body() {
                   {numMode === "compact" ? <ToggleLeft className="h-4 w-4" /> : <ToggleRight className="h-4 w-4" />}
                 </button>
               </div>
-              <span className="h-5 w-px bg-border" aria-hidden />
-              <Button size="sm" onClick={openCreate} className="btn-new gap-1.5" aria-label="New invoice">
-                <Plus className="h-4 w-4" /> New invoice
+              <span className="h-5 w-px bg-border shrink-0" aria-hidden />
+              <Button
+                size="sm"
+                onClick={openCreate}
+                className="btn-new gap-1.5 shrink-0"
+                aria-label="New invoice"
+                title="New invoice"
+              >
+                <Plus className="h-4 w-4" />
+                {!isMobile && "New invoice"}
               </Button>
             </div>
           </div>
+
 
           <ListTableShell
             scrollX
