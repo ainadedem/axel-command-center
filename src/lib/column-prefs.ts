@@ -40,6 +40,8 @@ export interface ColumnPrefs {
   /** Is the column currently rendered? */
   on: (key: string) => boolean;
   toggle: (key: string) => void;
+  /** Show every column, or hide everything that isn't locked on. */
+  setAll?: (visible: boolean) => void;
   reset: () => void;
   /** Number of visible columns — handy for `colSpan`. */
   count: number;
