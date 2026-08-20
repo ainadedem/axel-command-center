@@ -683,16 +683,13 @@ function Body() {
                 {list.length} of {baseList.length} invoice{baseList.length !== 1 ? "s" : ""}
                 {filtersActive && <span className="text-foreground/70"> · filtered</span>}
               </div>
-              <span className="mx-1 hidden sm:block h-6 w-px bg-border" aria-hidden />
               <DataToolbar view={view} items={baseList} />
-              <span className="mx-1 hidden sm:block h-6 w-px bg-border" aria-hidden />
               <FilterPresetBar
                 api={presets}
                 statuses={chipStatuses}
                 po={chipPo}
                 onApply={(p) => { setChipStatuses(p.statuses); setChipPo(p.po as PoState[]); }}
               />
-              <span className="mx-1 hidden sm:block h-6 w-px bg-border" aria-hidden />
               <StatusFilterBar
                 statuses={INVOICE_STATUSES}
                 selected={chipStatuses}
