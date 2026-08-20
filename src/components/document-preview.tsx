@@ -84,7 +84,11 @@ interface Props {
     stampY?: number;
     stampScale?: number;
     stampDirty?: boolean;
+    status?: string;
+    paidDate?: string;
   }) => void;
+  /** When provided, the preview lets the user change the document status. */
+  statusOptions?: string[];
   /** Identifies the document so stamp/signer changes are written to the audit trail. */
   audit?: { docType: DocType; docId: string; companyId: string };
 }
