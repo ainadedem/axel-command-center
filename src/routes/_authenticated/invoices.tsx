@@ -108,6 +108,18 @@ const DEFAULT_PRESETS = [
 /** PO handling state of an invoice. */
 const poStateOf = (i: Invoice): PoState => (i.poId ? "linked" : i.poWaived ? "waived" : "missing");
 
+/** Compact inline stat — label + value on one line, used in the invoices header strip. */
+function StatItem({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "danger" | "success" }) {
+  return (
+    <div className="flex items-baseline gap-1.5">
+      <span className="text-[11px] tracking-[0.02em] text-muted-foreground font-medium whitespace-nowrap">{label}</span>
+      <span className={cn("text-sm font-semibold font-tnum whitespace-nowrap", tone === "danger" && "text-destructive", tone === "success" && "text-success")}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
 
 /** `focus`/`aging` deep links plus `fromPo` (start a new invoice from a PO). */
 const invoiceSearch = (search: Record<string, unknown>): FocusSearch & { fromPo?: string } => ({
