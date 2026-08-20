@@ -107,6 +107,7 @@ export function useColumnPrefs(page: string, columns: ColumnDef[]): ColumnPrefs 
     columns,
     on,
     toggle,
+    setAll,
     reset,
     count: visibleKeys.length,
     visibleKeys,
