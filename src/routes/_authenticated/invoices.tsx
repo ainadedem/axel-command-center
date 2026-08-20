@@ -69,6 +69,8 @@ import { AgingPanel } from "@/components/aging-panel";
 import { StatusFilterBar, type PoState } from "@/components/status-filter-bar";
 import { TableExportMenu } from "@/components/table-export-menu";
 import { invoiceBalance, invoicePayable } from "@/lib/invoice-money";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 
 
 
