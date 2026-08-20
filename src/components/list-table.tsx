@@ -276,7 +276,10 @@ export function ColumnPicker({ prefs, className, onResetWidths, onResetOrder }: 
               onCheckedChange={() => prefs.toggle(c.key)}
               className="text-xs"
             >
-              {c.label}
+              <span className="flex w-full items-center justify-between gap-2">
+                {c.label}
+                {locked && <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Locked</span>}
+              </span>
             </DropdownMenuCheckboxItem>
           );
         })}
