@@ -626,10 +626,10 @@ function Body() {
       ) : (
 
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <KpiCard label="Open receivables" value={fmtAmount(totalOpen, "MGA")} />
-            <KpiCard label="Overdue" value={fmtAmount(totalOverdue, "MGA")} tone={totalOverdue > 0 ? "danger" : "default"} />
-            <KpiCard label="Collected (period)" value={fmtAmount(totalPaid, "MGA")} tone="success" />
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5 px-1">
+            <StatItem label="Open receivables" value={fmtAmount(totalOpen, "MGA")} />
+            <StatItem label="Overdue" value={fmtAmount(totalOverdue, "MGA")} tone={totalOverdue > 0 ? "danger" : "default"} />
+            <StatItem label="Collected (period)" value={fmtAmount(totalPaid, "MGA")} tone="success" />
           </div>
 
           <AgingPanel
