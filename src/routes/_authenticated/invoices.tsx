@@ -65,7 +65,7 @@ import { FilterPresetBar } from "@/components/filter-presets";
 
 import { buildAging, inBucket, type AgingKey } from "@/lib/aging";
 import { AgingPanel } from "@/components/aging-panel";
-import { KpiCard } from "@/components/kpi-card";
+
 import { StatusFilterBar, type PoState } from "@/components/status-filter-bar";
 import { TableExportMenu } from "@/components/table-export-menu";
 import { invoiceBalance, invoicePayable } from "@/lib/invoice-money";
