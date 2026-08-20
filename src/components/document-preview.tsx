@@ -20,7 +20,7 @@ import {
   pagesForSheetHeight, nextScaleDown, identityScale, contentScale,
 } from "@/lib/a4-fit";
 import { Slider } from "@/components/ui/slider";
-import { describePlacement, logStampChange, logSignerChange, type DocType } from "@/lib/document-activity";
+import { describePlacement, logActivity, logStampChange, logSignerChange, type DocType } from "@/lib/document-activity";
 
 
 
