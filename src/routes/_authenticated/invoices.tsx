@@ -676,37 +676,45 @@ function Body() {
             onJump={(item) => jumpTo(item.id, bucket)}
           />
 
-          {/* Unified table toolbar — filters and table actions cap the table panel */}
-          <div ref={filterRef} className="rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] p-3 space-y-2.5">
+          {/* Unified table toolbar — filters and table actions on a single line capping the table panel */}
+          <div ref={filterRef} className="rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] p-3">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
               <div className="text-xs text-muted-foreground font-tnum whitespace-nowrap">
-                {list.length} invoice{list.length !== 1 ? "s" : ""}
+                {list.length} of {baseList.length} invoice{baseList.length !== 1 ? "s" : ""}
                 {filtersActive && <span className="text-foreground/70"> · filtered</span>}
               </div>
               <span className="mx-1 hidden sm:block h-6 w-px bg-border" aria-hidden />
-              <div className="flex flex-wrap items-center gap-2">
-                <DataToolbar view={view} items={baseList} />
-              </div>
+              <DataToolbar view={view} items={baseList} />
               <span className="mx-1 hidden sm:block h-6 w-px bg-border" aria-hidden />
-              <div className="flex flex-wrap items-center gap-2">
-                <FilterPresetBar
-                  api={presets}
-                  statuses={chipStatuses}
-                  po={chipPo}
-                  onApply={(p) => { setChipStatuses(p.statuses); setChipPo(p.po as PoState[]); }}
-                />
-              </div>
+              <FilterPresetBar
+                api={presets}
+                statuses={chipStatuses}
+                po={chipPo}
+                onApply={(p) => { setChipStatuses(p.statuses); setChipPo(p.po as PoState[]); }}
+              />
+              <span className="mx-1 hidden sm:block h-6 w-px bg-border" aria-hidden />
+              <StatusFilterBar
+                statuses={INVOICE_STATUSES}
+                selected={chipStatuses}
+                statusCount={(s) => baseList.filter((i) => i.status === s).length}
+                onToggleStatus={(s) =>
+                  setChipStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))
+                }
+                poSelected={chipPo}
+                poCount={(s) => baseList.filter((i) => poStateOf(i) === s).length}
+                onTogglePo={(s) => setChipPo((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))}
+                onClear={() => { setChipStatuses([]); setChipPo([]); }}
+              />
+              {filtersActive && (
+                <button
+                  type="button"
+                  onClick={clearAllFilters}
+                  className="inline-flex items-center gap-1 h-8 px-3 rounded-full border border-border bg-surface text-xs text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+                >
+                  <X className="h-3.5 w-3.5" /> Clear all
+                </button>
+              )}
               <div className="ml-auto flex flex-wrap items-center gap-2">
-                {filtersActive && (
-                  <button
-                    type="button"
-                    onClick={clearAllFilters}
-                    className="inline-flex items-center gap-1 h-8 px-3 rounded-full border border-border bg-surface text-xs text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
-                  >
-                    <X className="h-3.5 w-3.5" /> Clear all
-                  </button>
-                )}
-                <span className="mx-0.5 hidden sm:block h-5 w-px bg-border" aria-hidden />
                 <TableExportMenu
                   filename="invoices"
                   title="Invoices"
@@ -732,25 +740,6 @@ function Body() {
                 </Button>
               </div>
             </div>
-
-            <StatusFilterBar
-              statuses={INVOICE_STATUSES}
-              selected={chipStatuses}
-              statusCount={(s) => baseList.filter((i) => i.status === s).length}
-              onToggleStatus={(s) =>
-                setChipStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))
-              }
-              poSelected={chipPo}
-              poCount={(s) => baseList.filter((i) => poStateOf(i) === s).length}
-              onTogglePo={(s) => setChipPo((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))}
-              onClear={() => { setChipStatuses([]); setChipPo([]); }}
-            />
-
-            {activeChips.length > 0 && (
-              <p className="text-[11px] text-muted-foreground">
-                Showing {list.length} of {baseList.length} invoices · {activeChips.map((c) => c.label).join(" · ")}
-              </p>
-            )}
           </div>
 
           <ListTableShell
