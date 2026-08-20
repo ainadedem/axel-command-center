@@ -240,8 +240,30 @@ export function ColumnPicker({ prefs, className, onResetWidths, onResetOrder }: 
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-52">
+      <DropdownMenuContent align="end" className="w-60 max-h-[70vh] overflow-y-auto">
         <DropdownMenuLabel className="text-xs">Visible columns</DropdownMenuLabel>
+        {prefs.setAll && (
+          <>
+            <div className="flex items-center gap-1.5 px-2 pb-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 flex-1 text-[11px]"
+                onClick={() => prefs.setAll?.(true)}
+              >
+                Show all
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 flex-1 text-[11px]"
+                onClick={() => prefs.setAll?.(false)}
+              >
+                Hide optional
+              </Button>
+            </div>
+          </>
+        )}
         <DropdownMenuSeparator />
         {prefs.columns.map((c) => {
           const locked = (c.priority ?? "default") === "always";
