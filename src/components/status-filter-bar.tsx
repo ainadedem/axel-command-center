@@ -204,12 +204,12 @@ export function StatusFilterBar({
   return (
     <TooltipProvider delayDuration={150}>
       <div className={cn(flat ? "[display:contents]" : "flex flex-wrap items-center gap-1.5", className)}>
-        {statusEntries.map((e) => (
-          <Chip key={e.key} {...e} iconOnly={iconOnly} />
+        {statusEntries.map(({ key, ...e }) => (
+          <Chip key={key} {...e} iconOnly={iconOnly} />
         ))}
         <span className="mx-1 h-5 w-px bg-border shrink-0" aria-hidden />
-        {poEntries.map((e) => (
-          <Chip key={e.key} {...e} iconOnly={iconOnly} />
+        {poEntries.map(({ key, ...e }) => (
+          <Chip key={key} {...e} iconOnly={iconOnly} />
         ))}
         {clearBtn}
       </div>
@@ -239,8 +239,8 @@ function OverflowRow({
 
   return (
     <div ref={ref} className={cn("flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden", className)}>
-      {shown.map((e, i) => (
-        <span key={e.key} className="contents">
+      {shown.map(({ key, ...e }, i) => (
+        <span key={key} className="contents">
           {i === statusEntryCount && <span className="mx-0.5 h-5 w-px bg-border shrink-0" aria-hidden />}
           <Chip {...e} iconOnly={iconOnly} />
         </span>
