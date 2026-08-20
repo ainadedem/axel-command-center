@@ -288,6 +288,19 @@ export function useTablePrefs(
     count: visible.length,
     on,
     toggle,
+    setAll: (visible_: boolean) => {
+      const hidden: string[] = [];
+      for (const c of columns) {
+        const priority = c.priority ?? "default";
+        if (priority === "always") continue;
+        if (visible_) {
+          if (priority === "optional") hidden.push(`+${c.key}`);
+        } else {
+          hidden.push(c.key);
+        }
+      }
+      persist({ ...state, hidden });
+    },
     width,
     cssWidth: (key: string) => `${width(key)}px`,
     startResize,
