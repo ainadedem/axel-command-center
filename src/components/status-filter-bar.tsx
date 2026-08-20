@@ -60,6 +60,7 @@ export function StatusFilterBar({
   poCount,
   onClear,
   className,
+  flat = false,
 }: {
   statuses: string[];
   selected: string[];
@@ -70,10 +71,11 @@ export function StatusFilterBar({
   poCount: (s: PoState) => number;
   onClear: () => void;
   className?: string;
+  flat?: boolean;
 }) {
   const anyActive = selected.length > 0 || poSelected.length > 0;
   return (
-    <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
+    <div className={cn(flat ? "[display:contents]" : "flex flex-wrap items-center gap-1.5", className)}>
       {statuses.map((s) => {
         const meta = STATUS_META[s];
         return (

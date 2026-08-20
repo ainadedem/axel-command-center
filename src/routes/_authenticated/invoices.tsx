@@ -65,7 +65,7 @@ import { FilterPresetBar } from "@/components/filter-presets";
 
 import { buildAging, inBucket, type AgingKey } from "@/lib/aging";
 import { AgingPanel } from "@/components/aging-panel";
-import { KpiCard } from "@/components/kpi-card";
+
 import { StatusFilterBar, type PoState } from "@/components/status-filter-bar";
 import { TableExportMenu } from "@/components/table-export-menu";
 import { invoiceBalance, invoicePayable } from "@/lib/invoice-money";
@@ -107,6 +107,18 @@ const DEFAULT_PRESETS = [
 
 /** PO handling state of an invoice. */
 const poStateOf = (i: Invoice): PoState => (i.poId ? "linked" : i.poWaived ? "waived" : "missing");
+
+/** Compact inline stat — label + value on one line, used in the invoices header strip. */
+function StatItem({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "danger" | "success" }) {
+  return (
+    <div className="flex items-baseline gap-1.5">
+      <span className="text-[11px] tracking-[0.02em] text-muted-foreground font-medium whitespace-nowrap">{label}</span>
+      <span className={cn("text-sm font-semibold font-tnum whitespace-nowrap", tone === "danger" && "text-destructive", tone === "success" && "text-success")}>
+        {value}
+      </span>
+    </div>
+  );
+}
 
 
 /** `focus`/`aging` deep links plus `fromPo` (start a new invoice from a PO). */
@@ -626,10 +638,10 @@ function Body() {
       ) : (
 
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <KpiCard label="Open receivables" value={fmtAmount(totalOpen, "MGA")} />
-            <KpiCard label="Overdue" value={fmtAmount(totalOverdue, "MGA")} tone={totalOverdue > 0 ? "danger" : "default"} />
-            <KpiCard label="Collected (period)" value={fmtAmount(totalPaid, "MGA")} tone="success" />
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5 px-1">
+            <StatItem label="Open receivables" value={fmtAmount(totalOpen, "MGA")} />
+            <StatItem label="Overdue" value={fmtAmount(totalOverdue, "MGA")} tone={totalOverdue > 0 ? "danger" : "default"} />
+            <StatItem label="Collected (period)" value={fmtAmount(totalPaid, "MGA")} tone="success" />
           </div>
 
           <AgingPanel
@@ -664,37 +676,44 @@ function Body() {
             onJump={(item) => jumpTo(item.id, bucket)}
           />
 
-          {/* Unified table toolbar — filters and table actions cap the table panel */}
-          <div ref={filterRef} className="rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] p-3 space-y-2.5">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
+          {/* Unified table toolbar — filters and table actions on a single line capping the table panel */}
+          <div ref={filterRef} className="rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] p-2.5">
+            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5">
               <div className="text-xs text-muted-foreground font-tnum whitespace-nowrap">
-                {list.length} invoice{list.length !== 1 ? "s" : ""}
+                {list.length} of {baseList.length} invoice{baseList.length !== 1 ? "s" : ""}
                 {filtersActive && <span className="text-foreground/70"> · filtered</span>}
               </div>
-              <span className="mx-1 hidden sm:block h-6 w-px bg-border" aria-hidden />
-              <div className="flex flex-wrap items-center gap-2">
-                <DataToolbar view={view} items={baseList} />
-              </div>
-              <span className="mx-1 hidden sm:block h-6 w-px bg-border" aria-hidden />
-              <div className="flex flex-wrap items-center gap-2">
-                <FilterPresetBar
-                  api={presets}
-                  statuses={chipStatuses}
-                  po={chipPo}
-                  onApply={(p) => { setChipStatuses(p.statuses); setChipPo(p.po as PoState[]); }}
-                />
-              </div>
+              <DataToolbar view={view} items={baseList} />
+              <FilterPresetBar
+                api={presets}
+                statuses={chipStatuses}
+                po={chipPo}
+                onApply={(p) => { setChipStatuses(p.statuses); setChipPo(p.po as PoState[]); }}
+                flat
+              />
+              <StatusFilterBar
+                statuses={INVOICE_STATUSES}
+                selected={chipStatuses}
+                statusCount={(s) => baseList.filter((i) => i.status === s).length}
+                onToggleStatus={(s) =>
+                  setChipStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))
+                }
+                poSelected={chipPo}
+                poCount={(s) => baseList.filter((i) => poStateOf(i) === s).length}
+                onTogglePo={(s) => setChipPo((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))}
+                onClear={() => { setChipStatuses([]); setChipPo([]); }}
+                flat
+              />
+              {filtersActive && (
+                <button
+                  type="button"
+                  onClick={clearAllFilters}
+                  className="inline-flex items-center gap-1 h-8 px-3 rounded-full border border-border bg-surface text-xs text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+                >
+                  <X className="h-3.5 w-3.5" /> Clear all
+                </button>
+              )}
               <div className="ml-auto flex flex-wrap items-center gap-2">
-                {filtersActive && (
-                  <button
-                    type="button"
-                    onClick={clearAllFilters}
-                    className="inline-flex items-center gap-1 h-8 px-3 rounded-full border border-border bg-surface text-xs text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
-                  >
-                    <X className="h-3.5 w-3.5" /> Clear all
-                  </button>
-                )}
-                <span className="mx-0.5 hidden sm:block h-5 w-px bg-border" aria-hidden />
                 <TableExportMenu
                   filename="invoices"
                   title="Invoices"
@@ -720,25 +739,6 @@ function Body() {
                 </Button>
               </div>
             </div>
-
-            <StatusFilterBar
-              statuses={INVOICE_STATUSES}
-              selected={chipStatuses}
-              statusCount={(s) => baseList.filter((i) => i.status === s).length}
-              onToggleStatus={(s) =>
-                setChipStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))
-              }
-              poSelected={chipPo}
-              poCount={(s) => baseList.filter((i) => poStateOf(i) === s).length}
-              onTogglePo={(s) => setChipPo((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))}
-              onClear={() => { setChipStatuses([]); setChipPo([]); }}
-            />
-
-            {activeChips.length > 0 && (
-              <p className="text-[11px] text-muted-foreground">
-                Showing {list.length} of {baseList.length} invoices · {activeChips.map((c) => c.label).join(" · ")}
-              </p>
-            )}
           </div>
 
           <ListTableShell
