@@ -52,7 +52,8 @@ export function InvoicePreview({ open, onOpenChange, invoice, company, client, p
       open={open} onOpenChange={onOpenChange} doc={doc}
       company={company} client={client} project={project}
       signers={users.map((u) => ({ userId: u.userId, name: u.name }))}
-      onDocChange={(patch) => { if (invoice) invoicesStore.update(invoice.id, patch); }}
+      statusOptions={["draft", "sent", "partial", "paid", "overdue", "cancelled"]}
+      onDocChange={(patch) => { if (invoice) invoicesStore.update(invoice.id, patch as Partial<Invoice>); }}
       audit={invoice ? { docType: "invoice", docId: invoice.id, companyId: invoice.companyId } : undefined}
     />
   );

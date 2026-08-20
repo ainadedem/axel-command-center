@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bookmark, BookmarkPlus, X } from "lucide-react";
+import { Bookmark, BookmarkPlus, Check, MoreHorizontal, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -7,6 +7,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { FilterPreset, FilterPresetsApi } from "@/lib/filter-presets";
 
@@ -14,7 +20,7 @@ function sameSet(a: string[], b: string[]) {
   return a.length === b.length && a.every((x) => b.includes(x));
 }
 
-/** Row of saved status + PO filter combinations with a save/delete control. */
+/** Row of saved status + PO filter combinations with save/rename/update/delete. */
 export function FilterPresetBar({
   api,
   statuses,
@@ -30,7 +36,15 @@ export function FilterPresetBar({
 }) {
   const [name, setName] = useState("");
   const [open, setOpen] = useState(false);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
   const canSave = statuses.length > 0 || po.length > 0;
+
+  const commitRename = () => {
+    if (renamingId) api.rename(renamingId, renameValue);
+    setRenamingId(null);
+    setRenameValue("");
+  };
 
   return (
     <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
@@ -39,6 +53,35 @@ export function FilterPresetBar({
       )}
       {api.presets.map((p) => {
         const active = sameSet(p.statuses, statuses) && sameSet(p.po, po);
+
+        if (renamingId === p.id) {
+          return (
+            <span key={p.id} className="inline-flex items-center gap-1">
+              <Input
+                autoFocus
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                onBlur={commitRename}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") commitRename();
+                  if (e.key === "Escape") { setRenamingId(null); setRenameValue(""); }
+                }}
+                aria-label={`Rename preset ${p.name}`}
+                className="h-8 w-36 rounded-full text-xs"
+              />
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={commitRename}
+                aria-label="Save preset name"
+                className="inline-flex items-center h-8 px-2 rounded-full border border-border bg-surface text-muted-foreground hover:text-foreground"
+              >
+                <Check className="h-3.5 w-3.5" />
+              </button>
+            </span>
+          );
+        }
+
         return (
           <span key={p.id} className="inline-flex items-center">
             <button
@@ -57,18 +100,39 @@ export function FilterPresetBar({
               <Bookmark className="h-3.5 w-3.5" />
               {p.name}
             </button>
-            <button
-              type="button"
-              onClick={() => api.remove(p.id)}
-              aria-label={`Delete preset ${p.name}`}
-              className={cn(
-                "inline-flex items-center h-8 pl-1 pr-2 rounded-r-full border text-muted-foreground",
-                "transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)] hover:text-destructive",
-                active ? "border-primary/50 bg-primary/15" : "border-border bg-surface",
-              )}
-            >
-              <X className="h-3 w-3" />
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={`Preset ${p.name} options`}
+                  className={cn(
+                    "inline-flex items-center h-8 pl-1 pr-2 rounded-r-full border text-muted-foreground",
+                    "transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)] hover:text-foreground",
+                    active ? "border-primary/50 bg-primary/15" : "border-border bg-surface",
+                  )}
+                >
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuItem
+                  className="text-xs"
+                  onSelect={() => { setRenamingId(p.id); setRenameValue(p.name); }}
+                >
+                  <Pencil className="h-3.5 w-3.5 mr-2" /> Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-xs"
+                  disabled={!canSave}
+                  onSelect={() => api.update(p.id, statuses, po)}
+                >
+                  <RefreshCw className="h-3.5 w-3.5 mr-2" /> Update from filters
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-xs text-destructive" onSelect={() => api.remove(p.id)}>
+                  <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </span>
         );
       })}

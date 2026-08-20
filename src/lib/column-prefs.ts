@@ -40,6 +40,8 @@ export interface ColumnPrefs {
   /** Is the column currently rendered? */
   on: (key: string) => boolean;
   toggle: (key: string) => void;
+  /** Show every column, or hide everything that isn't locked on. */
+  setAll?: (visible: boolean) => void;
   reset: () => void;
   /** Number of visible columns — handy for `colSpan`. */
   count: number;
@@ -90,12 +92,22 @@ export function useColumnPrefs(page: string, columns: ColumnDef[]): ColumnPrefs 
 
   const reset = useCallback(() => persist({ ...base }), [base, persist]);
 
+  const setAll = useCallback(
+    (visible: boolean) => {
+      const next: Record<string, boolean> = {};
+      for (const c of columns) next[c.key] = (c.priority ?? "default") === "always" ? true : visible;
+      persist(next);
+    },
+    [columns, persist],
+  );
+
   const visibleKeys = columns.filter((c) => on(c.key)).map((c) => c.key);
 
   return {
     columns,
     on,
     toggle,
+    setAll,
     reset,
     count: visibleKeys.length,
     visibleKeys,

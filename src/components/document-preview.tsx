@@ -20,7 +20,7 @@ import {
   pagesForSheetHeight, nextScaleDown, identityScale, contentScale,
 } from "@/lib/a4-fit";
 import { Slider } from "@/components/ui/slider";
-import { describePlacement, logStampChange, logSignerChange, type DocType } from "@/lib/document-activity";
+import { describePlacement, logActivity, logStampChange, logSignerChange, type DocType } from "@/lib/document-activity";
 
 
 
@@ -84,7 +84,11 @@ interface Props {
     stampY?: number;
     stampScale?: number;
     stampDirty?: boolean;
+    status?: string;
+    paidDate?: string;
   }) => void;
+  /** When provided, the preview lets the user change the document status. */
+  statusOptions?: string[];
   /** Identifies the document so stamp/signer changes are written to the audit trail. */
   audit?: { docType: DocType; docId: string; companyId: string };
 }
@@ -162,8 +166,33 @@ function saveView(kind: DocKind, v: SavedView) {
   } catch { /* storage unavailable — non-fatal */ }
 }
 
-export function DocumentPreview({ open, onOpenChange, doc, company, client, project, signers, onDocChange, audit }: Props) {
+export function DocumentPreview({ open, onOpenChange, doc, company, client, project, signers, onDocChange, audit, statusOptions }: Props) {
   const [showStatus, setShowStatus] = useState(true);
+  // Optimistic status so the printed pill updates the moment it is changed.
+  const [statusLocal, setStatusLocal] = useState<string | null>(null);
+  useEffect(() => { setStatusLocal(null); }, [doc?.number, doc?.status]);
+  const status = statusLocal ?? doc?.status ?? "";
+
+  const changeStatus = useCallback(
+    (next: string) => {
+      if (!doc || !onDocChange || next === status) return;
+      if (next === "cancelled" && !window.confirm("Mark this document as cancelled?")) return;
+      const patch: { status: string; paidDate?: string } = { status: next };
+      if (next === "paid" && !doc.paidDate) patch.paidDate = new Date().toISOString().slice(0, 10);
+      setStatusLocal(next);
+      onDocChange(patch);
+      if (audit) {
+        logActivity({
+          ...audit,
+          docNumber: doc.number,
+          action: "status_changed",
+          summary: `Status changed from ${status} to ${next}`,
+          details: { before: status, after: next },
+        });
+      }
+    },
+    [doc, onDocChange, status, audit],
+  );
   const [showClientEmail, setShowClientEmail] = useState(true);
   const [showUnit, setShowUnit] = useState(true);
   const [showPayment, setShowPayment] = useState(company?.showPaymentDetails !== false);
@@ -321,8 +350,8 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   const html = useMemo(() => {
     if (!doc) return "";
-    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName: signer.name, stampX: place.x, stampY: place.y, stampScale: place.scale });
-  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signer.name, place]);
+    return buildHTML({ doc: { ...doc, status }, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName: signer.name, stampX: place.x, stampY: place.y, stampScale: place.scale });
+  }, [doc, status, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signer.name, place]);
 
   // Reset the auto-fit search whenever the document content changes.
   useEffect(() => {
@@ -430,11 +459,11 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
   const printableHtml = useCallback((scaleOverride?: number) => {
     if (!doc) return "";
     return buildPrintableDocument({
-      doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit,
+      doc: { ...doc, status }, company, client, project, showStatus, showPayment, showClientEmail, showUnit,
       logoUrl, logoScale, lang, cols, scale: scaleOverride ?? scale, showStamp, stampUrl, showSignature, signatureUrl,
       signerName: signer.name, stampX: place.x, stampY: place.y, stampScale: place.scale,
     });
-  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signer.name, place]);
+  }, [doc, status, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signer.name, place]);
 
   const downloadPdf = useCallback(async () => {
     if (!doc || exporting) return;
@@ -643,6 +672,21 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <Checkbox checked={showStatus} onCheckedChange={(v) => setShowStatus(!!v)} /> Show status
                   </label>
+                  {statusOptions && statusOptions.length > 0 && onDocChange ? (
+                    <div className="space-y-1.5 pt-0.5">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Status</p>
+                      <select
+                        value={status}
+                        onChange={(e) => changeStatus(e.target.value)}
+                        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-[11px] focus-ring capitalize"
+                        aria-label="Document status"
+                      >
+                        {statusOptions.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : null}
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <Checkbox checked={showClientEmail} onCheckedChange={(v) => setShowClientEmail(!!v)} /> Show client email
                   </label>

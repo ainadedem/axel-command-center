@@ -36,21 +36,44 @@ function read(key: string): FilterPreset[] {
   }
 }
 
+/** Starter presets are seeded once per user + route, then owned by the user. */
+function seed(key: string, defaults: FilterPreset[]): FilterPreset[] {
+  if (typeof window === "undefined" || defaults.length === 0) return [];
+  const flag = `${key}.seeded`;
+  try {
+    if (window.localStorage.getItem(flag)) return [];
+    window.localStorage.setItem(flag, "1");
+    window.localStorage.setItem(key, JSON.stringify(defaults));
+    return defaults;
+  } catch {
+    return defaults;
+  }
+}
+
+function load(key: string, defaults: FilterPreset[]): FilterPreset[] {
+  const existing = read(key);
+  if (existing.length > 0) return existing;
+  return seed(key, defaults);
+}
+
 export interface FilterPresetsApi {
   presets: FilterPreset[];
   save: (name: string, statuses: string[], po: string[]) => void;
+  rename: (id: string, name: string) => void;
+  /** Overwrite a preset's filters with the current selection. */
+  update: (id: string, statuses: string[], po: string[]) => void;
   remove: (id: string) => void;
 }
 
-export function useFilterPresets(route: string): FilterPresetsApi {
+export function useFilterPresets(route: string, defaults: FilterPreset[] = []): FilterPresetsApi {
   const { user } = useAuth();
   const storeKey = keyFor(user?.id, route);
-  const [presets, setPresets] = useState<FilterPreset[]>(() => read(storeKey));
+  const [presets, setPresets] = useState<FilterPreset[]>(() => load(storeKey, defaults));
   const [loadedFor, setLoadedFor] = useState(storeKey);
 
   if (loadedFor !== storeKey) {
     setLoadedFor(storeKey);
-    setPresets(read(storeKey));
+    setPresets(load(storeKey, defaults));
   }
 
   const persist = useCallback(
@@ -76,7 +99,23 @@ export function useFilterPresets(route: string): FilterPresetsApi {
     [presets, persist],
   );
 
+  const rename = useCallback(
+    (id: string, name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed) return;
+      persist(presets.map((p) => (p.id === id ? { ...p, name: trimmed } : p)));
+    },
+    [presets, persist],
+  );
+
+  const update = useCallback(
+    (id: string, statuses: string[], po: string[]) => {
+      persist(presets.map((p) => (p.id === id ? { ...p, statuses, po } : p)));
+    },
+    [presets, persist],
+  );
+
   const remove = useCallback((id: string) => persist(presets.filter((p) => p.id !== id)), [presets, persist]);
 
-  return { presets, save, remove };
+  return { presets, save, rename, update, remove };
 }

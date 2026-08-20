@@ -47,6 +47,8 @@ export interface TablePrefs {
   count: number;
   on: (key: string) => boolean;
   toggle: (key: string) => void;
+  /** Show every column, or hide everything that isn't locked on. */
+  setAll: (visible: boolean) => void;
   width: (key: string) => number;
   /** CSS width string for a `<th>`. */
   cssWidth: (key: string) => string;
@@ -288,6 +290,19 @@ export function useTablePrefs(
     count: visible.length,
     on,
     toggle,
+    setAll: (visible_: boolean) => {
+      const hidden: string[] = [];
+      for (const c of columns) {
+        const priority = c.priority ?? "default";
+        if (priority === "always") continue;
+        if (visible_) {
+          if (priority === "optional") hidden.push(`+${c.key}`);
+        } else {
+          hidden.push(c.key);
+        }
+      }
+      persist({ ...state, hidden });
+    },
     width,
     cssWidth: (key: string) => `${width(key)}px`,
     startResize,

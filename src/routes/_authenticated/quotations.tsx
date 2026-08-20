@@ -464,7 +464,7 @@ function Body() {
         client={previewing ? clients.find((c) => c.id === previewing.clientId) : undefined}
         project={previewing?.projectId ? projects.find((p) => p.id === previewing.projectId) : undefined}
         signers={previewSigners.map((u) => ({ userId: u.userId, name: u.name }))}
-        onDocChange={(patch) => { if (previewing) quotesStore.update(previewing.id, patch); }}
+        onDocChange={(patch) => { if (previewing) quotesStore.update(previewing.id, patch as Partial<Quote>); }}
         audit={previewing ? { docType: "quote", docId: previewing.id, companyId: previewing.companyId } : undefined}
       />
       </div>
