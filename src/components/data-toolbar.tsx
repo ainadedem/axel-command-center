@@ -24,7 +24,7 @@ type Props<T> = {
 };
 
 function chipBase() {
-  return "inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-xs border-0 bg-surface shadow-[0_1px_2px_color-mix(in_oklab,var(--foreground)_6%,transparent)] hover:bg-surface-elevated text-muted-foreground hover:text-foreground transition-all duration-150";
+  return "inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs border-0 bg-surface shadow-[0_1px_2px_color-mix(in_oklab,var(--foreground)_6%,transparent)] hover:bg-surface-elevated text-muted-foreground hover:text-foreground transition-all duration-150";
 }
 
 export function DataToolbar<T>({ view, items, className }: Props<T>) {
