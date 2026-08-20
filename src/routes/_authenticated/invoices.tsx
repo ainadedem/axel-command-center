@@ -35,7 +35,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ListEmptyState, ListNoMatchState, ListErrorState } from "@/components/list-state";
 import { useCreateAction } from "@/lib/create-action";
-import { Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, Ban, BadgeCheck, ToggleLeft, ToggleRight, Plus, X } from "lucide-react";
+import { Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, Ban, BadgeCheck, ToggleLeft, ToggleRight, Plus, X, ListFilter } from "lucide-react";
 import { InvoicePreview } from "@/components/invoice-preview";
 import { RecordPaymentDialog } from "@/components/statement-import-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -678,18 +678,22 @@ function Body() {
 
           {/* Unified table toolbar — filters and table actions on a single line capping the table panel */}
           <div ref={filterRef} className="rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] p-2.5">
-            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5">
-              <div className="text-xs text-muted-foreground font-tnum whitespace-nowrap">
-                {list.length} of {baseList.length} invoice{baseList.length !== 1 ? "s" : ""}
-                {filtersActive && <span className="text-foreground/70"> · filtered</span>}
-              </div>
-              <DataToolbar view={view} items={baseList} />
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span
+                title={`${list.length} of ${baseList.length} invoice${baseList.length !== 1 ? "s" : ""}${filtersActive ? " · filtered" : ""}`}
+                aria-label={`${list.length} of ${baseList.length} invoices`}
+                className="inline-flex items-center gap-1.5 h-8 px-2 rounded-full border border-border bg-surface text-xs text-muted-foreground font-tnum whitespace-nowrap"
+              >
+                <ListFilter className="h-4 w-4" />
+                <span>{list.length}/{baseList.length}</span>
+              </span>
+              <DataToolbar view={view} items={baseList} iconOnly />
               <FilterPresetBar
                 api={presets}
                 statuses={chipStatuses}
                 po={chipPo}
                 onApply={(p) => { setChipStatuses(p.statuses); setChipPo(p.po as PoState[]); }}
-                flat
+                iconOnly
               />
               <StatusFilterBar
                 statuses={INVOICE_STATUSES}
@@ -702,18 +706,20 @@ function Body() {
                 poCount={(s) => baseList.filter((i) => poStateOf(i) === s).length}
                 onTogglePo={(s) => setChipPo((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))}
                 onClear={() => { setChipStatuses([]); setChipPo([]); }}
-                flat
+                iconOnly
               />
               {filtersActive && (
                 <button
                   type="button"
                   onClick={clearAllFilters}
-                  className="inline-flex items-center gap-1 h-8 px-3 rounded-full border border-border bg-surface text-xs text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+                  title="Clear all"
+                  aria-label="Clear all filters"
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-surface text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
                 >
-                  <X className="h-3.5 w-3.5" /> Clear all
+                  <X className="h-4 w-4" />
                 </button>
               )}
-              <div className="ml-auto flex flex-wrap items-center gap-2">
+              <div className="ml-auto flex items-center gap-1 rounded-full bg-[var(--surface-container)]/70 p-1">
                 <TableExportMenu
                   filename="invoices"
                   title="Invoices"
@@ -722,22 +728,23 @@ function Body() {
                     columns: tp.visible.map((c) => ({ key: c.key, label: c.label, width: tp.width(c.key), align: ALIGN[c.key] ?? "left" })),
                     rows: list.map((inv) => Object.fromEntries(tp.visible.map((c) => [c.key, exportValue(c.key, inv)]))),
                   })}
+                  iconOnly
                 />
-                <ColumnPicker prefs={tp} onResetWidths={tp.resetWidths} onResetOrder={tp.resetOrder} />
-                <ReconcileButton checks={checks} />
+                <ColumnPicker prefs={tp} onResetWidths={tp.resetWidths} onResetOrder={tp.resetOrder} iconOnly />
+                <ReconcileButton checks={checks} iconOnly />
                 <button
                   onClick={toggleMode}
-                  className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md border border-border bg-surface text-xs text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
                   title={numMode === "compact" ? "Switch to full numbers" : "Switch to compact numbers"}
+                  aria-label={numMode === "compact" ? "Switch to full numbers" : "Switch to compact numbers"}
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-surface text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
                 >
                   {numMode === "compact" ? <ToggleLeft className="h-4 w-4" /> : <ToggleRight className="h-4 w-4" />}
-                  <span className="hidden sm:inline">{numMode === "compact" ? "Compact" : "Full"}</span>
                 </button>
-                <span className="mx-0.5 hidden sm:block h-5 w-px bg-border" aria-hidden />
-                <Button size="sm" onClick={openCreate} className="btn-new gap-1.5" aria-label="New invoice">
-                  <Plus className="h-4 w-4" /> New invoice
-                </Button>
               </div>
+              <span className="h-5 w-px bg-border" aria-hidden />
+              <Button size="sm" onClick={openCreate} className="btn-new gap-1.5" aria-label="New invoice">
+                <Plus className="h-4 w-4" /> New invoice
+              </Button>
             </div>
           </div>
 

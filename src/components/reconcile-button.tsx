@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { ScanSearch, Wand2, CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface ReconcileCheck {
   /** Stable id (used as key). */
@@ -21,7 +22,17 @@ export interface ReconcileCheck {
  * Lists data integrity checks for the current scope and lets the user
  * fix them individually or all at once.
  */
-export function ReconcileButton({ checks, label = "Scan" }: { checks: ReconcileCheck[]; label?: string }) {
+export function ReconcileButton({
+  checks,
+  label = "Scan",
+  iconOnly = false,
+  className,
+}: {
+  checks: ReconcileCheck[];
+  label?: string;
+  iconOnly?: boolean;
+  className?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [lastFixed, setLastFixed] = useState<Record<string, number>>({});
   const totalIssues = checks.reduce((s, c) => s + c.count, 0);
@@ -44,11 +55,19 @@ export function ReconcileButton({ checks, label = "Scan" }: { checks: ReconcileC
     <>
       <button
         onClick={() => setOpen(true)}
-        className="relative inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
         title="Scan for data inconsistencies"
+        aria-label="Scan for data inconsistencies"
+        className={cn(
+          iconOnly
+            ? cn(
+                "relative inline-flex items-center justify-center h-8 w-8 rounded-full border-0 bg-surface text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                className,
+              )
+            : cn("relative inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors", className),
+        )}
       >
-        <ScanSearch className="h-4 w-4" />
-        <span className="hidden sm:inline">{label}</span>
+        <ScanSearch className={iconOnly ? "h-4 w-4" : "h-4 w-4"} />
+        {!iconOnly && <span className="hidden sm:inline">{label}</span>}
         {totalIssues > 0 && (
           <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-medium bg-warning/15 text-warning border border-warning/30">
             {totalIssues}

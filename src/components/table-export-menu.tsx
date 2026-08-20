@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { exportTableCsv, exportTablePdf, type ExportColumn, type ExportRow } from "@/lib/table-export";
 
@@ -23,12 +24,14 @@ export function TableExportMenu({
   subtitle,
   build,
   className,
+  iconOnly = false,
 }: {
   filename: string;
   title: string;
   subtitle?: string;
   build: () => { columns: ExportColumn[]; rows: ExportRow[] };
   className?: string;
+  iconOnly?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
 
@@ -56,10 +59,25 @@ export function TableExportMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className={className ?? "h-8 px-2.5 text-xs gap-1.5"} disabled={busy}>
-          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-          Export
-        </Button>
+        {iconOnly ? (
+          <button
+            type="button"
+            disabled={busy}
+            title="Export"
+            aria-label="Export"
+            className={cn(
+              "inline-flex items-center justify-center h-8 w-8 rounded-full border-0 bg-surface text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:opacity-50",
+              className,
+            )}
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          </button>
+        ) : (
+          <Button variant="outline" size="sm" className={className ?? "h-8 px-2.5 text-xs gap-1.5"} disabled={busy}>
+            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+            Export
+          </Button>
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="text-xs">Export current view</DropdownMenuLabel>
