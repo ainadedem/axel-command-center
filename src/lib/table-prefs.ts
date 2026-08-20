@@ -47,6 +47,8 @@ export interface TablePrefs {
   count: number;
   on: (key: string) => boolean;
   toggle: (key: string) => void;
+  /** Show every column, or hide everything that isn't locked on. */
+  setAll: (visible: boolean) => void;
   width: (key: string) => number;
   /** CSS width string for a `<th>`. */
   cssWidth: (key: string) => string;
