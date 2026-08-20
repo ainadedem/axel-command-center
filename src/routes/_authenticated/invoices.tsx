@@ -689,6 +689,7 @@ function Body() {
                 statuses={chipStatuses}
                 po={chipPo}
                 onApply={(p) => { setChipStatuses(p.statuses); setChipPo(p.po as PoState[]); }}
+                className="[display:contents]"
               />
               <StatusFilterBar
                 statuses={INVOICE_STATUSES}
@@ -701,6 +702,7 @@ function Body() {
                 poCount={(s) => baseList.filter((i) => poStateOf(i) === s).length}
                 onTogglePo={(s) => setChipPo((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))}
                 onClear={() => { setChipStatuses([]); setChipPo([]); }}
+                className="[display:contents]"
               />
               {filtersActive && (
                 <button
