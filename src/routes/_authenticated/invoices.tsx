@@ -97,6 +97,14 @@ const ALIGN: Record<string, "left" | "right" | "center"> = { amount: "right", ba
 
 const INVOICE_STATUSES = ["draft", "sent", "partial", "paid", "overdue", "cancelled"];
 
+/** Starter presets seeded once per user — renameable and deletable afterwards. */
+const DEFAULT_PRESETS = [
+  { id: "seed-draft", name: "Draft", statuses: ["draft"], po: [] },
+  { id: "seed-sent", name: "Sent", statuses: ["sent"], po: [] },
+  { id: "seed-overdue", name: "Overdue", statuses: ["overdue"], po: [] },
+  { id: "seed-po-missing", name: "PO missing", statuses: [], po: ["missing"] },
+];
+
 /** PO handling state of an invoice. */
 const poStateOf = (i: Invoice): PoState => (i.poId ? "linked" : i.poWaived ? "waived" : "missing");
 
