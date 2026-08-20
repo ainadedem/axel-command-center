@@ -168,6 +168,31 @@ function saveView(kind: DocKind, v: SavedView) {
 
 export function DocumentPreview({ open, onOpenChange, doc, company, client, project, signers, onDocChange, audit, statusOptions }: Props) {
   const [showStatus, setShowStatus] = useState(true);
+  // Optimistic status so the printed pill updates the moment it is changed.
+  const [statusLocal, setStatusLocal] = useState<string | null>(null);
+  useEffect(() => { setStatusLocal(null); }, [doc?.number, doc?.status]);
+  const status = statusLocal ?? doc?.status ?? "";
+
+  const changeStatus = useCallback(
+    (next: string) => {
+      if (!doc || !onDocChange || next === status) return;
+      if (next === "cancelled" && !window.confirm("Mark this document as cancelled?")) return;
+      const patch: { status: string; paidDate?: string } = { status: next };
+      if (next === "paid" && !doc.paidDate) patch.paidDate = new Date().toISOString().slice(0, 10);
+      setStatusLocal(next);
+      onDocChange(patch);
+      if (audit) {
+        logActivity({
+          ...audit,
+          docNumber: doc.number,
+          action: "status_changed",
+          summary: `Status changed from ${status} to ${next}`,
+          details: { before: status, after: next },
+        });
+      }
+    },
+    [doc, onDocChange, status, audit],
+  );
   const [showClientEmail, setShowClientEmail] = useState(true);
   const [showUnit, setShowUnit] = useState(true);
   const [showPayment, setShowPayment] = useState(company?.showPaymentDetails !== false);
