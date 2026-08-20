@@ -677,8 +677,8 @@ function Body() {
           />
 
           {/* Unified table toolbar — filters and table actions on a single line capping the table panel */}
-          <div ref={filterRef} className="rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] p-3">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
+          <div ref={filterRef} className="rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] p-2.5">
+            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5">
               <div className="text-xs text-muted-foreground font-tnum whitespace-nowrap">
                 {list.length} of {baseList.length} invoice{baseList.length !== 1 ? "s" : ""}
                 {filtersActive && <span className="text-foreground/70"> · filtered</span>}
