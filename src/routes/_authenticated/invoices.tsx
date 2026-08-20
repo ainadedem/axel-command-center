@@ -193,7 +193,7 @@ function Body() {
       ),
     [baseList, chipStatuses, chipPo],
   );
-  const presets = useFilterPresets("invoices");
+  const presets = useFilterPresets("invoices", DEFAULT_PRESETS);
   // Aging bucket filter driven by the shared aging panel (click a tile / bar).
   // The bucket + focused record live in the URL so drawer jumps are shareable.
   const search = Route.useSearch();
