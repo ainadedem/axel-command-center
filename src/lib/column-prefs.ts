@@ -92,6 +92,15 @@ export function useColumnPrefs(page: string, columns: ColumnDef[]): ColumnPrefs 
 
   const reset = useCallback(() => persist({ ...base }), [base, persist]);
 
+  const setAll = useCallback(
+    (visible: boolean) => {
+      const next: Record<string, boolean> = {};
+      for (const c of columns) next[c.key] = (c.priority ?? "default") === "always" ? true : visible;
+      persist(next);
+    },
+    [columns, persist],
+  );
+
   const visibleKeys = columns.filter((c) => on(c.key)).map((c) => c.key);
 
   return {
