@@ -350,8 +350,8 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   const html = useMemo(() => {
     if (!doc) return "";
-    return buildHTML({ doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName: signer.name, stampX: place.x, stampY: place.y, stampScale: place.scale });
-  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signer.name, place]);
+    return buildHTML({ doc: { ...doc, status }, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signerName: signer.name, stampX: place.x, stampY: place.y, stampScale: place.scale });
+  }, [doc, status, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signer.name, place]);
 
   // Reset the auto-fit search whenever the document content changes.
   useEffect(() => {
@@ -459,11 +459,11 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
   const printableHtml = useCallback((scaleOverride?: number) => {
     if (!doc) return "";
     return buildPrintableDocument({
-      doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit,
+      doc: { ...doc, status }, company, client, project, showStatus, showPayment, showClientEmail, showUnit,
       logoUrl, logoScale, lang, cols, scale: scaleOverride ?? scale, showStamp, stampUrl, showSignature, signatureUrl,
       signerName: signer.name, stampX: place.x, stampY: place.y, stampScale: place.scale,
     });
-  }, [doc, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signer.name, place]);
+  }, [doc, status, company, client, project, showStatus, showPayment, showClientEmail, showUnit, logoUrl, logoScale, lang, cols, scale, showStamp, stampUrl, showSignature, signatureUrl, signer.name, place]);
 
   const downloadPdf = useCallback(async () => {
     if (!doc || exporting) return;
@@ -672,6 +672,21 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <Checkbox checked={showStatus} onCheckedChange={(v) => setShowStatus(!!v)} /> Show status
                   </label>
+                  {statusOptions && statusOptions.length > 0 && onDocChange ? (
+                    <div className="space-y-1.5 pt-0.5">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Status</p>
+                      <select
+                        value={status}
+                        onChange={(e) => changeStatus(e.target.value)}
+                        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-[11px] focus-ring capitalize"
+                        aria-label="Document status"
+                      >
+                        {statusOptions.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : null}
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <Checkbox checked={showClientEmail} onCheckedChange={(v) => setShowClientEmail(!!v)} /> Show client email
                   </label>
