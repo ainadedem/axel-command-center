@@ -193,6 +193,8 @@ export interface Client {
   rcs?: string;
   /** Contact categories — supports multiple (client, supplier, referral, partner). */
   categories?: ContactCategory[];
+  /** Days after invoicing this client normally pays (e.g. Airtel at 30). */
+  paymentTermsDays?: number;
 }
 
 /** Multi-select contact category, shared between Client and Supplier records. */

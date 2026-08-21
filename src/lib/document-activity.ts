@@ -42,7 +42,11 @@ const isUuid = (v?: string) =>
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((l) => l());
 
-/** Records one history entry. Failures never block the user's action. */
+/**
+ * Records one history entry. Failures never block the user's action.
+ * Returns the id of the created entry so callers (payment verification) can
+ * link straight to the audit record they just wrote.
+ */
 export async function logActivity(input: {
   docType: DocType;
   docId: string;
@@ -51,14 +55,14 @@ export async function logActivity(input: {
   action: ActivityAction;
   summary?: string;
   details?: Record<string, unknown>;
-}): Promise<void> {
+}): Promise<string | null> {
   try {
     const company = dbCompanyId(input.companyId);
-    if (!company || !isUuid(input.docId)) return;
+    if (!company || !isUuid(input.docId)) return null;
     const { data } = await supabase.auth.getUser();
     const actor = data.user?.id;
-    if (!actor) return;
-    const { error } = await supabase.from("document_activity").insert({
+    if (!actor) return null;
+    const { data: row, error } = await supabase.from("document_activity").insert({
       company_id: company,
       doc_type: input.docType,
       doc_id: input.docId,
@@ -67,11 +71,13 @@ export async function logActivity(input: {
       summary: input.summary ?? null,
       details: (input.details ?? {}) as never,
       actor_id: actor,
-    });
-    if (error) { console.warn("[activity]", error.message); return; }
+    }).select("id").single();
+    if (error) { console.warn("[activity]", error.message); return null; }
     notify();
+    return (row?.id as string) ?? null;
   } catch (e) {
     console.warn("[activity]", e);
+    return null;
   }
 }
 

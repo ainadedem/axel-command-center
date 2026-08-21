@@ -82,14 +82,14 @@ export function logPaymentUnlinked(
     reason: string;
     source?: "manual" | "undo";
   },
-) {
+): Promise<string | null> {
   const what =
     info.transactionDate && info.transactionAmount != null
       ? ` (${info.transactionDate} · ${Math.round(info.transactionAmount).toLocaleString()} ${
           info.transactionCurrency ?? ""
         })`.trimEnd()
       : "";
-  void logActivity({
+  return logActivity({
     docType: "invoice",
     docId: doc.invoiceId,
     docNumber: doc.invoiceNumber,
@@ -138,21 +138,56 @@ export interface UnlinkTarget {
   transactionCurrency?: string;
 }
 
+export class UnlinkPermissionError extends Error {
+  constructor(
+    message: string,
+    /** Targets refused because the user is not finance/admin there. */
+    readonly blocked: UnlinkTarget[],
+  ) {
+    super(message);
+    this.name = "UnlinkPermissionError";
+  }
+}
+
+export interface UnlinkResult {
+  count: number;
+  invoices: number;
+  /** Ids of the audit entries written by this removal, per invoice. */
+  entries: Array<{ invoiceId: string; invoiceNumber?: string; entryId: string }>;
+  undo: () => Promise<void>;
+}
+
 /**
  * Remove several payment links in one auditable act.
  *
  * Each removal is written to its invoice's verification history with the
- * shared reason; the returned `undo` restores every link at once. Writes are
- * kept out of the global undo stack so the single toast is the only handle.
+ * shared reason; the returned `undo` restores every link at once and records a
+ * reversal entry. Writes are kept out of the global undo stack so the single
+ * toast is the only handle.
+ *
+ * `allow` re-checks the caller's rights per company: a batch that touches a
+ * company where the user is not finance/admin is refused as a whole, never
+ * applied partially.
  */
 export async function bulkUnlinkPayments(
   targets: UnlinkTarget[],
   reason: string,
   source: "manual" | "undo" = "manual",
-): Promise<{ count: number; invoices: number; undo: () => void }> {
+  allow?: (companyId: string) => boolean,
+): Promise<UnlinkResult> {
   const { transactionsStore } = await import("@/lib/mock-data");
   const { withoutHistory } = await import("@/lib/history");
   const why = reason.trim() || "no reason given";
+
+  if (allow) {
+    const blocked = targets.filter((t) => !allow(t.companyId));
+    if (blocked.length > 0) {
+      throw new UnlinkPermissionError(
+        "You do not have permission to unlink payments for every selected invoice.",
+        blocked,
+      );
+    }
+  }
 
   await withoutHistory(async () => {
     targets.forEach((t) => {
@@ -160,29 +195,59 @@ export async function bulkUnlinkPayments(
     });
   });
 
-  targets.forEach((t) => {
-    logPaymentUnlinked(
-      { invoiceId: t.invoiceId, invoiceNumber: t.invoiceNumber, companyId: t.companyId },
-      {
-        transactionId: t.transactionId,
-        transactionDate: t.transactionDate,
-        transactionAmount: t.transactionAmount,
-        transactionCurrency: t.transactionCurrency,
-        reason: why,
-        source,
-      },
-    );
-  });
+  const entries = (
+    await Promise.all(
+      targets.map(async (t) => {
+        const entryId = await logPaymentUnlinked(
+          { invoiceId: t.invoiceId, invoiceNumber: t.invoiceNumber, companyId: t.companyId },
+          {
+            transactionId: t.transactionId,
+            transactionDate: t.transactionDate,
+            transactionAmount: t.transactionAmount,
+            transactionCurrency: t.transactionCurrency,
+            reason: why,
+            source,
+          },
+        );
+        return entryId
+          ? { invoiceId: t.invoiceId, invoiceNumber: t.invoiceNumber, entryId }
+          : null;
+      }),
+    )
+  ).filter(Boolean) as UnlinkResult["entries"];
 
   return {
     count: targets.length,
     invoices: new Set(targets.map((t) => t.invoiceId)).size,
-    undo: () => {
-      void withoutHistory(async () => {
+    entries,
+    undo: async () => {
+      await withoutHistory(async () => {
         targets.forEach((t) => {
           transactionsStore.update(t.transactionId, { invoiceId: t.invoiceId });
         });
       });
+      await Promise.all(
+        targets.map((t) =>
+          logActivity({
+            docType: "invoice",
+            docId: t.invoiceId,
+            docNumber: t.invoiceNumber,
+            companyId: t.companyId,
+            action: "payment_verified",
+            summary: `Payment link restored (undo)${
+              t.transactionDate ? ` — ${t.transactionDate}` : ""
+            }`,
+            details: {
+              transactionId: t.transactionId,
+              transactionDate: t.transactionDate,
+              transactionAmount: t.transactionAmount,
+              transactionCurrency: t.transactionCurrency,
+              reason: `undo of: ${why}`,
+              source: "undo",
+            },
+          }),
+        ),
+      );
     },
   };
 }

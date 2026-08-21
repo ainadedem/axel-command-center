@@ -62,6 +62,7 @@ export function PaymentMatchDialog({
         quotes: quotes as never,
         pos: pos as never,
         clientName: (id) => clients.find((c) => c.id === id)?.name,
+        clientTerms: (id) => clients.find((c) => c.id === id)?.paymentTermsDays,
       }).map((m) => ({ invoice: m.invoice, candidates: [m.candidate], best: m.candidate }));
     }
     const ids = new Set(invoices.map((i) => i.id));
@@ -72,6 +73,7 @@ export function PaymentMatchDialog({
       quotes: quotes as never,
       pos: pos as never,
       clientName: (id) => clients.find((c) => c.id === id)?.name,
+      clientTerms: (id) => clients.find((c) => c.id === id)?.paymentTermsDays,
     });
   }, [open, invoices, allInvoices, transactions, quotes, pos, clients, transaction]);
 
@@ -246,6 +248,11 @@ export function PaymentMatchDialog({
                           {money(invoicePayable(p.invoice), p.invoice.currency)}
                         </span>
                         <span className={`text-xs ${toneOf(c.confidence)}`}>{c.confidence} confidence</span>
+                        {c.ambiguousWith && !c.narrativeMatch ? (
+                          <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[11px] font-medium text-warning">
+                            Check: {c.ambiguousWith + 1} invoices share this amount
+                          </span>
+                        ) : null}
                       </div>
                       <div className="truncate text-sm text-muted-foreground">
                         {c.transaction.date} · {c.transaction.description} ·{" "}

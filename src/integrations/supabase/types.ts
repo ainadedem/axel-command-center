@@ -416,6 +416,7 @@ export type Database = {
           industry: string | null
           name: string
           nif: string | null
+          payment_terms_days: number | null
           phone: string | null
           rcs: string | null
           referral: string | null
@@ -441,6 +442,7 @@ export type Database = {
           industry?: string | null
           name: string
           nif?: string | null
+          payment_terms_days?: number | null
           phone?: string | null
           rcs?: string | null
           referral?: string | null
@@ -466,6 +468,7 @@ export type Database = {
           industry?: string | null
           name?: string
           nif?: string | null
+          payment_terms_days?: number | null
           phone?: string | null
           rcs?: string | null
           referral?: string | null
