@@ -151,6 +151,13 @@ function Body() {
   const [followingUp, setFollowingUp] = useState<Quote | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [layout, setLayout] = usePersistentState<"list" | "board">("quotations.layout", "list");
+  // A deep link may ask for a specific layout (?view=board) — honour it once.
+  const wantedView = Route.useSearch().view;
+  useEffect(() => {
+    if (wantedView && wantedView !== layout) setLayout(wantedView);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantedView]);
+
   const { user } = useAuth();
   const openCreate = () => { setEditing(null); setOpen(true); };
 
