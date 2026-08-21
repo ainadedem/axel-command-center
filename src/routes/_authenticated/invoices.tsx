@@ -66,6 +66,9 @@ import { canWriteCompany, dbCompanyId } from "@/lib/db-sync";
 import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } from "@/components/bulk-select";
 import { refreshStampsAndSignatures } from "@/lib/stamp-refresh";
 import { BulkEditDocDialog } from "@/components/bulk-edit-doc-dialog";
+import { BulkStatusDialog } from "@/components/bulk-status-dialog";
+import { applyBulkStatus } from "@/lib/bulk-status";
+import { CancelReasonDialog } from "@/components/cancel-reason-dialog";
 import { bulkUpdateDocuments, bulkSetFields, bulkResultMessage, type BulkPatch } from "@/lib/bulk-edit";
 import { type ColumnDef } from "@/lib/column-prefs";
 import { useTablePrefs } from "@/lib/table-prefs";
@@ -286,7 +289,25 @@ function Body() {
   );
   const selection = useBulkSelection(list, isWritable);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
   const { user: authUser } = useAuth();
+
+  /** Rules that make a bulk status move impossible for a given invoice. */
+  const bulkStatusBlock = (inv: Invoice, next: string): string | null => {
+    if (next !== "draft" && !inv.poId && !inv.poWaived) return "No purchase order";
+    if (next === "paid" && invoiceBalance(inv) > 0) return "Outstanding balance — use Mark paid";
+    return null;
+  };
+
+  const applyBulkStatusChange = async (next: string, rows: Invoice[], reason?: string) => {
+    const result = await applyBulkStatus({
+      collection: invoicesStore, docType: "invoice", rows, next, reason, userId: authUser?.id,
+    });
+    selection.clear();
+    toast.success(result.message, result.changed.length
+      ? { action: { label: "Undo", onClick: () => void result.undo() } }
+      : undefined);
+  };
 
   const applyBulk = async (patch: BulkPatch) => {
     const rows = selection.selectedRows;
@@ -944,13 +965,8 @@ function Body() {
         <Button size="sm" variant="outline" className="h-7 px-3 text-xs" onClick={() => setMatchOpen(true)}>
           Match payments
         </Button>
-        <Button
-          size="sm" variant="outline" className="h-7 px-3 text-xs text-destructive"
-          onClick={() => {
-            if (confirm(`Cancel ${selection.count} invoice${selection.count !== 1 ? "s" : ""}?`)) void bulkStatus("cancelled", "Cancelled");
-          }}
-        >
-          Cancel
+        <Button size="sm" variant="outline" className="h-7 px-3 text-xs" onClick={() => setBulkStatusOpen(true)}>
+          Change status
         </Button>
         <Button
           size="sm" variant="outline" className="h-7 px-3 text-xs"
@@ -965,6 +981,16 @@ function Body() {
           Refresh stamp &amp; signature
         </Button>
       </BulkActionBar>
+      <BulkStatusDialog
+        open={bulkStatusOpen}
+        onOpenChange={setBulkStatusOpen}
+        noun="invoice"
+        rows={selection.selectedRows}
+        statuses={INVOICE_STATUSES}
+        canWrite={isWritable}
+        validate={bulkStatusBlock}
+        onApply={applyBulkStatusChange}
+      />
       <BulkEditDocDialog
         open={bulkOpen}
         onOpenChange={setBulkOpen}
