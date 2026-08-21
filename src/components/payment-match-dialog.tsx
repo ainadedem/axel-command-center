@@ -22,7 +22,7 @@ const money = (v: number, c: string) => fmtFull(v, c as Currency);
 
 import { invoicePayable } from "@/lib/invoice-money";
 import {
-  proposeMatches, proposeMatchesForTransaction, buildPaymentProof,
+  proposeMatches, proposeMatchesForTransaction, buildPaymentProof, effectiveTermsDays,
   type MatchProposal, type ProofInvoice, type ProofTransaction,
 } from "@/lib/payment-proof";
 import { logPaymentVerified, logPaymentReviewed, logPaymentUnlinked } from "@/lib/payment-audit";
@@ -62,7 +62,7 @@ export function PaymentMatchDialog({
         quotes: quotes as never,
         pos: pos as never,
         clientName: (id) => clients.find((c) => c.id === id)?.name,
-        clientTerms: (id) => clients.find((c) => c.id === id)?.paymentTermsDays,
+        clientTerms: (id, cur) => effectiveTermsDays(clients.find((c) => c.id === id), cur),
       }).map((m) => ({ invoice: m.invoice, candidates: [m.candidate], best: m.candidate }));
     }
     const ids = new Set(invoices.map((i) => i.id));
@@ -73,7 +73,7 @@ export function PaymentMatchDialog({
       quotes: quotes as never,
       pos: pos as never,
       clientName: (id) => clients.find((c) => c.id === id)?.name,
-      clientTerms: (id) => clients.find((c) => c.id === id)?.paymentTermsDays,
+      clientTerms: (id, cur) => effectiveTermsDays(clients.find((c) => c.id === id), cur),
     });
   }, [open, invoices, allInvoices, transactions, quotes, pos, clients, transaction]);
 
