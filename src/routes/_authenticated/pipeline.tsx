@@ -341,71 +341,86 @@ function StageDistribution({ list }: { list: Opportunity[] }) {
   );
 }
 
-/* ─── Kanban view ─────────────────────────────────────────────────── */
+/* ─── Kanban view (draggable) ─────────────────────────────────────── */
 
 function KanbanView({ list, companies, onEdit, acqOf }: { list: Opportunity[]; companies: ReturnType<typeof useCompanies>; onEdit: (o: Opportunity) => void; acqOf: (o: Opportunity) => string }) {
+  const columns: KanbanColumnDef[] = stages.map((s) => {
+    const col = list.filter((o) => o.stage === s);
+    const sum = col.reduce((acc, o) => acc + toMGA(o.value, o.currency), 0);
+    return {
+      key: s,
+      label: s,
+      dot: STAGE_STYLES[s].dot,
+      meta: `${fmtCompact(sum, "MGA")} · ${Math.round(stageProbability[s] * 100)}%`,
+    };
+  });
+
+  const moveStage = (o: Opportunity, stage: string) => {
+    const previous = o.stage;
+    try {
+      opportunitiesStore.update(o.id, { stage: stage as Stage });
+      toast.success(`${o.name} → ${stage}`, {
+        action: {
+          label: "Undo",
+          onClick: () => opportunitiesStore.update(o.id, { stage: previous }),
+        },
+      });
+    } catch (e) {
+      opportunitiesStore.update(o.id, { stage: previous });
+      toast.error(`Could not move ${o.name}`, { description: e instanceof Error ? e.message : undefined });
+    }
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
-      {stages.map((s) => {
-        const st = STAGE_STYLES[s];
-        const col = list.filter((o) => o.stage === s);
-        const sum = col.reduce((acc, o) => acc + toMGA(o.value, o.currency), 0);
+    <KanbanBoard
+      className="xl:grid-cols-4 2xl:grid-cols-7"
+      columns={columns}
+      items={list}
+      idOf={(o) => o.id}
+      labelOf={(o) => o.name}
+      columnOf={(o) => o.stage}
+      onMove={moveStage}
+      onCardClick={onEdit}
+      renderCard={(o) => {
+        const co = companies.find((c) => c.id === o.companyId);
+        const u = urgencyOf(o);
+        const acq = acqOf(o);
         return (
-          <div key={s} className="rounded-lg border border-border bg-surface overflow-hidden min-h-[280px] flex flex-col">
-            <div className="px-3 py-2.5 flex items-center justify-between border-b border-border">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${st.dot}`} />
-                <div className="text-xs font-medium truncate">{s}</div>
+          <>
+            <div className="flex items-start justify-between gap-2">
+              <div className="text-sm font-medium leading-snug truncate">{o.name}</div>
+              {co && <span className="h-1.5 w-1.5 rounded-full mt-1.5 shrink-0" style={{ background: co.color }} />}
+            </div>
+            <div className="text-xs text-muted-foreground mt-0.5 truncate">{o.client}</div>
+            {(acq || o.closer) && (
+              <div className="text-[10px] text-muted-foreground mt-1.5 truncate">
+                {acq && <span>A: {acq}</span>}
+                {acq && o.closer && <span> · </span>}
+                {o.closer && <span>C: {o.closer}</span>}
               </div>
-              <div className="text-[10px] text-muted-foreground font-tnum shrink-0">{col.length}</div>
+            )}
+            <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40">
+              <div className="font-tnum text-sm font-semibold">{fmtCompact(o.value, o.currency)}</div>
+              {u ? (
+                <span className={`text-[10px] font-tnum inline-flex items-center gap-1 ${u.cls}`}>
+                  {u.label.includes("overdue") && <AlertTriangle className="h-2.5 w-2.5" />}
+                  {u.label}
+                </span>
+              ) : (
+                <div className="text-[10px] text-muted-foreground font-tnum">{format(parseISO(o.expectedClose), "MMM d")}</div>
+              )}
             </div>
-            <div className="px-3 py-2 text-[10px] text-muted-foreground font-tnum border-b border-border/50">
-              {fmtCompact(sum, "MGA")} · {Math.round(stageProbability[s] * 100)}%
+            <div className="opacity-0 group-hover:opacity-100 flex gap-1 mt-2">
+              <button onClick={(e) => { e.stopPropagation(); onEdit(o); }} className="h-6 px-2 text-[10px] rounded hover:bg-surface text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><Pencil className="h-3 w-3" /> Edit</button>
+              <button onClick={(e) => { e.stopPropagation(); if (confirm(`Delete ${o.name}?`)) opportunitiesStore.remove(o.id); }} className="h-6 px-2 text-[10px] rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive inline-flex items-center gap-1"><Trash2 className="h-3 w-3" /> Delete</button>
             </div>
-            <div className="p-2 space-y-1.5 flex-1">
-              {col.map((o) => {
-                const co = companies.find((c) => c.id === o.companyId);
-                const u = urgencyOf(o);
-                const acq = acqOf(o);
-                return (
-                  <div key={o.id} className="rounded-md bg-surface-elevated border border-border/60 p-2.5 hover:border-border transition group cursor-pointer" onClick={() => onEdit(o)}>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="text-sm font-medium leading-snug truncate">{o.name}</div>
-                      {co && <span className="h-1.5 w-1.5 rounded-full mt-1.5 shrink-0" style={{ background: co.color }} />}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-0.5 truncate">{o.client}</div>
-                    {(acq || o.closer) && (
-                      <div className="text-[10px] text-muted-foreground mt-1.5 truncate">
-                        {acq && <span>A: {acq}</span>}
-                        {acq && o.closer && <span> · </span>}
-                        {o.closer && <span>C: {o.closer}</span>}
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40">
-                      <div className="font-tnum text-sm font-semibold">{fmtCompact(o.value, o.currency)}</div>
-                      {u ? (
-                        <span className={`text-[10px] font-tnum inline-flex items-center gap-1 ${u.cls}`}>
-                          {u.label.includes("overdue") && <AlertTriangle className="h-2.5 w-2.5" />}
-                          {u.label}
-                        </span>
-                      ) : (
-                        <div className="text-[10px] text-muted-foreground font-tnum">{format(parseISO(o.expectedClose), "MMM d")}</div>
-                      )}
-                    </div>
-                    <div className="opacity-0 group-hover:opacity-100 flex gap-1 mt-2">
-                      <button onClick={(e) => { e.stopPropagation(); onEdit(o); }} className="h-6 px-2 text-[10px] rounded hover:bg-surface text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><Pencil className="h-3 w-3" /> Edit</button>
-                      <button onClick={(e) => { e.stopPropagation(); if (confirm(`Delete ${o.name}?`)) opportunitiesStore.remove(o.id); }} className="h-6 px-2 text-[10px] rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive inline-flex items-center gap-1"><Trash2 className="h-3 w-3" /> Delete</button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          </>
         );
-      })}
-    </div>
+      }}
+    />
   );
 }
+
 
 /* ─── List view ───────────────────────────────────────────────────── */
 
