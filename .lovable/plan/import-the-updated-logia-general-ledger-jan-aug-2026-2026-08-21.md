@@ -13,6 +13,10 @@ Your file is the same Logia ledger as the one already in the app, but restated a
 
 Total: 1,340 accounting pieces / 3,606 ledger lines across six journals (Banque, Caisse, Factures fournisseurs, Factures clients, Opérations diverses, Report à nouveau).
 
+## Scope
+
+Logia Madagascar only. Nothing belonging to Winford Next or Axiom Unlimited is read, rewritten or deleted at any point of the import; every write is filtered on Logia's company id.
+
 ## What will happen
 
 **1. The ledger becomes the shared source of truth**
