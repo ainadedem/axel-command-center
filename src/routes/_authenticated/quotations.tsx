@@ -70,6 +70,9 @@ import { useCompanySalesUsers } from "@/hooks/use-company-users";
 import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } from "@/components/bulk-select";
 import { BulkEditDocDialog } from "@/components/bulk-edit-doc-dialog";
 import { bulkUpdateDocuments, bulkResultMessage, type BulkPatch } from "@/lib/bulk-edit";
+import { BulkStatusDialog } from "@/components/bulk-status-dialog";
+import { applyBulkStatus } from "@/lib/bulk-status";
+import { useQuoteStatusRequest } from "@/components/quote-status-request";
 import { renderDocumentPdfBlob } from "@/lib/pdf-export";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
@@ -112,6 +115,7 @@ const statusStyles: Record<QuoteStatus, string> = {
   accepted: "border-success/40 text-success bg-success/10",
   rejected: "border-destructive/40 text-destructive bg-destructive/10",
   expired: "border-warning/40 text-warning bg-warning/10",
+  cancelled: "border-muted text-muted-foreground bg-muted/30",
 };
 
 /** FX snapshot is captured inline in the dialog submit, only while still in draft. */
@@ -235,6 +239,18 @@ function Body() {
   );
   const selection = useBulkSelection(list, isWritable);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
+  const statusRequest = useQuoteStatusRequest(isWritable);
+
+  const applyBulkStatusChange = async (next: string, rows: Quote[], reason?: string) => {
+    const result = await applyBulkStatus({
+      collection: quotesStore, docType: "quote", rows, next, reason, userId: user?.id,
+    });
+    selection.clear();
+    toast.success(result.message, result.changed.length
+      ? { action: { label: "Undo", onClick: () => void result.undo() } }
+      : undefined);
+  };
   const { users: previewSigners } = useCompanySalesUsers(previewing?.companyId);
 
   const applyBulk = async (patch: BulkPatch) => {
@@ -325,7 +341,7 @@ function Body() {
           statuses={QUOTE_STATUS_OPTIONS}
           disabled={!isWritable(selectedQuote)}
           disabledReason="You cannot change this quotation"
-          onSelect={(next) => applyQuoteStatus(selectedQuote, next as QuoteStatus, { userId: user?.id })}
+          onSelect={(next) => statusRequest.request(selectedQuote, next as QuoteStatus)}
         />
         <AssigneeStack companyId={selectedQuote.companyId} ids={selectedQuote.assignedTo ?? []} />
       </div>
@@ -498,7 +514,7 @@ function Body() {
                             statuses={QUOTE_STATUS_OPTIONS}
                             disabled={!isWritable(q)}
                             disabledReason="You cannot change this quotation"
-                            onSelect={(next) => applyQuoteStatus(q, next as QuoteStatus, { userId: user?.id })}
+                            onSelect={(next) => statusRequest.request(q, next as QuoteStatus)}
                           />
                           {q.sentAt && (
                             <span className={cn("inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles.sent)} title={`Sent ${format(parseISO(q.sentAt), "MMM d, yyyy HH:mm")}${q.sentTo ? ` to ${q.sentTo}` : ""}`}>
@@ -525,6 +541,9 @@ function Body() {
         <Button size="sm" className="h-7 px-3 text-xs" onClick={() => setBulkOpen(true)}>
           Bulk edit
         </Button>
+        <Button size="sm" variant="outline" className="h-7 px-3 text-xs" onClick={() => setBulkStatusOpen(true)}>
+          Change status
+        </Button>
         <Button
           size="sm" variant="outline" className="h-7 px-3 text-xs"
           onClick={async () => {
@@ -538,6 +557,16 @@ function Body() {
           Refresh stamp &amp; signature
         </Button>
       </BulkActionBar>
+      <BulkStatusDialog
+        open={bulkStatusOpen}
+        onOpenChange={setBulkStatusOpen}
+        noun="quotation"
+        rows={selection.selectedRows}
+        statuses={QUOTE_STATUS_OPTIONS}
+        canWrite={isWritable}
+        onApply={applyBulkStatusChange}
+      />
+      {statusRequest.dialog}
       <BulkEditDocDialog
         open={bulkOpen}
         onOpenChange={setBulkOpen}
@@ -1254,10 +1283,12 @@ function QuoteBoard({
   const visible = list.filter((q) => activeKeys.includes(q.status));
   const hidden = list.length - visible.length;
 
+  const statusRequest = useQuoteStatusRequest(canWrite);
+
   const move = (q: Quote, status: string) => {
     const previous = q.status;
-    applyQuoteStatus(q, status as QuoteStatus, { userId: user?.id });
-    logBoardMove({ docType: "quote", docId: q.id, docNumber: q.number, companyId: q.companyId, from: previous, to: status });
+    statusRequest.request(q, status as QuoteStatus, () =>
+      logBoardMove({ docType: "quote", docId: q.id, docNumber: q.number, companyId: q.companyId, from: previous, to: status }));
   };
 
   const assignToMe = (q: Quote) => {
@@ -1343,6 +1374,14 @@ function QuoteBoard({
           const notes = followups.filter((f) => f.quoteId === q.id).length;
           return (
             <>
+              <StatusMenu
+                status={q.status}
+                statuses={QUOTE_STATUS_OPTIONS}
+                disabled={!canWrite(q)}
+                disabledReason="You cannot change this quotation"
+                onSelect={(next) => move(q, next)}
+                className="mr-auto"
+              />
               <CardAction icon={ExternalLink} label="Open details" onClick={() => onOpen(q)} />
               <CardAction icon={UserPlus} label="Assign to me" onClick={() => assignToMe(q)} disabled={!user?.id} />
               <CardCommentAction count={notes} onSubmit={(text) => comment(q, text)} />
@@ -1369,6 +1408,7 @@ function QuoteBoard({
         }}
       />
 
+      {statusRequest.dialog}
       <BoardHistoryPanel
         open={historyOpen}
         onOpenChange={setHistoryOpen}

@@ -1567,6 +1567,8 @@ export type Database = {
           amount: number
           assigned_to: string[]
           bank_account_id: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
           client_id: string | null
           company_id: string
           created_at: string
@@ -1606,6 +1608,8 @@ export type Database = {
           amount?: number
           assigned_to?: string[]
           bank_account_id?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           client_id?: string | null
           company_id: string
           created_at?: string
@@ -1645,6 +1649,8 @@ export type Database = {
           amount?: number
           assigned_to?: string[]
           bank_account_id?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           client_id?: string | null
           company_id?: string
           created_at?: string

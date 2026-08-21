@@ -13,6 +13,8 @@ import { invoiceBalance, invoicePayable } from "@/lib/invoice-money";
 import { notify } from "@/lib/notifications";
 import { logActivity } from "@/lib/document-activity";
 import { withoutHistory } from "@/lib/history";
+import { toast } from "sonner";
+import { confirmStatusChanges, conflictMessage, statusLabel } from "@/lib/status-guard";
 
 export type InvoiceStatus = Invoice["status"];
 
@@ -202,12 +204,53 @@ export function commitStatusChange(
     });
   }
 
+  // Confirm the move against the database. A stale write (someone else moved
+  // the invoice first) is refused server-side and rolled back here.
+  if (next !== invoice.status) {
+    void confirmStatusChanges("invoice", [{
+      id: invoice.id,
+      expectedStatus: invoice.status,
+      expectedUpdatedAt: invoice.updatedAt ?? null,
+      next,
+      reason: plan.patch.cancellationReason ?? null,
+      paid: plan.patch.paid ?? null,
+      paidDate: plan.patch.paidDate ?? null,
+    }]).then(([res]) => {
+      if (!res || res.state === "ok" || res.state === "skipped") return;
+      withoutHistory(() => {
+        invoicesStore.update(invoice.id, {
+          ...plan.previous,
+          ...(res.current?.status ? { status: res.current.status as InvoiceStatus } : {}),
+          ...(res.current?.updatedAt ? { updatedAt: res.current.updatedAt } : {}),
+        });
+      });
+      clearStatusDiff(invoice.id);
+      if (res.state === "conflict") {
+        toast.error(conflictMessage(invoice.number, res), {
+          description: `Your change to ${statusLabel(next)} was not applied.`,
+        });
+      } else if (res.state === "denied" || res.state === "missing") {
+        toast.error(`You do not have permission to change ${invoice.number}.`);
+      } else {
+        toast.error(`Could not save ${invoice.number}`, { description: res.message });
+      }
+    });
+  }
+
   const revert = async () => {
     await withoutHistory(() => {
       invoicesStore.update(invoice.id, plan.previous);
       (opts.createdTransactionIds ?? []).forEach((txId) => transactionsStore.remove(txId));
     });
     clearStatusDiff(invoice.id);
+    await confirmStatusChanges("invoice", [{
+      id: invoice.id,
+      expectedStatus: next,
+      next: invoice.status,
+      reason: invoice.cancellationReason ?? null,
+      paid: invoice.paid ?? null,
+      paidDate: invoice.paidDate ?? null,
+    }]);
     logActivity({
       docType: "invoice",
       docId: invoice.id,

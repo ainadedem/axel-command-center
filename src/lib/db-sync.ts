@@ -1033,6 +1033,8 @@ const quoteToDb = (q: Quote) => {
     stamp_y: q.stampY ?? null,
     stamp_scale: q.stampScale ?? null,
     stamp_dirty: q.stampDirty ?? false,
+    cancelled_at: q.cancelledAt ?? null,
+    cancellation_reason: q.cancellationReason ?? null,
     ...(q.createdBy && isUuid(q.createdBy) ? { created_by: q.createdBy } : {}),
     ...(q.updatedBy && isUuid(q.updatedBy) ? { updated_by: q.updatedBy } : {}),
   };
@@ -1073,6 +1075,8 @@ const quoteFromDb = (r: Record<string, unknown>): Quote => ({
   stampY: r.stamp_y != null ? Number(r.stamp_y) : undefined,
   stampScale: r.stamp_scale != null ? Number(r.stamp_scale) : undefined,
   stampDirty: Boolean(r.stamp_dirty),
+  cancelledAt: (r.cancelled_at as string) ?? undefined,
+  cancellationReason: (r.cancellation_reason as string) ?? undefined,
 });
 
 /* ───────── QUOTE FOLLOW-UPS ───────── */

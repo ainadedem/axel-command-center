@@ -66,6 +66,9 @@ import { canWriteCompany, dbCompanyId } from "@/lib/db-sync";
 import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } from "@/components/bulk-select";
 import { refreshStampsAndSignatures } from "@/lib/stamp-refresh";
 import { BulkEditDocDialog } from "@/components/bulk-edit-doc-dialog";
+import { BulkStatusDialog } from "@/components/bulk-status-dialog";
+import { applyBulkStatus } from "@/lib/bulk-status";
+import { CancelReasonDialog } from "@/components/cancel-reason-dialog";
 import { bulkUpdateDocuments, bulkSetFields, bulkResultMessage, type BulkPatch } from "@/lib/bulk-edit";
 import { type ColumnDef } from "@/lib/column-prefs";
 import { useTablePrefs } from "@/lib/table-prefs";
@@ -286,7 +289,25 @@ function Body() {
   );
   const selection = useBulkSelection(list, isWritable);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
   const { user: authUser } = useAuth();
+
+  /** Rules that make a bulk status move impossible for a given invoice. */
+  const bulkStatusBlock = (inv: Invoice, next: string): string | null => {
+    if (next !== "draft" && !inv.poId && !inv.poWaived) return "No purchase order";
+    if (next === "paid" && invoiceBalance(inv) > 0) return "Outstanding balance — use Mark paid";
+    return null;
+  };
+
+  const applyBulkStatusChange = async (next: string, rows: Invoice[], reason?: string) => {
+    const result = await applyBulkStatus({
+      collection: invoicesStore, docType: "invoice", rows, next, reason, userId: authUser?.id,
+    });
+    selection.clear();
+    toast.success(result.message, result.changed.length
+      ? { action: { label: "Undo", onClick: () => void result.undo() } }
+      : undefined);
+  };
 
   const applyBulk = async (patch: BulkPatch) => {
     const rows = selection.selectedRows;
@@ -944,13 +965,8 @@ function Body() {
         <Button size="sm" variant="outline" className="h-7 px-3 text-xs" onClick={() => setMatchOpen(true)}>
           Match payments
         </Button>
-        <Button
-          size="sm" variant="outline" className="h-7 px-3 text-xs text-destructive"
-          onClick={() => {
-            if (confirm(`Cancel ${selection.count} invoice${selection.count !== 1 ? "s" : ""}?`)) void bulkStatus("cancelled", "Cancelled");
-          }}
-        >
-          Cancel
+        <Button size="sm" variant="outline" className="h-7 px-3 text-xs" onClick={() => setBulkStatusOpen(true)}>
+          Change status
         </Button>
         <Button
           size="sm" variant="outline" className="h-7 px-3 text-xs"
@@ -965,6 +981,16 @@ function Body() {
           Refresh stamp &amp; signature
         </Button>
       </BulkActionBar>
+      <BulkStatusDialog
+        open={bulkStatusOpen}
+        onOpenChange={setBulkStatusOpen}
+        noun="invoice"
+        rows={selection.selectedRows}
+        statuses={INVOICE_STATUSES}
+        canWrite={isWritable}
+        validate={bulkStatusBlock}
+        onApply={applyBulkStatusChange}
+      />
       <BulkEditDocDialog
         open={bulkOpen}
         onOpenChange={setBulkOpen}
@@ -999,58 +1025,27 @@ function Body() {
   );
 }
 
+/**
+ * Cancellation always collects a reason, then goes through the guarded status
+ * commit so the change is conflict-checked and lands in the audit trail.
+ */
 function CancelInvoiceDialog({ open, onOpenChange, invoice }: { open: boolean; onOpenChange: (v: boolean) => void; invoice: Invoice | null }) {
-  const [reason, setReason] = useState("");
-  const [showErrors, setShowErrors] = useState(false);
-  useEffect(() => { if (open) setReason(""); }, [open]);
   if (!invoice) return null;
-  const submit = () => {
-    const trimmed = reason.trim();
-    if (!trimmed) {
-      setShowErrors(true);
-      return;
-    }
-    invoicesStore.update(invoice.id, {
-      status: "cancelled",
-      cancelledAt: new Date().toISOString(),
-      cancellationReason: trimmed,
-    });
-    logActivity({
-      docType: "invoice", docId: invoice.id, docNumber: invoice.number, companyId: invoice.companyId,
-      action: "status_changed", summary: `Cancelled — ${trimmed}`, details: { from: invoice.status, to: "cancelled" },
-    });
-    onOpenChange(false);
-  };
-  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>Cancel invoice {invoice.number}</DialogTitle></DialogHeader>
-        <div className="space-y-3 py-2">
-          <FormErrorBanner show={showErrors} />
-          <p className="text-xs text-muted-foreground">
-            The invoice will remain in the CRM with a <span className="text-foreground font-medium">cancelled</span> status. This action cannot be undone from this dialog.
-          </p>
-          <div>
-            <Label><RequiredLabel>Reason</RequiredLabel></Label>
-            <Textarea
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="Why is this invoice being cancelled?"
-              rows={4}
-              className={invalidFieldClassName(showErrors && !reason.trim())}
-              aria-invalid={showErrors && !reason.trim()}
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Keep invoice</Button>
-          <Button variant="destructive" onClick={handleSubmit} disabled={isSubmitting}>
-            <Ban className="h-3.5 w-3.5 mr-1.5" /> Cancel invoice
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <CancelReasonDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={`Cancel invoice ${invoice.number}`}
+      description="The invoice stays in the CRM as cancelled. The reason is stored on the invoice and in its audit trail."
+      confirmLabel="Cancel invoice"
+      onConfirm={(reason) => {
+        const plan = planStatusChange(invoice, "cancelled", { reason });
+        const committed = commitStatusChange(invoice, plan);
+        toast.success(`${invoice.number} cancelled`, {
+          action: { label: "Undo", onClick: () => { void committed.revert(); } },
+        });
+      }}
+    />
   );
 }
 
@@ -1746,6 +1741,8 @@ function InvoiceBoard({
   const visible = list.filter((inv) => activeKeys.includes(inv.status));
   const hidden = list.length - visible.length;
 
+  const [cancelling, setCancelling] = useState<Invoice | null>(null);
+
   const blocked = (inv: Invoice, to: string, reason: string) =>
     logBoardMove({
       docType: "invoice", docId: inv.id, docNumber: inv.number, companyId: inv.companyId,
@@ -1766,8 +1763,8 @@ function InvoiceBoard({
       return;
     }
     if (plan.requiresReason) {
-      blocked(inv, next, "cancellation reason required");
-      toast.error(`${inv.number} needs a cancellation reason`, { description: "Cancel it from the row actions." });
+      // Cancelling is allowed from the board, but only through the reason gate.
+      setCancelling(inv);
       return;
     }
     const committed = commitStatusChange(inv, plan);
@@ -1850,6 +1847,14 @@ function InvoiceBoard({
         accentOf={(inv) => clientColor(clients.find((c) => c.id === inv.clientId))}
         renderActions={(inv) => (
           <>
+            <StatusMenu
+              status={inv.status}
+              statuses={INVOICE_STATUSES}
+              disabled={!canWrite(inv)}
+              disabledReason="You cannot change this invoice"
+              onSelect={(next) => move(inv, next)}
+              className="mr-auto"
+            />
             <CardAction icon={ExternalLink} label="Open details" onClick={() => onOpen(inv)} />
             <CardAction
               icon={CircleDollarSign}
@@ -1885,6 +1890,7 @@ function InvoiceBoard({
         }}
       />
 
+      <CancelInvoiceDialog open={!!cancelling} onOpenChange={(v) => { if (!v) setCancelling(null); }} invoice={cancelling} />
       <BoardHistoryPanel
         open={historyOpen}
         onOpenChange={setHistoryOpen}

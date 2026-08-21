@@ -346,7 +346,7 @@ export interface Invoice {
 
 /* ─── Sales process: Quote → PO → Invoice ───────────────────────────── */
 
-export type QuoteStatus = "draft" | "sent" | "accepted" | "rejected" | "expired";
+export type QuoteStatus = "draft" | "sent" | "accepted" | "rejected" | "expired" | "cancelled";
 export interface QuoteLine {
   id: string;
   description: string;
@@ -431,6 +431,10 @@ export interface Quote {
   /** Set when the company stamp or a signature changed after the last render. */
   stampDirty?: boolean;
 
+  /** ISO timestamp when the quotation was cancelled. */
+  cancelledAt?: string;
+  /** Required comment explaining the cancellation. */
+  cancellationReason?: string;
 }
 
 /** Maximum number of sales people that can follow one quotation. */
