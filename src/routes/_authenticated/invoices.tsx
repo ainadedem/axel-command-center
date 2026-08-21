@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/page-header";
 import {
   useInvoices, useCompanies, useClients, useProjects, usePurchaseOrders, useQuotes, useAccounts, useTransactions,
   invoicesStore, transactionsStore, projectsStore, purchaseOrdersStore, quotesStore,
-  fmtAmount, fmtFull, toMGA, FX, type Invoice, type Project, type Currency, type QuoteLine, type Client,
+  fmtAmount, fmtFull, fmtCompact, toMGA, FX, type Invoice, type Project, type Currency, type QuoteLine, type Client,
   getNumberFormat, setNumberFormat, type NumberFormatMode,
   contactBelongsTo,
 } from "@/lib/mock-data";
@@ -38,7 +38,7 @@ import { useCreateAction } from "@/lib/create-action";
 import { Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, Ban, BadgeCheck, ToggleLeft, ToggleRight, Plus, X, ListFilter } from "lucide-react";
 import { InvoicePreview } from "@/components/invoice-preview";
 import { MarkPaidDialog } from "@/components/mark-paid-dialog";
-import { useStatusDiff } from "@/lib/invoice-status";
+import { useStatusDiff, planStatusChange, commitStatusChange, type InvoiceStatus } from "@/lib/invoice-status";
 import { RecordPaymentDialog } from "@/components/statement-import-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 
