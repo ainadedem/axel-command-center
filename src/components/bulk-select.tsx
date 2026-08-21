@@ -86,7 +86,7 @@ export function SelectAllHeaderCell({
   className?: string;
 }) {
   return (
-    <th className={cn("px-3 py-3 w-10", className)}>
+    <th className={cn("bulk-select-cell px-3 py-3 w-10", className)}>
       <Checkbox checked={checked} onCheckedChange={() => onToggle()} aria-label="Select all rows" />
     </th>
   );
@@ -104,7 +104,7 @@ export function SelectRowCell({
   label?: string;
 }) {
   return (
-    <td className="px-3 py-1.5 w-10">
+    <td className="bulk-select-cell px-3 py-1.5 w-10">
       <Checkbox
         checked={checked}
         disabled={disabled}
