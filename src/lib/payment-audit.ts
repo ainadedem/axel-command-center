@@ -126,3 +126,63 @@ export function describeMatchedFields(details: Record<string, unknown>): string 
   if (typeof details.source === "string") parts.push(String(details.source));
   return parts.join(" · ");
 }
+
+/** One payment link about to be removed. */
+export interface UnlinkTarget {
+  invoiceId: string;
+  invoiceNumber?: string;
+  companyId: string;
+  transactionId: string;
+  transactionDate?: string;
+  transactionAmount?: number;
+  transactionCurrency?: string;
+}
+
+/**
+ * Remove several payment links in one auditable act.
+ *
+ * Each removal is written to its invoice's verification history with the
+ * shared reason; the returned `undo` restores every link at once. Writes are
+ * kept out of the global undo stack so the single toast is the only handle.
+ */
+export async function bulkUnlinkPayments(
+  targets: UnlinkTarget[],
+  reason: string,
+  source: "manual" | "undo" = "manual",
+): Promise<{ count: number; invoices: number; undo: () => void }> {
+  const { transactionsStore } = await import("@/lib/mock-data");
+  const { withoutHistory } = await import("@/lib/history");
+  const why = reason.trim() || "no reason given";
+
+  await withoutHistory(async () => {
+    targets.forEach((t) => {
+      transactionsStore.update(t.transactionId, { invoiceId: undefined });
+    });
+  });
+
+  targets.forEach((t) => {
+    logPaymentUnlinked(
+      { invoiceId: t.invoiceId, invoiceNumber: t.invoiceNumber, companyId: t.companyId },
+      {
+        transactionId: t.transactionId,
+        transactionDate: t.transactionDate,
+        transactionAmount: t.transactionAmount,
+        transactionCurrency: t.transactionCurrency,
+        reason: why,
+        source,
+      },
+    );
+  });
+
+  return {
+    count: targets.length,
+    invoices: new Set(targets.map((t) => t.invoiceId)).size,
+    undo: () => {
+      void withoutHistory(async () => {
+        targets.forEach((t) => {
+          transactionsStore.update(t.transactionId, { invoiceId: t.invoiceId });
+        });
+      });
+    },
+  };
+}
