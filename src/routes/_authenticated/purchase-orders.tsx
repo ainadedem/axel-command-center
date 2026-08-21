@@ -22,6 +22,7 @@ import { useOwnerNames } from "@/hooks/use-owner-names";
 import { logActivity, diffDocument } from "@/lib/document-activity";
 import { DocumentActivityPanel } from "@/components/document-activity-panel";
 import { useAuth } from "@/lib/auth-context";
+import { toast } from "sonner";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -95,6 +96,7 @@ function POPage() {
 
 function Body() {
   const { scope } = useCompany();
+  const { user } = useAuth();
   const pos = usePurchaseOrders();
   const invoices = useInvoices();
   const navigate = useNavigate();
