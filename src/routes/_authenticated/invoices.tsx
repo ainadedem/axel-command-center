@@ -189,6 +189,13 @@ function Body() {
   const tp = useTablePrefs("invoices", INVOICE_COLUMNS, INVOICE_COL_WIDTHS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [layout, setLayout] = usePersistentState<"list" | "board">("invoices.layout", "list");
+  // A deep link may ask for a specific layout (?view=board) — honour it once.
+  const wantedView = Route.useSearch().view;
+  useEffect(() => {
+    if (wantedView && wantedView !== layout) setLayout(wantedView);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantedView]);
+
 
 
   const toggleMode = useCallback(() => {
