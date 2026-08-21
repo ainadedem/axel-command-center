@@ -251,3 +251,12 @@ export function computeVariance(quotes: Quote[], invoices: Invoice[]): QuoteInvo
 /** True when the deal has anything worth showing in a variance panel. */
 export const hasVariance = (v: QuoteInvoiceVariance) =>
   Math.abs(v.total) >= 1 || v.missing.length > 0 || v.extra.length > 0 || v.changed.length > 0;
+
+/** Variance for every rolled-up deal, keyed by opportunity id. */
+export function buildVariances(
+  rollups: Map<string, { quotes: Quote[]; invoices: Invoice[] }>,
+): Map<string, QuoteInvoiceVariance> {
+  const out = new Map<string, QuoteInvoiceVariance>();
+  for (const [id, r] of rollups) out.set(id, computeVariance(r.quotes, r.invoices));
+  return out;
+}
