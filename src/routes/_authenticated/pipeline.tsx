@@ -24,6 +24,8 @@ import { KpiCard } from "@/components/kpi-card";
 import { useQuotes, useInvoices } from "@/lib/mock-data";
 import { buildRollups, type OpportunityRollup } from "@/lib/pipeline-link";
 import { OpportunityRevenueDrawer } from "@/components/opportunity-revenue-drawer";
+import { buildVariances, hasVariance, type QuoteInvoiceVariance } from "@/lib/quote-invoice-variance";
+import { SignedAmount } from "@/components/signed-amount";
 
 export const Route = createFileRoute("/_authenticated/pipeline")({ component: PipelinePage });
 
@@ -90,6 +92,7 @@ function Body() {
   const quotes = useQuotes();
   const invoices = useInvoices();
   const rollups = useMemo(() => buildRollups(list, quotes, invoices), [list, quotes, invoices]);
+  const variances = useMemo(() => buildVariances(rollups), [rollups]);
   const [drill, setDrill] = useState<Opportunity | null>(null);
 
   const active = list.filter((o) => o.stage !== "Closed" && o.stage !== "Lost");
@@ -142,7 +145,7 @@ function Body() {
               <ListView list={list} onEdit={onEdit} acqOf={acqOf} />
             </TabsContent>
             <TabsContent value="revenue" className="mt-4">
-              <RevenueView list={list} rollups={rollups} onDrill={setDrill} />
+              <RevenueView list={list} rollups={rollups} variances={variances} onDrill={setDrill} />
             </TabsContent>
             <TabsContent value="acquisition" className="mt-4">
               <PeopleView list={list} onEdit={onEdit} role="acquisition" acqOf={acqOf} />
@@ -160,6 +163,7 @@ function Body() {
       <OpportunityRevenueDrawer
         opportunity={drill}
         rollup={drill ? rollups.get(drill.id) ?? null : null}
+        variance={drill ? variances.get(drill.id) ?? null : null}
         open={!!drill}
         onOpenChange={(v) => { if (!v) setDrill(null); }}
       />
@@ -170,17 +174,20 @@ function Body() {
 
 /* ─── Revenue view: quoted → invoiced → collected per deal ─────────── */
 
-function RevenueView({ list, rollups, onDrill }: {
+function RevenueView({ list, rollups, variances, onDrill }: {
   list: Opportunity[];
   rollups: Map<string, OpportunityRollup>;
+  variances: Map<string, QuoteInvoiceVariance>;
   onDrill: (o: Opportunity) => void;
 }) {
+  const [onlyVariance, setOnlyVariance] = useState(false);
   const rows = useMemo(() => {
     return list
-      .map((o) => ({ o, r: rollups.get(o.id) }))
-      .filter((x): x is { o: Opportunity; r: OpportunityRollup } => !!x.r)
+      .map((o) => ({ o, r: rollups.get(o.id), v: variances.get(o.id) }))
+      .filter((x): x is { o: Opportunity; r: OpportunityRollup; v?: QuoteInvoiceVariance } => !!x.r)
+      .filter((x) => !onlyVariance || (x.v ? hasVariance(x.v) : false))
       .sort((a, b) => (b.r.invoiced || b.r.quoted) - (a.r.invoiced || a.r.quoted));
-  }, [list, rollups]);
+  }, [list, rollups, variances, onlyVariance]);
 
   const sum = (pick: (r: OpportunityRollup) => number) => rows.reduce((s, x) => s + pick(x.r), 0);
   const totals = {
@@ -189,6 +196,7 @@ function RevenueView({ list, rollups, onDrill }: {
     collected: sum((r) => r.collected),
     outstanding: sum((r) => r.outstanding),
   };
+  const varianceTotal = rows.reduce((s2, x) => s2 + (x.v?.total ?? 0), 0);
   const unlinked = rows.filter((x) => x.r.quotes.length === 0 && x.r.invoices.length === 0).length;
 
   return (
@@ -198,6 +206,23 @@ function RevenueView({ list, rollups, onDrill }: {
         <Stat label="Invoiced" value={fmtCompact(totals.invoiced, "MGA")} />
         <Stat label="Collected" value={fmtCompact(totals.collected, "MGA")} />
         <Stat label="Outstanding" value={fmtCompact(totals.outstanding, "MGA")} />
+      </div>
+
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <Button
+          size="sm"
+          variant={onlyVariance ? "default" : "outline"}
+          onClick={() => setOnlyVariance((x) => !x)}
+        >
+          {onlyVariance ? "Showing deals with variance" : "Only deals with variance"}
+        </Button>
+        <div className="text-xs text-muted-foreground">
+          Net variance{" "}
+          <SignedAmount
+            value={varianceTotal}
+            formatted={<span className="font-tnum">{varianceTotal > 0 ? "+" : ""}{fmtCompact(varianceTotal, "MGA")}</span>}
+          />
+        </div>
       </div>
 
       <div className="rounded-lg border border-border bg-surface overflow-hidden">
@@ -212,10 +237,11 @@ function RevenueView({ list, rollups, onDrill }: {
                 <th className="text-right font-medium px-3 py-2">Invoiced</th>
                 <th className="text-right font-medium px-3 py-2">Collected</th>
                 <th className="text-right font-medium px-3 py-2 hidden md:table-cell">Outstanding</th>
+                <th className="text-right font-medium px-3 py-2">Variance</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ o, r }) => {
+              {rows.map(({ o, r, v }) => {
                 const value = toMGA(o.value, o.currency);
                 const pct = value ? Math.min(100, Math.round((r.invoiced / value) * 100)) : 0;
                 return (
@@ -244,6 +270,23 @@ function RevenueView({ list, rollups, onDrill }: {
                     <td className="px-3 py-2 text-right font-tnum">{fmtCompact(r.invoiced, "MGA")}</td>
                     <td className="px-3 py-2 text-right font-tnum text-success">{fmtCompact(r.collected, "MGA")}</td>
                     <td className="px-3 py-2 text-right font-tnum hidden md:table-cell">{fmtCompact(r.outstanding, "MGA")}</td>
+                    <td className="px-3 py-2 text-right font-tnum whitespace-nowrap">
+                      {v && (v.quoted > 0 || v.invoiced > 0) ? (
+                        <span className="inline-flex items-center gap-1.5 justify-end">
+                          {(v.missing.length > 0 || v.extra.length > 0) && (
+                            <span
+                              className="inline-flex items-center rounded-full bg-warning/10 text-warning px-1.5 py-0.5 text-[10px]"
+                              title={`${v.missing.length} quoted line(s) not invoiced · ${v.extra.length} unquoted line(s)`}
+                            >
+                              {v.missing.length + v.extra.length}
+                            </span>
+                          )}
+                          <SignedAmount value={v.total} formatted={`${v.total > 0 ? "+" : ""}${fmtCompact(v.total, "MGA")}`} />
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
