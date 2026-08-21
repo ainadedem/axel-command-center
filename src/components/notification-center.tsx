@@ -215,8 +215,18 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
               ) : visible.length === 0 ? (
                 <div className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
                   <Bell className="h-5 w-5 opacity-50" />
-                  {items.length === 0 ? "You're all caught up." : "Nothing in this filter."}
+                  {items.length === 0
+                    ? "You're all caught up."
+                    : query.trim()
+                      ? `No match for "${query.trim()}".`
+                      : "Nothing in this filter."}
+                  {query.trim() && (
+                    <button onClick={() => setQuery("")} className="text-xs text-primary hover:underline">
+                      Clear search
+                    </button>
+                  )}
                 </div>
+
               ) : (
                 groups.map((g) => (
                   <div key={g.label}>
