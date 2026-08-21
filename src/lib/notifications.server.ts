@@ -29,15 +29,22 @@ export async function fanOut(actorId: string, input: FanOutInput) {
   // Everyone who has ever saved preferences is a fan-out candidate.
   const { data: prefRows } = await admin
     .from("notification_prefs")
-    .select("user_id, events, watch_company_ids, watch_rules");
-  const prefs = new Map<string, { events: unknown; companies: string[]; rules: unknown }>();
+    .select("user_id, events, watch_company_ids, watch_rules, quiet_hours, digest_modes, time_zone");
+  const prefs = new Map<
+    string,
+    { events: unknown; companies: string[]; rules: unknown; quiet: unknown; modes: unknown; tz: string | null }
+  >();
   for (const r of prefRows ?? []) {
     prefs.set(r.user_id as string, {
       events: r.events,
       companies: ((r.watch_company_ids as string[]) ?? []),
       rules: r.watch_rules,
+      quiet: (r as Record<string, unknown>)["quiet_hours"],
+      modes: (r as Record<string, unknown>)["digest_modes"],
+      tz: ((r as Record<string, unknown>)["time_zone"] as string | null) ?? null,
     });
   }
+
 
   // Watchers: opted into this event, scope covers this company, and they
   // actually have access to it.
