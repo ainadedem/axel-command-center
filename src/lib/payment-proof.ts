@@ -10,7 +10,20 @@
  */
 import { invoicePayable } from "@/lib/invoice-money";
 
-export type Verification = "verified" | "partial" | "unverified" | "n/a";
+/**
+ * - verified    — the whole recorded payment is backed by bank transactions.
+ * - installment — part-payment: bank trail matches what was received, balance open.
+ * - partial     — money recorded as paid with no bank trail behind part of it.
+ * - unverified  — nothing linked at all.
+ */
+export type Verification = "verified" | "installment" | "partial" | "unverified" | "n/a";
+
+/** Three-state vocabulary used by the shared badge. */
+export function badgeState(v: Verification): "verified" | "partial" | "unverified" {
+  if (v === "verified") return "verified";
+  if (v === "unverified") return "unverified";
+  return "partial";
+}
 
 export interface ProofInvoice {
   id: string;
@@ -71,6 +84,14 @@ export interface ProofPO {
   documentName?: string;
 }
 
+export interface Installment {
+  transaction: ProofTransaction;
+  /** Cumulative amount covered by bank transactions up to and including this one. */
+  runningCovered: number;
+  /** Invoice payable minus the running coverage after this installment. */
+  remainingAfter: number;
+}
+
 export interface PaymentProof {
   quote?: ProofQuote;
   po?: ProofPO;
@@ -82,6 +103,12 @@ export interface PaymentProof {
   paid: number;
   /** paid − covered, when positive the trail is incomplete. */
   shortfall: number;
+  /** Per-transaction evidence chain with running coverage. */
+  installments: Installment[];
+  /** Total payable on the invoice (tax included). */
+  payable: number;
+  /** Payable − covered: what is still to be received and matched. */
+  outstanding: number;
   verification: Verification;
 }
 
@@ -102,18 +129,30 @@ export function buildPaymentProof(
     .filter((t) => t.invoiceId === invoice.id && t.type === "income")
     .sort((a, b) => a.date.localeCompare(b.date));
 
+  const payable = invoicePayable(invoice);
   const covered = payments.reduce((s, t) => s + (Number(t.amount) || 0), 0);
   const paid = Number(invoice.paid) || 0;
   const shortfall = Math.max(0, paid - covered);
+  const outstanding = Math.max(0, payable - covered);
+
+  let running = 0;
+  const installments: Installment[] = payments.map((t) => {
+    running += Number(t.amount) || 0;
+    return { transaction: t, runningCovered: running, remainingAfter: Math.max(0, payable - running) };
+  });
 
   let verification: Verification = "n/a";
   if (invoice.status === "paid" || paid > 0) {
     if (payments.length === 0) verification = "unverified";
-    else if (shortfall <= TOLERANCE) verification = "verified";
-    else verification = "partial";
+    else if (shortfall > TOLERANCE) verification = "partial";
+    else if (outstanding > TOLERANCE) verification = "installment";
+    else verification = "verified";
   }
 
-  return { quote, po, payments, covered, paid, shortfall, verification };
+  return {
+    quote, po, payments, covered, paid, shortfall,
+    installments, payable, outstanding, verification,
+  };
 }
 
 /** Convenience for list badges — avoids building the whole chain. */
@@ -162,11 +201,13 @@ export function scoreCandidate(
   invoice: ProofInvoice,
   tx: ProofTransaction,
   clientName?: string,
+  /** Amount the transaction should settle — defaults to the full payable. */
+  targetAmount?: number,
 ): MatchCandidate {
   const reasons: string[] = [];
   let score = 0;
 
-  const payable = invoicePayable(invoice);
+  const payable = targetAmount != null && targetAmount > 0 ? targetAmount : invoicePayable(invoice);
   const amountDelta = Math.abs((Number(tx.amount) || 0) - payable);
   const rel = payable > 0 ? amountDelta / payable : 1;
 
@@ -243,10 +284,13 @@ export function proposeMatches({
   clientName,
 }: ProposeInput): MatchProposal[] {
   const linked = new Set(transactions.map((t) => t.invoiceId).filter(Boolean) as string[]);
+  const outstandingOf = new Map<string, number>();
   const targets = invoices.filter((inv) => {
     if (inv.status === "cancelled") return false;
     const proof = buildPaymentProof(inv, transactions, quotes, pos);
-    return proof.verification === "unverified" || proof.verification === "partial";
+    outstandingOf.set(inv.id, proof.outstanding);
+    return proof.verification === "unverified" || proof.verification === "partial" ||
+      proof.verification === "installment";
   });
 
   const free = transactions.filter((t) => t.type === "income" && !t.invoiceId);
@@ -256,7 +300,7 @@ export function proposeMatches({
     const name = clientName?.(inv.clientId);
     const candidates = free
       .filter((t) => t.companyId === inv.companyId)
-      .map((t) => scoreCandidate(inv, t, name))
+      .map((t) => scoreCandidate(inv, t, name, outstandingOf.get(inv.id)))
       .filter((c) => c.score >= 30)
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
@@ -298,4 +342,44 @@ export function proposeMatches({
   proposals.sort((a, b) => (rank.get(a.invoice.id) ?? 0) - (rank.get(b.invoice.id) ?? 0));
   void linked;
   return proposals;
+}
+
+// ---------------------------------------------------------------------------
+// Transaction-side matching: which invoices could this receipt settle?
+// ---------------------------------------------------------------------------
+
+export interface TransactionMatch {
+  invoice: ProofInvoice;
+  candidate: MatchCandidate;
+  /** What is still to be matched on that invoice before this receipt. */
+  outstanding: number;
+}
+
+/**
+ * Ranks the invoices a single unlinked bank receipt could belong to, scoring
+ * against each invoice's outstanding (unmatched) balance rather than its total.
+ */
+export function proposeMatchesForTransaction(input: {
+  transaction: ProofTransaction;
+  invoices: ProofInvoice[];
+  transactions: ProofTransaction[];
+  quotes: ProofQuote[];
+  pos: ProofPO[];
+  clientName?: (clientId?: string) => string | undefined;
+}): TransactionMatch[] {
+  const { transaction: tx, invoices, transactions, quotes, pos, clientName } = input;
+  if (tx.type !== "income") return [];
+
+  const rows: TransactionMatch[] = [];
+  for (const inv of invoices) {
+    if (inv.status === "cancelled") continue;
+    if (inv.companyId !== tx.companyId) continue;
+    const proof = buildPaymentProof(inv, transactions, quotes, pos);
+    if (proof.verification === "verified") continue;
+    const outstanding = proof.outstanding > 0 ? proof.outstanding : invoicePayable(inv);
+    const candidate = scoreCandidate(inv, tx, clientName?.(inv.clientId), outstanding);
+    if (candidate.score < 30) continue;
+    rows.push({ invoice: inv, candidate, outstanding });
+  }
+  return rows.sort((a, b) => b.candidate.score - a.candidate.score).slice(0, 6);
 }
