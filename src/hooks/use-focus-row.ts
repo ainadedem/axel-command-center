@@ -13,12 +13,26 @@ export interface FocusSearch {
   focus?: string;
   /** Aging bucket to restore (re-opens the aging drawer on load). */
   aging?: string;
+  /** Which layout the deep link should land on ("list" or "board"). */
+  view?: "list" | "board";
 }
 
 export const focusSearch = (search: Record<string, unknown>): FocusSearch => ({
   focus: typeof search.focus === "string" && search.focus ? search.focus : undefined,
   aging: typeof search.aging === "string" && search.aging ? search.aging : undefined,
+  view: search.view === "board" || search.view === "list" ? search.view : undefined,
 });
+
+/** Builds a notification / alert deep link to one document. */
+export function docDeepLink(
+  path: "/quotations" | "/invoices" | "/purchase-orders",
+  id?: string | null,
+  view: "list" | "board" = "list",
+): string {
+  if (!id) return path;
+  return `${path}?focus=${encodeURIComponent(id)}&view=${view}`;
+}
+
 
 
 const RING = ["ring-2", "ring-primary", "ring-offset-2", "ring-offset-background", "rounded-lg"];
