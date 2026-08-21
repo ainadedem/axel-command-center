@@ -40,7 +40,12 @@ export function logBoardMove(input: {
       docNumber: input.docNumber,
       title: `${input.docNumber ?? "Document"} moved to ${input.to}`,
       body: `Moved from ${input.from} to ${input.to} on the board.`,
-      href: input.docType === "quote" ? "/quotations" : input.docType === "invoice" ? "/invoices" : "/purchase-orders",
+      href: docDeepLink(
+        input.docType === "quote" ? "/quotations" : input.docType === "invoice" ? "/invoices" : "/purchase-orders",
+        input.docId,
+        "board",
+      ),
+
     });
   }
 }
