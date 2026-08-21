@@ -155,6 +155,25 @@ function Body() {
   const list = groups.flatMap((g) => g.items);
   const cp = useColumnPrefs("purchase-orders", PO_COLUMNS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  /** One-click status change from the list or detail panel (no full edit). */
+  const changeStatus = (po: PurchaseOrder, next: POStatus) => {
+    if (po.status === next) return;
+    const previous = po.status;
+    purchaseOrdersStore.update(po.id, { status: next, updatedBy: user?.id, updatedAt: new Date().toISOString() });
+    void logActivity({
+      docType: "po", docId: po.id, docNumber: po.number, companyId: po.companyId,
+      action: "status_changed", summary: `From ${previous} to ${next}`,
+      details: { from: previous, to: next },
+    });
+    toast.success(`${po.number} → ${next}`, {
+      action: {
+        label: "Undo",
+        onClick: () => purchaseOrdersStore.update(po.id, { status: previous, updatedBy: user?.id, updatedAt: new Date().toISOString() }),
+      },
+    });
+  };
+
   const selected = selectedId ? list.find((p) => p.id === selectedId) ?? null : null;
   const detail = selected ? (
     <DetailPanel
