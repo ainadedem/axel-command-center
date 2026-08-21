@@ -88,6 +88,18 @@ export function useNotifications(limit = 40) {
   const [loading, setLoading] = useState(true);
   const [unread, setUnread] = useState(0);
   const userIdRef = useRef<string | undefined>(undefined);
+  // Bumped on identity changes so the channel is rebuilt for the new user.
+  const [session, setSession] = useState(0);
+
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+        setSession((s) => s + 1);
+      }
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
+
 
   const load = useCallback(async () => {
     const { data: auth } = await supabase.auth.getUser();
