@@ -440,6 +440,13 @@ function Body() {
       )}
 
       <TransactionDialog open={open} onOpenChange={setOpen} editing={editing} />
+
+      <PaymentMatchDialog
+        open={!!linking}
+        onOpenChange={(v) => { if (!v) setLinking(null); }}
+        invoices={[]}
+        transaction={(linking as unknown as ProofTransaction) ?? undefined}
+      />
     </div>
   );
 }
