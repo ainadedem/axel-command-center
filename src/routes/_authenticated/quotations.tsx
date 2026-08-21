@@ -49,7 +49,7 @@ import { refreshStampsAndSignatures } from "@/lib/stamp-refresh";
 import { useCompanySalesUsers } from "@/hooks/use-company-users";
 import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } from "@/components/bulk-select";
 import { BulkEditDocDialog } from "@/components/bulk-edit-doc-dialog";
-import { bulkUpdateDocuments, type BulkPatch } from "@/lib/bulk-edit";
+import { bulkUpdateDocuments, bulkResultMessage, type BulkPatch } from "@/lib/bulk-edit";
 import { renderDocumentPdfBlob } from "@/lib/pdf-export";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
@@ -190,7 +190,7 @@ function Body() {
 
   const applyBulk = async (patch: BulkPatch) => {
     const rows = selection.selectedRows;
-    const n = await bulkUpdateDocuments({
+    const result = await bulkUpdateDocuments({
       collection: quotesStore,
       docType: "quote",
       rows,
@@ -201,7 +201,14 @@ function Body() {
       projectName: (id) => projects.find((p) => p.id === id)?.name ?? id,
     });
     selection.clear();
-    toast.success(`Updated ${n} quote${n !== 1 ? "s" : ""}`);
+    const msg = bulkResultMessage(result, "quote");
+    if (result.failed.length) toast.error(msg, { description: result.failed.map((f) => f.number).join(", ") });
+    else if (result.updated === 0) toast.info(msg);
+    else toast.success(msg, {
+      description: result.skipped.length
+        ? `Skipped: ${result.skipped.slice(0, 4).map((s) => `${s.number} (${s.reason})`).join(", ")}`
+        : undefined,
+    });
   };
 
   const convertToPO = async (q: Quote) => {
@@ -407,7 +414,7 @@ function Body() {
       )}
       <BulkActionBar count={selection.count} noun="quote" onClear={selection.clear}>
         <Button size="sm" className="h-7 px-3 text-xs" onClick={() => setBulkOpen(true)}>
-          Edit client / project
+          Bulk edit
         </Button>
         <Button
           size="sm" variant="outline" className="h-7 px-3 text-xs"
@@ -427,6 +434,7 @@ function Body() {
         onOpenChange={setBulkOpen}
         rows={selection.selectedRows}
         noun="quote"
+        docType="quote"
         onApply={applyBulk}
       />
 
