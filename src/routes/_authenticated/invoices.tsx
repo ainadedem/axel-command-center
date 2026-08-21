@@ -1580,3 +1580,17 @@ function ProcessStrip({ hasQuote, hasPO }: { hasQuote: boolean; hasPO: boolean }
 }
 
 
+
+/** Transient inline diff shown on a row right after a status change. */
+function StatusDiffChip({ id }: { id: string }) {
+  const diff = useStatusDiff(id);
+  if (!diff) return null;
+  return (
+    <span
+      title={diff}
+      className="inline-flex max-w-[220px] truncate items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary animate-in fade-in"
+    >
+      {diff}
+    </span>
+  );
+}
