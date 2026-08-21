@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { FileText, FileCheck2, Landmark, ExternalLink, Search, History, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { VerifiedBadge } from "@/components/status-badge";
 import {
   fmtFull,
@@ -69,6 +70,8 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
   const pos = usePurchaseOrders();
   const [matching, setMatching] = useState(false);
   const [unlinking, setUnlinking] = useState<ProofTransaction | null>(null);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [bulkUnlink, setBulkUnlink] = useState(false);
 
   const proof = useMemo(
     () =>
@@ -80,6 +83,8 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
       ),
     [invoice, transactions, quotes, pos],
   );
+
+  const multi = proof.installments.length > 1;
 
   if (proof.verification === "n/a") return null;
 
@@ -122,32 +127,80 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
           missing
         />
       ) : (
-        proof.installments.map((it, idx) => (
-          <div key={it.transaction.id} className="group/pay relative">
-            <button
-              type="button"
-              aria-label="Unlink this payment"
-              title="Unlink this payment"
-              onClick={() => setUnlinking(it.transaction)}
-              className="absolute right-1 top-1.5 z-10 rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 group-hover/pay:opacity-100"
-            >
-              <Unlink className="h-3.5 w-3.5" />
-            </button>
-            <Row
-              icon={<Landmark className="h-4 w-4" />}
-              label={proof.installments.length > 1 ? `Payment ${idx + 1}` : "Payment"}
-              primary={`${it.transaction.date} · ${it.transaction.description}`}
-              secondary={money(it.transaction.amount, it.transaction.currency)}
-              href={{ to: "/transactions", search: { q: it.transaction.description.slice(0, 40) } }}
-            />
-            {proof.installments.length > 1 && (
-              <p className="pl-[7.1rem] text-[11px] text-muted-foreground">
-                covered {money(it.runningCovered, invoice.currency)} · remaining{" "}
-                {money(it.remainingAfter, invoice.currency)}
-              </p>
-            )}
-          </div>
-        ))
+        <>
+          {multi && (
+            <div className="flex items-center justify-between gap-2 px-1 pb-1 pt-1 text-[11px] text-muted-foreground">
+              <button
+                type="button"
+                className="rounded px-1.5 py-0.5 hover:bg-[var(--surface-container)] hover:text-foreground"
+                onClick={() =>
+                  setPicked(
+                    picked.length === proof.installments.length
+                      ? []
+                      : proof.installments.map((i) => i.transaction.id),
+                  )
+                }
+              >
+                {picked.length === proof.installments.length ? "Clear" : "Select all payments"}
+              </button>
+              {picked.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 gap-1 px-2 text-xs text-destructive"
+                  onClick={() => setBulkUnlink(true)}
+                >
+                  <Unlink className="h-3.5 w-3.5" /> Unlink {picked.length} payment
+                  {picked.length !== 1 ? "s" : ""}
+                </Button>
+              )}
+            </div>
+          )}
+          {proof.installments.map((it, idx) => (
+            <div key={it.transaction.id} className="group/pay relative flex items-start gap-2">
+              {multi && (
+                <Checkbox
+                  className="mt-2.5 shrink-0"
+                  checked={picked.includes(it.transaction.id)}
+                  onCheckedChange={() =>
+                    setPicked((prev) =>
+                      prev.includes(it.transaction.id)
+                        ? prev.filter((id) => id !== it.transaction.id)
+                        : [...prev, it.transaction.id],
+                    )
+                  }
+                  aria-label={`Select payment ${idx + 1}`}
+                />
+              )}
+              <div className="min-w-0 flex-1">
+                {picked.length === 0 && (
+                  <button
+                    type="button"
+                    aria-label="Unlink this payment"
+                    title="Unlink this payment"
+                    onClick={() => setUnlinking(it.transaction)}
+                    className="absolute right-1 top-1.5 z-10 rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 group-hover/pay:opacity-100"
+                  >
+                    <Unlink className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                <Row
+                  icon={<Landmark className="h-4 w-4" />}
+                  label={multi ? `Payment ${idx + 1}` : "Payment"}
+                  primary={`${it.transaction.date} · ${it.transaction.description}`}
+                  secondary={money(it.transaction.amount, it.transaction.currency)}
+                  href={{ to: "/transactions", search: { q: it.transaction.description.slice(0, 40) } }}
+                />
+                {multi && (
+                  <p className="pl-[7.1rem] text-[11px] text-muted-foreground">
+                    covered {money(it.runningCovered, invoice.currency)} · remaining{" "}
+                    {money(it.remainingAfter, invoice.currency)}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </>
       )}
 
       {proof.verification === "installment" && (
@@ -185,6 +238,21 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
           onOpenChange={(v) => !v && setUnlinking(null)}
           invoice={invoice}
           transaction={unlinking}
+        />
+      )}
+
+      {bulkUnlink && picked.length > 0 && (
+        <PaymentUnlinkDialog
+          open
+          onOpenChange={(v) => {
+            if (!v) {
+              setBulkUnlink(false);
+              setPicked([]);
+            }
+          }}
+          items={proof.installments
+            .filter((it) => picked.includes(it.transaction.id))
+            .map((it) => ({ invoice, transaction: it.transaction }))}
         />
       )}
     </section>

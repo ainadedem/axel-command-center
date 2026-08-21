@@ -227,4 +227,24 @@ describe("unlinking a payment", () => {
     expect(after.installments).toHaveLength(0);
     expect(badgeState(after.verification)).toBe("unverified");
   });
+
+  it("drops all evidence when several installments are removed at once", () => {
+    const txs = [
+      tx({ id: "p1", invoiceId: "inv1", amount: 400_000, date: "2026-06-12" }),
+      tx({ id: "p2", invoiceId: "inv1", amount: 400_000, date: "2026-07-02" }),
+      tx({ id: "p3", invoiceId: "inv1", amount: 400_000, date: "2026-07-20" }),
+    ];
+    expect(buildPaymentProof(inv(), txs, [], []).verification).toBe("verified");
+
+    const removed = new Set(["p2", "p3"]);
+    const after = buildPaymentProof(inv(), txs.filter((t) => !removed.has(t.id)), [], []);
+    expect(after.verification).toBe("partial");
+    expect(after.covered).toBe(400_000);
+    expect(after.outstanding).toBe(800_000);
+    expect(after.installments).toHaveLength(1);
+
+    const none = buildPaymentProof(inv(), [], [], []);
+    expect(none.verification).toBe("unverified");
+    expect(none.installments).toHaveLength(0);
+  });
 });

@@ -22,7 +22,7 @@ import { Pencil, Trash2, Link2, Unlink } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { VerifiedBadge } from "@/components/status-badge";
 import { PaymentMatchDialog } from "@/components/payment-match-dialog";
-import { PaymentUnlinkDialog } from "@/components/payment-unlink-dialog";
+import { PaymentUnlinkDialog, type UnlinkPair } from "@/components/payment-unlink-dialog";
 import { buildPaymentProof, badgeState, type ProofInvoice, type ProofTransaction } from "@/lib/payment-proof";
 import { useQuotes, usePurchaseOrders } from "@/lib/mock-data";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
@@ -32,6 +32,7 @@ import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 import { useRowWindow, SpacerRow, useScrollRef } from "@/components/virtual-rows";
+import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } from "@/components/bulk-select";
 import { LiveAmount, RowSaveState } from "@/components/save-state";
 
 const TX_COLUMNS: ColumnDef[] = [
@@ -80,6 +81,7 @@ function Body() {
   const [unlinkedOnly, setUnlinkedOnly] = useState(false);
   const [linking, setLinking] = useState<Transaction | null>(null);
   const [unlinking, setUnlinking] = useState<Transaction | null>(null);
+  const [bulkUnlink, setBulkUnlink] = useState(false);
 
   /** Invoice + quotation a receipt points at, with the shared payment verdict. */
   const linkOf = useCallback((t: Transaction) => {
@@ -123,6 +125,17 @@ function Body() {
   const defaultSorted = view.state.sort ? preList : [...preList].sort((a, b) => b.date.localeCompare(a.date));
   const groups = view.apply(defaultSorted);
   const list = groups.flatMap((g) => g.items);
+  const isLinked = useCallback((t: Transaction) => !!t.invoiceId, []);
+  const selection = useBulkSelection(list, isLinked);
+  /** Selected receipts that still resolve to an invoice, as unlink pairs. */
+  const unlinkPairs = useMemo<UnlinkPair[]>(() => {
+    const pairs: UnlinkPair[] = [];
+    selection.selectedRows.forEach((t) => {
+      const link = linkOf(t);
+      if (link) pairs.push({ invoice: link.invoice, transaction: t as unknown as ProofTransaction });
+    });
+    return pairs;
+  }, [selection.selectedRows, linkOf]);
 
   const cp = useColumnPrefs("transactions", TX_COLUMNS);
 
@@ -307,7 +320,8 @@ function Body() {
             <thead>
               <ListHeadRow>
                 <ListActionsTh />
-<ListTh width="11%">Date</ListTh>
+                <SelectAllHeaderCell checked={selection.allSelected} onToggle={selection.toggleAll} />
+                <ListTh width="11%">Date</ListTh>
                 <ListTh width="20%">Description</ListTh>
                 {cp.on("company") && <ListTh width="9%">Company</ListTh>}
                 {cp.on("counterparty") && <ListTh width="14%">Counterparty</ListTh>}
@@ -320,10 +334,10 @@ function Body() {
               </ListHeadRow>
             </thead>
             <tbody>
-              <SpacerRow height={windowed.padTop} colSpan={cp.count + 1} />
+              <SpacerRow height={windowed.padTop} colSpan={cp.count + 2} />
               {windowed.items.map((row) => {
                 if (row.kind === "group") {
-                  return <GroupHeaderRow key={row.key} label={row.label} count={row.count} colSpan={cp.count + 1} />;
+                  return <GroupHeaderRow key={row.key} label={row.label} count={row.count} colSpan={cp.count + 2} />;
                 }
                 const t = row.tx;
                 {
@@ -335,7 +349,7 @@ function Body() {
                     return (
                       <Fragment key={t.id}>
                       <tr className="hover:bg-surface-elevated/40" data-row-id={t.id}>
-<ListRowActions colSpan={cp.count}>
+<ListRowActions colSpan={cp.count + 1}>
                         <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(t); setOpen(true); }} />
                         {t.type === "income" && !t.invoiceId && (
                           <RowAction icon={<Link2 className="h-3.5 w-3.5" />} label="Link to invoice" onClick={() => setLinking(t)} />
@@ -346,6 +360,12 @@ function Body() {
                         <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm("Delete this transaction?")) transactionsStore.remove(t.id); }} />
                       </ListRowActions>
 
+                        <SelectRowCell
+                          checked={selection.isSelected(t.id)}
+                          onToggle={() => selection.toggle(t.id)}
+                          disabled={!t.invoiceId}
+                          label={`Select transaction ${t.description}`}
+                        />
                         <ListTd className="text-muted-foreground font-tnum text-xs">{format(parseISO(t.date), "MMM d, yyyy")}</ListTd>
                         <ListTd className="font-medium" title={t.description}>
                           <span className="inline-flex items-center gap-1.5 max-w-full">
@@ -438,7 +458,7 @@ function Body() {
                     );
                 }
               })}
-              <SpacerRow height={windowed.padBottom} colSpan={cp.count + 1} />
+              <SpacerRow height={windowed.padBottom} colSpan={cp.count + 2} />
             </tbody>
           </ListTable>
         </ListTableShell>
@@ -452,6 +472,29 @@ function Body() {
         invoices={[]}
         transaction={(linking as unknown as ProofTransaction) ?? undefined}
       />
+
+      <BulkActionBar count={selection.count} noun="payment" onClear={selection.clear}>
+        <Button
+          size="sm" variant="outline" className="h-7 px-3 text-xs text-destructive"
+          disabled={unlinkPairs.length === 0}
+          onClick={() => setBulkUnlink(true)}
+        >
+          Unlink payments
+        </Button>
+      </BulkActionBar>
+
+      {bulkUnlink && unlinkPairs.length > 0 && (
+        <PaymentUnlinkDialog
+          open
+          onOpenChange={(v) => {
+            if (!v) {
+              setBulkUnlink(false);
+              selection.clear();
+            }
+          }}
+          items={unlinkPairs}
+        />
+      )}
 
       {unlinking && linkOf(unlinking) && (
         <PaymentUnlinkDialog

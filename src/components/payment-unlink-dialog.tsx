@@ -1,12 +1,12 @@
 /**
- * Unlink a bank transaction from an invoice.
+ * Unlink one or several bank transactions from their invoices.
  *
  * Removing a payment link is an auditable act: it is confirmed explicitly,
- * recorded in the invoice's verification history with a reason, and can be
- * undone for 10 seconds. Only the link is removed — the transaction, the
- * invoice figures, the quotation and the PO are untouched.
+ * recorded in each invoice's verification history with a reason, and can be
+ * undone for 10 seconds. Only the links are removed — the transactions, the
+ * invoice figures, the quotations and the POs are untouched.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
@@ -14,12 +14,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  fmtFull, transactionsStore, useTransactions, useQuotes, usePurchaseOrders,
+  fmtFull, useTransactions, useQuotes, usePurchaseOrders,
   type Invoice, type Currency,
 } from "@/lib/mock-data";
 import { buildPaymentProof, type ProofInvoice, type ProofTransaction } from "@/lib/payment-proof";
-import { logPaymentUnlinked } from "@/lib/payment-audit";
-import { withoutHistory } from "@/lib/history";
+import { bulkUnlinkPayments, type UnlinkTarget } from "@/lib/payment-audit";
 
 const money = (v: number, c: string) => fmtFull(v, c as Currency);
 
@@ -31,16 +30,25 @@ const VERDICT_LABEL: Record<string, string> = {
   "n/a": "Not applicable",
 };
 
+export interface UnlinkPair {
+  invoice: Invoice;
+  transaction: ProofTransaction;
+}
+
 export function PaymentUnlinkDialog({
   open,
   onOpenChange,
   invoice,
   transaction,
+  items,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  invoice: Invoice;
-  transaction: ProofTransaction;
+  /** Single-payment shorthand. */
+  invoice?: Invoice;
+  transaction?: ProofTransaction;
+  /** Bulk form: any number of invoice/transaction pairs. */
+  items?: UnlinkPair[];
 }) {
   const transactions = useTransactions();
   const quotes = useQuotes();
@@ -48,87 +56,134 @@ export function PaymentUnlinkDialog({
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // What the verdict becomes once this receipt no longer counts as evidence.
-  const after = buildPaymentProof(
-    invoice as unknown as ProofInvoice,
-    (transactions as unknown as ProofTransaction[]).filter((t) => t.id !== transaction.id) as never,
-    quotes as never,
-    pos as never,
+  const pairs = useMemo<UnlinkPair[]>(
+    () => (items && items.length > 0 ? items : invoice && transaction ? [{ invoice, transaction }] : []),
+    [items, invoice, transaction],
   );
 
-  const confirm = async () => {
-    setBusy(true);
-    const before = { invoiceId: transaction.invoiceId };
-    const why = reason.trim() || "no reason given";
+  const removedIds = useMemo(() => new Set(pairs.map((p) => p.transaction.id)), [pairs]);
 
-    await withoutHistory(async () => {
-      transactionsStore.update(transaction.id, { invoiceId: undefined });
+  /** One group per affected invoice, with the verdict it falls back to. */
+  const groups = useMemo(() => {
+    const byInvoice = new Map<string, { invoice: Invoice; txs: ProofTransaction[] }>();
+    pairs.forEach((p) => {
+      const g = byInvoice.get(p.invoice.id) ?? { invoice: p.invoice, txs: [] };
+      g.txs.push(p.transaction);
+      byInvoice.set(p.invoice.id, g);
     });
+    const remaining = (transactions as unknown as ProofTransaction[]).filter((t) => !removedIds.has(t.id));
+    return [...byInvoice.values()].map((g) => ({
+      ...g,
+      after: buildPaymentProof(
+        g.invoice as unknown as ProofInvoice,
+        remaining as never,
+        quotes as never,
+        pos as never,
+      ),
+      before: buildPaymentProof(
+        g.invoice as unknown as ProofInvoice,
+        transactions as never,
+        quotes as never,
+        pos as never,
+      ),
+    }));
+  }, [pairs, removedIds, transactions, quotes, pos]);
 
-    logPaymentUnlinked(
-      { invoiceId: invoice.id, invoiceNumber: invoice.number, companyId: invoice.companyId },
-      {
-        transactionId: transaction.id,
-        transactionDate: transaction.date,
-        transactionAmount: transaction.amount,
-        transactionCurrency: transaction.currency,
-        reason: why,
-        source: "manual",
-      },
-    );
+  const total = pairs.reduce((s, p) => s + p.transaction.amount, 0);
+  const many = pairs.length > 1;
+
+  const confirm = async () => {
+    if (pairs.length === 0) return;
+    setBusy(true);
+    const targets: UnlinkTarget[] = pairs.map((p) => ({
+      invoiceId: p.invoice.id,
+      invoiceNumber: p.invoice.number,
+      companyId: p.invoice.companyId,
+      transactionId: p.transaction.id,
+      transactionDate: p.transaction.date,
+      transactionAmount: p.transaction.amount,
+      transactionCurrency: p.transaction.currency,
+    }));
+
+    const res = await bulkUnlinkPayments(targets, reason, "manual");
+    const summary = groups
+      .map((g) => `${g.invoice.number} → ${VERDICT_LABEL[g.after.verification] ?? g.after.verification}`)
+      .join(", ");
 
     setBusy(false);
     setReason("");
     onOpenChange(false);
-    toast.success("Payment unlinked", {
-      duration: 10_000,
-      description: `${invoice.number} is now ${VERDICT_LABEL[after.verification] ?? after.verification}.`,
-      action: {
-        label: "Undo",
-        onClick: () => {
-          void withoutHistory(async () => {
-            transactionsStore.update(transaction.id, { invoiceId: before.invoiceId ?? invoice.id });
-          });
-          toast.message("Payment link restored");
+    toast.success(
+      many
+        ? `Unlinked ${res.count} payments from ${res.invoices} invoice${res.invoices !== 1 ? "s" : ""}`
+        : "Payment unlinked",
+      {
+        duration: 10_000,
+        description: summary,
+        action: {
+          label: "Undo",
+          onClick: () => {
+            res.undo();
+            toast.message(many ? "Payment links restored" : "Payment link restored");
+          },
         },
       },
-    });
+    );
   };
+
+  if (pairs.length === 0) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Unlink this payment?</DialogTitle>
+          <DialogTitle>
+            {many ? `Unlink ${pairs.length} payments?` : "Unlink this payment?"}
+          </DialogTitle>
           <DialogDescription>
-            The bank transaction stays in your books — only the evidence link to this invoice is removed.
+            The bank transaction{many ? "s stay" : " stays"} in your books — only the evidence
+            link{many ? "s are" : " is"} removed.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 text-sm">
-          <div className="rounded-lg border border-border bg-[var(--surface-container)] p-3">
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="font-medium">Invoice {invoice.number}</span>
-              <span className="font-tnum text-muted-foreground">
-                {money(invoice.amount, invoice.currency)}
-              </span>
-            </div>
-            <div className="mt-2 flex items-baseline justify-between gap-3 border-t border-border pt-2">
-              <span className="min-w-0 truncate text-muted-foreground" title={transaction.description}>
-                {transaction.date} · {transaction.description}
-              </span>
-              <span className="shrink-0 font-tnum text-muted-foreground">
-                {money(transaction.amount, transaction.currency)}
-              </span>
-            </div>
+          <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+            {groups.map((g) => (
+              <div key={g.invoice.id} className="rounded-lg border border-border bg-[var(--surface-container)] p-3">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="font-medium">Invoice {g.invoice.number}</span>
+                  <span className="font-tnum text-muted-foreground">
+                    {money(g.invoice.amount, g.invoice.currency)}
+                  </span>
+                </div>
+                {g.txs.map((t) => (
+                  <div key={t.id} className="mt-2 flex items-baseline justify-between gap-3 border-t border-border pt-2">
+                    <span className="min-w-0 truncate text-muted-foreground" title={t.description}>
+                      {t.date} · {t.description}
+                    </span>
+                    <span className="shrink-0 font-tnum text-muted-foreground">
+                      {money(t.amount, t.currency)}
+                    </span>
+                  </div>
+                ))}
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {VERDICT_LABEL[g.before.verification] ?? g.before.verification} →{" "}
+                  <span className="font-medium text-warning">
+                    {VERDICT_LABEL[g.after.verification] ?? g.after.verification}
+                  </span>
+                  {g.after.outstanding > 0 && (
+                    <> · {money(g.after.outstanding, g.invoice.currency)} unevidenced</>
+                  )}
+                </p>
+              </div>
+            ))}
           </div>
 
           <p className="text-xs text-muted-foreground">
-            After unlinking, this invoice becomes{" "}
-            <span className="font-medium text-warning">
-              {VERDICT_LABEL[after.verification] ?? after.verification}
-            </span>
-            . Its recorded paid amount is not changed — the badge is what tells you the money is no
+            {many
+              ? `${money(total, pairs[0].transaction.currency)} of evidence is withdrawn across ${groups.length} invoice${groups.length !== 1 ? "s" : ""}. `
+              : ""}
+            Recorded paid amounts are not changed — the badge is what tells you the money is no
             longer evidenced.
           </p>
 
@@ -150,7 +205,7 @@ export function PaymentUnlinkDialog({
             Cancel
           </Button>
           <Button variant="destructive" onClick={confirm} disabled={busy}>
-            Unlink payment
+            {many ? `Unlink ${pairs.length} payments` : "Unlink payment"}
           </Button>
         </DialogFooter>
       </DialogContent>
