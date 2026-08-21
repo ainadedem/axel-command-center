@@ -1741,6 +1741,8 @@ function InvoiceBoard({
   const visible = list.filter((inv) => activeKeys.includes(inv.status));
   const hidden = list.length - visible.length;
 
+  const [cancelling, setCancelling] = useState<Invoice | null>(null);
+
   const blocked = (inv: Invoice, to: string, reason: string) =>
     logBoardMove({
       docType: "invoice", docId: inv.id, docNumber: inv.number, companyId: inv.companyId,
@@ -1761,8 +1763,8 @@ function InvoiceBoard({
       return;
     }
     if (plan.requiresReason) {
-      blocked(inv, next, "cancellation reason required");
-      toast.error(`${inv.number} needs a cancellation reason`, { description: "Cancel it from the row actions." });
+      // Cancelling is allowed from the board, but only through the reason gate.
+      setCancelling(inv);
       return;
     }
     const committed = commitStatusChange(inv, plan);
@@ -1845,6 +1847,14 @@ function InvoiceBoard({
         accentOf={(inv) => clientColor(clients.find((c) => c.id === inv.clientId))}
         renderActions={(inv) => (
           <>
+            <StatusMenu
+              status={inv.status}
+              statuses={INVOICE_STATUSES}
+              disabled={!canWrite(inv)}
+              disabledReason="You cannot change this invoice"
+              onSelect={(next) => move(inv, next)}
+              className="mr-auto"
+            />
             <CardAction icon={ExternalLink} label="Open details" onClick={() => onOpen(inv)} />
             <CardAction
               icon={CircleDollarSign}
@@ -1880,6 +1890,7 @@ function InvoiceBoard({
         }}
       />
 
+      <CancelInvoiceDialog open={!!cancelling} onOpenChange={(v) => { if (!v) setCancelling(null); }} invoice={cancelling} />
       <BoardHistoryPanel
         open={historyOpen}
         onOpenChange={setHistoryOpen}
