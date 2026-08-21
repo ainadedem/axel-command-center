@@ -346,7 +346,7 @@ export interface Invoice {
 
 /* ─── Sales process: Quote → PO → Invoice ───────────────────────────── */
 
-export type QuoteStatus = "draft" | "sent" | "accepted" | "rejected" | "expired";
+export type QuoteStatus = "draft" | "sent" | "accepted" | "rejected" | "expired" | "cancelled";
 export interface QuoteLine {
   id: string;
   description: string;
