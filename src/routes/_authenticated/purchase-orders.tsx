@@ -60,6 +60,21 @@ type DocVersion = { url: string; name?: string; type?: string; uploadedAt: strin
 
 export const Route = createFileRoute("/_authenticated/purchase-orders")({ component: POPage, validateSearch: focusSearch });
 
+const PO_STATUSES = ["draft", "issued", "fulfilled", "cancelled"];
+
+/** Document-on-file chips — the PO page equivalent of the invoice PO chips. */
+const DOC_CHIPS = [
+  { key: "has", label: "Document on file", hint: "Client PO document uploaded", icon: <FileCheck2 className="h-3.5 w-3.5" />, tone: "success" as const },
+  { key: "missing", label: "Missing document", hint: "No client PO document uploaded", icon: <FileX2 className="h-3.5 w-3.5" />, tone: "danger" as const },
+];
+
+/** Starter presets seeded once per user — renameable and deletable afterwards. */
+const PO_PRESETS = [
+  { id: "seed-issued", name: "Issued", statuses: ["issued"], po: [] },
+  { id: "seed-fulfilled", name: "Fulfilled", statuses: ["fulfilled"], po: [] },
+  { id: "seed-missing-doc", name: "Missing document", statuses: [], po: ["missing"] },
+];
+
 const statusStyles: Record<POStatus, string> = {
   draft: "border-muted text-muted-foreground bg-muted/30",
   issued: "border-chart-2/40 text-chart-2 bg-chart-2/10",
