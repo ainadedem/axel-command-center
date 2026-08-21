@@ -201,9 +201,53 @@ function Body() {
     <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <CrudToolbar createLabel="New PO" count={list.length} label="purchase orders" onCreate={openCreate} />
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 justify-end">
+          <span
+            title={`${list.length} of ${baseList.length} purchase order${baseList.length !== 1 ? "s" : ""}${filtersActive ? " · filtered" : ""}`}
+            aria-label={`${list.length} of ${baseList.length} purchase orders`}
+            className="inline-flex shrink-0 items-center gap-1.5 h-8 px-2 rounded-full border border-border bg-surface text-xs text-muted-foreground font-tnum whitespace-nowrap"
+          >
+            <ListFilter className="h-4 w-4" />
+            <span>{list.length}/{baseList.length}</span>
+          </span>
+          <DataToolbar view={view} items={baseList} iconOnly className="shrink-0 flex-nowrap" />
+          <FilterPresetBar
+            api={presets}
+            statuses={chipStatuses}
+            po={chipDoc}
+            onApply={(p) => { setChipStatuses(p.statuses); setChipDoc(p.po); }}
+            iconOnly
+          />
+          <StatusFilterBar
+            statuses={PO_STATUSES}
+            selected={chipStatuses}
+            statusCount={(s) => baseList.filter((p) => p.status === s).length}
+            onToggleStatus={(s) =>
+              setChipStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))
+            }
+            extra={{
+              entries: DOC_CHIPS,
+              selected: chipDoc,
+              count: (k) => baseList.filter((p) => docStateOf(p) === k).length,
+              onToggle: (k) => setChipDoc((prev) => (prev.includes(k) ? prev.filter((x) => x !== k) : [...prev, k])),
+            }}
+            onClear={() => { setChipStatuses([]); setChipDoc([]); }}
+            iconOnly
+            overflow
+            forceOverflowAll={isMobile}
+          />
+          {filtersActive && (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              title="Clear all"
+              aria-label="Clear all filters"
+              className="inline-flex shrink-0 items-center justify-center h-8 w-8 rounded-full bg-surface text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
           <ColumnPicker prefs={cp} />
-          <DataToolbar view={view} items={baseList} />
         </div>
 
       </div>
