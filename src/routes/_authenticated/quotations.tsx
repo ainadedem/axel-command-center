@@ -115,6 +115,7 @@ const statusStyles: Record<QuoteStatus, string> = {
   accepted: "border-success/40 text-success bg-success/10",
   rejected: "border-destructive/40 text-destructive bg-destructive/10",
   expired: "border-warning/40 text-warning bg-warning/10",
+  cancelled: "border-muted text-muted-foreground bg-muted/30",
 };
 
 /** FX snapshot is captured inline in the dialog submit, only while still in draft. */
