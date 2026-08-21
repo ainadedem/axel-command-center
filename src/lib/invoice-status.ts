@@ -1,4 +1,5 @@
 /**
+import { notify } from "@/lib/notifications";
  * Controlled invoice status transitions.
  *
  * Every status change (preview dropdown, bulk action, reconcile fix) should go
@@ -185,6 +186,21 @@ export function commitStatusChange(
       transactionIds: opts.createdTransactionIds ?? [],
     },
   });
+
+  if (next !== invoice.status) {
+    notify({
+      kind: "status_change",
+      companyId: invoice.companyId,
+      docType: "invoice",
+      docId: invoice.id,
+      docNumber: invoice.number,
+      title: `${invoice.number} is now ${next}`,
+      body: summary,
+      href: "/invoices",
+      recipients: (invoice as { assignedTo?: string[] }).assignedTo ?? [],
+      amount: invoice.amount,
+    });
+  }
 
   const revert = async () => {
     await withoutHistory(() => {
