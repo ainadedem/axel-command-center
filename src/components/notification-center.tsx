@@ -1,20 +1,46 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Bell, CheckCheck, Circle, Dot, Trash2 } from "lucide-react";
+import { Bell, CheckCheck, Circle, Dot, Search, Trash2, X } from "lucide-react";
 import { useNotifications, type AppNotification } from "@/lib/notifications";
 import { EVENT_LABEL, EVENT_GROUPS, groupOfKind, type EventGroupKey } from "@/lib/notification-events";
+import { useClients, useQuotes, useInvoices, usePurchaseOrders } from "@/lib/mock-data";
 import { usePersistentState } from "@/lib/persistent-state";
 import { cn } from "@/lib/utils";
 
 type FilterKey = "all" | "unread" | EventGroupKey;
 
-/** Bell popover: unread badge, filters, grouped feed, click-through to the document. */
+/** Lowercased, accent-stripped text so "Sté" matches "ste". */
+const norm = (s: string) =>
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+/** Bell popover: unread badge, search, filters, grouped feed, click-through. */
 export function NotificationCenter({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { items, loading, unread, markRead, markUnread, markAllRead, restoreUnread, clearAll } = useNotifications();
   const navigate = useNavigate();
   const [filter, setFilter] = usePersistentState<FilterKey>("notifications.filter", "all");
+  const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
+
+  // Documents referenced by notifications, so search can match the client too.
+  const clients = useClients();
+  const quotes = useQuotes();
+  const invoices = useInvoices();
+  const pos = usePurchaseOrders();
+
+  const clientOfDoc = useMemo(() => {
+    const byId = new Map(clients.map((c) => [c.id, c]));
+    const map = new Map<string, string>();
+    const add = (docId: string | undefined, clientId: string | undefined | null) => {
+      if (!docId || !clientId) return;
+      const c = byId.get(clientId);
+      if (c) map.set(docId, [c.name, (c as { displayName?: string }).displayName].filter(Boolean).join(" "));
+    };
+    for (const q of quotes) add(q.id, q.clientId);
+    for (const i of invoices) add(i.id, i.clientId);
+    for (const p of pos) add(p.id, (p as { clientId?: string }).clientId);
+    return map;
+  }, [clients, quotes, invoices, pos]);
 
   const counts = useMemo(() => {
     const out: Record<string, number> = { all: items.length, unread: items.filter((n) => !n.readAt).length };
@@ -23,10 +49,32 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
   }, [items]);
 
   const visible = useMemo(() => {
-    if (filter === "all") return items;
-    if (filter === "unread") return items.filter((n) => !n.readAt);
-    return items.filter((n) => groupOfKind(n.kind) === filter);
-  }, [items, filter]);
+    const base =
+      filter === "all"
+        ? items
+        : filter === "unread"
+          ? items.filter((n) => !n.readAt)
+          : items.filter((n) => groupOfKind(n.kind) === filter);
+    const q = norm(query.trim());
+    if (!q) return base;
+    const terms = q.split(/\s+/);
+    return base.filter((n) => {
+      const hay = norm(
+        [
+          n.title,
+          n.body,
+          n.docNumber,
+          n.actorName,
+          EVENT_LABEL[n.kind] ?? n.kind,
+          n.docId ? clientOfDoc.get(n.docId) : undefined,
+        ]
+          .filter(Boolean)
+          .join(" "),
+      );
+      return terms.every((t) => hay.includes(t));
+    });
+  }, [items, filter, query, clientOfDoc]);
+
 
   const today = new Date().toDateString();
   const groups: { label: string; rows: AppNotification[] }[] = [
@@ -110,7 +158,35 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
               </div>
             </div>
 
+            <div className="px-2.5 pt-2">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search client, document number or text…"
+                  aria-label="Search notifications"
+                  className="h-8 w-full rounded-full border border-border bg-background pl-8 pr-7 text-xs outline-none focus:border-primary/50"
+                />
+                {query && (
+                  <button
+                    onClick={() => setQuery("")}
+                    aria-label="Clear search"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-muted-foreground hover:bg-accent"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+              {query.trim() && (
+                <div className="px-1 pt-1 text-[10px] text-muted-foreground font-tnum">
+                  {visible.length} of {items.length} match{visible.length === 1 ? "" : "es"}
+                </div>
+              )}
+            </div>
+
             <div className="flex flex-wrap gap-1 px-2.5 py-2 border-b border-border/60">
+
               {chips.map((c) => {
                 const on = filter === c.key;
                 const n = counts[c.key] ?? 0;
@@ -139,8 +215,18 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
               ) : visible.length === 0 ? (
                 <div className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
                   <Bell className="h-5 w-5 opacity-50" />
-                  {items.length === 0 ? "You're all caught up." : "Nothing in this filter."}
+                  {items.length === 0
+                    ? "You're all caught up."
+                    : query.trim()
+                      ? `No match for "${query.trim()}".`
+                      : "Nothing in this filter."}
+                  {query.trim() && (
+                    <button onClick={() => setQuery("")} className="text-xs text-primary hover:underline">
+                      Clear search
+                    </button>
+                  )}
                 </div>
+
               ) : (
                 groups.map((g) => (
                   <div key={g.label}>

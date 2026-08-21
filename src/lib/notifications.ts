@@ -88,6 +88,18 @@ export function useNotifications(limit = 40) {
   const [loading, setLoading] = useState(true);
   const [unread, setUnread] = useState(0);
   const userIdRef = useRef<string | undefined>(undefined);
+  // Bumped on identity changes so the channel is rebuilt for the new user.
+  const [session, setSession] = useState(0);
+
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+        setSession((s) => s + 1);
+      }
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
+
 
   const load = useCallback(async () => {
     const { data: auth } = await supabase.auth.getUser();
@@ -114,17 +126,64 @@ export function useNotifications(limit = 40) {
   }, [limit]);
 
   useEffect(() => {
-    void load();
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | undefined;
+    let recount: ReturnType<typeof setTimeout> | undefined;
     listeners.add(load);
-    const channel = supabase
-      .channel("notifications-inbox")
-      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => { void load(); })
-      .subscribe();
-    return () => {
-      listeners.delete(load);
-      void supabase.removeChannel(channel);
+
+    /** Re-reads the exact unread count so optimistic maths never drifts. */
+    const scheduleRecount = (uid: string) => {
+      if (recount) clearTimeout(recount);
+      recount = setTimeout(() => {
+        void supabase
+          .from("notifications")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", uid)
+          .is("read_at", null)
+          .then(({ count }) => { if (!cancelled) setUnread(count ?? 0); });
+      }, 400);
     };
-  }, [load]);
+
+    void (async () => {
+      await load();
+      const uid = userIdRef.current;
+      if (cancelled || !uid) return;
+      // One filtered channel per user: only this inbox's rows come down the wire.
+      channel = supabase
+        .channel(`notifications-inbox-${uid}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${uid}` },
+          (payload) => {
+            if (cancelled) return;
+            if (payload.eventType === "INSERT") {
+              const row = fromRow(payload.new as Record<string, unknown>);
+              setItems((prev) => (prev.some((n) => n.id === row.id) ? prev : [row, ...prev].slice(0, limit)));
+              if (!row.readAt) setUnread((u) => u + 1);
+            } else if (payload.eventType === "UPDATE") {
+              const row = fromRow(payload.new as Record<string, unknown>);
+              setItems((prev) => prev.map((n) => (n.id === row.id ? row : n)));
+            } else if (payload.eventType === "DELETE") {
+              const id = (payload.old as { id?: string })?.id;
+              if (id) setItems((prev) => prev.filter((n) => n.id !== id));
+            }
+            scheduleRecount(uid);
+          },
+        )
+        .subscribe((status) => {
+          // Socket dropped and recovered — resync the page we may have missed.
+          if (status === "SUBSCRIBED") void load();
+        });
+    })();
+
+    return () => {
+      cancelled = true;
+      if (recount) clearTimeout(recount);
+      listeners.delete(load);
+      if (channel) void supabase.removeChannel(channel);
+    };
+  }, [load, limit, session]);
+
 
   /** Flip one item read or unread (optimistic, reconciled by the reload). */
   const setRead = useCallback(async (id: string, read: boolean) => {
