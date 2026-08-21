@@ -356,10 +356,8 @@ function Body() {
                         {t.type === "income" && !t.invoiceId && (
                           <RowAction icon={<Link2 className="h-3.5 w-3.5" />} label="Link to invoice" onClick={() => setLinking(t)} />
                         )}
-                        {t.invoiceId && linkOf(t) && (
-                          {unlinkPerm.can(t.companyId) && (
-                            <RowAction icon={<Unlink className="h-3.5 w-3.5" />} label="Unlink payment" onClick={() => setUnlinking(t)} />
-                          )}
+                        {t.invoiceId && linkOf(t) && unlinkPerm.can(t.companyId) && (
+                          <RowAction icon={<Unlink className="h-3.5 w-3.5" />} label="Unlink payment" onClick={() => setUnlinking(t)} />
                         )}
                         <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm("Delete this transaction?")) transactionsStore.remove(t.id); }} />
                       </ListRowActions>
