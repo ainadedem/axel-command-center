@@ -421,6 +421,74 @@ export function learnClientLags(
   return out;
 }
 
+/** What we learned about one client's payment lag, with the evidence count. */
+export interface TermsSuggestion {
+  clientId: string;
+  currency?: string;
+  /** Median observed invoice -> payment lag, in days. */
+  days: number;
+  /** How many matched payments the median is based on. */
+  samples: number;
+  /** Spread between the fastest and slowest observed payment. */
+  spreadDays: number;
+}
+
+const median = (arr: number[]) => {
+  const sorted = [...arr].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+};
+
+/**
+ * Suggests payment terms per client and per currency from the payments already
+ * matched. `currency: undefined` is the all-currencies suggestion used for the
+ * client's default terms; the per-currency rows drive the overrides.
+ */
+export function suggestClientTerms(
+  invoices: ProofInvoice[],
+  transactions: ProofTransaction[],
+): TermsSuggestion[] {
+  const byInvoice = new Map(invoices.map((i) => [i.id, i]));
+  const buckets = new Map<string, { clientId: string; currency?: string; lags: number[] }>();
+  const push = (clientId: string, currency: string | undefined, lag: number) => {
+    const key = `${clientId}|${currency ?? "*"}`;
+    const b = buckets.get(key) ?? { clientId, currency, lags: [] };
+    b.lags.push(lag);
+    buckets.set(key, b);
+  };
+  transactions.forEach((t) => {
+    if (!t.invoiceId) return;
+    const inv = byInvoice.get(t.invoiceId);
+    if (!inv?.clientId) return;
+    const lag = signedDays(inv.issueDate, t.date);
+    if (lag == null || lag < 0 || lag > 365) return;
+    push(inv.clientId, undefined, lag);
+    push(inv.clientId, inv.currency, lag);
+  });
+  const out: TermsSuggestion[] = [];
+  buckets.forEach((b) => {
+    if (b.lags.length < 2) return;
+    out.push({
+      clientId: b.clientId,
+      currency: b.currency,
+      days: median(b.lags),
+      samples: b.lags.length,
+      spreadDays: Math.max(...b.lags) - Math.min(...b.lags),
+    });
+  });
+  return out;
+}
+
+/** Resolves effective terms: per-currency override first, then the default. */
+export function effectiveTermsDays(
+  client: { paymentTermsDays?: number; paymentTermsByCurrency?: Record<string, number> } | undefined,
+  currency?: string,
+): number | undefined {
+  if (!client) return undefined;
+  const byCur = currency ? client.paymentTermsByCurrency?.[currency] : undefined;
+  return byCur != null && byCur > 0 ? byCur : client.paymentTermsDays;
+}
+
 /** Round to the tolerance so "same amount" survives cent-level noise. */
 const amountKey = (v: number) => Math.round(v);
 
@@ -451,7 +519,7 @@ export interface ProposeInput {
   pos: ProofPO[];
   clientName?: (clientId?: string) => string | undefined;
   /** Contractual payment terms, in days, per client. */
-  clientTerms?: (clientId?: string) => number | undefined;
+  clientTerms?: (clientId?: string, currency?: string) => number | undefined;
 }
 
 /**
@@ -470,9 +538,9 @@ export function proposeMatches({
   clientTerms,
 }: ProposeInput): MatchProposal[] {
   const learned = learnClientLags(invoices, transactions);
-  const behaviourOf = (clientId?: string): ClientPaymentBehaviour | undefined =>
+  const behaviourOf = (clientId?: string, currency?: string): ClientPaymentBehaviour | undefined =>
     clientId
-      ? { termsDays: clientTerms?.(clientId), learnedLagDays: learned.get(clientId) }
+      ? { termsDays: clientTerms?.(clientId, currency), learnedLagDays: learned.get(clientId) }
       : undefined;
   const linked = new Set(transactions.map((t) => t.invoiceId).filter(Boolean) as string[]);
   const outstandingOf = new Map<string, number>();
@@ -490,7 +558,7 @@ export function proposeMatches({
   // Build every candidate, then resolve conflicts greedily by score.
   const rows: Array<{ invoice: ProofInvoice; candidates: MatchCandidate[] }> = targets.map((inv) => {
     const name = clientName?.(inv.clientId);
-    const opts = { behaviour: behaviourOf(inv.clientId), ambiguousWith: ambiguity.get(inv.id) ?? 0 };
+    const opts = { behaviour: behaviourOf(inv.clientId, inv.currency), ambiguousWith: ambiguity.get(inv.id) ?? 0 };
     const candidates = free
       .filter((t) => t.companyId === inv.companyId)
       .map((t) => scoreCandidate(inv, t, name, outstandingOf.get(inv.id), opts))
@@ -570,7 +638,7 @@ export function proposeMatchesForTransaction(input: {
   quotes: ProofQuote[];
   pos: ProofPO[];
   clientName?: (clientId?: string) => string | undefined;
-  clientTerms?: (clientId?: string) => number | undefined;
+  clientTerms?: (clientId?: string, currency?: string) => number | undefined;
 }): TransactionMatch[] {
   const { transaction: tx, invoices, transactions, quotes, pos, clientName, clientTerms } = input;
   if (tx.type !== "income") return [];
@@ -586,7 +654,7 @@ export function proposeMatchesForTransaction(input: {
     const outstanding = proof.outstanding > 0 ? proof.outstanding : invoicePayable(inv);
     const candidate = scoreCandidate(inv, tx, clientName?.(inv.clientId), outstanding, {
       behaviour: inv.clientId
-        ? { termsDays: clientTerms?.(inv.clientId), learnedLagDays: learned.get(inv.clientId) }
+        ? { termsDays: clientTerms?.(inv.clientId, inv.currency), learnedLagDays: learned.get(inv.clientId) }
         : undefined,
       ambiguousWith: ambiguity.get(inv.id) ?? 0,
     });
