@@ -10,6 +10,7 @@ import { useSyncExternalStore } from "react";
 import { proposeStageChange } from "@/lib/pipeline-automation";
 import { invoicesStore, transactionsStore, type Invoice } from "@/lib/mock-data";
 import { invoiceBalance, invoicePayable } from "@/lib/invoice-money";
+import { docDeepLink } from "@/hooks/use-focus-row";
 import { notify } from "@/lib/notifications";
 import { logActivity } from "@/lib/document-activity";
 import { withoutHistory } from "@/lib/history";
@@ -198,7 +199,7 @@ export function commitStatusChange(
       docNumber: invoice.number,
       title: `${invoice.number} is now ${next}`,
       body: summary,
-      href: "/invoices",
+      href: docDeepLink("/invoices", invoice.id),
       recipients: (invoice as { assignedTo?: string[] }).assignedTo ?? [],
       amount: invoice.amount,
     });

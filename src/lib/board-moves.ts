@@ -1,5 +1,6 @@
 import { logActivity, type DocType } from "@/lib/document-activity";
 import { notify } from "@/lib/notifications";
+import { docDeepLink } from "@/hooks/use-focus-row";
 
 /** Notified whenever a board move is recorded, so open history panels refresh. */
 export const boardMoveListeners = new Set<() => void>();
