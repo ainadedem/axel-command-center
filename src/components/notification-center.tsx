@@ -158,7 +158,35 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
               </div>
             </div>
 
+            <div className="px-2.5 pt-2">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search client, document number or text…"
+                  aria-label="Search notifications"
+                  className="h-8 w-full rounded-full border border-border bg-background pl-8 pr-7 text-xs outline-none focus:border-primary/50"
+                />
+                {query && (
+                  <button
+                    onClick={() => setQuery("")}
+                    aria-label="Clear search"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-muted-foreground hover:bg-accent"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+              {query.trim() && (
+                <div className="px-1 pt-1 text-[10px] text-muted-foreground font-tnum">
+                  {visible.length} of {items.length} match{visible.length === 1 ? "" : "es"}
+                </div>
+              )}
+            </div>
+
             <div className="flex flex-wrap gap-1 px-2.5 py-2 border-b border-border/60">
+
               {chips.map((c) => {
                 const on = filter === c.key;
                 const n = counts[c.key] ?? 0;
