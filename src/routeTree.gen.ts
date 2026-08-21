@@ -16,6 +16,7 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as ApiAxelChatRouteImport } from './routes/api/axel-chat'
 import { Route as AuthenticatedUsersAccessRouteImport } from './routes/_authenticated/users-access'
 import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
+import { Route as AuthenticatedTimeRouteImport } from './routes/_authenticated/time'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
 import { Route as AuthenticatedSopsRouteImport } from './routes/_authenticated/sops'
@@ -83,6 +84,11 @@ const AuthenticatedTransactionsRoute =
     path: '/transactions',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedTimeRoute = AuthenticatedTimeRouteImport.update({
+  id: '/time',
+  path: '/time',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
   id: '/team',
   path: '/team',
@@ -270,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/sops': typeof AuthenticatedSopsRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/time': typeof AuthenticatedTimeRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/users-access': typeof AuthenticatedUsersAccessRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
@@ -306,6 +313,7 @@ export interface FileRoutesByTo {
   '/sops': typeof AuthenticatedSopsRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/time': typeof AuthenticatedTimeRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/users-access': typeof AuthenticatedUsersAccessRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
@@ -346,6 +354,7 @@ export interface FileRoutesById {
   '/_authenticated/sops': typeof AuthenticatedSopsRoute
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
+  '/_authenticated/time': typeof AuthenticatedTimeRoute
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
   '/_authenticated/users-access': typeof AuthenticatedUsersAccessRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
@@ -387,6 +396,7 @@ export interface FileRouteTypes {
     | '/sops'
     | '/suppliers'
     | '/team'
+    | '/time'
     | '/transactions'
     | '/users-access'
     | '/api/axel-chat'
@@ -423,6 +433,7 @@ export interface FileRouteTypes {
     | '/sops'
     | '/suppliers'
     | '/team'
+    | '/time'
     | '/transactions'
     | '/users-access'
     | '/api/axel-chat'
@@ -462,6 +473,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sops'
     | '/_authenticated/suppliers'
     | '/_authenticated/team'
+    | '/_authenticated/time'
     | '/_authenticated/transactions'
     | '/_authenticated/users-access'
     | '/api/axel-chat'
@@ -530,6 +542,13 @@ declare module '@tanstack/react-router' {
       path: '/transactions'
       fullPath: '/transactions'
       preLoaderRoute: typeof AuthenticatedTransactionsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/time': {
+      id: '/_authenticated/time'
+      path: '/time'
+      fullPath: '/time'
+      preLoaderRoute: typeof AuthenticatedTimeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/team': {
@@ -785,6 +804,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSopsRoute: typeof AuthenticatedSopsRoute
   AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
+  AuthenticatedTimeRoute: typeof AuthenticatedTimeRoute
   AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRoute
   AuthenticatedUsersAccessRoute: typeof AuthenticatedUsersAccessRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -817,6 +837,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSopsRoute: AuthenticatedSopsRoute,
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
+  AuthenticatedTimeRoute: AuthenticatedTimeRoute,
   AuthenticatedTransactionsRoute: AuthenticatedTransactionsRoute,
   AuthenticatedUsersAccessRoute: AuthenticatedUsersAccessRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
