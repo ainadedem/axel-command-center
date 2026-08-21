@@ -772,6 +772,44 @@ export type Database = {
           },
         ]
       }
+      holidays: {
+        Row: {
+          company_id: string
+          created_at: string
+          date: string
+          id: string
+          name: string
+          recurring: boolean
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          date: string
+          id?: string
+          name: string
+          recurring?: boolean
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          date?: string
+          id?: string
+          name?: string
+          recurring?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "holidays_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_escalations: {
         Row: {
           action: string
@@ -1082,6 +1120,100 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "journal_entries_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kiosk_credentials: {
+        Row: {
+          company_id: string
+          created_at: string
+          employee_id: string
+          id: string
+          pin_hash: string
+          qr_token: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          employee_id: string
+          id?: string
+          pin_hash: string
+          qr_token?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          employee_id?: string
+          id?: string
+          pin_hash?: string
+          qr_token?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kiosk_credentials_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leave_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          company_id: string
+          created_at: string
+          employee_id: string
+          end_date: string
+          half_day: boolean
+          id: string
+          kind: string
+          note: string | null
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          company_id: string
+          created_at?: string
+          employee_id: string
+          end_date: string
+          half_day?: boolean
+          id?: string
+          kind?: string
+          note?: string | null
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          company_id?: string
+          created_at?: string
+          employee_id?: string
+          end_date?: string
+          half_day?: boolean
+          id?: string
+          kind?: string
+          note?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_requests_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -1882,6 +2014,59 @@ export type Database = {
         }
         Relationships: []
       }
+      schedules: {
+        Row: {
+          break_minutes: number
+          company_id: string
+          created_at: string
+          employee_id: string | null
+          end_time: string
+          grace_minutes: number
+          id: string
+          name: string | null
+          role: string | null
+          start_time: string
+          updated_at: string
+          working_days: number[]
+        }
+        Insert: {
+          break_minutes?: number
+          company_id: string
+          created_at?: string
+          employee_id?: string | null
+          end_time?: string
+          grace_minutes?: number
+          id?: string
+          name?: string | null
+          role?: string | null
+          start_time?: string
+          updated_at?: string
+          working_days?: number[]
+        }
+        Update: {
+          break_minutes?: number
+          company_id?: string
+          created_at?: string
+          employee_id?: string | null
+          end_time?: string
+          grace_minutes?: number
+          id?: string
+          name?: string | null
+          role?: string | null
+          start_time?: string
+          updated_at?: string
+          working_days?: number[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedules_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           account: string
@@ -2056,6 +2241,193 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "team_members_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_entries: {
+        Row: {
+          activity: string | null
+          billable: boolean
+          clock_in: string
+          clock_out: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          duration_minutes: number
+          employee_id: string
+          gps_lat: number | null
+          gps_lng: number | null
+          id: string
+          method: string
+          note: string | null
+          photo_url: string | null
+          project_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          activity?: string | null
+          billable?: boolean
+          clock_in?: string
+          clock_out?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          duration_minutes?: number
+          employee_id: string
+          gps_lat?: number | null
+          gps_lng?: number | null
+          id?: string
+          method?: string
+          note?: string | null
+          photo_url?: string | null
+          project_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          activity?: string | null
+          billable?: boolean
+          clock_in?: string
+          clock_out?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          duration_minutes?: number
+          employee_id?: string
+          gps_lat?: number | null
+          gps_lng?: number | null
+          id?: string
+          method?: string
+          note?: string | null
+          photo_url?: string | null
+          project_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_entry_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_name: string | null
+          after: Json | null
+          before: Json | null
+          company_id: string
+          created_at: string
+          entry_id: string
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_name?: string | null
+          after?: Json | null
+          before?: Json | null
+          company_id: string
+          created_at?: string
+          entry_id: string
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_name?: string | null
+          after?: Json | null
+          before?: Json | null
+          company_id?: string
+          created_at?: string
+          entry_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entry_audit_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timesheets: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          break_minutes: number
+          company_id: string
+          created_at: string
+          employee_id: string
+          id: string
+          leave_minutes: number
+          note: string | null
+          overtime_minutes: number
+          period_end: string
+          period_start: string
+          regular_minutes: number
+          status: string
+          unpaid_leave_minutes: number
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          break_minutes?: number
+          company_id: string
+          created_at?: string
+          employee_id: string
+          id?: string
+          leave_minutes?: number
+          note?: string | null
+          overtime_minutes?: number
+          period_end: string
+          period_start: string
+          regular_minutes?: number
+          status?: string
+          unpaid_leave_minutes?: number
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          break_minutes?: number
+          company_id?: string
+          created_at?: string
+          employee_id?: string
+          id?: string
+          leave_minutes?: number
+          note?: string | null
+          overtime_minutes?: number
+          period_end?: string
+          period_start?: string
+          regular_minutes?: number
+          status?: string
+          unpaid_leave_minutes?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timesheets_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"

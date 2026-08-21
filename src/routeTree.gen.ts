@@ -16,6 +16,7 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as ApiAxelChatRouteImport } from './routes/api/axel-chat'
 import { Route as AuthenticatedUsersAccessRouteImport } from './routes/_authenticated/users-access'
 import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
+import { Route as AuthenticatedTimeRouteImport } from './routes/_authenticated/time'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
 import { Route as AuthenticatedSopsRouteImport } from './routes/_authenticated/sops'
@@ -28,6 +29,7 @@ import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedPlanComptableRouteImport } from './routes/_authenticated/plan-comptable'
 import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated/pipeline'
 import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
+import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedGrandLivreRouteImport } from './routes/_authenticated/grand-livre'
@@ -83,6 +85,11 @@ const AuthenticatedTransactionsRoute =
     path: '/transactions',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedTimeRoute = AuthenticatedTimeRouteImport.update({
+  id: '/time',
+  path: '/time',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
   id: '/team',
   path: '/team',
@@ -143,6 +150,11 @@ const AuthenticatedPipelineRoute = AuthenticatedPipelineRouteImport.update({
 const AuthenticatedPayrollRoute = AuthenticatedPayrollRouteImport.update({
   id: '/payroll',
   path: '/payroll',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedLeaveRoute = AuthenticatedLeaveRouteImport.update({
+  id: '/leave',
+  path: '/leave',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedJournalRoute = AuthenticatedJournalRouteImport.update({
@@ -258,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/grand-livre': typeof AuthenticatedGrandLivreRoute
   '/invoices': typeof AuthenticatedInvoicesRoute
   '/journal': typeof AuthenticatedJournalRoute
+  '/leave': typeof AuthenticatedLeaveRoute
   '/payroll': typeof AuthenticatedPayrollRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/plan-comptable': typeof AuthenticatedPlanComptableRoute
@@ -270,6 +283,7 @@ export interface FileRoutesByFullPath {
   '/sops': typeof AuthenticatedSopsRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/time': typeof AuthenticatedTimeRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/users-access': typeof AuthenticatedUsersAccessRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
@@ -294,6 +308,7 @@ export interface FileRoutesByTo {
   '/grand-livre': typeof AuthenticatedGrandLivreRoute
   '/invoices': typeof AuthenticatedInvoicesRoute
   '/journal': typeof AuthenticatedJournalRoute
+  '/leave': typeof AuthenticatedLeaveRoute
   '/payroll': typeof AuthenticatedPayrollRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/plan-comptable': typeof AuthenticatedPlanComptableRoute
@@ -306,6 +321,7 @@ export interface FileRoutesByTo {
   '/sops': typeof AuthenticatedSopsRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/time': typeof AuthenticatedTimeRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/users-access': typeof AuthenticatedUsersAccessRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
@@ -334,6 +350,7 @@ export interface FileRoutesById {
   '/_authenticated/grand-livre': typeof AuthenticatedGrandLivreRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
+  '/_authenticated/leave': typeof AuthenticatedLeaveRoute
   '/_authenticated/payroll': typeof AuthenticatedPayrollRoute
   '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
   '/_authenticated/plan-comptable': typeof AuthenticatedPlanComptableRoute
@@ -346,6 +363,7 @@ export interface FileRoutesById {
   '/_authenticated/sops': typeof AuthenticatedSopsRoute
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
+  '/_authenticated/time': typeof AuthenticatedTimeRoute
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
   '/_authenticated/users-access': typeof AuthenticatedUsersAccessRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
@@ -375,6 +393,7 @@ export interface FileRouteTypes {
     | '/grand-livre'
     | '/invoices'
     | '/journal'
+    | '/leave'
     | '/payroll'
     | '/pipeline'
     | '/plan-comptable'
@@ -387,6 +406,7 @@ export interface FileRouteTypes {
     | '/sops'
     | '/suppliers'
     | '/team'
+    | '/time'
     | '/transactions'
     | '/users-access'
     | '/api/axel-chat'
@@ -411,6 +431,7 @@ export interface FileRouteTypes {
     | '/grand-livre'
     | '/invoices'
     | '/journal'
+    | '/leave'
     | '/payroll'
     | '/pipeline'
     | '/plan-comptable'
@@ -423,6 +444,7 @@ export interface FileRouteTypes {
     | '/sops'
     | '/suppliers'
     | '/team'
+    | '/time'
     | '/transactions'
     | '/users-access'
     | '/api/axel-chat'
@@ -450,6 +472,7 @@ export interface FileRouteTypes {
     | '/_authenticated/grand-livre'
     | '/_authenticated/invoices'
     | '/_authenticated/journal'
+    | '/_authenticated/leave'
     | '/_authenticated/payroll'
     | '/_authenticated/pipeline'
     | '/_authenticated/plan-comptable'
@@ -462,6 +485,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sops'
     | '/_authenticated/suppliers'
     | '/_authenticated/team'
+    | '/_authenticated/time'
     | '/_authenticated/transactions'
     | '/_authenticated/users-access'
     | '/api/axel-chat'
@@ -530,6 +554,13 @@ declare module '@tanstack/react-router' {
       path: '/transactions'
       fullPath: '/transactions'
       preLoaderRoute: typeof AuthenticatedTransactionsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/time': {
+      id: '/_authenticated/time'
+      path: '/time'
+      fullPath: '/time'
+      preLoaderRoute: typeof AuthenticatedTimeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/team': {
@@ -614,6 +645,13 @@ declare module '@tanstack/react-router' {
       path: '/payroll'
       fullPath: '/payroll'
       preLoaderRoute: typeof AuthenticatedPayrollRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/leave': {
+      id: '/_authenticated/leave'
+      path: '/leave'
+      fullPath: '/leave'
+      preLoaderRoute: typeof AuthenticatedLeaveRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/journal': {
@@ -773,6 +811,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedGrandLivreRoute: typeof AuthenticatedGrandLivreRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
+  AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
   AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRoute
   AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
   AuthenticatedPlanComptableRoute: typeof AuthenticatedPlanComptableRoute
@@ -785,6 +824,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSopsRoute: typeof AuthenticatedSopsRoute
   AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
+  AuthenticatedTimeRoute: typeof AuthenticatedTimeRoute
   AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRoute
   AuthenticatedUsersAccessRoute: typeof AuthenticatedUsersAccessRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -805,6 +845,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedGrandLivreRoute: AuthenticatedGrandLivreRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
+  AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
   AuthenticatedPayrollRoute: AuthenticatedPayrollRoute,
   AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
   AuthenticatedPlanComptableRoute: AuthenticatedPlanComptableRoute,
@@ -817,6 +858,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSopsRoute: AuthenticatedSopsRoute,
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
+  AuthenticatedTimeRoute: AuthenticatedTimeRoute,
   AuthenticatedTransactionsRoute: AuthenticatedTransactionsRoute,
   AuthenticatedUsersAccessRoute: AuthenticatedUsersAccessRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
