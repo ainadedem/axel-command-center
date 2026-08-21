@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/page-header";
 import {
   useQuotes, useCompanies, useClients, useProjects, quotesStore, purchaseOrdersStore,
   fmt, fmtCompact, FX, type Quote, type QuoteLine, type QuoteStatus, type QuoteMode, type Currency,
-  contactBelongsTo, MAX_QUOTE_ASSIGNEES,
+  contactBelongsTo, MAX_QUOTE_ASSIGNEES, useOpportunities, useInvoices,
 } from "@/lib/mock-data";
 import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
 import { useLineReorder, DragHandle, moveItem, ReorderLiveRegion } from "@/components/sortable-row";
@@ -24,6 +24,9 @@ import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { useOwnerNames } from "@/hooks/use-owner-names";
 import { logActivity, diffDocument } from "@/lib/document-activity";
 import { DocumentActivityPanel } from "@/components/document-activity-panel";
+import { OpportunitySelect, NEW_OPPORTUNITY } from "@/components/opportunity-select";
+import { createOpportunityFromQuote, ensureOpportunityForQuote } from "@/lib/pipeline-link";
+import { proposeStageChange } from "@/lib/pipeline-automation";
 
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -505,6 +508,9 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const companies = useCompanies();
   const clients = useClients();
   const projects = useProjects();
+  const opportunities = useOpportunities();
+  const invoices = useInvoices();
+  const quotes = useQuotes();
   const today = new Date().toISOString().slice(0, 10);
   const [number, setNumber] = useState("");
   // True once the user edits the number by hand, so async resolution stops overriding it.
