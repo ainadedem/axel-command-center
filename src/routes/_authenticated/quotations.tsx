@@ -8,7 +8,15 @@ import {
   useQuotes, useCompanies, useClients, useProjects, quotesStore, purchaseOrdersStore,
   fmt, fmtCompact, toMGA, FX, type Quote, type QuoteLine, type QuoteStatus, type QuoteMode, type Currency, type Client,
   contactBelongsTo, MAX_QUOTE_ASSIGNEES, useOpportunities, useInvoices,
+  useQuoteFollowups, quoteFollowupsStore,
 } from "@/lib/mock-data";
+import { KanbanTemplatePicker } from "@/components/kanban-template-picker";
+import { useKanbanTemplates, type KanbanTemplate } from "@/lib/kanban-templates";
+import { BoardHistoryPanel } from "@/components/board-history-panel";
+import { logBoardMove } from "@/lib/board-moves";
+import { CardAction, CardCommentAction } from "@/components/kanban-card-actions";
+import { ExternalLink, UserPlus } from "lucide-react";
+
 import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
 import { useLineReorder, DragHandle, moveItem, ReorderLiveRegion } from "@/components/sortable-row";
 import { newId } from "@/lib/data-store";
@@ -1192,6 +1200,11 @@ const QUOTE_BOARD_COLUMNS: { key: QuoteStatus; label: string; dot: string }[] = 
   { key: "expired", label: "Expired", dot: "bg-amber-500" },
 ];
 
+const QUOTE_TEMPLATES: KanbanTemplate[] = [
+  { id: "sales-flow", name: "Sales flow", keys: ["draft", "sent", "accepted", "rejected", "expired"] },
+  { id: "focus", name: "Focus", keys: ["draft", "sent", "accepted"] },
+];
+
 function QuoteBoard({
   list,
   clients,
@@ -1205,53 +1218,143 @@ function QuoteBoard({
   canWrite: (q: Quote) => boolean;
   onOpen: (q: Quote) => void;
 }) {
-  const columns: KanbanColumnDef[] = QUOTE_BOARD_COLUMNS.map((c) => {
-    const items = list.filter((q) => q.status === c.key);
-    const sum = items.reduce((acc, q) => acc + toMGA(q.totalAmount ?? q.amount, q.currency), 0);
-    return { key: c.key, label: c.label, dot: c.dot, meta: fmtCompact(sum, "MGA") };
-  });
+  const { user } = useAuth();
+  const followups = useQuoteFollowups();
+  const tpl = useKanbanTemplates("quotations", QUOTE_TEMPLATES);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const activeKeys = tpl.active?.keys ?? QUOTE_BOARD_COLUMNS.map((c) => c.key);
+
+  const columns: KanbanColumnDef[] = activeKeys
+    .map((k) => QUOTE_BOARD_COLUMNS.find((c) => c.key === k))
+    .filter(Boolean)
+    .map((c) => {
+      const col = c!;
+      const items = list.filter((q) => q.status === col.key);
+      const sum = items.reduce((acc, q) => acc + toMGA(q.totalAmount ?? q.amount, q.currency), 0);
+      return { key: col.key, label: col.label, dot: col.dot, meta: fmtCompact(sum, "MGA") };
+    });
+
+  const visible = list.filter((q) => activeKeys.includes(q.status));
+  const hidden = list.length - visible.length;
 
   const move = (q: Quote, status: string) => {
     const previous = q.status;
     quotesStore.update(q.id, { status: status as QuoteStatus });
+    logBoardMove({ docType: "quote", docId: q.id, docNumber: q.number, companyId: q.companyId, from: previous, to: status });
     toast.success(`${q.number} → ${status}`, {
       action: { label: "Undo", onClick: () => quotesStore.update(q.id, { status: previous }) },
     });
   };
 
+  const assignToMe = (q: Quote) => {
+    if (!user?.id) return;
+    if (!canWrite(q)) { toast.error(`You do not have permission to change ${q.number}.`); return; }
+    const current = q.assignedTo ?? [];
+    if (current.includes(user.id)) { toast.info(`You are already following ${q.number}.`); return; }
+    if (current.length >= MAX_QUOTE_ASSIGNEES) { toast.error(`${q.number} already has ${MAX_QUOTE_ASSIGNEES} assignees.`); return; }
+    quotesStore.update(q.id, { assignedTo: [...current, user.id] });
+    toast.success(`Assigned ${q.number} to you`);
+  };
+
+  const comment = (q: Quote, text: string) => {
+    quoteFollowupsStore.add({
+      id: newId(),
+      companyId: q.companyId,
+      quoteId: q.id,
+      kind: "note",
+      note: text,
+      happenedAt: new Date().toISOString(),
+      createdBy: user?.id,
+    });
+    toast.success(`Note added to ${q.number}`);
+  };
+
   return (
-    <KanbanBoard
-      className="xl:grid-cols-3 2xl:grid-cols-5"
-      columns={columns}
-      items={list}
-      idOf={(q) => q.id}
-      labelOf={(q) => q.number}
-      columnOf={(q) => q.status}
-      canMove={(q) => {
-        if (canWrite(q)) return true;
-        toast.error(`You do not have permission to change ${q.number}.`);
-        return false;
-      }}
-      onMove={move}
-      onCardClick={onOpen}
-      renderCard={(q) => {
-        const cl = clients.find((c) => c.id === q.clientId);
-        const co = companies.find((c) => c.id === q.companyId);
-        return (
-          <>
-            <div className="flex items-start justify-between gap-2">
-              <div className="text-xs font-tnum text-muted-foreground break-words">{q.number}</div>
-              {co && <span className="h-1.5 w-1.5 rounded-full mt-1 shrink-0" style={{ background: co.color }} />}
-            </div>
-            <div className="text-sm font-medium leading-snug mt-0.5 break-words" title={clientTitle(cl)}>{clientLabel(cl)}</div>
-            {q.subject && <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{q.subject}</div>}
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40">
-              <div className="font-tnum text-sm font-semibold">{fmtCompact(q.totalAmount ?? q.amount, q.currency)}</div>
-              <div className="text-[10px] text-muted-foreground font-tnum">{format(parseISO(q.validUntil), "MMM d")}</div>
-            </div>
-          </>
-        );
-      }}
-    />
+    <div className="space-y-3">
+      <div className="flex items-center justify-end gap-2">
+        {hidden > 0 && (
+          <button
+            type="button"
+            onClick={() => tpl.setActive("sales-flow")}
+            className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {hidden} hidden by this template
+          </button>
+        )}
+        <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setHistoryOpen(true)}>
+          <History className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Board history</span>
+        </Button>
+        <KanbanTemplatePicker
+          templates={tpl.templates}
+          active={tpl.active}
+          onSelect={tpl.setActive}
+          onSave={tpl.save}
+          onRename={tpl.rename}
+          onRemove={tpl.remove}
+          currentKeys={activeKeys}
+        />
+      </div>
+
+      <KanbanBoard
+        className="xl:grid-cols-3 2xl:grid-cols-5"
+        columns={columns}
+        items={visible}
+        idOf={(q) => q.id}
+        labelOf={(q) => q.number}
+        columnOf={(q) => q.status}
+        canMove={(q, to) => {
+          if (canWrite(q)) return true;
+          logBoardMove({
+            docType: "quote", docId: q.id, docNumber: q.number, companyId: q.companyId,
+            from: q.status, to, blocked: true, reason: "no permission",
+          });
+          toast.error(`You do not have permission to change ${q.number}.`);
+          return false;
+        }}
+        onMove={move}
+        onCardClick={onOpen}
+        renderActions={(q) => {
+          const notes = followups.filter((f) => f.quoteId === q.id).length;
+          return (
+            <>
+              <CardAction icon={ExternalLink} label="Open details" onClick={() => onOpen(q)} />
+              <CardAction icon={UserPlus} label="Assign to me" onClick={() => assignToMe(q)} disabled={!user?.id} />
+              <CardCommentAction count={notes} onSubmit={(text) => comment(q, text)} />
+            </>
+          );
+        }}
+        renderCard={(q) => {
+          const cl = clients.find((c) => c.id === q.clientId);
+          const co = companies.find((c) => c.id === q.companyId);
+          return (
+            <>
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-xs font-tnum text-muted-foreground break-words">{q.number}</div>
+                {co && <span className="h-1.5 w-1.5 rounded-full mt-1 shrink-0" style={{ background: co.color }} />}
+              </div>
+              <div className="text-sm font-medium leading-snug mt-0.5 break-words" title={clientTitle(cl)}>{clientLabel(cl)}</div>
+              {q.subject && <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{q.subject}</div>}
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40">
+                <div className="font-tnum text-sm font-semibold">{fmtCompact(q.totalAmount ?? q.amount, q.currency)}</div>
+                <div className="text-[10px] text-muted-foreground font-tnum">{format(parseISO(q.validUntil), "MMM d")}</div>
+              </div>
+            </>
+          );
+        }}
+      />
+
+      <BoardHistoryPanel
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        docType="quote"
+        docIds={list.map((q) => q.id)}
+        onOpenDoc={(id) => {
+          const q = list.find((x) => x.id === id);
+          if (q) onOpen(q);
+        }}
+      />
+    </div>
   );
 }
+

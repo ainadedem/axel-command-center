@@ -878,6 +878,7 @@ export type Database = {
       invoices: {
         Row: {
           amount: number
+          assigned_to: string[]
           bank_account_id: string | null
           cancellation_reason: string | null
           cancelled_at: string | null
@@ -921,6 +922,7 @@ export type Database = {
         }
         Insert: {
           amount?: number
+          assigned_to?: string[]
           bank_account_id?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -964,6 +966,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          assigned_to?: string[]
           bank_account_id?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null

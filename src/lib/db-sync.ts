@@ -683,6 +683,7 @@ const invoiceToDb = (inv: Invoice) => {
     total_amount: inv.totalAmount ?? inv.amount,
 
     subject: inv.subject ?? null,
+    assigned_to: (inv.assignedTo ?? []).filter((id) => isUuid(id)).slice(0, 3),
     bank_account_id: inv.bankAccountId ?? null,
     ingestion_date: inv.ingestionDate ?? null,
     handover_proof_url: inv.handoverProofUrl ?? null,
@@ -709,6 +710,7 @@ const invoiceFromDb = (r: Record<string, unknown>, lines: QuoteLine[]): Invoice 
   projectId: (r.project_id as string) ?? undefined,
   poId: (r.po_id as string) ?? undefined,
   poWaived: Boolean(r.po_waived),
+  assignedTo: ((r.assigned_to as string[]) ?? []).filter(Boolean),
   poWaiverReason: (r.po_waiver_reason as string) ?? undefined,
 
   quoteId: (r.quote_id as string) ?? undefined,

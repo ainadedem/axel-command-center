@@ -26,6 +26,7 @@ export function KanbanBoard<T>({
   idOf,
   labelOf,
   renderCard,
+  renderActions,
   onMove,
   canMove,
   onCardClick,
@@ -39,6 +40,8 @@ export function KanbanBoard<T>({
   /** Accessible name of a card, used in the live region. */
   labelOf: (item: T) => string;
   renderCard: (item: T) => ReactNode;
+  /** Quick actions rendered on hover / focus at the bottom of a card. */
+  renderActions?: (item: T) => ReactNode;
   onMove: (item: T, columnKey: string) => void;
   /** Optional guard — return false to reject a drop. */
   canMove?: (item: T, columnKey: string) => boolean;
@@ -46,6 +49,7 @@ export function KanbanBoard<T>({
   className?: string;
   minHeight?: string;
 }) {
+
   const [dragId, setDragId] = useState<string | null>(null);
   const [overKey, setOverKey] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
@@ -155,7 +159,21 @@ export function KanbanBoard<T>({
                       )}
                     >
                       {renderCard(item)}
+                      {renderActions && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                          className={cn(
+                            "flex items-center gap-1 mt-2 pt-2 border-t border-border/40",
+                            "opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100",
+                            "transition-opacity duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
+                          )}
+                        >
+                          {renderActions(item)}
+                        </div>
+                      )}
                     </div>
+
                   );
                 })}
                 {colItems.length === 0 && (
