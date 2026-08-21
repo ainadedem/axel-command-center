@@ -20,7 +20,7 @@ const isUuid = (v?: string | null) =>
 export async function fanOut(actorId: string, input: FanOutInput) {
   const url = process.env["SUPABASE_URL"];
   const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
-  if (!url || !serviceKey) return { delivered: 0, emailed: 0 };
+  if (!url || !serviceKey) return { delivered: 0, emailed: 0, queued: 0 };
 
   const { createClient } = await import("@supabase/supabase-js");
   const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
@@ -85,7 +85,7 @@ export async function fanOut(actorId: string, input: FanOutInput) {
   };
 
   const targets = [...new Set([...direct, ...watchers])].filter((u) => u !== actorId);
-  if (targets.length === 0) return { delivered: 0, emailed: 0 };
+  if (targets.length === 0) return { delivered: 0, emailed: 0, queued: 0 };
 
   const { data: actorProfile } = await admin
     .from("profiles").select("display_name, email").eq("user_id", actorId).maybeSingle();
