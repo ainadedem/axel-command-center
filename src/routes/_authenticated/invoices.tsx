@@ -922,6 +922,7 @@ function Body() {
 function CancelInvoiceDialog({ open, onOpenChange, invoice }: { open: boolean; onOpenChange: (v: boolean) => void; invoice: Invoice | null }) {
   const [reason, setReason] = useState("");
   const [showErrors, setShowErrors] = useState(false);
+  const [opportunityId, setOpportunityId] = useState("");
   useEffect(() => { if (open) setReason(""); }, [open]);
   if (!invoice) return null;
   const submit = () => {
@@ -1030,6 +1031,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
       setLines((editing.lines ?? []).map((l) => ({ ...l })));
       setDiscountPct(editing.discountPct ?? 0);
       setTaxRate(editing.taxRate ?? 0);
+      setOpportunityId(editing.opportunityId ?? "");
     } else {
       // Starting from a PO ("Send to Invoice"): inherit its company/client/project.
       const sourcePo = prefillPoId ? pos.find((p) => p.id === prefillPoId) : undefined;
@@ -1040,6 +1042,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
       setProjectId(sourcePo?.projectId ?? ""); setPoId(sourcePo?.id ?? ""); setPoWaived(false); setPoWaiverReason("");
       setSubject(sourcePo?.subject ?? ""); setBankAccountId(sourcePo?.bankAccountId ?? "");
 
+      setOpportunityId("");
       setIssueDate(today); setDueDate(today);
       setAmount(sourcePo ? String(sourcePo.amount) : "0"); setPaid("0");
       setCurrency(sourcePo?.currency ?? company?.baseCurrency ?? "EUR"); setStatus("draft");
@@ -1207,7 +1210,10 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
       taxRate: taxRateNum,
       taxAmount,
       totalAmount: payable,
+      // Pipeline link: explicit choice wins, otherwise inherit the source quote's deal.
+      opportunityId: opportunityId || linkedQuote?.opportunityId || undefined,
     };
+    const oppId = data.opportunityId;
 
     if (editing) {
       invoicesStore.update(editing.id, { ...data, updatedBy: user?.id, updatedAt: new Date().toISOString() });
@@ -1225,6 +1231,11 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
         { id: newId("inv"), ...data, createdBy: user?.id, updatedBy: user?.id, updatedAt: new Date().toISOString() },
         { onSynced: (dbId) => logActivity({ docType: "invoice", docId: dbId, docNumber: number, companyId, action: "created", summary: `Invoice ${number} created` }) },
       );
+    }
+
+    if (oppId && finalStatus !== "draft" && editing?.status !== finalStatus) {
+      proposeStageChange(oppId, "invoice_issued", {},
+        editing ? { docType: "invoice", docId: editing.id, docNumber: number } : undefined);
     }
     onOpenChange(false);
   };
@@ -1330,6 +1341,15 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
               </SelectContent>
             </Select>
           </div>
+          <OpportunitySelect
+            companyId={companyId}
+            clientId={clientId}
+            subject={subject}
+            issueDate={issueDate}
+            value={opportunityId || linkedQuote?.opportunityId || ""}
+            onChange={setOpportunityId}
+            allowCreate={false}
+          />
           <div>
             <Label>Object</Label>
             <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Brand campaign production — Q3 2026" />
