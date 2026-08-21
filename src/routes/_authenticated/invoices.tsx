@@ -172,6 +172,10 @@ function Body() {
     const d = parseISO(iso);
     return `${d.getFullYear()} Q${Math.floor(d.getMonth() / 3) + 1}`;
   };
+  const quarterSortKey = (iso: string) => {
+    const d = parseISO(iso);
+    return `${d.getFullYear()}-Q${Math.floor(d.getMonth() / 3) + 1}`;
+  };
   const { ownerName } = useOwnerNames(baseList.map((i) => i.createdBy));
   const monthOf = (iso: string) => format(parseISO(iso), "MMM yyyy");
   const dayOf = (iso: string) => format(parseISO(iso), "MMM d, yyyy");
