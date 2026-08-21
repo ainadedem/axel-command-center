@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Link } from "@tanstack/react-router";
 import { format, parseISO } from "date-fns";
@@ -11,14 +12,27 @@ import type { QuoteInvoiceVariance, VarianceLine } from "@/lib/quote-invoice-var
 
 /** Drill-down of everything a pipeline deal is linked to. */
 export function OpportunityRevenueDrawer({
-  opportunity, rollup, variance, open, onOpenChange,
+  opportunity, rollup, variance, open, onOpenChange, initialSection,
 }: {
   opportunity: Opportunity | null;
   rollup: OpportunityRollup | null;
   variance?: QuoteInvoiceVariance | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  initialSection?: "quotes" | "invoices" | null;
 }) {
+  const quotesRef = useRef<HTMLDivElement | null>(null);
+  const invoicesRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open || !initialSection) return;
+    const t = setTimeout(() => {
+      const el = initialSection === "quotes" ? quotesRef.current : invoicesRef.current;
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 220);
+    return () => clearTimeout(t);
+  }, [open, initialSection, opportunity?.id]);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-lg p-0 flex flex-col gap-0">
@@ -44,7 +58,7 @@ export function OpportunityRevenueDrawer({
               <VarianceSection v={variance} />
             )}
 
-            <Section icon={<FileText className="h-3.5 w-3.5" />} title={`Quotations (${rollup.quotes.length})`}>
+            <Section anchorRef={quotesRef} icon={<FileText className="h-3.5 w-3.5" />} title={`Quotations (${rollup.quotes.length})`}>
               {rollup.quotes.length === 0 ? (
                 <Empty>No quotation linked to this deal yet.</Empty>
               ) : rollup.quotes.map((q) => (
@@ -60,7 +74,7 @@ export function OpportunityRevenueDrawer({
               ))}
             </Section>
 
-            <Section icon={<Receipt className="h-3.5 w-3.5" />} title={`Invoices (${rollup.invoices.length})`}>
+            <Section anchorRef={invoicesRef} icon={<Receipt className="h-3.5 w-3.5" />} title={`Invoices (${rollup.invoices.length})`}>
               {rollup.invoices.length === 0 ? (
                 <Empty>No invoice raised against this deal yet.</Empty>
               ) : rollup.invoices.map((i) => (
@@ -91,9 +105,9 @@ function Metric({ label, value, tone }: { label: string; value: string; tone?: "
   );
 }
 
-function Section({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+function Section({ icon, title, children, anchorRef }: { icon: React.ReactNode; title: string; children: React.ReactNode; anchorRef?: React.Ref<HTMLDivElement> }) {
   return (
-    <div className="space-y-2">
+    <div ref={anchorRef} className="space-y-2 scroll-mt-4">
       <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">{icon}{title}</div>
       <div className="space-y-1.5">{children}</div>
     </div>
@@ -122,6 +136,7 @@ function Row({ to, focus, title, meta, amount, badge }: {
       </div>
       {badge}
       <div className="text-xs font-tnum shrink-0">{amount}</div>
+      <span className="text-[10px] text-primary shrink-0 opacity-70 group-hover:opacity-100">Open</span>
     </Link>
   );
 }
