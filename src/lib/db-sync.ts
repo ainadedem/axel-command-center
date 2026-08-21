@@ -658,6 +658,7 @@ const invoiceToDb = (inv: Invoice) => {
     po_waiver_reason: inv.poWaiverReason ?? null,
 
     ...link("quote_id", inv.quoteId),
+    ...link("opportunity_id", inv.opportunityId),
 
     number: inv.number,
     issue_date: inv.issueDate,
@@ -704,6 +705,7 @@ const invoiceFromDb = (r: Record<string, unknown>, lines: QuoteLine[]): Invoice 
   poWaiverReason: (r.po_waiver_reason as string) ?? undefined,
 
   quoteId: (r.quote_id as string) ?? undefined,
+  opportunityId: (r.opportunity_id as string) ?? undefined,
   issueDate: (r.issue_date as string) ?? "",
   dueDate: (r.due_date as string) ?? "",
   amount: Number(r.amount) || 0,
@@ -991,6 +993,7 @@ const quoteToDb = (q: Quote) => {
     company_id: dbCompany,
     ...link("client_id", q.clientId),
     ...link("project_id", q.projectId),
+    ...link("opportunity_id", q.opportunityId),
 
     number: q.number,
     issue_date: q.issueDate,
@@ -1029,6 +1032,7 @@ const quoteFromDb = (r: Record<string, unknown>): Quote => ({
   companyId: toLocalCompanyId(r.company_id as string),
   clientId: (r.client_id as string) ?? "",
   projectId: (r.project_id as string) ?? undefined,
+  opportunityId: (r.opportunity_id as string) ?? undefined,
   issueDate: (r.issue_date as string) ?? "",
   validUntil: (r.valid_until as string) ?? "",
   amount: Number(r.amount) || 0,

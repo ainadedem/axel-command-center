@@ -267,6 +267,8 @@ export interface Invoice {
 
   /** Convenience: quote that the PO descends from. */
   quoteId?: string;
+  /** Pipeline deal this invoice realises revenue for. */
+  opportunityId?: string;
   issueDate: string;
   dueDate: string;
   amount: number;
@@ -359,6 +361,8 @@ export interface Quote {
   companyId: string;
   clientId: string;
   projectId?: string;
+  /** Pipeline deal this quotation belongs to. */
+  opportunityId?: string;
   issueDate: string;
   /** Date the quote stops being valid. */
   validUntil: string;
