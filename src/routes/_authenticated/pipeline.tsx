@@ -89,7 +89,7 @@ function Body() {
   const acqOf = useAcqLookup(clients);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Opportunity | null>(null);
-  const [view, setView] = useState<"kanban" | "list" | "revenue" | "acquisition" | "closer" | "forecast">("kanban");
+  const [view, setView] = useState<"kanban" | "list" | "revenue" | "conversion" | "acquisition" | "closer" | "forecast">("kanban");
   const quotes = useQuotes();
   const invoices = useInvoices();
   const rollups = useMemo(() => buildRollups(list, quotes, invoices), [list, quotes, invoices]);
