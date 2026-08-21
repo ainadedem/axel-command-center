@@ -8,7 +8,15 @@ import {
   useQuotes, useCompanies, useClients, useProjects, quotesStore, purchaseOrdersStore,
   fmt, fmtCompact, toMGA, FX, type Quote, type QuoteLine, type QuoteStatus, type QuoteMode, type Currency, type Client,
   contactBelongsTo, MAX_QUOTE_ASSIGNEES, useOpportunities, useInvoices,
+  useQuoteFollowups, quoteFollowupsStore,
 } from "@/lib/mock-data";
+import { KanbanTemplatePicker } from "@/components/kanban-template-picker";
+import { useKanbanTemplates, type KanbanTemplate } from "@/lib/kanban-templates";
+import { BoardHistoryPanel } from "@/components/board-history-panel";
+import { logBoardMove } from "@/lib/board-moves";
+import { CardAction, CardCommentAction } from "@/components/kanban-card-actions";
+import { ExternalLink, UserPlus } from "lucide-react";
+
 import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
 import { useLineReorder, DragHandle, moveItem, ReorderLiveRegion } from "@/components/sortable-row";
 import { newId } from "@/lib/data-store";
