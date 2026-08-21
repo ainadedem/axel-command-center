@@ -62,7 +62,7 @@ import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions,
 import { StatusBadge, PoBadge, VerifiedBadge } from "@/components/status-badge";
 import { PaymentProofBlock } from "@/components/payment-proof-block";
 import { PaymentMatchDialog } from "@/components/payment-match-dialog";
-import { verificationOf, type ProofInvoice } from "@/lib/payment-proof";
+import { verificationOf, badgeState, type ProofInvoice } from "@/lib/payment-proof";
 import { OpportunitySelect } from "@/components/opportunity-select";
 import { proposeStageChange } from "@/lib/pipeline-automation";
 import { MasterDetail, DetailPanel, DetailField, DetailSection } from "@/components/master-detail";
@@ -496,7 +496,7 @@ function Body() {
                 title={inv.status === "cancelled" && inv.cancellationReason ? `Cancelled: ${inv.cancellationReason}` : undefined}
               />
               {inv.status !== "cancelled" && <PoBadge state={poStateOf(inv)} />}
-              {inv.status !== "cancelled" && verifOf(inv) !== "n/a" && <VerifiedBadge state={verifOf(inv) as "verified" | "partial" | "unverified"} />}
+              {inv.status !== "cancelled" && verifOf(inv) !== "n/a" && <VerifiedBadge state={badgeState(verifOf(inv))} />}
               <StatusDiffChip id={inv.id} />
             </div>
           </ListTd>

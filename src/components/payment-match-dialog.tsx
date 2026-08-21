@@ -21,8 +21,11 @@ import {
 const money = (v: number, c: string) => fmtFull(v, c as Currency);
 
 import { invoicePayable } from "@/lib/invoice-money";
-import { proposeMatches, type MatchProposal, type ProofInvoice } from "@/lib/payment-proof";
-import { logActivity } from "@/lib/document-activity";
+import {
+  proposeMatches, proposeMatchesForTransaction, buildPaymentProof,
+  type MatchProposal, type ProofInvoice, type ProofTransaction,
+} from "@/lib/payment-proof";
+import { logPaymentVerified, logPaymentReviewed, logPaymentUnlinked } from "@/lib/payment-audit";
 import { withoutHistory } from "@/lib/history";
 
 const toneOf = (c: string) =>
@@ -32,11 +35,14 @@ export function PaymentMatchDialog({
   open,
   onOpenChange,
   invoices,
+  transaction,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   /** Invoices to review — a single invoice, a bulk selection, or the whole list. */
   invoices: Invoice[];
+  /** Transaction-seeded mode: propose the invoices this receipt could settle. */
+  transaction?: ProofTransaction;
 }) {
   const allInvoices = useInvoices();
   const transactions = useTransactions();
@@ -48,6 +54,16 @@ export function PaymentMatchDialog({
 
   const proposals: MatchProposal[] = useMemo(() => {
     if (!open) return [];
+    if (transaction) {
+      return proposeMatchesForTransaction({
+        transaction,
+        invoices: allInvoices as unknown as ProofInvoice[],
+        transactions: transactions as never,
+        quotes: quotes as never,
+        pos: pos as never,
+        clientName: (id) => clients.find((c) => c.id === id)?.name,
+      }).map((m) => ({ invoice: m.invoice, candidates: [m.candidate], best: m.candidate }));
+    }
     const ids = new Set(invoices.map((i) => i.id));
     const scope = allInvoices.filter((i) => ids.has(i.id));
     return proposeMatches({
@@ -57,12 +73,12 @@ export function PaymentMatchDialog({
       pos: pos as never,
       clientName: (id) => clients.find((c) => c.id === id)?.name,
     });
-  }, [open, invoices, allInvoices, transactions, quotes, pos, clients]);
+  }, [open, invoices, allInvoices, transactions, quotes, pos, clients, transaction]);
 
   useEffect(() => {
     if (!open) return;
     const next: Record<string, boolean> = {};
-    for (const p of proposals) next[p.invoice.id] = p.best.confidence === "high";
+    for (const p of proposals) next[p.invoice.id] = !transaction && p.best.confidence === "high";
     setAccepted(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, proposals.length]);
@@ -102,30 +118,54 @@ export function PaymentMatchDialog({
         invoicesStore.update(inv.id, invPatch);
       });
 
-      logActivity({
-        docType: "invoice",
-        docId: inv.id,
-        docNumber: inv.number,
-        companyId: inv.companyId,
-        action: "status_changed",
-        summary: `Payment matched to bank transaction ${tx.date} · ${money(tx.amount, tx.currency)}`,
-        details: {
+      const outstanding = buildPaymentProof(
+        inv as unknown as ProofInvoice, transactions as never, quotes as never, pos as never,
+      ).outstanding;
+
+      logPaymentVerified(
+        { invoiceId: inv.id, invoiceNumber: inv.number, companyId: inv.companyId },
+        {
           transactionId: tx.id,
+          transactionDate: tx.date,
+          transactionAmount: tx.amount,
+          transactionCurrency: tx.currency,
           transactionDescription: tx.description,
+          reasons: p.best.reasons,
           confidence: p.best.confidence,
           score: p.best.score,
-          reasons: p.best.reasons,
+          amountDelta: p.best.amountDelta,
+          dayGap: p.best.dayGap,
+          targetAmount: outstanding || invoicePayable(inv),
           quoteLinked: invPatch.quoteId ?? null,
           poLinked: invPatch.poId ?? null,
         },
-      });
+        transaction ? "transaction" : accepted[p.invoice.id] && p.best.confidence === "high" ? "auto" : "manual",
+      );
 
       reverts.push(() => {
         void withoutHistory(async () => {
           transactionsStore.update(tx.id, txBefore);
           invoicesStore.update(inv.id, invBefore);
         });
+        logPaymentUnlinked(
+          { invoiceId: inv.id, invoiceNumber: inv.number, companyId: inv.companyId },
+          { transactionId: tx.id, reason: "undone by the user" },
+        );
       });
+    }
+
+    for (const p of proposals) {
+      if (accepted[p.invoice.id]) continue;
+      const inv = allInvoices.find((i) => i.id === p.invoice.id);
+      if (!inv) continue;
+      logPaymentReviewed(
+        { invoiceId: inv.id, invoiceNumber: inv.number, companyId: inv.companyId },
+        {
+          candidates: p.candidates.length,
+          bestConfidence: p.best.confidence,
+          bestTransactionId: p.best.transaction.id,
+        },
+      );
     }
 
     setBusy(false);
@@ -148,8 +188,9 @@ export function PaymentMatchDialog({
         <DialogHeader>
           <DialogTitle>Match payments to bank transactions</DialogTitle>
           <DialogDescription>
-            Proposed links between invoices marked paid and unlinked income transactions. Review each
-            one — nothing is written until you confirm.
+            {transaction
+              ? "Invoices this bank receipt could settle, scored against what is still outstanding on each. Review before confirming."
+              : "Proposed links between invoices marked paid and unlinked income transactions. Review each one — nothing is written until you confirm."}
           </DialogDescription>
         </DialogHeader>
 

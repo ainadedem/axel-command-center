@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   buildPaymentProof,
   proposeMatches,
+  proposeMatchesForTransaction,
+  badgeState,
   scoreCandidate,
   type ProofInvoice,
   type ProofTransaction,
@@ -120,5 +122,80 @@ describe("proposeMatches", () => {
       pos: [{ id: "po1", number: "PO-1", companyId: "log", quoteId: "q1", amount: 1, currency: "MGA" }],
     });
     expect(res[0].suggestedQuote?.id).toBe("q1");
+  });
+});
+
+describe("installments", () => {
+  const half = 600_000;
+
+  it("reports a part-payment as an installment with the balance outstanding", () => {
+    const proof = buildPaymentProof(
+      inv({ status: "sent", paid: half }),
+      [tx({ id: "p1", invoiceId: "inv1", amount: half })],
+      [], [],
+    );
+    expect(proof.verification).toBe("installment");
+    expect(proof.covered).toBe(half);
+    expect(proof.outstanding).toBe(600_000);
+    expect(proof.shortfall).toBe(0);
+    expect(proof.installments).toHaveLength(1);
+    expect(proof.installments[0].remainingAfter).toBe(600_000);
+  });
+
+  it("chains several installments with running coverage", () => {
+    const proof = buildPaymentProof(
+      inv({ paid: 1_200_000 }),
+      [
+        tx({ id: "p2", invoiceId: "inv1", amount: half, date: "2026-07-02" }),
+        tx({ id: "p1", invoiceId: "inv1", amount: half, date: "2026-06-12" }),
+      ],
+      [], [],
+    );
+    expect(proof.verification).toBe("verified");
+    expect(proof.installments.map((i) => i.transaction.id)).toEqual(["p1", "p2"]);
+    expect(proof.installments[0].runningCovered).toBe(half);
+    expect(proof.installments[1].remainingAfter).toBe(0);
+  });
+
+  it("keeps 'partial' when money was recorded as paid without a bank trail", () => {
+    const proof = buildPaymentProof(
+      inv({ paid: 1_200_000 }),
+      [tx({ id: "p1", invoiceId: "inv1", amount: half })],
+      [], [],
+    );
+    expect(proof.verification).toBe("partial");
+    expect(proof.shortfall).toBe(600_000);
+  });
+
+  it("maps every verdict onto the three-state badge", () => {
+    expect(badgeState("installment")).toBe("partial");
+    expect(badgeState("verified")).toBe("verified");
+    expect(badgeState("unverified")).toBe("unverified");
+  });
+});
+
+describe("proposeMatchesForTransaction", () => {
+  it("ranks invoices a receipt could settle, scored on the outstanding balance", () => {
+    const target = inv({ id: "a", number: "FA-A", status: "sent", paid: 600_000 });
+    const other = inv({ id: "b", number: "FA-B", status: "sent", paid: 0, clientId: "cli2" });
+    const receipt = tx({ id: "r1", amount: 600_000, clientId: "cli1", invoiceId: undefined });
+    const res = proposeMatchesForTransaction({
+      transaction: receipt,
+      invoices: [target, other],
+      transactions: [tx({ id: "p1", invoiceId: "a", amount: 600_000 }), receipt],
+      quotes: [], pos: [],
+    });
+    expect(res[0].invoice.id).toBe("a");
+    expect(res[0].outstanding).toBe(600_000);
+    expect(res[0].candidate.reasons).toContain("exact amount");
+  });
+
+  it("ignores expenses and fully verified invoices", () => {
+    const res = proposeMatchesForTransaction({
+      transaction: tx({ type: "expense" }),
+      invoices: [inv()],
+      transactions: [], quotes: [], pos: [],
+    });
+    expect(res).toHaveLength(0);
   });
 });

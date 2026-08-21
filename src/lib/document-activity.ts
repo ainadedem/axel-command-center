@@ -18,7 +18,10 @@ export type ActivityAction =
   | "sent"
   | "deleted"
   | "stamp_changed"
-  | "signer_changed";
+  | "signer_changed"
+  | "payment_verified"
+  | "payment_unlinked"
+  | "payment_reviewed";
 
 
 export interface ActivityEntry {

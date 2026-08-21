@@ -4,7 +4,7 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import {
-  CircleDollarSign, FilePlus2, FileUp, Pencil, Send, Tag, Trash2, History, Loader2, Stamp, PenLine,
+  CircleDollarSign, FilePlus2, FileUp, Pencil, Send, Tag, Trash2, History, Loader2, Stamp, PenLine, ShieldCheck, ShieldQuestion, ShieldAlert,
 } from "lucide-react";
 import { useDocumentActivity, type ActivityAction, type DocType } from "@/lib/document-activity";
 import { useOwnerNames } from "@/hooks/use-owner-names";
@@ -19,6 +19,9 @@ const ICONS: Record<ActivityAction, typeof Pencil> = {
   deleted: Trash2,
   stamp_changed: Stamp,
   signer_changed: PenLine,
+  payment_verified: ShieldCheck,
+  payment_unlinked: ShieldQuestion,
+  payment_reviewed: ShieldAlert,
 };
 
 const TITLES: Record<ActivityAction, string> = {
@@ -31,6 +34,9 @@ const TITLES: Record<ActivityAction, string> = {
   deleted: "Deleted",
   stamp_changed: "Stamp changed",
   signer_changed: "Signer changed",
+  payment_verified: "Payment verified",
+  payment_unlinked: "Payment link removed",
+  payment_reviewed: "Payment reviewed",
 };
 
 
