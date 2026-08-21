@@ -1027,6 +1027,53 @@ export type Database = {
           },
         ]
       }
+      journal_entries: {
+        Row: {
+          company_id: string
+          created_at: string
+          date: string
+          description: string
+          id: string
+          journal: string
+          lines: Json
+          piece: string
+          source: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          date: string
+          description?: string
+          id?: string
+          journal: string
+          lines?: Json
+          piece: string
+          source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          journal?: string
+          lines?: Json
+          piece?: string
+          source?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entries_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_prefs: {
         Row: {
           ar_alerts_enabled: boolean
