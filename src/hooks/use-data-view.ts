@@ -7,6 +7,10 @@ export type FieldDef<T> = {
   label: string;
   type: FieldType;
   accessor: (item: T) => unknown;
+  /** Optional value used for sorting/group ordering instead of the displayed accessor value. */
+  sortAccessor?: (item: T) => unknown;
+  /** Order groups ascending (default) or descending by their sort key. */
+  groupOrder?: "asc" | "desc";
   /** Optional explicit enum options (otherwise derived from data). */
   enumOptions?: string[];
   /** Disable sorting on this field. */
