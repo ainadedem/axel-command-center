@@ -6,10 +6,17 @@ import { useCompanies } from "@/lib/mock-data";
 import { dbCompanyId } from "@/lib/db-sync";
 import {
   NOTIFICATION_EVENTS,
+  EVENT_GROUPS,
+  EMAIL_MODE_LABEL,
+  DEFAULT_QUIET_HOURS,
   resolveEventPrefs,
   resolveWatchRules,
+  resolveEmailModes,
+  resolveQuietHours,
+  type EmailMode,
   type EventChannels,
   type NotificationEventKey,
+  type QuietHours,
   type WatchRules,
 } from "@/lib/notification-events";
 import { Button } from "@/components/ui/button";
