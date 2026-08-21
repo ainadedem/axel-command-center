@@ -18,10 +18,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, Link2 } from "lucide-react";
+import { Pencil, Trash2, Link2, Unlink } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { VerifiedBadge } from "@/components/status-badge";
 import { PaymentMatchDialog } from "@/components/payment-match-dialog";
+import { PaymentUnlinkDialog } from "@/components/payment-unlink-dialog";
 import { buildPaymentProof, badgeState, type ProofInvoice, type ProofTransaction } from "@/lib/payment-proof";
 import { useQuotes, usePurchaseOrders } from "@/lib/mock-data";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
@@ -451,6 +452,15 @@ function Body() {
         invoices={[]}
         transaction={(linking as unknown as ProofTransaction) ?? undefined}
       />
+
+      {unlinking && linkOf(unlinking) && (
+        <PaymentUnlinkDialog
+          open
+          onOpenChange={(v) => { if (!v) setUnlinking(null); }}
+          invoice={linkOf(unlinking)!.invoice}
+          transaction={unlinking as unknown as ProofTransaction}
+        />
+      )}
     </div>
   );
 }
