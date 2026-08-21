@@ -639,6 +639,13 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
   const newAction = NEW_BUTTON_ROUTES.find((route) => route.match(pathname));
   const newLabel = newAction?.label ?? "New";
   const history = useHistory();
+  const router = useRouter();
+  const canGoBack = router.history.canGoBack?.() ?? window.history.length > 1;
+  const crumbs = useBreadcrumbs(pathname);
+  const goBack = () => {
+    if (router.history.back) router.history.back();
+    else window.history.back();
+  };
 
   const runUndo = async () => {
     try {
