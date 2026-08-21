@@ -84,6 +84,16 @@ const QUOTE_COLUMNS: ColumnDef[] = [
 
 export const Route = createFileRoute("/_authenticated/quotations")({ component: QuotationsPage, validateSearch: focusSearch });
 
+const QUOTE_STATUSES = ["draft", "sent", "accepted", "rejected", "expired"];
+
+/** Starter presets seeded once per user — renameable and deletable afterwards. */
+const QUOTE_PRESETS = [
+  { id: "seed-draft", name: "Draft", statuses: ["draft"], po: [] },
+  { id: "seed-awaiting", name: "Sent, awaiting reply", statuses: ["sent"], po: [] },
+  { id: "seed-accepted", name: "Accepted", statuses: ["accepted"], po: [] },
+  { id: "seed-expired", name: "Expired", statuses: ["expired"], po: [] },
+];
+
 const statusStyles: Record<QuoteStatus, string> = {
   draft: "border-muted text-muted-foreground bg-muted/30",
   sent: "border-chart-2/40 text-chart-2 bg-chart-2/10",
