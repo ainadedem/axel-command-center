@@ -137,6 +137,7 @@ const clientToDb = (c: Client) => {
     rcs: c.rcs ?? null,
     categories: c.categories ?? null,
     payment_terms_days: c.paymentTermsDays ?? null,
+    payment_terms_by_currency: c.paymentTermsByCurrency ?? {},
   };
 };
 
@@ -160,6 +161,7 @@ const clientFromDb = (r: Record<string, unknown>): Client => ({
   contacts: (r.contacts as string) ?? undefined,
   taxId: (r.tax_id as string) ?? undefined,
   paymentTermsDays: (r.payment_terms_days as number) ?? undefined,
+  paymentTermsByCurrency: (r.payment_terms_by_currency as Record<string, number>) ?? undefined,
   nif: (r.nif as string) ?? undefined,
   stat: (r.stat as string) ?? undefined,
   rcs: (r.rcs as string) ?? undefined,
