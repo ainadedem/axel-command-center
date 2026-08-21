@@ -233,8 +233,8 @@ export function StatusFilterBar({
         {statusEntries.map(({ key, ...e }) => (
           <Chip key={key} {...e} iconOnly={iconOnly} />
         ))}
-        <span className="mx-1 h-5 w-px bg-border shrink-0" aria-hidden />
-        {poEntries.map(({ key, ...e }) => (
+        {secondary.length > 0 && <span className="mx-1 h-5 w-px bg-border shrink-0" aria-hidden />}
+        {secondary.map(({ key, ...e }) => (
           <Chip key={key} {...e} iconOnly={iconOnly} />
         ))}
         {clearBtn}
