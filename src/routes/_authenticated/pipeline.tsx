@@ -184,7 +184,7 @@ function RevenueView({ list, rollups, variances, onDrill }: {
   const rows = useMemo(() => {
     return list
       .map((o) => ({ o, r: rollups.get(o.id), v: variances.get(o.id) }))
-      .filter((x): x is { o: Opportunity; r: OpportunityRollup; v?: QuoteInvoiceVariance } => !!x.r)
+      .filter((x): x is { o: Opportunity; r: OpportunityRollup; v: QuoteInvoiceVariance | undefined } => !!x.r)
       .filter((x) => !onlyVariance || (x.v ? hasVariance(x.v) : false))
       .sort((a, b) => (b.r.invoiced || b.r.quoted) - (a.r.invoiced || a.r.quoted));
   }, [list, rollups, variances, onlyVariance]);
