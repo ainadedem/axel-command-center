@@ -58,7 +58,7 @@ export function OpportunityRevenueDrawer({
               <VarianceSection v={variance} />
             )}
 
-            <Section icon={<FileText className="h-3.5 w-3.5" />} title={`Quotations (${rollup.quotes.length})`}>
+            <Section anchorRef={quotesRef} icon={<FileText className="h-3.5 w-3.5" />} title={`Quotations (${rollup.quotes.length})`}>
               {rollup.quotes.length === 0 ? (
                 <Empty>No quotation linked to this deal yet.</Empty>
               ) : rollup.quotes.map((q) => (
@@ -74,7 +74,7 @@ export function OpportunityRevenueDrawer({
               ))}
             </Section>
 
-            <Section icon={<Receipt className="h-3.5 w-3.5" />} title={`Invoices (${rollup.invoices.length})`}>
+            <Section anchorRef={invoicesRef} icon={<Receipt className="h-3.5 w-3.5" />} title={`Invoices (${rollup.invoices.length})`}>
               {rollup.invoices.length === 0 ? (
                 <Empty>No invoice raised against this deal yet.</Empty>
               ) : rollup.invoices.map((i) => (
@@ -105,9 +105,9 @@ function Metric({ label, value, tone }: { label: string; value: string; tone?: "
   );
 }
 
-function Section({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+function Section({ icon, title, children, anchorRef }: { icon: React.ReactNode; title: string; children: React.ReactNode; anchorRef?: React.Ref<HTMLDivElement> }) {
   return (
-    <div className="space-y-2">
+    <div ref={anchorRef} className="space-y-2 scroll-mt-4">
       <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">{icon}{title}</div>
       <div className="space-y-1.5">{children}</div>
     </div>
@@ -136,6 +136,7 @@ function Row({ to, focus, title, meta, amount, badge }: {
       </div>
       {badge}
       <div className="text-xs font-tnum shrink-0">{amount}</div>
+      <span className="text-[10px] text-primary shrink-0 opacity-70 group-hover:opacity-100">Open</span>
     </Link>
   );
 }
