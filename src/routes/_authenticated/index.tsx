@@ -360,6 +360,9 @@ function DashboardBody() {
         />
       </div>
 
+      {/* Quotation → invoice conversion gap */}
+      <ConversionGapPanel />
+
       {/* Charts row */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 sm:gap-6">
         <ChartFrame
