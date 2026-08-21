@@ -304,6 +304,8 @@ export interface Invoice {
 
   /** Short object / title printed on the document. */
   subject?: string;
+  /** Up to 3 user ids following this invoice. */
+  assignedTo?: string[];
   /** Which company bank account prints in the payment details block. */
   bankAccountId?: string;
   /** User id of whoever created this invoice. */

@@ -45,7 +45,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { RICH_TEXT_HINT } from "@/lib/rich-text";
 import { RichTextField } from "@/components/rich-text-field";
-import { Wallet, History } from "lucide-react";
+import { Wallet, History, CircleDollarSign, ExternalLink, UserPlus } from "lucide-react";
+import { KanbanTemplatePicker } from "@/components/kanban-template-picker";
+import { useKanbanTemplates, type KanbanTemplate } from "@/lib/kanban-templates";
+import { BoardHistoryPanel } from "@/components/board-history-panel";
+import { logBoardMove } from "@/lib/board-moves";
+import { CardAction, CardCommentAction } from "@/components/kanban-card-actions";
 import { nextNumber, nextNumberAsync, isNumberTaken } from "@/lib/numbering";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
@@ -800,7 +805,7 @@ function Body() {
 
 
           {layout === "board" ? (
-            <InvoiceBoard list={list} clients={clients} companies={companies} canWrite={isWritable} onOpen={(inv) => setSelectedId(inv.id)} />
+            <InvoiceBoard list={list} clients={clients} companies={companies} canWrite={isWritable} onOpen={(inv) => setSelectedId(inv.id)} onMarkPaid={(inv) => setMarking(inv)} />
           ) : (
           <ListTableShell
             scrollX
