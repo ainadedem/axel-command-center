@@ -22,7 +22,7 @@ import { Pencil, Trash2, Link2, Unlink } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { VerifiedBadge } from "@/components/status-badge";
 import { PaymentMatchDialog } from "@/components/payment-match-dialog";
-import { PaymentUnlinkDialog } from "@/components/payment-unlink-dialog";
+import { PaymentUnlinkDialog, type UnlinkPair } from "@/components/payment-unlink-dialog";
 import { buildPaymentProof, badgeState, type ProofInvoice, type ProofTransaction } from "@/lib/payment-proof";
 import { useQuotes, usePurchaseOrders } from "@/lib/mock-data";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
@@ -128,16 +128,14 @@ function Body() {
   const isLinked = useCallback((t: Transaction) => !!t.invoiceId, []);
   const selection = useBulkSelection(list, isLinked);
   /** Selected receipts that still resolve to an invoice, as unlink pairs. */
-  const unlinkPairs = useMemo(
-    () =>
-      selection.selectedRows
-        .map((t) => {
-          const link = linkOf(t);
-          return link ? { invoice: link.invoice, transaction: t as unknown as ProofTransaction } : null;
-        })
-        .filter((p): p is { invoice: (typeof p & object) extends never ? never : ReturnType<typeof linkOf> extends null ? never : NonNullable<ReturnType<typeof linkOf>>["invoice"]; transaction: ProofTransaction } => p !== null),
-    [selection.selectedRows, linkOf],
-  );
+  const unlinkPairs = useMemo<UnlinkPair[]>(() => {
+    const pairs: UnlinkPair[] = [];
+    selection.selectedRows.forEach((t) => {
+      const link = linkOf(t);
+      if (link) pairs.push({ invoice: link.invoice, transaction: t as unknown as ProofTransaction });
+    });
+    return pairs;
+  }, [selection.selectedRows, linkOf]);
 
   const cp = useColumnPrefs("transactions", TX_COLUMNS);
 
