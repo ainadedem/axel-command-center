@@ -177,31 +177,104 @@ export function NotificationSettings() {
         <>
           <div className="rounded-lg border border-border overflow-hidden">
             <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 px-3 py-2 bg-[var(--surface-container)] text-[10px] uppercase tracking-wider text-muted-foreground">
-              <span>Event</span><span className="text-center w-14">In-app</span><span className="text-center w-14">Email</span>
+              <span>Event</span><span className="text-center w-14">In-app</span><span className="text-center w-32">Email</span>
             </div>
-            {NOTIFICATION_EVENTS.map((e) => (
-              <div key={e.key} className="grid grid-cols-[1fr_auto_auto] gap-x-4 items-center px-3 py-2.5 border-t border-border/60">
-                <div className="min-w-0">
-                  <div className="text-sm">{e.label}</div>
-                  <div className="text-[11px] text-muted-foreground">{e.description}</div>
+            {EVENT_GROUPS.map((g) => {
+              const kinds = g.kinds;
+              const allOn = kinds.every((k) => events[k].inApp);
+              return (
+                <div key={g.key}>
+                  <div className="flex items-center justify-between gap-2 px-3 py-1.5 border-t border-border/60 bg-muted/30">
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{g.label}</span>
+                    <span className="flex items-center gap-2">
+                      <button
+                        onClick={() => setGroup(kinds, !allOn)}
+                        className="text-[11px] text-primary hover:underline"
+                      >
+                        {allOn ? "Turn group off" : "Turn group on"}
+                      </button>
+                      <button
+                        onClick={() => muteGroup(kinds)}
+                        className="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
+                      >
+                        Mute everywhere
+                      </button>
+                    </span>
+                  </div>
+                  {NOTIFICATION_EVENTS.filter((e) => kinds.includes(e.key)).map((e) => (
+                    <div key={e.key} className="grid grid-cols-[1fr_auto_auto] gap-x-4 items-center px-3 py-2.5 border-t border-border/60">
+                      <div className="min-w-0">
+                        <div className="text-sm">{e.label}</div>
+                        <div className="text-[11px] text-muted-foreground">{e.description}</div>
+                      </div>
+                      <div className="w-14 flex justify-center">
+                        <Switch
+                          checked={events[e.key].inApp}
+                          onCheckedChange={(v) => setChannel(e.key, "inApp", v)}
+                          aria-label={`${e.label} in app`}
+                        />
+                      </div>
+                      <div className="w-32 flex justify-end">
+                        <select
+                          value={modes[e.key]}
+                          onChange={(ev) => setMode(e.key, ev.target.value as EmailMode)}
+                          aria-label={`${e.label} email delivery`}
+                          className="h-8 w-32 rounded-md border border-border bg-background px-2 text-xs"
+                        >
+                          {(["off", "immediate", "digest"] as EmailMode[]).map((m) => (
+                            <option key={m} value={m}>{EMAIL_MODE_LABEL[m]}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="w-14 flex justify-center">
-                  <Switch
-                    checked={events[e.key].inApp}
-                    onCheckedChange={(v) => setChannel(e.key, "inApp", v)}
-                    aria-label={`${e.label} in app`}
-                  />
-                </div>
-                <div className="w-14 flex justify-center">
-                  <Switch
-                    checked={events[e.key].email}
-                    onCheckedChange={(v) => setChannel(e.key, "email", v)}
-                    aria-label={`${e.label} by email`}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
+
+          <div className="rounded-lg border border-border p-3 space-y-3">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label htmlFor="quiet-hours" className="text-sm font-normal">Quiet hours</Label>
+                <p className="text-[11px] text-muted-foreground">
+                  In-app alerts always arrive instantly — quiet hours only hold emails back.
+                </p>
+              </div>
+              <Switch
+                id="quiet-hours"
+                checked={quiet.enabled}
+                onCheckedChange={(v) => setQuiet((q) => ({ ...q, enabled: v }))}
+              />
+            </div>
+            <div className={cn("flex flex-wrap items-center gap-3", !quiet.enabled && "opacity-50 pointer-events-none")}>
+              <label className="text-xs text-muted-foreground flex items-center gap-2">
+                From
+                <Input
+                  type="time"
+                  className="h-8 w-28"
+                  value={quiet.start}
+                  onChange={(e) => setQuiet((q) => ({ ...q, start: e.target.value || q.start }))}
+                />
+              </label>
+              <label className="text-xs text-muted-foreground flex items-center gap-2">
+                To
+                <Input
+                  type="time"
+                  className="h-8 w-28"
+                  value={quiet.end}
+                  onChange={(e) => setQuiet((q) => ({ ...q, end: e.target.value || q.end }))}
+                />
+              </label>
+              <span className="text-[11px] text-muted-foreground">{quiet.timeZone ?? localZone}</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              {quiet.enabled
+                ? `Emails paused ${quiet.start}–${quiet.end} (${quiet.timeZone ?? localZone}) — held mail and daily digests arrive at ${quiet.end}.`
+                : "Daily digests go out at 08:00 in your timezone."}
+            </p>
+          </div>
+
 
           {isAdmin && (
             <div className="rounded-lg border border-border p-3 space-y-3">
