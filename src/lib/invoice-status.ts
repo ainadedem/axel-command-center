@@ -7,6 +7,7 @@
  * together with the status, are written to the audit trail, and can be undone.
  */
 import { useSyncExternalStore } from "react";
+import { proposeStageChange } from "@/lib/pipeline-automation";
 import { invoicesStore, transactionsStore, type Invoice } from "@/lib/mock-data";
 import { invoiceBalance, invoicePayable } from "@/lib/invoice-money";
 import { logActivity } from "@/lib/document-activity";
