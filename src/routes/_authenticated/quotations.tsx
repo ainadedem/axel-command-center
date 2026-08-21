@@ -26,6 +26,8 @@ import { inScope, useCompany } from "@/lib/company-context";
 import { useAuth } from "@/lib/auth-context";
 import { format, parseISO, addDays } from "date-fns";
 import { StatusBadge } from "@/components/status-badge";
+import { StatusMenu } from "@/components/status-menu";
+import { applyQuoteStatus, QUOTE_STATUS_OPTIONS } from "@/lib/quote-status";
 import { cn } from "@/lib/utils";
 import { Fragment, useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
@@ -316,7 +318,13 @@ function Body() {
       }
     >
       <div className="flex flex-wrap items-center gap-2">
-        <StatusBadge status={selectedQuote.status} />
+        <StatusMenu
+          status={selectedQuote.status}
+          statuses={QUOTE_STATUS_OPTIONS}
+          disabled={!isWritable(selectedQuote)}
+          disabledReason="You cannot change this quotation"
+          onSelect={(next) => applyQuoteStatus(selectedQuote, next as QuoteStatus, { userId: user?.id })}
+        />
         <AssigneeStack companyId={selectedQuote.companyId} ids={selectedQuote.assignedTo ?? []} />
       </div>
       <DetailSection>
@@ -481,15 +489,22 @@ function Body() {
                     {cp.on("issued") && <ListTd className="text-muted-foreground text-xs font-tnum">{format(parseISO(q.issueDate), "MMM d, yyyy")}</ListTd>}
                     {cp.on("validUntil") && <ListTd className="text-muted-foreground text-xs font-tnum">{format(parseISO(q.validUntil), "MMM d, yyyy")}</ListTd>}
                     {cp.on("status") && (
-                      <ListTd>
-                        {q.sentAt ? (
-                          <span className={cn("inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles.sent)} title={`Sent ${format(parseISO(q.sentAt), "MMM d, yyyy HH:mm")}${q.sentTo ? ` to ${q.sentTo}` : ""}`}>
-                            <CheckCircle2 className="h-3 w-3" />
-                            Sent · {format(parseISO(q.sentAt), "MMM d")}
-                          </span>
-                        ) : (
-                          <StatusBadge status={q.status} />
-                        )}
+                      <ListTd wrap>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <StatusMenu
+                            status={q.status}
+                            statuses={QUOTE_STATUS_OPTIONS}
+                            disabled={!isWritable(q)}
+                            disabledReason="You cannot change this quotation"
+                            onSelect={(next) => applyQuoteStatus(q, next as QuoteStatus, { userId: user?.id })}
+                          />
+                          {q.sentAt && (
+                            <span className={cn("inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles.sent)} title={`Sent ${format(parseISO(q.sentAt), "MMM d, yyyy HH:mm")}${q.sentTo ? ` to ${q.sentTo}` : ""}`}>
+                              <CheckCircle2 className="h-3 w-3" />
+                              {format(parseISO(q.sentAt), "MMM d")}
+                            </span>
+                          )}
+                        </div>
                       </ListTd>
                     )}
                     <ListTd align="right" className="font-tnum">{fmtCompact(q.totalAmount ?? q.amount, q.currency)}</ListTd>
@@ -1239,11 +1254,8 @@ function QuoteBoard({
 
   const move = (q: Quote, status: string) => {
     const previous = q.status;
-    quotesStore.update(q.id, { status: status as QuoteStatus });
+    applyQuoteStatus(q, status as QuoteStatus, { userId: user?.id });
     logBoardMove({ docType: "quote", docId: q.id, docNumber: q.number, companyId: q.companyId, from: previous, to: status });
-    toast.success(`${q.number} → ${status}`, {
-      action: { label: "Undo", onClick: () => quotesStore.update(q.id, { status: previous }) },
-    });
   };
 
   const assignToMe = (q: Quote) => {
