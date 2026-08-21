@@ -26,6 +26,7 @@ import { buildRollups, type OpportunityRollup } from "@/lib/pipeline-link";
 import { OpportunityRevenueDrawer } from "@/components/opportunity-revenue-drawer";
 import { buildVariances, hasVariance, type QuoteInvoiceVariance } from "@/lib/quote-invoice-variance";
 import { SignedAmount } from "@/components/signed-amount";
+import { ConversionGapPanel } from "@/components/conversion-gap-panel";
 
 export const Route = createFileRoute("/_authenticated/pipeline")({ component: PipelinePage });
 
