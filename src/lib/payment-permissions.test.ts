@@ -58,9 +58,16 @@ const target = (companyId: string, n: number): UnlinkTarget => ({
 
 const updates: Array<[string, unknown]> = [];
 
-vi.mock("@/lib/mock-data", () => ({
-  transactionsStore: { update: (id: string, patch: unknown) => updates.push([id, patch]) },
-}));
+vi.mock("@/lib/mock-data", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/mock-data")>();
+  return {
+    ...actual,
+    transactionsStore: {
+      ...actual.transactionsStore,
+      update: (id: string, patch: unknown) => updates.push([id, patch]),
+    },
+  };
+});
 vi.mock("@/lib/history", () => ({ withoutHistory: async (fn: () => Promise<void>) => fn() }));
 vi.mock("@/lib/document-activity", () => ({ logActivity: async () => "entry-1" }));
 
