@@ -11,14 +11,27 @@ import type { QuoteInvoiceVariance, VarianceLine } from "@/lib/quote-invoice-var
 
 /** Drill-down of everything a pipeline deal is linked to. */
 export function OpportunityRevenueDrawer({
-  opportunity, rollup, variance, open, onOpenChange,
+  opportunity, rollup, variance, open, onOpenChange, initialSection,
 }: {
   opportunity: Opportunity | null;
   rollup: OpportunityRollup | null;
   variance?: QuoteInvoiceVariance | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  initialSection?: "quotes" | "invoices" | null;
 }) {
+  const quotesRef = useRef<HTMLDivElement | null>(null);
+  const invoicesRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open || !initialSection) return;
+    const t = setTimeout(() => {
+      const el = initialSection === "quotes" ? quotesRef.current : invoicesRef.current;
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 220);
+    return () => clearTimeout(t);
+  }, [open, initialSection, opportunity?.id]);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-lg p-0 flex flex-col gap-0">
