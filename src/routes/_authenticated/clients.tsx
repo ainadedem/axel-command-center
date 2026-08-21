@@ -558,6 +558,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [industry, setIndustry] = useState("");
+  const [paymentTermsDays, setPaymentTermsDays] = useState("");
   const [contacts, setContacts] = useState("");
   const [nif, setNif] = useState("");
   const [stat, setStat] = useState("");
@@ -580,6 +581,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setPhone(editing.phone ?? "");
       setAddress(editing.address ?? "");
       setIndustry(editing.industry ?? "");
+      setPaymentTermsDays(editing.paymentTermsDays != null ? String(editing.paymentTermsDays) : "");
       setContacts(editing.contacts ?? "");
       setNif(editing.nif ?? "");
       setStat(editing.stat ?? "");
@@ -596,7 +598,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       const fallback = scopeFallback;
       setCompanyId(fallback); setCompanyIds(fallback ? [fallback] : []); setName(""); setCountry(""); setAcquisition(""); setReferral("");
       setAcquiredAt(new Date().toISOString().slice(0, 10));
-      setWebsite(""); setEmail(""); setPhone(""); setAddress(""); setIndustry(""); setContacts("");
+      setWebsite(""); setEmail(""); setPhone(""); setAddress(""); setIndustry(""); setContacts(""); setPaymentTermsDays("");
       setNif(""); setStat(""); setRcs("");
       setPay(emptyPayment);
       setAvatarUrl(undefined);
@@ -632,6 +634,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       phone: phone.trim() || undefined,
       address: address.trim() || undefined,
       industry: industry.trim() || undefined,
+      paymentTermsDays: paymentTermsDays.trim() ? Number(paymentTermsDays) : undefined,
       contacts: contacts.trim() || undefined,
       nif: nif.trim() || undefined,
       stat: stat.trim() || undefined,
@@ -761,6 +764,17 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Industry</Label><Input value={industry} onChange={(e) => setIndustry(e.target.value)} placeholder="Telecom, Finance, …" /></div>
+            <div>
+              <Label>Payment terms (days)</Label>
+              <Input
+                type="number"
+                min="0"
+                value={paymentTermsDays}
+                onChange={(e) => setPaymentTermsDays(e.target.value)}
+                placeholder="30"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">Used to match bank receipts to the right invoice when amounts repeat monthly.</p>
+            </div>
             <div><Label>Website</Label><Input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://…" /></div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
