@@ -190,7 +190,7 @@ function Body() {
 
   const applyBulk = async (patch: BulkPatch) => {
     const rows = selection.selectedRows;
-    const n = await bulkUpdateDocuments({
+    const result = await bulkUpdateDocuments({
       collection: quotesStore,
       docType: "quote",
       rows,
@@ -201,7 +201,14 @@ function Body() {
       projectName: (id) => projects.find((p) => p.id === id)?.name ?? id,
     });
     selection.clear();
-    toast.success(`Updated ${n} quote${n !== 1 ? "s" : ""}`);
+    const msg = bulkResultMessage(result, "quote");
+    if (result.failed.length) toast.error(msg, { description: result.failed.map((f) => f.number).join(", ") });
+    else if (result.updated === 0) toast.info(msg);
+    else toast.success(msg, {
+      description: result.skipped.length
+        ? `Skipped: ${result.skipped.slice(0, 4).map((s) => `${s.number} (${s.reason})`).join(", ")}`
+        : undefined,
+    });
   };
 
   const convertToPO = async (q: Quote) => {
