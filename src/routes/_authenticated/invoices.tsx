@@ -484,6 +484,7 @@ function Body() {
                 title={inv.status === "cancelled" && inv.cancellationReason ? `Cancelled: ${inv.cancellationReason}` : undefined}
               />
               {inv.status !== "cancelled" && <PoBadge state={poStateOf(inv)} />}
+              <StatusDiffChip id={inv.id} />
             </div>
           </ListTd>
         );
