@@ -202,5 +202,3 @@ export function ClockActionsHint() {
     </p>
   );
 }
-
-export { Button };
