@@ -86,7 +86,7 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
         icon={<FileText className="h-4 w-4" />}
         label="Quotation"
         primary={proof.quote ? `${proof.quote.number} · ${proof.quote.status}` : "No quotation linked"}
-        secondary={proof.quote ? fmtFull(proof.quote.amount, proof.quote.currency) : undefined}
+        secondary={proof.quote ? money(proof.quote.amount, proof.quote.currency) : undefined}
         href={proof.quote ? { to: "/quotations", search: { focus: proof.quote.id } } : undefined}
         missing={!proof.quote}
       />
@@ -101,7 +101,7 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
               ? `PO bypassed${invoice.poWaiverReason ? ` — ${invoice.poWaiverReason}` : ""}`
               : "PO missing"
         }
-        secondary={proof.po ? fmtFull(proof.po.amount, proof.po.currency) : undefined}
+        secondary={proof.po ? money(proof.po.amount, proof.po.currency) : undefined}
         href={proof.po ? { to: "/purchase-orders", search: { focus: proof.po.id } } : undefined}
         missing={!proof.po}
       />
@@ -120,7 +120,7 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
             icon={<Landmark className="h-4 w-4" />}
             label="Payment"
             primary={`${t.date} · ${t.description}`}
-            secondary={fmtFull(t.amount, t.currency)}
+            secondary={money(t.amount, t.currency)}
             href={{ to: "/transactions", search: { q: t.description.slice(0, 40) } }}
           />
         ))
@@ -128,7 +128,7 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
 
       {proof.verification === "partial" && (
         <p className="mt-1 text-xs text-warning">
-          Shortfall of {fmtFull(proof.shortfall, invoice.currency)} between the recorded payment and the
+          Shortfall of {money(proof.shortfall, invoice.currency)} between the recorded payment and the
           linked bank transactions.
         </p>
       )}

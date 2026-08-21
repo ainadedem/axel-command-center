@@ -43,6 +43,8 @@ export interface ProofTransaction {
   amount: number;
   currency: string;
   clientId?: string;
+  projectId?: string;
+  category?: string;
   invoiceId?: string;
 }
 

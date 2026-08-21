@@ -105,7 +105,7 @@ export function PaymentMatchDialog({
         docNumber: inv.number,
         companyId: inv.companyId,
         action: "status_changed",
-        summary: `Payment matched to bank transaction ${tx.date} · ${fmtFull(tx.amount, tx.currency)}`,
+        summary: `Payment matched to bank transaction ${tx.date} · ${money(tx.amount, tx.currency)}`,
         details: {
           transactionId: tx.id,
           transactionDescription: tx.description,
@@ -192,20 +192,20 @@ export function PaymentMatchDialog({
                       <div className="flex flex-wrap items-center gap-x-2 text-sm">
                         <span className="font-medium">{p.invoice.number}</span>
                         <span className="font-tnum text-muted-foreground">
-                          {fmtFull(invoicePayable(p.invoice), p.invoice.currency)}
+                          {money(invoicePayable(p.invoice), p.invoice.currency)}
                         </span>
                         <span className={`text-xs ${toneOf(c.confidence)}`}>{c.confidence} confidence</span>
                       </div>
                       <div className="truncate text-sm text-muted-foreground">
                         {c.transaction.date} · {c.transaction.description} ·{" "}
                         <span className="font-tnum">
-                          {fmtFull(c.transaction.amount, c.transaction.currency)}
+                          {money(c.transaction.amount, c.transaction.currency)}
                         </span>
                       </div>
                       <div className="text-xs text-muted-foreground">
                         {c.reasons.join(" · ")}
                         {c.amountDelta > 1 &&
-                          ` · delta ${fmtFull(c.amountDelta, p.invoice.currency)}`}
+                          ` · delta ${money(c.amountDelta, p.invoice.currency)}`}
                         {p.suggestedQuote && ` · will link quotation ${p.suggestedQuote.number}`}
                         {p.suggestedPo && ` · will link PO ${p.suggestedPo.number}`}
                       </div>
