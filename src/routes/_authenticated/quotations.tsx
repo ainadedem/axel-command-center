@@ -29,6 +29,8 @@ import { StatusBadge } from "@/components/status-badge";
 import { StatusMenu } from "@/components/status-menu";
 import { applyQuoteStatus, QUOTE_STATUS_OPTIONS } from "@/lib/quote-status";
 import { cn } from "@/lib/utils";
+import { clientColor } from "@/lib/client-color";
+import { notify } from "@/lib/notifications";
 import { Fragment, useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { useOwnerNames } from "@/hooks/use-owner-names";
@@ -434,7 +436,7 @@ function Body() {
                 const proj = q.projectId ? projects.find((p) => p.id === q.projectId) : undefined;
                 return (
                   <Fragment key={q.id}>
-                  <tr data-focus-id={q.id} data-selected={selectedId === q.id ? "true" : undefined} onClick={() => setSelectedId(q.id)} className="cursor-pointer hover:bg-surface-elevated/40 data-[selected=true]:bg-[var(--primary-container)]/40 transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]">
+                  <tr data-focus-id={q.id} data-selected={selectedId === q.id ? "true" : undefined} onClick={() => setSelectedId(q.id)} style={{ boxShadow: `inset 3px 0 0 0 ${clientColor(cl)}` }} className="cursor-pointer hover:bg-surface-elevated/40 data-[selected=true]:bg-[var(--primary-container)]/40 transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]">
 <ListRowActions colSpan={colCount}>
                     {!q.sentAt && (
                       <RowAction
@@ -1265,6 +1267,11 @@ function QuoteBoard({
     if (current.includes(user.id)) { toast.info(`You are already following ${q.number}.`); return; }
     if (current.length >= MAX_QUOTE_ASSIGNEES) { toast.error(`${q.number} already has ${MAX_QUOTE_ASSIGNEES} assignees.`); return; }
     quotesStore.update(q.id, { assignedTo: [...current, user.id] });
+    notify({
+      kind: "assignment", companyId: q.companyId, docType: "quote", docId: q.id, docNumber: q.number,
+      title: `${q.number} assigned`, body: "Assigned from the board.", href: "/quotations",
+      recipients: [user.id],
+    });
     toast.success(`Assigned ${q.number} to you`);
   };
 
@@ -1277,6 +1284,11 @@ function QuoteBoard({
       note: text,
       happenedAt: new Date().toISOString(),
       createdBy: user?.id,
+    });
+    notify({
+      kind: "comment", companyId: q.companyId, docType: "quote", docId: q.id, docNumber: q.number,
+      title: `New note on ${q.number}`, body: text, href: "/quotations",
+      recipients: q.assignedTo ?? [],
     });
     toast.success(`Note added to ${q.number}`);
   };
@@ -1326,6 +1338,7 @@ function QuoteBoard({
         }}
         onMove={move}
         onCardClick={onOpen}
+        accentOf={(q) => clientColor(clients.find((c) => c.id === q.clientId))}
         renderActions={(q) => {
           const notes = followups.filter((f) => f.quoteId === q.id).length;
           return (

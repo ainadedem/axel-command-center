@@ -27,6 +27,7 @@ export function KanbanBoard<T>({
   labelOf,
   renderCard,
   renderActions,
+  accentOf,
   onMove,
   canMove,
   onCardClick,
@@ -42,6 +43,8 @@ export function KanbanBoard<T>({
   renderCard: (item: T) => ReactNode;
   /** Quick actions rendered on hover / focus at the bottom of a card. */
   renderActions?: (item: T) => ReactNode;
+  /** Optional colour code (e.g. per client) shown as a left accent bar. */
+  accentOf?: (item: T) => string | undefined;
   onMove: (item: T, columnKey: string) => void;
   /** Optional guard — return false to reject a drop. */
   canMove?: (item: T, columnKey: string) => boolean;
@@ -149,6 +152,7 @@ export function KanbanBoard<T>({
                         }
                       }}
                       data-dragging={dragId === id ? "" : undefined}
+                      style={accentOf?.(item) ? { boxShadow: `inset 3px 0 0 0 ${accentOf(item)}` } : undefined}
                       className={cn(
                         "rounded-md bg-surface-elevated border border-border/60 p-2.5 group text-left w-full",
                         "cursor-grab active:cursor-grabbing",

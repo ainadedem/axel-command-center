@@ -10,6 +10,8 @@ import {
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { CREATE_EVENT } from "@/lib/create-action";
+import { NotificationCenter } from "@/components/notification-center";
+
 import { useHistory, undo as undoAction, redo as redoAction } from "@/lib/history";
 import { toast } from "sonner";
 
@@ -829,15 +831,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
           >
             <Bell className="h-4 w-4" aria-hidden="true" />
           </button>
-          {bellOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setBellOpen(false)} />
-              <div className="absolute right-0 mt-2 w-72 rounded-2xl border-0 bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-150">
-                <div className="px-3 py-2.5 border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground">Notifications</div>
-                <div className="p-6 text-center text-sm text-muted-foreground">You're all caught up.</div>
-              </div>
-            </>
-          )}
+          <NotificationCenter open={bellOpen} onClose={() => setBellOpen(false)} />
         </div>
         <div className="relative">
           <button

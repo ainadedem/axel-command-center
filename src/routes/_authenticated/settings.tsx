@@ -14,7 +14,7 @@ import { useCompanies } from "@/lib/mock-data";
 import { Building2, Users, Wallet, BookText, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeControls } from "@/components/theme-controls";
-import { NotificationPrefsCard } from "@/components/notification-prefs-card";
+import { NotificationSettings } from "@/components/notification-settings";
 import { DataExportCard } from "@/components/data-export-card";
 
 export const Route = createFileRoute("/_authenticated/settings")({ component: SettingsPage });
@@ -148,7 +148,7 @@ function Body() {
         </div>
       </section>
 
-      <NotificationPrefsCard />
+      <NotificationSettings />
 
       <DataExportCard />
 

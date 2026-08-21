@@ -58,6 +58,8 @@ import { withSelected } from "@/lib/select-options";
 import { toast } from "sonner";
 import { clientLabel, clientTitle } from "@/lib/client-name";
 import { KanbanBoard, type KanbanColumnDef } from "@/components/kanban-board";
+import { clientColor } from "@/lib/client-color";
+import { notify } from "@/lib/notifications";
 import { LayoutToggle } from "@/components/layout-toggle";
 import { usePersistentState } from "@/lib/persistent-state";
 import { canWriteCompany, dbCompanyId } from "@/lib/db-sync";
@@ -877,6 +879,7 @@ function Body() {
                       data-focus-id={inv.id}
                       data-selected={selectedId === inv.id ? "true" : undefined}
                       onClick={() => setSelectedId(inv.id)}
+                      style={{ boxShadow: `inset 3px 0 0 0 ${clientColor(clients.find((c) => c.id === inv.clientId))}` }}
                       className="cursor-pointer hover:bg-surface-elevated/40 data-[selected=true]:bg-[var(--primary-container)]/40 transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
                     >
 <ListRowActions colSpan={colCount}>
@@ -1781,6 +1784,11 @@ function InvoiceBoard({
     if (current.includes(user.id)) { toast.info(`You are already following ${inv.number}.`); return; }
     if (current.length >= 3) { toast.error(`${inv.number} already has 3 assignees.`); return; }
     invoicesStore.update(inv.id, { assignedTo: [...current, user.id] });
+    notify({
+      kind: "assignment", companyId: inv.companyId, docType: "invoice", docId: inv.id, docNumber: inv.number,
+      title: `${inv.number} assigned`, body: "Assigned from the board.", href: "/invoices",
+      recipients: [user.id], amount: inv.amount,
+    });
     toast.success(`Assigned ${inv.number} to you`);
   };
 
@@ -1788,6 +1796,11 @@ function InvoiceBoard({
     void logActivity({
       docType: "invoice", docId: inv.id, docNumber: inv.number, companyId: inv.companyId,
       action: "comment", summary: text,
+    });
+    notify({
+      kind: "comment", companyId: inv.companyId, docType: "invoice", docId: inv.id, docNumber: inv.number,
+      title: `New comment on ${inv.number}`, body: text, href: "/invoices",
+      recipients: inv.assignedTo ?? [], amount: inv.amount,
     });
     toast.success(`Comment added to ${inv.number}`);
   };
@@ -1834,6 +1847,7 @@ function InvoiceBoard({
         }}
         onMove={move}
         onCardClick={onOpen}
+        accentOf={(inv) => clientColor(clients.find((c) => c.id === inv.clientId))}
         renderActions={(inv) => (
           <>
             <CardAction icon={ExternalLink} label="Open details" onClick={() => onOpen(inv)} />

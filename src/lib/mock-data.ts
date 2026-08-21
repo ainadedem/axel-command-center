@@ -203,6 +203,8 @@ export interface Client {
   paymentTermsDays?: number;
   /** Per-currency override of the default terms, e.g. { EUR: 60 }. */
   paymentTermsByCurrency?: Record<string, number>;
+  /** Optional colour override used to colour-code rows and cards. */
+  color?: string;
 }
 
 /** Multi-select contact category, shared between Client and Supplier records. */
