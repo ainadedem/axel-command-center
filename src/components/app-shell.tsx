@@ -553,6 +553,48 @@ function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
+/**
+ * Derive a compact breadcrumb trail (Home / Section / Page) from the pathname
+ * using the static `sections` nav map. No DB lookups.
+ */
+function useBreadcrumbs(pathname: string): { label: string; to: string }[] {
+  const crumbs: { label: string; to: string }[] = [];
+  if (pathname !== "/") crumbs.push({ label: "Home", to: "/" });
+  // Find the matching nav item.
+  let matched:
+    | { label: string; to: string; sectionLabel: string }
+    | null = null;
+  for (const section of sections) {
+    for (const item of section.items) {
+      if (item.to === "/") continue;
+      if (pathname === item.to || pathname.startsWith(item.to + "/")) {
+        matched = { label: item.label, to: item.to, sectionLabel: section.label };
+        break;
+      }
+    }
+    if (matched) break;
+  }
+  if (matched) {
+    if (pathname !== matched.to) {
+      // We're on a detail/sub page — show section, then list, then "Detail".
+      crumbs.push({ label: matched.sectionLabel, to: matched.to });
+      crumbs.push({ label: matched.label, to: matched.to });
+      crumbs.push({ label: "Detail", to: pathname });
+    } else {
+      crumbs.push({ label: matched.sectionLabel, to: matched.to });
+      crumbs.push({ label: matched.label, to: pathname });
+    }
+  } else if (pathname !== "/") {
+    // Unknown route: title-case the last segment.
+    const seg = pathname.split("/").filter(Boolean).pop() ?? "";
+    const label = seg
+      .replace(/[-_]/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+    crumbs.push({ label: label || "Page", to: pathname });
+  }
+  return crumbs;
+}
+
 const NEW_BUTTON_ROUTES: { match: (p: string) => boolean; to: string; label: string }[] = [
   { match: (p) => p.startsWith("/accounts"), to: "/accounts", label: "New account" },
   { match: (p) => p.startsWith("/transactions"), to: "/transactions", label: "New transaction" },
