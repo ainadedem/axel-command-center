@@ -2,6 +2,7 @@ import { toast } from "sonner";
 import { quotesStore, invoicesStore, type Quote, type QuoteStatus } from "@/lib/mock-data";
 import { logActivity } from "@/lib/document-activity";
 import { proposeStageChange } from "@/lib/pipeline-automation";
+import { notify } from "@/lib/notifications";
 
 /** Statuses a quotation can be moved to from a list, board or detail panel. */
 export const QUOTE_STATUS_OPTIONS: QuoteStatus[] = ["draft", "sent", "accepted", "rejected", "expired"];
@@ -35,6 +36,11 @@ export function applyQuoteStatus(
     docType: "quote", docId: quote.id, docNumber: quote.number, companyId: quote.companyId,
     action: "status_changed", summary: `From ${previous} to ${next}`,
     details: { from: previous, to: next },
+  });
+  notify({
+    kind: "status_change", companyId: quote.companyId, docType: "quote", docId: quote.id, docNumber: quote.number,
+    title: `${quote.number} is now ${next}`, body: `Status changed from ${previous} to ${next}.`,
+    href: "/quotations", recipients: quote.assignedTo ?? [], amount: quote.amount,
   });
 
   const event =

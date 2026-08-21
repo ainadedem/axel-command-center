@@ -19,6 +19,8 @@ import { newId } from "@/lib/data-store";
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { CLIENT_PALETTE, clientColor } from "@/lib/client-color";
+import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { PaymentDetailsFields, paymentFrom, paymentValues, emptyPayment, type PaymentFormState } from "@/components/payment-details-fields";
 import { Label } from "@/components/ui/label";
@@ -578,6 +580,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   const [rcs, setRcs] = useState("");
   const [pay, setPay] = useState<PaymentFormState>(emptyPayment);
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+  const [color, setColor] = useState<string | undefined>(undefined);
   const [status, setStatus] = useState<"lead" | "client">("client");
   const [categories, setCategories] = useState<ContactCategory[]>(["client"]);
   const [showErrors, setShowErrors] = useState(false);
@@ -602,6 +605,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setRcs(editing.rcs ?? "");
       setPay(paymentFrom(editing));
       setAvatarUrl(editing.avatarUrl);
+      setColor(editing.color);
       setStatus(editing.status ?? "client");
       setCategories(defaultCategoriesFor("client", editing.categories));
     } else {
@@ -616,6 +620,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       setNif(""); setStat(""); setRcs("");
       setPay(emptyPayment);
       setAvatarUrl(undefined);
+      setColor(undefined);
       setStatus("client");
       setCategories(["client"]);
     }
@@ -656,6 +661,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
       rcs: rcs.trim() || undefined,
       ...paymentValues(pay),
       avatarUrl,
+      color,
       categories: categories.length > 0 ? categories : undefined,
     };
     try {
@@ -742,6 +748,39 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
                 <Label>Display name</Label>
                 <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={name ? `Short label, e.g. ${name.split(" ")[0]}` : "Short label used in lists"} />
                 <p className="text-[11px] text-muted-foreground mt-1">Shown in lists and boards. Invoices and quotations always use the legal name.</p>
+              </div>
+              <div>
+                <Label>Colour code</Label>
+                <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                  {CLIENT_PALETTE.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setColor(c)}
+                      aria-label={`Use colour ${c}`}
+                      aria-pressed={color === c}
+                      className={cn(
+                        "h-6 w-6 rounded-full border-2 transition-transform press-scale",
+                        color === c ? "border-foreground scale-110" : "border-transparent",
+                      )}
+                      style={{ background: c }}
+                    />
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setColor(undefined)}
+                    className="text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-2 ml-1"
+                  >
+                    Automatic
+                  </button>
+                  <span
+                    className="ml-auto inline-flex items-center gap-1.5 text-[11px] text-muted-foreground"
+                    title="Preview"
+                  >
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: clientColor({ id: editing?.id, name, color }) }} />
+                    {color ? "Custom" : "Auto colour"}
+                  </span>
+                </div>
               </div>
               <div>
                 <Label><RequiredLabel>Linked companies</RequiredLabel></Label>

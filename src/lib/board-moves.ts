@@ -1,4 +1,5 @@
 import { logActivity, type DocType } from "@/lib/document-activity";
+import { notify } from "@/lib/notifications";
 
 /** Notified whenever a board move is recorded, so open history panels refresh. */
 export const boardMoveListeners = new Set<() => void>();
@@ -29,4 +30,17 @@ export function logBoardMove(input: {
     summary,
     details: { from: input.from, to: input.to, blocked: !!input.blocked, reason: input.reason, source: "kanban" },
   }).then(() => boardMoveListeners.forEach((l) => l()));
+
+  if (!input.blocked) {
+    notify({
+      kind: "board_move",
+      companyId: input.companyId,
+      docType: input.docType === "quote" ? "quote" : input.docType === "invoice" ? "invoice" : "po",
+      docId: input.docId,
+      docNumber: input.docNumber,
+      title: `${input.docNumber ?? "Document"} moved to ${input.to}`,
+      body: `Moved from ${input.from} to ${input.to} on the board.`,
+      href: input.docType === "quote" ? "/quotations" : input.docType === "invoice" ? "/invoices" : "/purchase-orders",
+    });
+  }
 }

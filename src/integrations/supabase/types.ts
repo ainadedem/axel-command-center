@@ -407,6 +407,7 @@ export type Database = {
           address: string | null
           avatar_url: string | null
           categories: string[] | null
+          color: string | null
           company_id: string
           contacts: string | null
           country: string | null
@@ -435,6 +436,7 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           categories?: string[] | null
+          color?: string | null
           company_id: string
           contacts?: string | null
           country?: string | null
@@ -463,6 +465,7 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           categories?: string[] | null
+          color?: string | null
           company_id?: string
           contacts?: string | null
           country?: string | null
@@ -1090,25 +1093,85 @@ export type Database = {
         Row: {
           ar_alerts_enabled: boolean
           created_at: string
+          events: Json
           id: string
           stages: number[]
           updated_at: string
           user_id: string
+          watch_company_ids: string[]
+          watch_rules: Json
         }
         Insert: {
           ar_alerts_enabled?: boolean
           created_at?: string
+          events?: Json
           id?: string
           stages?: number[]
           updated_at?: string
           user_id: string
+          watch_company_ids?: string[]
+          watch_rules?: Json
         }
         Update: {
           ar_alerts_enabled?: boolean
           created_at?: string
+          events?: Json
           id?: string
           stages?: number[]
           updated_at?: string
+          user_id?: string
+          watch_company_ids?: string[]
+          watch_rules?: Json
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          actor_id: string | null
+          actor_name: string | null
+          body: string | null
+          company_id: string | null
+          created_at: string
+          doc_id: string | null
+          doc_number: string | null
+          doc_type: string | null
+          href: string | null
+          id: string
+          kind: string
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_name?: string | null
+          body?: string | null
+          company_id?: string | null
+          created_at?: string
+          doc_id?: string | null
+          doc_number?: string | null
+          doc_type?: string | null
+          href?: string | null
+          id?: string
+          kind: string
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_name?: string | null
+          body?: string | null
+          company_id?: string | null
+          created_at?: string
+          doc_id?: string | null
+          doc_number?: string | null
+          doc_type?: string | null
+          href?: string | null
+          id?: string
+          kind?: string
+          read_at?: string | null
+          title?: string
           user_id?: string
         }
         Relationships: []

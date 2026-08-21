@@ -10,6 +10,7 @@ import { useSyncExternalStore } from "react";
 import { proposeStageChange } from "@/lib/pipeline-automation";
 import { invoicesStore, transactionsStore, type Invoice } from "@/lib/mock-data";
 import { invoiceBalance, invoicePayable } from "@/lib/invoice-money";
+import { notify } from "@/lib/notifications";
 import { logActivity } from "@/lib/document-activity";
 import { withoutHistory } from "@/lib/history";
 
@@ -185,6 +186,21 @@ export function commitStatusChange(
       transactionIds: opts.createdTransactionIds ?? [],
     },
   });
+
+  if (next !== invoice.status) {
+    notify({
+      kind: "status_change",
+      companyId: invoice.companyId,
+      docType: "invoice",
+      docId: invoice.id,
+      docNumber: invoice.number,
+      title: `${invoice.number} is now ${next}`,
+      body: summary,
+      href: "/invoices",
+      recipients: (invoice as { assignedTo?: string[] }).assignedTo ?? [],
+      amount: invoice.amount,
+    });
+  }
 
   const revert = async () => {
     await withoutHistory(() => {
