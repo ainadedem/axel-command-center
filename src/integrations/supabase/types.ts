@@ -889,6 +889,7 @@ export type Database = {
           issue_date: string
           language: string
           number: string
+          opportunity_id: string | null
           paid: number
           paid_date: string | null
           po_id: string | null
@@ -931,6 +932,7 @@ export type Database = {
           issue_date: string
           language?: string
           number: string
+          opportunity_id?: string | null
           paid?: number
           paid_date?: string | null
           po_id?: string | null
@@ -973,6 +975,7 @@ export type Database = {
           issue_date?: string
           language?: string
           number?: string
+          opportunity_id?: string | null
           paid?: number
           paid_date?: string | null
           po_id?: string | null
@@ -1006,6 +1009,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
             referencedColumns: ["id"]
           },
           {
@@ -1451,6 +1461,7 @@ export type Database = {
           next_follow_up_at: string | null
           notes: string | null
           number: string
+          opportunity_id: string | null
           pdf_url: string | null
           project_id: string | null
           sent_at: string | null
@@ -1489,6 +1500,7 @@ export type Database = {
           next_follow_up_at?: string | null
           notes?: string | null
           number: string
+          opportunity_id?: string | null
           pdf_url?: string | null
           project_id?: string | null
           sent_at?: string | null
@@ -1527,6 +1539,7 @@ export type Database = {
           next_follow_up_at?: string | null
           notes?: string | null
           number?: string
+          opportunity_id?: string | null
           pdf_url?: string | null
           project_id?: string | null
           sent_at?: string | null
@@ -1545,7 +1558,15 @@ export type Database = {
           updated_by?: string | null
           valid_until?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "quotes_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recurring_billings: {
         Row: {
