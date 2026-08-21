@@ -414,7 +414,7 @@ function Body() {
       )}
       <BulkActionBar count={selection.count} noun="quote" onClear={selection.clear}>
         <Button size="sm" className="h-7 px-3 text-xs" onClick={() => setBulkOpen(true)}>
-          Edit client / project
+          Bulk edit
         </Button>
         <Button
           size="sm" variant="outline" className="h-7 px-3 text-xs"
