@@ -7,6 +7,10 @@ export type FieldDef<T> = {
   label: string;
   type: FieldType;
   accessor: (item: T) => unknown;
+  /** Optional value used for sorting/group ordering instead of the displayed accessor value. */
+  sortAccessor?: (item: T) => unknown;
+  /** Order groups ascending (default) or descending by their sort key. */
+  groupOrder?: "asc" | "desc";
   /** Optional explicit enum options (otherwise derived from data). */
   enumOptions?: string[];
   /** Disable sorting on this field. */
@@ -142,9 +146,11 @@ export function useDataView<T>(storageKey: string, fields: FieldDef<T>[]) {
       const def = fieldMap.get(state.sort.key);
       if (def) {
         const dir = state.sort.dir === "asc" ? 1 : -1;
+        const val = (it: T) =>
+          def.sortAccessor ? toComparable(def.sortAccessor(it), "string") : toComparable(def.accessor(it), def.type);
         out = [...out].sort((a, b) => {
-          const av = toComparable(def.accessor(a), def.type);
-          const bv = toComparable(def.accessor(b), def.type);
+          const av = val(a);
+          const bv = val(b);
           if (av < bv) return -1 * dir;
           if (av > bv) return 1 * dir;
           return 0;
@@ -156,19 +162,23 @@ export function useDataView<T>(storageKey: string, fields: FieldDef<T>[]) {
     if (state.group) {
       const def = fieldMap.get(state.group.key);
       if (def) {
-        const map = new Map<string, T[]>();
+        const map = new Map<string, { label: string; sortKey: string; items: T[] }>();
         for (const it of out) {
           const raw = def.accessor(it);
-          const key = raw == null || raw === "" ? "—" : String(raw);
-          const arr = map.get(key) ?? [];
-          arr.push(it);
-          map.set(key, arr);
+          const label = raw == null || raw === "" ? "—" : String(raw);
+          const rawSort = def.sortAccessor ? def.sortAccessor(it) : raw;
+          const sortKey = rawSort == null || rawSort === "" ? "" : String(rawSort);
+          const bucket = map.get(label) ?? { label, sortKey, items: [] };
+          bucket.items.push(it);
+          map.set(label, bucket);
         }
-        return Array.from(map.entries())
-          .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-          .map(([key, items]) => ({ key, label: key, items }));
+        const gdir = def.groupOrder === "desc" ? -1 : 1;
+        return Array.from(map.values())
+          .sort((a, b) => (a.sortKey < b.sortKey ? -1 * gdir : a.sortKey > b.sortKey ? 1 * gdir : 0))
+          .map((g) => ({ key: g.label, label: g.label, items: g.items }));
       }
     }
+
 
     return [{ key: "__all__", label: "All", items: out }];
   }, [state, fields, fieldMap]);
