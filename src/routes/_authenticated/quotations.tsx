@@ -6,7 +6,7 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
   useQuotes, useCompanies, useClients, useProjects, quotesStore, purchaseOrdersStore,
-  fmt, fmtCompact, FX, type Quote, type QuoteLine, type QuoteStatus, type QuoteMode, type Currency,
+  fmt, fmtCompact, toMGA, FX, type Quote, type QuoteLine, type QuoteStatus, type QuoteMode, type Currency, type Client,
   contactBelongsTo, MAX_QUOTE_ASSIGNEES, useOpportunities, useInvoices,
 } from "@/lib/mock-data";
 import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
@@ -44,6 +44,10 @@ import { resolveFileUrl } from "@/lib/storage";
 import { nextNumber, nextNumberAsync, isNumberTaken, primeNumbering } from "@/lib/numbering";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { clientLabel, clientTitle } from "@/lib/client-name";
+import { KanbanBoard, type KanbanColumnDef } from "@/components/kanban-board";
+import { LayoutToggle } from "@/components/layout-toggle";
+import { usePersistentState } from "@/lib/persistent-state";
 import { canWriteCompany, dbCompanyId } from "@/lib/db-sync";
 import { refreshStampsAndSignatures } from "@/lib/stamp-refresh";
 import { useCompanySalesUsers } from "@/hooks/use-company-users";
@@ -116,6 +120,7 @@ function Body() {
   const [historyOf, setHistoryOf] = useState<Quote | null>(null);
   const [followingUp, setFollowingUp] = useState<Quote | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [layout, setLayout] = usePersistentState<"list" | "board">("quotations.layout", "list");
   const { user } = useAuth();
   const openCreate = () => { setEditing(null); setOpen(true); };
 
@@ -298,13 +303,22 @@ function Body() {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <CrudToolbar createLabel="New quote" count={list.length} label="quotations" onCreate={openCreate} />
         <div className="flex items-center gap-2 flex-wrap">
-          <ColumnPicker prefs={cp} />
+          <LayoutToggle value={layout} onChange={setLayout} />
+          {layout === "list" && <ColumnPicker prefs={cp} />}
           <DataToolbar view={view} items={baseList} />
         </div>
 
       </div>
       {list.length === 0 ? (
         <EmptyState label="quotations" onCreate={openCreate} />
+      ) : layout === "board" ? (
+        <QuoteBoard
+          list={list}
+          clients={clients}
+          companies={companies}
+          canWrite={isWritable}
+          onOpen={(q) => setSelectedId(q.id)}
+        />
       ) : (
         <ListTableShell>
           <ListTable>
@@ -361,8 +375,8 @@ function Body() {
                       disabled={!isWritable(q)}
                       label={`Select quote ${q.number}`}
                     />
-                    <ListTd className="font-tnum text-xs text-muted-foreground" title={q.number}>{q.number}</ListTd>
-                    <ListTd className="font-medium" title={cl?.name}>{cl?.name ?? "—"}</ListTd>
+                    <ListTd lines={2} className="font-tnum text-xs text-muted-foreground" title={q.number}>{q.number}</ListTd>
+                    <ListTd lines={2} className="font-medium" title={clientTitle(cl)}>{clientLabel(cl)}</ListTd>
                     {cp.on("project") && (
                       <ListTd className="text-xs" title={proj?.name}>{proj ? <span className="inline-block max-w-full truncate px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 align-middle">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}</ListTd>
                     )}
@@ -1094,5 +1108,80 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
 
       </DialogContent>
     </Dialog>
+  );
+}
+
+
+/* ─── Board view (drag a quote between statuses) ───────────────────── */
+
+const QUOTE_BOARD_COLUMNS: { key: QuoteStatus; label: string; dot: string }[] = [
+  { key: "draft", label: "Draft", dot: "bg-slate-400" },
+  { key: "sent", label: "Sent", dot: "bg-blue-500" },
+  { key: "accepted", label: "Accepted", dot: "bg-emerald-500" },
+  { key: "rejected", label: "Rejected", dot: "bg-rose-500" },
+  { key: "expired", label: "Expired", dot: "bg-amber-500" },
+];
+
+function QuoteBoard({
+  list,
+  clients,
+  companies,
+  canWrite,
+  onOpen,
+}: {
+  list: Quote[];
+  clients: Client[];
+  companies: ReturnType<typeof useCompanies>;
+  canWrite: (q: Quote) => boolean;
+  onOpen: (q: Quote) => void;
+}) {
+  const columns: KanbanColumnDef[] = QUOTE_BOARD_COLUMNS.map((c) => {
+    const items = list.filter((q) => q.status === c.key);
+    const sum = items.reduce((acc, q) => acc + toMGA(q.totalAmount ?? q.amount, q.currency), 0);
+    return { key: c.key, label: c.label, dot: c.dot, meta: fmtCompact(sum, "MGA") };
+  });
+
+  const move = (q: Quote, status: string) => {
+    const previous = q.status;
+    quotesStore.update(q.id, { status: status as QuoteStatus });
+    toast.success(`${q.number} → ${status}`, {
+      action: { label: "Undo", onClick: () => quotesStore.update(q.id, { status: previous }) },
+    });
+  };
+
+  return (
+    <KanbanBoard
+      className="xl:grid-cols-3 2xl:grid-cols-5"
+      columns={columns}
+      items={list}
+      idOf={(q) => q.id}
+      labelOf={(q) => q.number}
+      columnOf={(q) => q.status}
+      canMove={(q) => {
+        if (canWrite(q)) return true;
+        toast.error(`You do not have permission to change ${q.number}.`);
+        return false;
+      }}
+      onMove={move}
+      onCardClick={onOpen}
+      renderCard={(q) => {
+        const cl = clients.find((c) => c.id === q.clientId);
+        const co = companies.find((c) => c.id === q.companyId);
+        return (
+          <>
+            <div className="flex items-start justify-between gap-2">
+              <div className="text-xs font-tnum text-muted-foreground break-words">{q.number}</div>
+              {co && <span className="h-1.5 w-1.5 rounded-full mt-1 shrink-0" style={{ background: co.color }} />}
+            </div>
+            <div className="text-sm font-medium leading-snug mt-0.5 break-words" title={clientTitle(cl)}>{clientLabel(cl)}</div>
+            {q.subject && <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{q.subject}</div>}
+            <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40">
+              <div className="font-tnum text-sm font-semibold">{fmtCompact(q.totalAmount ?? q.amount, q.currency)}</div>
+              <div className="text-[10px] text-muted-foreground font-tnum">{format(parseISO(q.validUntil), "MMM d")}</div>
+            </div>
+          </>
+        );
+      }}
+    />
   );
 }

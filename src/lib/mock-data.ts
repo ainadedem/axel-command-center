@@ -161,6 +161,12 @@ export interface Client {
   /** All companies this client is shared with. Defaults to [companyId]. */
   companyIds?: string[];
   name: string;
+  /**
+   * Optional short label shown in lists, boards and pickers
+   * (e.g. "Airtel" for "Airtel Madagascar S.A."). Generated documents always
+   * use the full legal `name`.
+   */
+  displayName?: string;
   country: string;
   /**
    * "lead" = prospect captured via the pipeline (not yet won).

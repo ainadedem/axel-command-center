@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/page-header";
 import {
   useInvoices, useCompanies, useClients, useProjects, usePurchaseOrders, useQuotes, useAccounts, useTransactions,
   invoicesStore, transactionsStore, projectsStore, purchaseOrdersStore, quotesStore,
-  fmtAmount, fmtFull, toMGA, FX, type Invoice, type Project, type Currency, type QuoteLine, type Client,
+  fmtAmount, fmtFull, fmtCompact, toMGA, FX, type Invoice, type Project, type Currency, type QuoteLine, type Client,
   getNumberFormat, setNumberFormat, type NumberFormatMode,
   contactBelongsTo,
 } from "@/lib/mock-data";
@@ -38,7 +38,7 @@ import { useCreateAction } from "@/lib/create-action";
 import { Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, Ban, BadgeCheck, ToggleLeft, ToggleRight, Plus, X, ListFilter } from "lucide-react";
 import { InvoicePreview } from "@/components/invoice-preview";
 import { MarkPaidDialog } from "@/components/mark-paid-dialog";
-import { useStatusDiff } from "@/lib/invoice-status";
+import { useStatusDiff, planStatusChange, commitStatusChange, type InvoiceStatus } from "@/lib/invoice-status";
 import { RecordPaymentDialog } from "@/components/statement-import-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -51,6 +51,10 @@ import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightS
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
 import { toast } from "sonner";
+import { clientLabel, clientTitle } from "@/lib/client-name";
+import { KanbanBoard, type KanbanColumnDef } from "@/components/kanban-board";
+import { LayoutToggle } from "@/components/layout-toggle";
+import { usePersistentState } from "@/lib/persistent-state";
 import { canWriteCompany, dbCompanyId } from "@/lib/db-sync";
 import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } from "@/components/bulk-select";
 import { refreshStampsAndSignatures } from "@/lib/stamp-refresh";
@@ -173,6 +177,7 @@ function Body() {
   const [numMode, setNumMode] = useState<NumberFormatMode>(getNumberFormat());
   const tp = useTablePrefs("invoices", INVOICE_COLUMNS, INVOICE_COL_WIDTHS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [layout, setLayout] = usePersistentState<"list" | "board">("invoices.layout", "list");
 
 
   const toggleMode = useCallback(() => {
@@ -452,9 +457,9 @@ function Body() {
 
     switch (key) {
       case "number":
-        return <ListTd className="font-tnum text-xs text-muted-foreground" title={inv.number}>{inv.number}</ListTd>;
+        return <ListTd lines={2} className="font-tnum text-xs text-muted-foreground" title={inv.number}>{inv.number}</ListTd>;
       case "client":
-        return <ListTd className="font-medium" title={cl?.name}>{cl?.name ?? "—"}</ListTd>;
+        return <ListTd lines={2} className="font-medium" title={clientTitle(cl)}>{clientLabel(cl)}</ListTd>;
       case "project":
         return (
           <ListTd className="text-xs" title={proj?.name}>
@@ -540,7 +545,7 @@ function Body() {
   const exportValue = (key: string, inv: Invoice): string => {
     switch (key) {
       case "number": return inv.number;
-      case "client": return clients.find((c) => c.id === inv.clientId)?.name ?? "";
+      case "client": return clientLabel(clients.find((c) => c.id === inv.clientId), "");
       case "project": return projects.find((p) => p.id === inv.projectId)?.name ?? "";
       case "company": return companies.find((c) => c.id === inv.companyId)?.shortName ?? "";
       case "issued": return format(parseISO(inv.issueDate), "yyyy-MM-dd");
@@ -767,7 +772,8 @@ function Body() {
                   })}
                   iconOnly
                 />
-                <ColumnPicker prefs={tp} onResetWidths={tp.resetWidths} onResetOrder={tp.resetOrder} iconOnly />
+                <LayoutToggle value={layout} onChange={setLayout} />
+                {layout === "list" && <ColumnPicker prefs={tp} onResetWidths={tp.resetWidths} onResetOrder={tp.resetOrder} iconOnly />}
                 <ReconcileButton checks={checks} iconOnly />
                 <button
                   onClick={toggleMode}
@@ -793,6 +799,9 @@ function Body() {
           </div>
 
 
+          {layout === "board" ? (
+            <InvoiceBoard list={list} clients={clients} companies={companies} canWrite={isWritable} onOpen={(inv) => setSelectedId(inv.id)} />
+          ) : (
           <ListTableShell
             scrollX
             stickyHeader
@@ -866,6 +875,7 @@ function Body() {
               </tbody>
             </ListTable>
           </ListTableShell>
+          )}
 
         </>
       )}
@@ -1643,5 +1653,97 @@ function StatusDiffChip({ id }: { id: string }) {
     >
       {diff}
     </span>
+  );
+}
+
+
+/* ─── Board view (drag an invoice between statuses) ────────────────── */
+
+const INVOICE_BOARD_COLUMNS: { key: InvoiceStatus; label: string; dot: string }[] = [
+  { key: "draft", label: "Draft", dot: "bg-slate-400" },
+  { key: "sent", label: "Sent", dot: "bg-blue-500" },
+  { key: "partial", label: "Partly paid", dot: "bg-amber-500" },
+  { key: "paid", label: "Paid", dot: "bg-emerald-500" },
+  { key: "overdue", label: "Overdue", dot: "bg-rose-500" },
+  { key: "cancelled", label: "Cancelled", dot: "bg-muted-foreground" },
+];
+
+function InvoiceBoard({
+  list,
+  clients,
+  companies,
+  canWrite,
+  onOpen,
+}: {
+  list: Invoice[];
+  clients: Client[];
+  companies: ReturnType<typeof useCompanies>;
+  canWrite: (inv: Invoice) => boolean;
+  onOpen: (inv: Invoice) => void;
+}) {
+  const columns: KanbanColumnDef[] = INVOICE_BOARD_COLUMNS.map((c) => {
+    const items = list.filter((inv) => inv.status === c.key);
+    const sum = items.reduce((acc, inv) => acc + toMGA(invoicePayable(inv), inv.currency), 0);
+    return { key: c.key, label: c.label, dot: c.dot, meta: fmtCompact(sum, "MGA") };
+  });
+
+  /**
+   * Drag only performs status changes that need no extra input. Moves to
+   * "paid" with an outstanding balance, or to "cancelled" (which requires a
+   * reason), stay in their dialogs so the audit trail keeps its evidence.
+   */
+  const move = (inv: Invoice, next: string) => {
+    const plan = planStatusChange(inv, next as InvoiceStatus);
+    if (plan.requiresPayment) {
+      toast.error(`${inv.number} has an outstanding balance`, { description: "Use “Mark paid” to record the payment." });
+      return;
+    }
+    if (plan.requiresReason) {
+      toast.error(`${inv.number} needs a cancellation reason`, { description: "Cancel it from the row actions." });
+      return;
+    }
+    const committed = commitStatusChange(inv, plan);
+    toast.success(`${inv.number} → ${next}`, {
+      action: { label: "Undo", onClick: () => { void committed.revert(); } },
+    });
+  };
+
+  return (
+    <KanbanBoard
+      className="xl:grid-cols-3 2xl:grid-cols-6"
+      columns={columns}
+      items={list}
+      idOf={(inv) => inv.id}
+      labelOf={(inv) => inv.number}
+      columnOf={(inv) => inv.status}
+      canMove={(inv) => {
+        if (canWrite(inv)) return true;
+        toast.error(`You do not have permission to change ${inv.number}.`);
+        return false;
+      }}
+      onMove={move}
+      onCardClick={onOpen}
+      renderCard={(inv) => {
+        const cl = clients.find((c) => c.id === inv.clientId);
+        const co = companies.find((c) => c.id === inv.companyId);
+        const balance = invoiceBalance(inv);
+        return (
+          <>
+            <div className="flex items-start justify-between gap-2">
+              <div className="text-xs font-tnum text-muted-foreground break-words">{inv.number}</div>
+              {co && <span className="h-1.5 w-1.5 rounded-full mt-1 shrink-0" style={{ background: co.color }} />}
+            </div>
+            <div className="text-sm font-medium leading-snug mt-0.5 break-words" title={clientTitle(cl)}>{clientLabel(cl)}</div>
+            {inv.subject && <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{inv.subject}</div>}
+            <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40">
+              <div className="font-tnum text-sm font-semibold">{fmtCompact(invoicePayable(inv), inv.currency)}</div>
+              <div className="text-[10px] text-muted-foreground font-tnum">
+                {balance > 0 ? `Due ${format(parseISO(inv.dueDate), "MMM d")}` : "Settled"}
+              </div>
+            </div>
+          </>
+        );
+      }}
+    />
   );
 }
