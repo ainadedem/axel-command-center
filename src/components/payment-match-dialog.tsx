@@ -62,6 +62,7 @@ export function PaymentMatchDialog({
         quotes: quotes as never,
         pos: pos as never,
         clientName: (id) => clients.find((c) => c.id === id)?.name,
+        clientTerms: (id) => clients.find((c) => c.id === id)?.paymentTermsDays,
       }).map((m) => ({ invoice: m.invoice, candidates: [m.candidate], best: m.candidate }));
     }
     const ids = new Set(invoices.map((i) => i.id));
@@ -72,6 +73,7 @@ export function PaymentMatchDialog({
       quotes: quotes as never,
       pos: pos as never,
       clientName: (id) => clients.find((c) => c.id === id)?.name,
+      clientTerms: (id) => clients.find((c) => c.id === id)?.paymentTermsDays,
     });
   }, [open, invoices, allInvoices, transactions, quotes, pos, clients, transaction]);
 
