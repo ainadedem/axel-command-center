@@ -1025,58 +1025,27 @@ function Body() {
   );
 }
 
+/**
+ * Cancellation always collects a reason, then goes through the guarded status
+ * commit so the change is conflict-checked and lands in the audit trail.
+ */
 function CancelInvoiceDialog({ open, onOpenChange, invoice }: { open: boolean; onOpenChange: (v: boolean) => void; invoice: Invoice | null }) {
-  const [reason, setReason] = useState("");
-  const [showErrors, setShowErrors] = useState(false);
-  useEffect(() => { if (open) setReason(""); }, [open]);
   if (!invoice) return null;
-  const submit = () => {
-    const trimmed = reason.trim();
-    if (!trimmed) {
-      setShowErrors(true);
-      return;
-    }
-    invoicesStore.update(invoice.id, {
-      status: "cancelled",
-      cancelledAt: new Date().toISOString(),
-      cancellationReason: trimmed,
-    });
-    logActivity({
-      docType: "invoice", docId: invoice.id, docNumber: invoice.number, companyId: invoice.companyId,
-      action: "status_changed", summary: `Cancelled — ${trimmed}`, details: { from: invoice.status, to: "cancelled" },
-    });
-    onOpenChange(false);
-  };
-  const { run: handleSubmit, isSubmitting } = useSingleFlightSubmit(submit);
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>Cancel invoice {invoice.number}</DialogTitle></DialogHeader>
-        <div className="space-y-3 py-2">
-          <FormErrorBanner show={showErrors} />
-          <p className="text-xs text-muted-foreground">
-            The invoice will remain in the CRM with a <span className="text-foreground font-medium">cancelled</span> status. This action cannot be undone from this dialog.
-          </p>
-          <div>
-            <Label><RequiredLabel>Reason</RequiredLabel></Label>
-            <Textarea
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="Why is this invoice being cancelled?"
-              rows={4}
-              className={invalidFieldClassName(showErrors && !reason.trim())}
-              aria-invalid={showErrors && !reason.trim()}
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Keep invoice</Button>
-          <Button variant="destructive" onClick={handleSubmit} disabled={isSubmitting}>
-            <Ban className="h-3.5 w-3.5 mr-1.5" /> Cancel invoice
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <CancelReasonDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={`Cancel invoice ${invoice.number}`}
+      description="The invoice stays in the CRM as cancelled. The reason is stored on the invoice and in its audit trail."
+      confirmLabel="Cancel invoice"
+      onConfirm={(reason) => {
+        const plan = planStatusChange(invoice, "cancelled", { reason });
+        const committed = commitStatusChange(invoice, plan);
+        toast.success(`${invoice.number} cancelled`, {
+          action: { label: "Undo", onClick: () => { void committed.revert(); } },
+        });
+      }}
+    />
   );
 }
 
