@@ -27,6 +27,8 @@ import { OpportunityRevenueDrawer } from "@/components/opportunity-revenue-drawe
 import { buildVariances, hasVariance, type QuoteInvoiceVariance } from "@/lib/quote-invoice-variance";
 import { SignedAmount } from "@/components/signed-amount";
 import { ConversionGapPanel } from "@/components/conversion-gap-panel";
+import { KanbanBoard, type KanbanColumnDef } from "@/components/kanban-board";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/pipeline")({ component: PipelinePage });
 
