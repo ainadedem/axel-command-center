@@ -202,6 +202,19 @@ export function commitStatusChange(
     });
   };
 
+  // A paid invoice can move its deal forward in the pipeline (user confirms).
+  if (next === "paid" && invoice.opportunityId) {
+    try {
+      const siblings = invoicesStore.items.filter(
+        (i) => i.opportunityId === invoice.opportunityId && i.status !== "cancelled",
+      );
+      const allPaid = siblings.every((i) => (i.id === invoice.id ? true : i.status === "paid"));
+      proposeStageChange(invoice.opportunityId, "invoice_paid", { allInvoicesPaid: allPaid }, {
+        docType: "invoice", docId: invoice.id, docNumber: invoice.number,
+      });
+    } catch { /* pipeline suggestion is best-effort */ }
+  }
+
   return { summary, diff, revert };
 }
 
