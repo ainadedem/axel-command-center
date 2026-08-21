@@ -5,7 +5,7 @@ import { defaultBankAccount } from "@/lib/payment-details";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useInvoices, useCompanies, useClients, useProjects, usePurchaseOrders, useQuotes, useAccounts,
+  useInvoices, useCompanies, useClients, useProjects, usePurchaseOrders, useQuotes, useAccounts, useTransactions,
   invoicesStore, transactionsStore, projectsStore, purchaseOrdersStore, quotesStore,
   fmtAmount, fmtFull, toMGA, FX, type Invoice, type Project, type Currency, type QuoteLine, type Client,
   getNumberFormat, setNumberFormat, type NumberFormatMode,
@@ -59,7 +59,10 @@ import { bulkUpdateDocuments, bulkSetFields, type BulkPatch } from "@/lib/bulk-e
 import { type ColumnDef } from "@/lib/column-prefs";
 import { useTablePrefs } from "@/lib/table-prefs";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
-import { StatusBadge, PoBadge } from "@/components/status-badge";
+import { StatusBadge, PoBadge, VerifiedBadge } from "@/components/status-badge";
+import { PaymentProofBlock } from "@/components/payment-proof-block";
+import { PaymentMatchDialog } from "@/components/payment-match-dialog";
+import { verificationOf, type ProofInvoice } from "@/lib/payment-proof";
 import { OpportunitySelect } from "@/components/opportunity-select";
 import { proposeStageChange } from "@/lib/pipeline-automation";
 import { MasterDetail, DetailPanel, DetailField, DetailSection } from "@/components/master-detail";
@@ -153,7 +156,13 @@ function Body() {
   const companies = useCompanies();
   const clients = useClients();
   const projects = useProjects();
+  const transactions = useTransactions();
   const baseList = inScope(invoices, scope);
+  const [matchOpen, setMatchOpen] = useState(false);
+  const verifOf = useCallback(
+    (i: Invoice) => verificationOf(i as unknown as ProofInvoice, transactions as never),
+    [transactions],
+  );
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Invoice | null>(null);
   const [previewing, setPreviewing] = useState<Invoice | null>(null);
@@ -191,6 +200,7 @@ function Body() {
     { key: "company", label: "Company", type: "enum", accessor: (i) => companies.find((c) => c.id === i.companyId)?.shortName ?? "" },
     { key: "status", label: "Status", type: "enum", accessor: (i) => i.status },
     { key: "poMissing", label: "PO missing", type: "boolean", accessor: (i) => !i.poId },
+    { key: "paymentUnverified", label: "Payment unverified", type: "boolean", accessor: (i) => verifOf(i) === "unverified" },
 
     { key: "currency", label: "Currency", type: "enum", accessor: (i) => i.currency },
     { key: "issueDate", label: "Issued", type: "date", accessor: (i) => i.issueDate, noGroup: true },
@@ -486,6 +496,7 @@ function Body() {
                 title={inv.status === "cancelled" && inv.cancellationReason ? `Cancelled: ${inv.cancellationReason}` : undefined}
               />
               {inv.status !== "cancelled" && <PoBadge state={poStateOf(inv)} />}
+              {inv.status !== "cancelled" && verifOf(inv) !== "n/a" && <VerifiedBadge state={verifOf(inv) as "verified" | "partial" | "unverified"} />}
               <StatusDiffChip id={inv.id} />
             </div>
           </ListTd>
@@ -618,6 +629,7 @@ function Body() {
         <StatusBadge status={selected.status} />
         <PoBadge state={poStateOf(selected)} />
       </div>
+      <PaymentProofBlock invoice={selected} />
       <DetailSection>
         <DetailField label="Project" value={projects.find((p) => p.id === selected.projectId)?.name ?? "—"} />
         <DetailField label="Issued" value={selected.issueDate} mono />
@@ -854,6 +866,12 @@ function Body() {
       </MasterDetail>
 
 
+      <PaymentMatchDialog
+        open={matchOpen}
+        onOpenChange={setMatchOpen}
+        invoices={selection.count > 0 ? selection.selectedRows : list}
+      />
+
       <BulkActionBar count={selection.count} noun="invoice" onClear={selection.clear}>
         <Button size="sm" className="h-7 px-3 text-xs" onClick={() => setBulkOpen(true)}>
           Edit client / project
@@ -866,6 +884,9 @@ function Body() {
         </Button>
         <Button size="sm" variant="outline" className="h-7 px-3 text-xs" onClick={() => bulkStatus("sent", "Marked sent")}>
           Mark sent
+        </Button>
+        <Button size="sm" variant="outline" className="h-7 px-3 text-xs" onClick={() => setMatchOpen(true)}>
+          Match payments
         </Button>
         <Button
           size="sm" variant="outline" className="h-7 px-3 text-xs text-destructive"

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import {
   FileEdit, Send, PieChart, CheckCircle2, AlertTriangle, XCircle,
-  FileWarning, FileCheck2, Clock,
+  FileWarning, FileCheck2, Clock, ShieldCheck, ShieldAlert, ShieldQuestion,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -91,6 +91,42 @@ export function PoBadge({
 }) {
   const meta = PO_META[state];
 
+  return (
+    <span
+      title={title ?? meta.aria}
+      aria-label={meta.aria}
+      tabIndex={0}
+      className={cn("status-chip", showLabel && "status-chip-static", toneClasses[meta.tone], className)}
+    >
+      {meta.icon}
+      <span className="status-chip-label" aria-hidden={!showLabel}>
+        <span>{meta.label}</span>
+      </span>
+    </span>
+  );
+}
+
+export type VerificationState = "verified" | "partial" | "unverified";
+
+const VERIF_META: Record<VerificationState, { label: string; tone: StatusTone; icon: ReactNode; aria: string }> = {
+  verified: { label: "Payment verified", tone: "success", icon: <ShieldCheck className={ICON} />, aria: "Payment verified against a bank transaction" },
+  partial: { label: "Payment partly matched", tone: "warning", icon: <ShieldAlert className={ICON} />, aria: "Payment only partly matched to bank transactions" },
+  unverified: { label: "Payment unverified", tone: "danger", icon: <ShieldQuestion className={ICON} />, aria: "No bank transaction linked to this payment" },
+};
+
+/** Payment-evidence chip: is the recorded payment backed by a bank transaction? */
+export function VerifiedBadge({
+  state,
+  title,
+  className,
+  showLabel = false,
+}: {
+  state: VerificationState;
+  title?: string;
+  className?: string;
+  showLabel?: boolean;
+}) {
+  const meta = VERIF_META[state];
   return (
     <span
       title={title ?? meta.aria}
