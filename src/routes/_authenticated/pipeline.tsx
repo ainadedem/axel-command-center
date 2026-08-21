@@ -26,6 +26,7 @@ import { buildRollups, type OpportunityRollup } from "@/lib/pipeline-link";
 import { OpportunityRevenueDrawer } from "@/components/opportunity-revenue-drawer";
 import { buildVariances, hasVariance, type QuoteInvoiceVariance } from "@/lib/quote-invoice-variance";
 import { SignedAmount } from "@/components/signed-amount";
+import { ConversionGapPanel } from "@/components/conversion-gap-panel";
 
 export const Route = createFileRoute("/_authenticated/pipeline")({ component: PipelinePage });
 
@@ -88,7 +89,7 @@ function Body() {
   const acqOf = useAcqLookup(clients);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Opportunity | null>(null);
-  const [view, setView] = useState<"kanban" | "list" | "revenue" | "acquisition" | "closer" | "forecast">("kanban");
+  const [view, setView] = useState<"kanban" | "list" | "revenue" | "conversion" | "acquisition" | "closer" | "forecast">("kanban");
   const quotes = useQuotes();
   const invoices = useInvoices();
   const rollups = useMemo(() => buildRollups(list, quotes, invoices), [list, quotes, invoices]);
@@ -133,6 +134,7 @@ function Body() {
               <TabsTrigger value="kanban">Kanban</TabsTrigger>
               <TabsTrigger value="list">List</TabsTrigger>
               <TabsTrigger value="revenue">Revenue</TabsTrigger>
+              <TabsTrigger value="conversion">Conversion</TabsTrigger>
               <TabsTrigger value="acquisition">By acquisition</TabsTrigger>
               <TabsTrigger value="closer">By closer</TabsTrigger>
               <TabsTrigger value="forecast">Forecast</TabsTrigger>
@@ -146,6 +148,9 @@ function Body() {
             </TabsContent>
             <TabsContent value="revenue" className="mt-4">
               <RevenueView list={list} rollups={rollups} variances={variances} onDrill={setDrill} />
+            </TabsContent>
+            <TabsContent value="conversion" className="mt-4">
+              <ConversionGapPanel />
             </TabsContent>
             <TabsContent value="acquisition" className="mt-4">
               <PeopleView list={list} onEdit={onEdit} role="acquisition" acqOf={acqOf} />
