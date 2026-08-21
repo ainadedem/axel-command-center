@@ -15,7 +15,7 @@ import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO } from "date-fns";
 import { StatusBadge } from "@/components/status-badge";
 import { cn } from "@/lib/utils";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { useOwnerNames } from "@/hooks/use-owner-names";
 import { logActivity, diffDocument } from "@/lib/document-activity";
