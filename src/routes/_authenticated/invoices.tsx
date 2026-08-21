@@ -60,6 +60,8 @@ import { type ColumnDef } from "@/lib/column-prefs";
 import { useTablePrefs } from "@/lib/table-prefs";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 import { StatusBadge, PoBadge } from "@/components/status-badge";
+import { OpportunitySelect } from "@/components/opportunity-select";
+import { proposeStageChange } from "@/lib/pipeline-automation";
 import { MasterDetail, DetailPanel, DetailField, DetailSection } from "@/components/master-detail";
 import { useLineReorder, DragHandle, moveItem, ReorderLiveRegion } from "@/components/sortable-row";
 import { useFilterPresets } from "@/lib/filter-presets";
@@ -922,7 +924,6 @@ function Body() {
 function CancelInvoiceDialog({ open, onOpenChange, invoice }: { open: boolean; onOpenChange: (v: boolean) => void; invoice: Invoice | null }) {
   const [reason, setReason] = useState("");
   const [showErrors, setShowErrors] = useState(false);
-  const [opportunityId, setOpportunityId] = useState("");
   useEffect(() => { if (open) setReason(""); }, [open]);
   if (!invoice) return null;
   const submit = () => {
@@ -1014,6 +1015,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
   const [taxRate, setTaxRate] = useState<number>(0);
 
   const [showErrors, setShowErrors] = useState(false);
+  const [opportunityId, setOpportunityId] = useState("");
 
   useEffect(() => {
     if (!open) return;
