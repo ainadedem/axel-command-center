@@ -822,6 +822,16 @@ td.row-actions-cell {
   border: 0 !important;
   z-index: 5;
 }
+/* On rows with a bulk-select checkbox, shift the action pill clear of the
+   checkbox column (w-10 ≈ 2.5rem) so it never covers the checkbox. */
+.stacked-table tbody > tr:has(td.bulk-select-cell) td.row-actions-cell {
+  left: 3rem;
+}
+/* Keep the checkbox above the pill so it stays clickable mid-transition. */
+.stacked-table td.bulk-select-cell {
+  position: relative;
+  z-index: 6;
+}
 .row-actions-inner {
   display: inline-flex;
   align-items: center;
