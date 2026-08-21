@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { focusSearch, useFocusRow, useJumpToRecord, type FocusSearch } from "@/hooks/use-focus-row";
+import { docDeepLink, focusSearch, useFocusRow, useJumpToRecord, type FocusSearch } from "@/hooks/use-focus-row";
 import { BankAccountSelect } from "@/components/bank-account-select";
 import { defaultBankAccount } from "@/lib/payment-details";
 import { AppShell } from "@/components/app-shell";
@@ -1790,7 +1790,7 @@ function InvoiceBoard({
     invoicesStore.update(inv.id, { assignedTo: [...current, user.id] });
     notify({
       kind: "assignment", companyId: inv.companyId, docType: "invoice", docId: inv.id, docNumber: inv.number,
-      title: `${inv.number} assigned`, body: "Assigned from the board.", href: "/invoices",
+      title: `${inv.number} assigned`, body: "Assigned from the board.", href: docDeepLink("/invoices", inv.id, "board"),
       recipients: [user.id], amount: inv.amount,
     });
     toast.success(`Assigned ${inv.number} to you`);
@@ -1803,7 +1803,7 @@ function InvoiceBoard({
     });
     notify({
       kind: "comment", companyId: inv.companyId, docType: "invoice", docId: inv.id, docNumber: inv.number,
-      title: `New comment on ${inv.number}`, body: text, href: "/invoices",
+      title: `New comment on ${inv.number}`, body: text, href: docDeepLink("/invoices", inv.id, "board"),
       recipients: inv.assignedTo ?? [], amount: inv.amount,
     });
     toast.success(`Comment added to ${inv.number}`);
