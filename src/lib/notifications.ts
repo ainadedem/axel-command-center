@@ -182,7 +182,7 @@ export function useNotifications(limit = 40) {
       listeners.delete(load);
       if (channel) void supabase.removeChannel(channel);
     };
-  }, [load, limit]);
+  }, [load, limit, session]);
 
 
   /** Flip one item read or unread (optimistic, reconciled by the reload). */
