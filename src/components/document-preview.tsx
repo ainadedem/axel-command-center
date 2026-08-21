@@ -86,6 +86,9 @@ interface Props {
     stampDirty?: boolean;
     status?: string;
     paidDate?: string;
+    paid?: number;
+    cancelledAt?: string | null;
+    cancellationReason?: string | null;
   }) => void;
   /** When provided, the preview lets the user change the document status. */
   statusOptions?: string[];
