@@ -44,6 +44,7 @@ import { resolveFileUrl } from "@/lib/storage";
 import { nextNumber, nextNumberAsync, isNumberTaken, primeNumbering } from "@/lib/numbering";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { clientLabel, clientTitle } from "@/lib/client-name";
 import { canWriteCompany, dbCompanyId } from "@/lib/db-sync";
 import { refreshStampsAndSignatures } from "@/lib/stamp-refresh";
 import { useCompanySalesUsers } from "@/hooks/use-company-users";
@@ -361,8 +362,8 @@ function Body() {
                       disabled={!isWritable(q)}
                       label={`Select quote ${q.number}`}
                     />
-                    <ListTd className="font-tnum text-xs text-muted-foreground" title={q.number}>{q.number}</ListTd>
-                    <ListTd className="font-medium" title={cl?.name}>{cl?.name ?? "—"}</ListTd>
+                    <ListTd lines={2} className="font-tnum text-xs text-muted-foreground" title={q.number}>{q.number}</ListTd>
+                    <ListTd lines={2} className="font-medium" title={clientTitle(cl)}>{clientLabel(cl)}</ListTd>
                     {cp.on("project") && (
                       <ListTd className="text-xs" title={proj?.name}>{proj ? <span className="inline-block max-w-full truncate px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 align-middle">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}</ListTd>
                     )}

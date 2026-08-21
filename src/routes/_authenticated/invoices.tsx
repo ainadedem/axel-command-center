@@ -51,6 +51,7 @@ import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightS
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
 import { toast } from "sonner";
+import { clientLabel, clientTitle } from "@/lib/client-name";
 import { canWriteCompany, dbCompanyId } from "@/lib/db-sync";
 import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } from "@/components/bulk-select";
 import { refreshStampsAndSignatures } from "@/lib/stamp-refresh";
@@ -452,9 +453,9 @@ function Body() {
 
     switch (key) {
       case "number":
-        return <ListTd className="font-tnum text-xs text-muted-foreground" title={inv.number}>{inv.number}</ListTd>;
+        return <ListTd lines={2} className="font-tnum text-xs text-muted-foreground" title={inv.number}>{inv.number}</ListTd>;
       case "client":
-        return <ListTd className="font-medium" title={cl?.name}>{cl?.name ?? "—"}</ListTd>;
+        return <ListTd lines={2} className="font-medium" title={clientTitle(cl)}>{clientLabel(cl)}</ListTd>;
       case "project":
         return (
           <ListTd className="text-xs" title={proj?.name}>
@@ -540,7 +541,7 @@ function Body() {
   const exportValue = (key: string, inv: Invoice): string => {
     switch (key) {
       case "number": return inv.number;
-      case "client": return clients.find((c) => c.id === inv.clientId)?.name ?? "";
+      case "client": return clientLabel(clients.find((c) => c.id === inv.clientId), "");
       case "project": return projects.find((p) => p.id === inv.projectId)?.name ?? "";
       case "company": return companies.find((c) => c.id === inv.companyId)?.shortName ?? "";
       case "issued": return format(parseISO(inv.issueDate), "yyyy-MM-dd");
