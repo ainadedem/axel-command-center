@@ -478,13 +478,15 @@ function Body() {
       />
 
       <BulkActionBar count={selection.count} noun="payment" onClear={selection.clear}>
-        <Button
-          size="sm" variant="outline" className="h-7 px-3 text-xs text-destructive"
-          disabled={unlinkPairs.length === 0}
-          onClick={() => setBulkUnlink(true)}
-        >
-          Unlink payments
-        </Button>
+        {unlinkPerm.canAny && (
+          <Button
+            size="sm" variant="outline" className="h-7 px-3 text-xs text-destructive"
+            disabled={unlinkPairs.length === 0}
+            onClick={() => setBulkUnlink(true)}
+          >
+            Unlink payments
+          </Button>
+        )}
       </BulkActionBar>
 
       {bulkUnlink && unlinkPairs.length > 0 && (
