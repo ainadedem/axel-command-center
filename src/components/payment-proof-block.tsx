@@ -24,6 +24,7 @@ import { usePaymentAudit, describeMatchedFields } from "@/lib/payment-audit";
 import { useOwnerNames } from "@/hooks/use-owner-names";
 import { PaymentMatchDialog } from "@/components/payment-match-dialog";
 import { PaymentUnlinkDialog } from "@/components/payment-unlink-dialog";
+import { useUnlinkPermission } from "@/lib/payment-permissions";
 import type { ProofTransaction } from "@/lib/payment-proof";
 
 function Row({
@@ -72,6 +73,7 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
   const [unlinking, setUnlinking] = useState<ProofTransaction | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
   const [bulkUnlink, setBulkUnlink] = useState(false);
+  const canUnlink = useUnlinkPermission().can(invoice.companyId);
 
   const proof = useMemo(
     () =>
@@ -128,7 +130,7 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
         />
       ) : (
         <>
-          {multi && (
+          {multi && canUnlink && (
             <div className="flex items-center justify-between gap-2 px-1 pb-1 pt-1 text-[11px] text-muted-foreground">
               <button
                 type="button"
@@ -158,7 +160,7 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
           )}
           {proof.installments.map((it, idx) => (
             <div key={it.transaction.id} className="group/pay relative flex items-start gap-2">
-              {multi && (
+              {multi && canUnlink && (
                 <Checkbox
                   className="mt-2.5 shrink-0"
                   checked={picked.includes(it.transaction.id)}
@@ -173,7 +175,7 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
                 />
               )}
               <div className="min-w-0 flex-1">
-                {picked.length === 0 && (
+                {picked.length === 0 && canUnlink && (
                   <button
                     type="button"
                     aria-label="Unlink this payment"
