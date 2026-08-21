@@ -1823,7 +1823,7 @@ const journalEntryToDb = (e: JournalEntry) => {
     date: e.date,
     piece: e.piece,
     description: e.description ?? "",
-    lines: e.lines ?? [],
+    lines: JSON.parse(JSON.stringify(e.lines ?? [])) as unknown as never,
   };
 };
 
@@ -1837,16 +1837,16 @@ const journalEntryFromDb = (r: Record<string, unknown>): JournalEntry => ({
   lines: (r.lines as JournalEntry["lines"]) ?? [],
 });
 
-export async function upsertJournalEntry(e: JournalEntry): Promise<string | undefined> {
+export async function upsertJournalEntry(e: JournalEntry): Promise<string | null> {
   const row = journalEntryToDb(e);
-  if (!row || !canWriteCompany(row.company_id)) return;
+  if (!row || !canWriteCompany(row.company_id)) return null;
   const { data, error } = await supabase
     .from("journal_entries")
     .upsert(row, { onConflict: "company_id,journal,date,piece" })
     .select("id")
     .single();
-  if (error) { reportWriteError("upsertJournalEntry", error.message); return; }
-  return data?.id as string | undefined;
+  if (error) { reportWriteError("upsertJournalEntry", error.message); return null; }
+  return (data?.id as string | undefined) ?? null;
 }
 
 export async function deleteJournalEntryDb(id: string) {
