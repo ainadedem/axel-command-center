@@ -29,6 +29,8 @@ export function InvoicePreview({ open, onOpenChange, invoice, company, client, p
         paidDate: invoice.paidDate,
         amount: invoice.amount,
         paid: invoice.paid,
+        cancelledAt: invoice.cancelledAt,
+        cancellationReason: invoice.cancellationReason,
         currency: invoice.currency,
         lines: invoice.lines ?? po?.lines ?? quote?.lines,
         discountPct: invoice.discountPct,
