@@ -1,0 +1,1 @@
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS payment_terms_by_currency jsonb NOT NULL DEFAULT '{}'::jsonb;

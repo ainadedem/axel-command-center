@@ -15,7 +15,7 @@ import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO } from "date-fns";
 import { StatusBadge } from "@/components/status-badge";
 import { cn } from "@/lib/utils";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { useOwnerNames } from "@/hooks/use-owner-names";
 import { logActivity, diffDocument } from "@/lib/document-activity";
@@ -28,7 +28,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, Upload, FileText, X, History, RefreshCw, Eye, AlertTriangle } from "lucide-react";
+import { Pencil, Trash2, Upload, FileText, X, History, RefreshCw, Eye, AlertTriangle, ListFilter, FileCheck2, FileX2 } from "lucide-react";
+import { StatusFilterBar } from "@/components/status-filter-bar";
+import { FilterPresetBar } from "@/components/filter-presets";
+import { useFilterPresets } from "@/lib/filter-presets";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
@@ -55,6 +59,21 @@ const PO_COLUMNS: ColumnDef[] = [
 type DocVersion = { url: string; name?: string; type?: string; uploadedAt: string };
 
 export const Route = createFileRoute("/_authenticated/purchase-orders")({ component: POPage, validateSearch: focusSearch });
+
+const PO_STATUSES = ["draft", "issued", "fulfilled", "cancelled"];
+
+/** Document-on-file chips — the PO page equivalent of the invoice PO chips. */
+const DOC_CHIPS = [
+  { key: "has", label: "Document on file", hint: "Client PO document uploaded", icon: <FileCheck2 className="h-3.5 w-3.5" />, tone: "success" as const },
+  { key: "missing", label: "Missing document", hint: "No client PO document uploaded", icon: <FileX2 className="h-3.5 w-3.5" />, tone: "danger" as const },
+];
+
+/** Starter presets seeded once per user — renameable and deletable afterwards. */
+const PO_PRESETS = [
+  { id: "seed-issued", name: "Issued", statuses: ["issued"], po: [] },
+  { id: "seed-fulfilled", name: "Fulfilled", statuses: ["fulfilled"], po: [] },
+  { id: "seed-missing-doc", name: "Missing document", statuses: [], po: ["missing"] },
+];
 
 const statusStyles: Record<POStatus, string> = {
   draft: "border-muted text-muted-foreground bg-muted/30",
@@ -104,7 +123,34 @@ function Body() {
     { key: "owner", label: "Owner", type: "enum", accessor: (p) => ownerName(p.createdBy) },
   ];
   const view = useDataView<PurchaseOrder>("purchase-orders", fields);
-  const groups = view.apply(baseList);
+  // Quick status / document chips layered on top of the saved view filters.
+  const [chipStatuses, setChipStatuses] = useState<string[]>([]);
+  const [chipDoc, setChipDoc] = useState<string[]>([]);
+  const presets = useFilterPresets("purchase-orders", PO_PRESETS);
+  const isMobile = useIsMobile();
+  const docStateOf = (p: PurchaseOrder) => (p.documentUrl ? "has" : "missing");
+  const chipFiltered = useMemo(
+    () =>
+      baseList.filter(
+        (p) =>
+          (chipStatuses.length === 0 || chipStatuses.includes(p.status)) &&
+          (chipDoc.length === 0 || chipDoc.includes(p.documentUrl ? "has" : "missing")),
+      ),
+    [baseList, chipStatuses, chipDoc],
+  );
+  const filtersActive =
+    chipStatuses.length > 0 ||
+    chipDoc.length > 0 ||
+    Boolean(view.state.q.trim()) ||
+    Object.values(view.state.filters).some(Boolean) ||
+    Boolean(view.state.sort) ||
+    Boolean(view.state.group);
+  const clearAllFilters = () => {
+    setChipStatuses([]);
+    setChipDoc([]);
+    view.reset();
+  };
+  const groups = view.apply(chipFiltered);
   const list = groups.flatMap((g) => g.items);
   const cp = useColumnPrefs("purchase-orders", PO_COLUMNS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -155,9 +201,53 @@ function Body() {
     <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <CrudToolbar createLabel="New PO" count={list.length} label="purchase orders" onCreate={openCreate} />
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 justify-end">
+          <span
+            title={`${list.length} of ${baseList.length} purchase order${baseList.length !== 1 ? "s" : ""}${filtersActive ? " · filtered" : ""}`}
+            aria-label={`${list.length} of ${baseList.length} purchase orders`}
+            className="inline-flex shrink-0 items-center gap-1.5 h-8 px-2 rounded-full border border-border bg-surface text-xs text-muted-foreground font-tnum whitespace-nowrap"
+          >
+            <ListFilter className="h-4 w-4" />
+            <span>{list.length}/{baseList.length}</span>
+          </span>
+          <DataToolbar view={view} items={baseList} iconOnly className="shrink-0 flex-nowrap" />
+          <FilterPresetBar
+            api={presets}
+            statuses={chipStatuses}
+            po={chipDoc}
+            onApply={(p) => { setChipStatuses(p.statuses); setChipDoc(p.po); }}
+            iconOnly
+          />
+          <StatusFilterBar
+            statuses={PO_STATUSES}
+            selected={chipStatuses}
+            statusCount={(s) => baseList.filter((p) => p.status === s).length}
+            onToggleStatus={(s) =>
+              setChipStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))
+            }
+            extra={{
+              entries: DOC_CHIPS,
+              selected: chipDoc,
+              count: (k) => baseList.filter((p) => docStateOf(p) === k).length,
+              onToggle: (k) => setChipDoc((prev) => (prev.includes(k) ? prev.filter((x) => x !== k) : [...prev, k])),
+            }}
+            onClear={() => { setChipStatuses([]); setChipDoc([]); }}
+            iconOnly
+            overflow
+            forceOverflowAll={isMobile}
+          />
+          {filtersActive && (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              title="Clear all"
+              aria-label="Clear all filters"
+              className="inline-flex shrink-0 items-center justify-center h-8 w-8 rounded-full bg-surface text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
           <ColumnPicker prefs={cp} />
-          <DataToolbar view={view} items={baseList} />
         </div>
 
       </div>

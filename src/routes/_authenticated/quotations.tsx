@@ -38,7 +38,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, FileCheck2, Plus, X, Eye, Copy, Send, Loader2, CheckCircle2, History } from "lucide-react";
+import { Pencil, Trash2, FileCheck2, Plus, X, Eye, Copy, Send, Loader2, CheckCircle2, History, ListFilter } from "lucide-react";
+import { StatusFilterBar } from "@/components/status-filter-bar";
+import { FilterPresetBar } from "@/components/filter-presets";
+import { useFilterPresets } from "@/lib/filter-presets";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { DocumentPreview, buildPrintableDocument, type DocumentData } from "@/components/document-preview";
 import { resolveFileUrl } from "@/lib/storage";
 import { nextNumber, nextNumberAsync, isNumberTaken, primeNumbering } from "@/lib/numbering";
@@ -79,6 +83,16 @@ const QUOTE_COLUMNS: ColumnDef[] = [
 
 
 export const Route = createFileRoute("/_authenticated/quotations")({ component: QuotationsPage, validateSearch: focusSearch });
+
+const QUOTE_STATUSES = ["draft", "sent", "accepted", "rejected", "expired"];
+
+/** Starter presets seeded once per user — renameable and deletable afterwards. */
+const QUOTE_PRESETS = [
+  { id: "seed-draft", name: "Draft", statuses: ["draft"], po: [] },
+  { id: "seed-awaiting", name: "Sent, awaiting reply", statuses: ["sent"], po: [] },
+  { id: "seed-accepted", name: "Accepted", statuses: ["accepted"], po: [] },
+  { id: "seed-expired", name: "Expired", statuses: ["expired"], po: [] },
+];
 
 const statusStyles: Record<QuoteStatus, string> = {
   draft: "border-muted text-muted-foreground bg-muted/30",
@@ -179,7 +193,25 @@ function Body() {
     { key: "owner", label: "Owner", type: "enum", accessor: (q) => ownerName(q) },
   ];
   const view = useDataView<Quote>("quotations", fields);
-  const groups = view.apply(baseList);
+  // Quick status chips layered on top of the saved view filters (same as invoices).
+  const [chipStatuses, setChipStatuses] = useState<string[]>([]);
+  const presets = useFilterPresets("quotations", QUOTE_PRESETS);
+  const isMobile = useIsMobile();
+  const chipFiltered = useMemo(
+    () => baseList.filter((q) => chipStatuses.length === 0 || chipStatuses.includes(q.status)),
+    [baseList, chipStatuses],
+  );
+  const filtersActive =
+    chipStatuses.length > 0 ||
+    Boolean(view.state.q.trim()) ||
+    Object.values(view.state.filters).some(Boolean) ||
+    Boolean(view.state.sort) ||
+    Boolean(view.state.group);
+  const clearAllFilters = () => {
+    setChipStatuses([]);
+    view.reset();
+  };
+  const groups = view.apply(chipFiltered);
   const list = groups.flatMap((g) => g.items);
   const cp = useColumnPrefs("quotations", QUOTE_COLUMNS);
   const colCount = 2 + cp.count;
@@ -302,10 +334,48 @@ function Body() {
       <div className="space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <CrudToolbar createLabel="New quote" count={list.length} label="quotations" onCreate={openCreate} />
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 justify-end">
+          <span
+            title={`${list.length} of ${baseList.length} quotation${baseList.length !== 1 ? "s" : ""}${filtersActive ? " · filtered" : ""}`}
+            aria-label={`${list.length} of ${baseList.length} quotations`}
+            className="inline-flex shrink-0 items-center gap-1.5 h-8 px-2 rounded-full border border-border bg-surface text-xs text-muted-foreground font-tnum whitespace-nowrap"
+          >
+            <ListFilter className="h-4 w-4" />
+            <span>{list.length}/{baseList.length}</span>
+          </span>
+          <DataToolbar view={view} items={baseList} iconOnly className="shrink-0 flex-nowrap" />
+          <FilterPresetBar
+            api={presets}
+            statuses={chipStatuses}
+            po={[]}
+            onApply={(p) => setChipStatuses(p.statuses)}
+            iconOnly
+          />
+          <StatusFilterBar
+            statuses={QUOTE_STATUSES}
+            selected={chipStatuses}
+            statusCount={(s) => baseList.filter((q) => q.status === s).length}
+            onToggleStatus={(s) =>
+              setChipStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))
+            }
+            onClear={() => setChipStatuses([])}
+            iconOnly
+            overflow
+            forceOverflowAll={isMobile}
+          />
+          {filtersActive && (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              title="Clear all"
+              aria-label="Clear all filters"
+              className="inline-flex shrink-0 items-center justify-center h-8 w-8 rounded-full bg-surface text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
           <LayoutToggle value={layout} onChange={setLayout} />
           {layout === "list" && <ColumnPicker prefs={cp} />}
-          <DataToolbar view={view} items={baseList} />
         </div>
 
       </div>

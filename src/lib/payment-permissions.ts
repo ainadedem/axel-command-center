@@ -19,6 +19,25 @@ export const UNLINK_ROLES_LABEL = "Finance, company administrators and group adm
 export const UNLINK_DENIED_MESSAGE = (company?: string) =>
   `You do not have permission to unlink payments${company ? ` in ${company}` : ""}. ${UNLINK_ROLES_LABEL} can do this.`;
 
+/** Everything the decision depends on — pure, so it can be unit-tested. */
+export interface UnlinkActor {
+  /** Platform-wide roles from the user's account. */
+  roles: string[];
+  /** Company-scoped role check, exactly as the company context resolves it. */
+  hasCompanyRole: (companyId: string, roles: CompanyRole[]) => boolean;
+}
+
+/**
+ * The single source of truth for "may this user unlink in this company".
+ * Platform admins pass everywhere; everyone else must hold an unlink role in
+ * the company the invoice belongs to — access to another company never counts.
+ */
+export function canUnlinkIn(actor: UnlinkActor, companyId?: string): boolean {
+  if (actor.roles.includes("super_admin") || actor.roles.includes("group_admin")) return true;
+  if (!companyId) return false;
+  return actor.hasCompanyRole(companyId, UNLINK_ROLES);
+}
+
 export interface UnlinkPermission {
   /** True when the signed-in user may unlink payments in that company. */
   can: (companyId?: string) => boolean;
@@ -34,12 +53,15 @@ export function useUnlinkPermission(): UnlinkPermission {
   const isPlatformAdmin = roles.includes("super_admin") || roles.includes("group_admin");
 
   const can = useCallback(
-    (companyId?: string) => {
-      if (isPlatformAdmin) return true;
-      if (!companyId) return false;
-      return company?.hasCompanyRole(companyId, UNLINK_ROLES) ?? false;
-    },
-    [isPlatformAdmin, company],
+    (companyId?: string) =>
+      canUnlinkIn(
+        {
+          roles,
+          hasCompanyRole: (id, r) => company?.hasCompanyRole(id, r) ?? false,
+        },
+        companyId,
+      ),
+    [roles, company],
   );
 
   const companyName = useCallback(
