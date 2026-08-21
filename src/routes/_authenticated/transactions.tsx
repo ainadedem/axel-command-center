@@ -125,6 +125,19 @@ function Body() {
   const defaultSorted = view.state.sort ? preList : [...preList].sort((a, b) => b.date.localeCompare(a.date));
   const groups = view.apply(defaultSorted);
   const list = groups.flatMap((g) => g.items);
+  const isLinked = useCallback((t: Transaction) => !!t.invoiceId, []);
+  const selection = useBulkSelection(list, isLinked);
+  /** Selected receipts that still resolve to an invoice, as unlink pairs. */
+  const unlinkPairs = useMemo(
+    () =>
+      selection.selectedRows
+        .map((t) => {
+          const link = linkOf(t);
+          return link ? { invoice: link.invoice, transaction: t as unknown as ProofTransaction } : null;
+        })
+        .filter((p): p is { invoice: (typeof p & object) extends never ? never : ReturnType<typeof linkOf> extends null ? never : NonNullable<ReturnType<typeof linkOf>>["invoice"]; transaction: ProofTransaction } => p !== null),
+    [selection.selectedRows, linkOf],
+  );
 
   const cp = useColumnPrefs("transactions", TX_COLUMNS);
 
@@ -461,6 +474,29 @@ function Body() {
         invoices={[]}
         transaction={(linking as unknown as ProofTransaction) ?? undefined}
       />
+
+      <BulkActionBar count={selection.count} noun="payment" onClear={selection.clear}>
+        <Button
+          size="sm" variant="outline" className="h-7 px-3 text-xs text-destructive"
+          disabled={unlinkPairs.length === 0}
+          onClick={() => setBulkUnlink(true)}
+        >
+          Unlink payments
+        </Button>
+      </BulkActionBar>
+
+      {bulkUnlink && unlinkPairs.length > 0 && (
+        <PaymentUnlinkDialog
+          open
+          onOpenChange={(v) => {
+            if (!v) {
+              setBulkUnlink(false);
+              selection.clear();
+            }
+          }}
+          items={unlinkPairs}
+        />
+      )}
 
       {unlinking && linkOf(unlinking) && (
         <PaymentUnlinkDialog
