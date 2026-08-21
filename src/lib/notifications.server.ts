@@ -89,7 +89,24 @@ export async function fanOut(actorId: string, input: FanOutInput) {
   const actorName = (actorProfile?.display_name as string) || (actorProfile?.email as string) || "A teammate";
 
   const inAppTargets = targets.filter((u) => channelsFor(u).inApp);
-  const emailTargets = targets.filter((u) => channelsFor(u).email);
+
+  /**
+   * Email routing per user: `immediate` sends now, `digest` (or an immediate
+   * email that lands inside quiet hours) is queued for the next digest run.
+   * In-app delivery is never delayed.
+   */
+  const emailPlan = targets.map((userId) => {
+    const stored = prefs.get(userId);
+    const channels = resolveEventPrefs(stored?.events);
+    const mode = resolveEmailModes(stored?.modes, channels)[input.kind];
+    const quiet = resolveQuietHours(stored?.quiet, stored?.tz);
+    if (mode === "off") return { userId, action: "none" as const, at: null as Date | null };
+    if (mode === "digest") return { userId, action: "queue" as const, at: nextDigestAt(quiet) };
+    if (isQuiet(quiet)) return { userId, action: "queue" as const, at: quietEndsAt(quiet) };
+    return { userId, action: "send" as const, at: null as Date | null };
+  });
+  const emailTargets = emailPlan.filter((p) => p.action === "send").map((p) => p.userId);
+  const queuedPlan = emailPlan.filter((p) => p.action === "queue");
 
   let delivered = 0;
   if (inAppTargets.length > 0) {
@@ -109,6 +126,24 @@ export async function fanOut(actorId: string, input: FanOutInput) {
     const { error } = await admin.from("notifications").insert(rows);
     if (!error) delivered = rows.length;
     else console.warn("[notifications]", error.message);
+  }
+
+  let queued = 0;
+  if (queuedPlan.length > 0) {
+    const rows = queuedPlan.map((p) => ({
+      user_id: p.userId,
+      company_id: companyId,
+      kind: input.kind,
+      title: input.title,
+      body: input.body ?? null,
+      href: input.href ?? null,
+      doc_number: input.docNumber ?? null,
+      actor_name: actorName,
+      scheduled_for: (p.at ?? new Date()).toISOString(),
+    }));
+    const { error } = await admin.from("notification_email_queue").insert(rows);
+    if (!error) queued = rows.length;
+    else console.warn("[notifications:queue]", error.message);
   }
 
   let emailed = 0;
@@ -143,5 +178,6 @@ export async function fanOut(actorId: string, input: FanOutInput) {
     }
   }
 
-  return { delivered, emailed };
+  return { delivered, emailed, queued };
+
 }
