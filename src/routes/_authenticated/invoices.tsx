@@ -1668,24 +1668,50 @@ const INVOICE_BOARD_COLUMNS: { key: InvoiceStatus; label: string; dot: string }[
   { key: "cancelled", label: "Cancelled", dot: "bg-muted-foreground" },
 ];
 
+const INVOICE_TEMPLATES: KanbanTemplate[] = [
+  { id: "sales-flow", name: "Sales flow", keys: ["draft", "sent", "paid"] },
+  { id: "collections", name: "Collections", keys: ["sent", "partial", "overdue", "paid"] },
+  { id: "full", name: "Full", keys: ["draft", "sent", "partial", "paid", "overdue", "cancelled"] },
+];
+
 function InvoiceBoard({
   list,
   clients,
   companies,
   canWrite,
   onOpen,
+  onMarkPaid,
 }: {
   list: Invoice[];
   clients: Client[];
   companies: ReturnType<typeof useCompanies>;
   canWrite: (inv: Invoice) => boolean;
   onOpen: (inv: Invoice) => void;
+  onMarkPaid: (inv: Invoice) => void;
 }) {
-  const columns: KanbanColumnDef[] = INVOICE_BOARD_COLUMNS.map((c) => {
-    const items = list.filter((inv) => inv.status === c.key);
-    const sum = items.reduce((acc, inv) => acc + toMGA(invoicePayable(inv), inv.currency), 0);
-    return { key: c.key, label: c.label, dot: c.dot, meta: fmtCompact(sum, "MGA") };
-  });
+  const { user } = useAuth();
+  const tpl = useKanbanTemplates("invoices", INVOICE_TEMPLATES);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const activeKeys = tpl.active?.keys ?? INVOICE_BOARD_COLUMNS.map((c) => c.key);
+
+  const columns: KanbanColumnDef[] = activeKeys
+    .map((k) => INVOICE_BOARD_COLUMNS.find((c) => c.key === k))
+    .filter(Boolean)
+    .map((c) => {
+      const col = c!;
+      const items = list.filter((inv) => inv.status === col.key);
+      const sum = items.reduce((acc, inv) => acc + toMGA(invoicePayable(inv), inv.currency), 0);
+      return { key: col.key, label: col.label, dot: col.dot, meta: fmtCompact(sum, "MGA") };
+    });
+
+  const visible = list.filter((inv) => activeKeys.includes(inv.status));
+  const hidden = list.length - visible.length;
+
+  const blocked = (inv: Invoice, to: string, reason: string) =>
+    logBoardMove({
+      docType: "invoice", docId: inv.id, docNumber: inv.number, companyId: inv.companyId,
+      from: inv.status, to, blocked: true, reason,
+    });
 
   /**
    * Drag only performs status changes that need no extra input. Moves to
@@ -1693,57 +1719,133 @@ function InvoiceBoard({
    * reason), stay in their dialogs so the audit trail keeps its evidence.
    */
   const move = (inv: Invoice, next: string) => {
+    const from = inv.status;
     const plan = planStatusChange(inv, next as InvoiceStatus);
     if (plan.requiresPayment) {
+      blocked(inv, next, "outstanding balance");
       toast.error(`${inv.number} has an outstanding balance`, { description: "Use “Mark paid” to record the payment." });
       return;
     }
     if (plan.requiresReason) {
+      blocked(inv, next, "cancellation reason required");
       toast.error(`${inv.number} needs a cancellation reason`, { description: "Cancel it from the row actions." });
       return;
     }
     const committed = commitStatusChange(inv, plan);
+    logBoardMove({ docType: "invoice", docId: inv.id, docNumber: inv.number, companyId: inv.companyId, from, to: next });
     toast.success(`${inv.number} → ${next}`, {
       action: { label: "Undo", onClick: () => { void committed.revert(); } },
     });
   };
 
+  const assignToMe = (inv: Invoice) => {
+    if (!user?.id) return;
+    if (!canWrite(inv)) { toast.error(`You do not have permission to change ${inv.number}.`); return; }
+    const current = inv.assignedTo ?? [];
+    if (current.includes(user.id)) { toast.info(`You are already following ${inv.number}.`); return; }
+    if (current.length >= 3) { toast.error(`${inv.number} already has 3 assignees.`); return; }
+    invoicesStore.update(inv.id, { assignedTo: [...current, user.id] });
+    toast.success(`Assigned ${inv.number} to you`);
+  };
+
+  const comment = (inv: Invoice, text: string) => {
+    void logActivity({
+      docType: "invoice", docId: inv.id, docNumber: inv.number, companyId: inv.companyId,
+      action: "comment", summary: text,
+    });
+    toast.success(`Comment added to ${inv.number}`);
+  };
+
   return (
-    <KanbanBoard
-      className="xl:grid-cols-3 2xl:grid-cols-6"
-      columns={columns}
-      items={list}
-      idOf={(inv) => inv.id}
-      labelOf={(inv) => inv.number}
-      columnOf={(inv) => inv.status}
-      canMove={(inv) => {
-        if (canWrite(inv)) return true;
-        toast.error(`You do not have permission to change ${inv.number}.`);
-        return false;
-      }}
-      onMove={move}
-      onCardClick={onOpen}
-      renderCard={(inv) => {
-        const cl = clients.find((c) => c.id === inv.clientId);
-        const co = companies.find((c) => c.id === inv.companyId);
-        const balance = invoiceBalance(inv);
-        return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-end gap-2">
+        {hidden > 0 && (
+          <button
+            type="button"
+            onClick={() => tpl.setActive("full")}
+            className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {hidden} hidden by this template
+          </button>
+        )}
+        <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setHistoryOpen(true)}>
+          <History className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Board history</span>
+        </Button>
+        <KanbanTemplatePicker
+          templates={tpl.templates}
+          active={tpl.active}
+          onSelect={tpl.setActive}
+          onSave={tpl.save}
+          onRename={tpl.rename}
+          onRemove={tpl.remove}
+          currentKeys={activeKeys}
+        />
+      </div>
+
+      <KanbanBoard
+        className="xl:grid-cols-3 2xl:grid-cols-6"
+        columns={columns}
+        items={visible}
+        idOf={(inv) => inv.id}
+        labelOf={(inv) => inv.number}
+        columnOf={(inv) => inv.status}
+        canMove={(inv, to) => {
+          if (canWrite(inv)) return true;
+          blocked(inv, to, "no permission");
+          toast.error(`You do not have permission to change ${inv.number}.`);
+          return false;
+        }}
+        onMove={move}
+        onCardClick={onOpen}
+        renderActions={(inv) => (
           <>
-            <div className="flex items-start justify-between gap-2">
-              <div className="text-xs font-tnum text-muted-foreground break-words">{inv.number}</div>
-              {co && <span className="h-1.5 w-1.5 rounded-full mt-1 shrink-0" style={{ background: co.color }} />}
-            </div>
-            <div className="text-sm font-medium leading-snug mt-0.5 break-words" title={clientTitle(cl)}>{clientLabel(cl)}</div>
-            {inv.subject && <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{inv.subject}</div>}
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40">
-              <div className="font-tnum text-sm font-semibold">{fmtCompact(invoicePayable(inv), inv.currency)}</div>
-              <div className="text-[10px] text-muted-foreground font-tnum">
-                {balance > 0 ? `Due ${format(parseISO(inv.dueDate), "MMM d")}` : "Settled"}
-              </div>
-            </div>
+            <CardAction icon={ExternalLink} label="Open details" onClick={() => onOpen(inv)} />
+            <CardAction
+              icon={CircleDollarSign}
+              label="Mark as paid"
+              tone="success"
+              disabled={inv.status === "paid" || inv.status === "cancelled" || !canWrite(inv)}
+              onClick={() => onMarkPaid(inv)}
+            />
+            <CardAction icon={UserPlus} label="Assign to me" onClick={() => assignToMe(inv)} disabled={!user?.id} />
+            <CardCommentAction onSubmit={(text) => comment(inv, text)} />
           </>
-        );
-      }}
-    />
+        )}
+        renderCard={(inv) => {
+          const cl = clients.find((c) => c.id === inv.clientId);
+          const co = companies.find((c) => c.id === inv.companyId);
+          const balance = invoiceBalance(inv);
+          return (
+            <>
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-xs font-tnum text-muted-foreground break-words">{inv.number}</div>
+                {co && <span className="h-1.5 w-1.5 rounded-full mt-1 shrink-0" style={{ background: co.color }} />}
+              </div>
+              <div className="text-sm font-medium leading-snug mt-0.5 break-words" title={clientTitle(cl)}>{clientLabel(cl)}</div>
+              {inv.subject && <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{inv.subject}</div>}
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40">
+                <div className="font-tnum text-sm font-semibold">{fmtCompact(invoicePayable(inv), inv.currency)}</div>
+                <div className="text-[10px] text-muted-foreground font-tnum">
+                  {balance > 0 ? `Due ${format(parseISO(inv.dueDate), "MMM d")}` : "Settled"}
+                </div>
+              </div>
+            </>
+          );
+        }}
+      />
+
+      <BoardHistoryPanel
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        docType="invoice"
+        docIds={list.map((inv) => inv.id)}
+        onOpenDoc={(id) => {
+          const inv = list.find((x) => x.id === id);
+          if (inv) onOpen(inv);
+        }}
+      />
+    </div>
   );
 }
+
