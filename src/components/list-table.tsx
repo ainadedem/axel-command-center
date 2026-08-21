@@ -107,12 +107,19 @@ export function ListTd({
   align = "left",
   /** Opt out of single-line truncation (rare — badges that must wrap). */
   wrap,
+  /**
+   * Allow the content to wrap onto a limited number of lines instead of being
+   * cut off. Use for document numbers and object titles, which must stay
+   * readable even in a narrow column.
+   */
+  lines,
 }: {
   children?: ReactNode;
   className?: string;
   title?: string;
   align?: "left" | "right" | "center";
   wrap?: boolean;
+  lines?: 2 | 3;
 }) {
   return (
     <td
@@ -120,7 +127,9 @@ export function ListTd({
       className={cn(
         "px-4 py-1.5 align-middle",
         align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
-        wrap ? "min-w-0" : "truncate",
+        lines ? "min-w-0 whitespace-normal break-words" : wrap ? "min-w-0" : "truncate",
+        lines === 2 && "line-clamp-2",
+        lines === 3 && "line-clamp-3",
         className,
       )}
     >
@@ -128,6 +137,7 @@ export function ListTd({
     </td>
   );
 }
+
 
 /** Header cell above the leading actions column. */
 export function ListActionsTh({ width = "0", className }: { width?: string; className?: string }) {
