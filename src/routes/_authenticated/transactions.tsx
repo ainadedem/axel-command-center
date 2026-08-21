@@ -78,6 +78,7 @@ function Body() {
   const { q } = Route.useSearch();
   const [unlinkedOnly, setUnlinkedOnly] = useState(false);
   const [linking, setLinking] = useState<Transaction | null>(null);
+  const [unlinking, setUnlinking] = useState<Transaction | null>(null);
 
   /** Invoice + quotation a receipt points at, with the shared payment verdict. */
   const linkOf = useCallback((t: Transaction) => {
@@ -337,6 +338,9 @@ function Body() {
                         <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(t); setOpen(true); }} />
                         {t.type === "income" && !t.invoiceId && (
                           <RowAction icon={<Link2 className="h-3.5 w-3.5" />} label="Link to invoice" onClick={() => setLinking(t)} />
+                        )}
+                        {t.invoiceId && linkOf(t) && (
+                          <RowAction icon={<Unlink className="h-3.5 w-3.5" />} label="Unlink payment" onClick={() => setUnlinking(t)} />
                         )}
                         <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm("Delete this transaction?")) transactionsStore.remove(t.id); }} />
                       </ListRowActions>
