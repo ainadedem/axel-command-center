@@ -69,6 +69,7 @@ import { type ColumnDef } from "@/lib/column-prefs";
 import { useTablePrefs } from "@/lib/table-prefs";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 import { StatusBadge, PoBadge, VerifiedBadge } from "@/components/status-badge";
+import { StatusMenu } from "@/components/status-menu";
 import { PaymentProofBlock } from "@/components/payment-proof-block";
 import { PaymentMatchDialog } from "@/components/payment-match-dialog";
 import { verificationOf, badgeState, type ProofInvoice } from "@/lib/payment-proof";
@@ -452,6 +453,26 @@ function Body() {
   const scrollRef = useScrollRef();
   const windowed = useRowWindow({ rows: flatRows, scrollRef, rowHeight: 40 });
 
+  /**
+   * Inline status change from the list / detail panel. Guarded moves keep
+   * their dialogs so the audit trail keeps its evidence.
+   */
+  const changeStatus = (inv: Invoice, next: string) => {
+    if (!isWritable(inv)) { toast.error(`You do not have permission to change ${inv.number}.`); return; }
+    if (next === inv.status) return;
+    if (next !== "draft" && !inv.poId && !inv.poWaived) {
+      toast.error(`${inv.number} has no purchase order`, { description: "Link a PO or bypass it from the invoice editor first." });
+      return;
+    }
+    const plan = planStatusChange(inv, next as InvoiceStatus);
+    if (plan.requiresPayment) { setMarking(inv); return; }
+    if (plan.requiresReason) { setCancelling(inv); return; }
+    const committed = commitStatusChange(inv, plan);
+    toast.success(`${inv.number} → ${next}`, {
+      action: { label: "Undo", onClick: () => { void committed.revert(); } },
+    });
+  };
+
   const renderCell = (key: string, inv: Invoice) => {
     const co = companies.find((c) => c.id === inv.companyId);
     const cl = clients.find((c) => c.id === inv.clientId);
@@ -508,9 +529,13 @@ function Body() {
         return (
           <ListTd wrap title={inv.status === "cancelled" && inv.cancellationReason ? `Cancelled: ${inv.cancellationReason}` : inv.status}>
             <div className="flex flex-wrap items-center gap-1.5">
-              <StatusBadge
+              <StatusMenu
                 status={inv.status}
+                statuses={INVOICE_STATUSES}
+                disabled={!isWritable(inv)}
+                disabledReason="You cannot change this invoice"
                 title={inv.status === "cancelled" && inv.cancellationReason ? `Cancelled: ${inv.cancellationReason}` : undefined}
+                onSelect={(next) => changeStatus(inv, next)}
               />
               {inv.status !== "cancelled" && <PoBadge state={poStateOf(inv)} />}
               {inv.status !== "cancelled" && verifOf(inv) !== "n/a" && <VerifiedBadge state={badgeState(verifOf(inv))} />}
@@ -643,7 +668,13 @@ function Body() {
       }
     >
       <div className="flex flex-wrap items-center gap-2">
-        <StatusBadge status={selected.status} />
+        <StatusMenu
+          status={selected.status}
+          statuses={INVOICE_STATUSES}
+          disabled={!isWritable(selected)}
+          disabledReason="You cannot change this invoice"
+          onSelect={(next) => changeStatus(selected, next)}
+        />
         <PoBadge state={poStateOf(selected)} />
       </div>
       <PaymentProofBlock invoice={selected} />
