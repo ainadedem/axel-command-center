@@ -1282,10 +1282,12 @@ function QuoteBoard({
   const visible = list.filter((q) => activeKeys.includes(q.status));
   const hidden = list.length - visible.length;
 
+  const statusRequest = useQuoteStatusRequest(canWrite);
+
   const move = (q: Quote, status: string) => {
     const previous = q.status;
-    applyQuoteStatus(q, status as QuoteStatus, { userId: user?.id });
-    logBoardMove({ docType: "quote", docId: q.id, docNumber: q.number, companyId: q.companyId, from: previous, to: status });
+    statusRequest.request(q, status as QuoteStatus, () =>
+      logBoardMove({ docType: "quote", docId: q.id, docNumber: q.number, companyId: q.companyId, from: previous, to: status }));
   };
 
   const assignToMe = (q: Quote) => {
@@ -1371,6 +1373,14 @@ function QuoteBoard({
           const notes = followups.filter((f) => f.quoteId === q.id).length;
           return (
             <>
+              <StatusMenu
+                status={q.status}
+                statuses={QUOTE_STATUS_OPTIONS}
+                disabled={!canWrite(q)}
+                disabledReason="You cannot change this quotation"
+                onSelect={(next) => move(q, next)}
+                className="mr-auto"
+              />
               <CardAction icon={ExternalLink} label="Open details" onClick={() => onOpen(q)} />
               <CardAction icon={UserPlus} label="Assign to me" onClick={() => assignToMe(q)} disabled={!user?.id} />
               <CardCommentAction count={notes} onSubmit={(text) => comment(q, text)} />
@@ -1397,6 +1407,7 @@ function QuoteBoard({
         }}
       />
 
+      {statusRequest.dialog}
       <BoardHistoryPanel
         open={historyOpen}
         onOpenChange={setHistoryOpen}
