@@ -108,6 +108,14 @@ type Entry = {
   onClick: () => void;
 };
 
+/** A secondary chip group (e.g. "document on file") defined by the caller. */
+export interface ExtraChipGroup {
+  entries: { key: string; label: string; hint?: string; icon?: React.ReactNode; tone: StatusTone }[];
+  selected: string[];
+  onToggle: (key: string) => void;
+  count: (key: string) => number;
+}
+
 export function StatusFilterBar({
   statuses,
   selected,
@@ -116,6 +124,7 @@ export function StatusFilterBar({
   poSelected,
   onTogglePo,
   poCount,
+  extra,
   onClear,
   className,
   flat = false,
@@ -127,9 +136,12 @@ export function StatusFilterBar({
   selected: string[];
   onToggleStatus: (s: string) => void;
   statusCount: (s: string) => number;
-  poSelected: PoState[];
-  onTogglePo: (s: PoState) => void;
-  poCount: (s: PoState) => number;
+  /** Invoice-style PO chips. Omit `onTogglePo` to hide that group entirely. */
+  poSelected?: PoState[];
+  onTogglePo?: (s: PoState) => void;
+  poCount?: (s: PoState) => number;
+  /** Optional caller-defined second group, rendered where the PO chips would be. */
+  extra?: ExtraChipGroup;
   onClear: () => void;
   className?: string;
   flat?: boolean;
@@ -139,7 +151,8 @@ export function StatusFilterBar({
   /** Collapse every chip into the overflow menu (mobile). */
   forceOverflowAll?: boolean;
 }) {
-  const anyActive = selected.length > 0 || poSelected.length > 0;
+  const poActive = poSelected ?? [];
+  const anyActive = selected.length > 0 || poActive.length > 0 || (extra?.selected.length ?? 0) > 0;
 
   const statusEntries: Entry[] = statuses.map((s) => {
     const meta = STATUS_META[s];
@@ -153,20 +166,33 @@ export function StatusFilterBar({
       onClick: () => onToggleStatus(s),
     };
   });
-  const poEntries: Entry[] = (["linked", "waived", "missing"] as PoState[]).map((s) => {
-    const meta = PO_META[s];
-    return {
-      key: `p:${s}`,
-      label: meta.label,
-      hint: PO_HINT[s],
-      icon: meta.icon,
-      tone: meta.tone,
-      count: poCount(s),
-      active: poSelected.includes(s),
-      onClick: () => onTogglePo(s),
-    };
-  });
-  const all = [...statusEntries, ...poEntries];
+  const poEntries: Entry[] = onTogglePo
+    ? (["linked", "waived", "missing"] as PoState[]).map((s) => {
+        const meta = PO_META[s];
+        return {
+          key: `p:${s}`,
+          label: meta.label,
+          hint: PO_HINT[s],
+          icon: meta.icon,
+          tone: meta.tone,
+          count: poCount?.(s) ?? 0,
+          active: poActive.includes(s),
+          onClick: () => onTogglePo(s),
+        };
+      })
+    : [];
+  const extraEntries: Entry[] = (extra?.entries ?? []).map((e) => ({
+    key: `x:${e.key}`,
+    label: e.label,
+    hint: e.hint,
+    icon: e.icon,
+    tone: e.tone,
+    count: extra!.count(e.key),
+    active: extra!.selected.includes(e.key),
+    onClick: () => extra!.onToggle(e.key),
+  }));
+  const secondary = [...poEntries, ...extraEntries];
+  const all = [...statusEntries, ...secondary];
 
   const clearBtn = anyActive ? (
     <button
