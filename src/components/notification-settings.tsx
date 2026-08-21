@@ -49,7 +49,15 @@ export function NotificationSettings() {
     [roles],
   );
 
+  const localZone = useMemo(() => {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return undefined; }
+  }, []);
+
   const [events, setEvents] = useState<Record<NotificationEventKey, EventChannels>>(() => resolveEventPrefs({}));
+  const [modes, setModes] = useState<Record<NotificationEventKey, EmailMode>>(() =>
+    resolveEmailModes({}, resolveEventPrefs({})),
+  );
+  const [quiet, setQuiet] = useState<QuietHours>(() => ({ ...DEFAULT_QUIET_HOURS }));
   const [arEnabled, setArEnabled] = useState(true);
   const [stages, setStages] = useState<number[]>([...STAGES]);
   const [watchCompanies, setWatchCompanies] = useState<string[]>([]);
@@ -62,28 +70,62 @@ export function NotificationSettings() {
     let cancelled = false;
     supabase
       .from("notification_prefs")
-      .select("ar_alerts_enabled, stages, events, watch_company_ids, watch_rules")
+      .select("ar_alerts_enabled, stages, events, watch_company_ids, watch_rules, quiet_hours, digest_modes, time_zone")
       .eq("user_id", userId)
       .maybeSingle()
       .then(({ data }) => {
         if (cancelled) return;
         if (data) {
-          setArEnabled(data.ar_alerts_enabled as boolean);
-          setStages((data.stages as number[]) ?? [...STAGES]);
-          setEvents(resolveEventPrefs(data.events));
-          setWatchCompanies((data.watch_company_ids as string[]) ?? []);
-          setRules(resolveWatchRules(data.watch_rules));
+          const row = data as Record<string, unknown>;
+          const channels = resolveEventPrefs(row["events"]);
+          setArEnabled(row["ar_alerts_enabled"] as boolean);
+          setStages((row["stages"] as number[]) ?? [...STAGES]);
+          setEvents(channels);
+          setModes(resolveEmailModes(row["digest_modes"], channels));
+          setQuiet(resolveQuietHours(row["quiet_hours"], (row["time_zone"] as string) ?? localZone));
+          setWatchCompanies((row["watch_company_ids"] as string[]) ?? []);
+          setRules(resolveWatchRules(row["watch_rules"]));
+        } else {
+          setQuiet((q) => ({ ...q, timeZone: localZone }));
         }
         setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [userId]);
+  }, [userId, localZone]);
 
   const toggleStage = (s: number) =>
     setStages((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s].sort((a, b) => a - b)));
 
   const setChannel = (key: NotificationEventKey, channel: keyof EventChannels, value: boolean) =>
     setEvents((prev) => ({ ...prev, [key]: { ...prev[key], [channel]: value } }));
+
+  const setMode = (key: NotificationEventKey, mode: EmailMode) => {
+    setModes((prev) => ({ ...prev, [key]: mode }));
+    // Keep the legacy boolean in sync so older code paths stay correct.
+    setEvents((prev) => ({ ...prev, [key]: { ...prev[key], email: mode !== "off" } }));
+  };
+
+  /** Turn a whole group on or off in one click. */
+  const setGroup = (kinds: NotificationEventKey[], on: boolean) =>
+    setEvents((prev) => {
+      const next = { ...prev };
+      for (const k of kinds) next[k] = { ...next[k], inApp: on };
+      return next;
+    });
+
+  const muteGroup = (kinds: NotificationEventKey[]) => {
+    setGroup(kinds, false);
+    setModes((prev) => {
+      const next = { ...prev };
+      for (const k of kinds) next[k] = "off";
+      return next;
+    });
+    setEvents((prev) => {
+      const next = { ...prev };
+      for (const k of kinds) next[k] = { inApp: false, email: false };
+      return next;
+    });
+  };
 
   const toggleCompany = (dbId: string) =>
     setWatchCompanies((prev) => (prev.includes(dbId) ? prev.filter((x) => x !== dbId) : [...prev, dbId]));
@@ -97,11 +139,20 @@ export function NotificationSettings() {
         ar_alerts_enabled: arEnabled,
         stages,
         events: events as never,
+        digest_modes: modes as never,
+        quiet_hours: {
+          enabled: quiet.enabled,
+          start: quiet.start,
+          end: quiet.end,
+          timeZone: quiet.timeZone ?? localZone ?? null,
+        } as never,
+        time_zone: quiet.timeZone ?? localZone ?? null,
         watch_company_ids: watchCompanies,
         watch_rules: { minAmount: rules.minAmount ?? null, watchUnassigned: rules.watchUnassigned !== false } as never,
       },
       { onConflict: "user_id" },
     );
+
     setSaving(false);
     if (error) toast.error(error.message);
     else toast.success("Notification preferences saved.");
