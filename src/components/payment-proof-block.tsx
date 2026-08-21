@@ -3,7 +3,7 @@
  * behind a payment — quotation, client PO, bank transaction — with an explicit
  * verdict and links to each source record.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { FileText, FileCheck2, Landmark, ExternalLink, Search, History, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -263,7 +263,31 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
 function VerificationHistory({ invoiceId }: { invoiceId: string }) {
   const { entries } = usePaymentAudit(invoiceId);
   const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState<string | null>(null);
+  const listRef = useRef<HTMLUListElement | null>(null);
   const { ownerName } = useOwnerNames(entries.map((e) => e.actorId));
+
+  // "View audit" on the unlink toast opens this invoice's history on the entry
+  // that was just written.
+  useEffect(() => {
+    const onOpen = (ev: Event) => {
+      const d = (ev as CustomEvent<{ docId?: string; entryId?: string }>).detail;
+      if (d?.docId !== invoiceId) return;
+      setOpen(true);
+      setHighlight(d.entryId ?? null);
+    };
+    window.addEventListener("axel:open-activity", onOpen);
+    return () => window.removeEventListener("axel:open-activity", onOpen);
+  }, [invoiceId]);
+
+  useEffect(() => {
+    if (!highlight || !open) return;
+    const el = listRef.current?.querySelector(`[data-entry="${highlight}"]`);
+    el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    const t = setTimeout(() => setHighlight(null), 4000);
+    return () => clearTimeout(t);
+  }, [highlight, open, entries.length]);
+
   if (entries.length === 0) return null;
 
   return (
@@ -277,9 +301,15 @@ function VerificationHistory({ invoiceId }: { invoiceId: string }) {
         Verification history ({entries.length})
       </button>
       {open && (
-        <ul className="mt-1.5 space-y-1.5">
+        <ul ref={listRef} className="mt-1.5 space-y-1.5">
           {entries.map((e) => (
-            <li key={e.id} className="text-xs">
+            <li
+              key={e.id}
+              data-entry={e.id}
+              className={`rounded-md text-xs transition-colors ${
+                highlight === e.id ? "bg-primary/10 px-1.5 py-1 ring-1 ring-primary/40" : ""
+              }`}
+            >
               <div className="flex flex-wrap items-baseline gap-x-2">
                 <span className="text-foreground">{e.summary ?? e.action}</span>
                 <span className="text-muted-foreground">
