@@ -866,6 +866,12 @@ function Body() {
       </MasterDetail>
 
 
+      <PaymentMatchDialog
+        open={matchOpen}
+        onOpenChange={setMatchOpen}
+        invoices={selection.count > 0 ? selection.selectedRows : list}
+      />
+
       <BulkActionBar count={selection.count} noun="invoice" onClear={selection.clear}>
         <Button size="sm" className="h-7 px-3 text-xs" onClick={() => setBulkOpen(true)}>
           Edit client / project
@@ -878,6 +884,9 @@ function Body() {
         </Button>
         <Button size="sm" variant="outline" className="h-7 px-3 text-xs" onClick={() => bulkStatus("sent", "Marked sent")}>
           Mark sent
+        </Button>
+        <Button size="sm" variant="outline" className="h-7 px-3 text-xs" onClick={() => setMatchOpen(true)}>
+          Match payments
         </Button>
         <Button
           size="sm" variant="outline" className="h-7 px-3 text-xs text-destructive"
