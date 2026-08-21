@@ -177,7 +177,7 @@ function saveView(kind: DocKind, v: SavedView) {
   } catch { /* storage unavailable — non-fatal */ }
 }
 
-export function DocumentPreview({ open, onOpenChange, doc, company, client, project, signers, onDocChange, audit, statusOptions }: Props) {
+export function DocumentPreview({ open, onOpenChange, doc, company, client, project, signers, onDocChange, audit, statusOptions, onStatusChange }: Props) {
   const [showStatus, setShowStatus] = useState(true);
   // Optimistic status so the printed pill updates the moment it is changed.
   const [statusLocal, setStatusLocal] = useState<string | null>(null);
@@ -186,7 +186,9 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   const changeStatus = useCallback(
     (next: string) => {
-      if (!doc || !onDocChange || next === status) return;
+      if (!doc || next === status) return;
+      if (onStatusChange) { onStatusChange(next); return; }
+      if (!onDocChange) return;
       const isInvoice = doc.paid !== undefined;
       const patch: {
         status: string;
@@ -233,7 +235,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
         });
       }
     },
-    [doc, onDocChange, status, audit],
+    [doc, onDocChange, status, audit, onStatusChange],
   );
 
   const [showClientEmail, setShowClientEmail] = useState(true);
