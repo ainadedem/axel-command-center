@@ -8,7 +8,10 @@
  * Runs with the service role because one user cannot read another user's
  * notification preferences.
  */
-import { resolveEventPrefs, resolveWatchRules, EVENT_LABEL } from "./notification-events";
+import {
+  resolveEventPrefs, resolveWatchRules, EVENT_LABEL,
+  resolveEmailModes, resolveQuietHours, isQuiet, quietEndsAt, nextDigestAt,
+} from "./notification-events";
 import type { FanOutInput } from "./notifications.types";
 
 const isUuid = (v?: string | null) =>
