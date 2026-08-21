@@ -750,18 +750,21 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
                 {i > 0 && (
                   <ChevronRight className="h-3.5 w-3.5 text-foreground/30 shrink-0" aria-hidden="true" />
                 )}
-                <Link
-                  to={crumb.to}
-                  aria-current={isLast ? "page" : undefined}
-                  className={cn(
-                    "truncate max-w-[20ch] text-sm transition-colors duration-150",
-                    isLast
-                      ? "font-medium text-foreground pointer-events-none"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {crumb.label}
-                </Link>
+                {isLast ? (
+                  <span
+                    aria-current="page"
+                    className="truncate max-w-[20ch] text-sm font-medium text-foreground"
+                  >
+                    {crumb.label}
+                  </span>
+                ) : (
+                  <Link
+                    to={crumb.to as never}
+                    className="truncate max-w-[20ch] text-sm text-muted-foreground hover:text-foreground transition-colors duration-150"
+                  >
+                    {crumb.label}
+                  </Link>
+                )}
               </span>
             );
           })}
