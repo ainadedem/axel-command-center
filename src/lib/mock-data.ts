@@ -431,6 +431,10 @@ export interface Quote {
   /** Set when the company stamp or a signature changed after the last render. */
   stampDirty?: boolean;
 
+  /** ISO timestamp when the quotation was cancelled. */
+  cancelledAt?: string;
+  /** Required comment explaining the cancellation. */
+  cancellationReason?: string;
 }
 
 /** Maximum number of sales people that can follow one quotation. */
