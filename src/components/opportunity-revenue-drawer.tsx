@@ -1,18 +1,21 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Link } from "@tanstack/react-router";
 import { format, parseISO } from "date-fns";
-import { FileText, Receipt, ArrowUpRight } from "lucide-react";
+import { FileText, Receipt, ArrowUpRight, Scale } from "lucide-react";
 import { fmtCompact, toMGA, type Opportunity } from "@/lib/mock-data";
 import { invoicePayable, invoiceBalance } from "@/lib/invoice-money";
 import { quotePayable, type OpportunityRollup } from "@/lib/pipeline-link";
 import { StatusBadge } from "@/components/status-badge";
+import { SignedAmount } from "@/components/signed-amount";
+import type { QuoteInvoiceVariance, VarianceLine } from "@/lib/quote-invoice-variance";
 
 /** Drill-down of everything a pipeline deal is linked to. */
 export function OpportunityRevenueDrawer({
-  opportunity, rollup, open, onOpenChange,
+  opportunity, rollup, variance, open, onOpenChange,
 }: {
   opportunity: Opportunity | null;
   rollup: OpportunityRollup | null;
+  variance?: QuoteInvoiceVariance | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
@@ -36,6 +39,10 @@ export function OpportunityRevenueDrawer({
               <Metric label="Collected" value={fmtCompact(rollup.collected, "MGA")} tone="success" />
               <Metric label="Outstanding" value={fmtCompact(rollup.outstanding, "MGA")} tone={rollup.outstanding > 0 ? "warning" : undefined} />
             </div>
+
+            {variance && (variance.quoted > 0 || variance.invoiced > 0) && (
+              <VarianceSection v={variance} />
+            )}
 
             <Section icon={<FileText className="h-3.5 w-3.5" />} title={`Quotations (${rollup.quotes.length})`}>
               {rollup.quotes.length === 0 ? (
@@ -116,5 +123,99 @@ function Row({ to, focus, title, meta, amount, badge }: {
       {badge}
       <div className="text-xs font-tnum shrink-0">{amount}</div>
     </Link>
+  );
+}
+
+/* ─── Quoted → invoiced variance ─────────────────────────────────── */
+
+function VarianceSection({ v }: { v: QuoteInvoiceVariance }) {
+  const signed = (n: number) => (
+    <SignedAmount value={n} formatted={`${n > 0 ? "+" : ""}${fmtCompact(n, "MGA")}`} />
+  );
+  return (
+    <Section icon={<Scale className="h-3.5 w-3.5" />} title="Quoted vs invoiced">
+      <div className="rounded-lg border border-border bg-surface p-3 space-y-3">
+        <div className="flex items-baseline justify-between gap-3">
+          <div className="text-xs text-muted-foreground">
+            {fmtCompact(v.quoted, "MGA")} quoted → {fmtCompact(v.invoiced, "MGA")} invoiced
+          </div>
+          <div className="text-sm font-tnum">{signed(v.total)}</div>
+        </div>
+
+        <div className="h-1.5 w-full rounded-full bg-surface-elevated overflow-hidden">
+          <div
+            className="h-full bg-primary transition-all"
+            style={{ width: `${Math.min(100, Math.round(v.invoicedPct * 100))}%` }}
+          />
+        </div>
+        <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+          <span>{Math.round(v.invoicedPct * 100)}% of the quote invoiced</span>
+          {v.notInvoiced > 0 && <span>{fmtCompact(v.notInvoiced, "MGA")} not yet invoiced</span>}
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <Bucket label="Scope" value={v.scope} />
+          <Bucket label="Price / qty" value={v.priceQty} />
+          <Bucket label="FX" value={v.fx} />
+        </div>
+
+        {v.partialDetail && (
+          <p className="text-[11px] text-muted-foreground">
+            Some documents have no line detail — the split below covers only documents with lines.
+          </p>
+        )}
+
+        {v.missing.length > 0 && (
+          <LineGroup title="Quoted, not invoiced" lines={v.missing} tone="destructive" />
+        )}
+        {v.extra.length > 0 && (
+          <LineGroup title="Invoiced, not quoted" lines={v.extra} tone="success" />
+        )}
+        {v.changed.length > 0 && (
+          <LineGroup title="Amount changed" lines={v.changed} />
+        )}
+        {v.missing.length === 0 && v.extra.length === 0 && v.changed.length === 0 && (
+          <p className="text-[11px] text-muted-foreground">Every quoted line matches an invoiced line.</p>
+        )}
+      </div>
+    </Section>
+  );
+}
+
+function Bucket({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md border border-border bg-surface-elevated px-2 py-1.5">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-xs font-tnum">
+        <SignedAmount value={value} formatted={`${value > 0 ? "+" : ""}${fmtCompact(value, "MGA")}`} />
+      </div>
+    </div>
+  );
+}
+
+function LineGroup({ title, lines, tone }: { title: string; lines: VarianceLine[]; tone?: "success" | "destructive" }) {
+  return (
+    <div className="space-y-1">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{title}</div>
+      {lines.slice(0, 8).map((l) => (
+        <div key={l.key} className="flex items-center gap-2 text-[11px] border-t border-border/60 pt-1">
+          <div className="min-w-0 flex-1">
+            <div className="truncate">{l.description}</div>
+            <div className="text-muted-foreground truncate">
+              {[...l.quoteNumbers, ...l.invoiceNumbers].join(" · ") || "—"}
+              {l.quantityQuoted !== undefined && l.quantityInvoiced !== undefined && l.quantityQuoted !== l.quantityInvoiced
+                ? ` · qty ${l.quantityQuoted} → ${l.quantityInvoiced}`
+                : ""}
+            </div>
+          </div>
+          <div className={`font-tnum shrink-0 ${tone === "success" ? "text-success" : tone === "destructive" ? "text-destructive" : ""}`}>
+            {l.delta > 0 ? "+" : ""}{fmtCompact(l.delta, "MGA")}
+          </div>
+        </div>
+      ))}
+      {lines.length > 8 && (
+        <div className="text-[11px] text-muted-foreground">+{lines.length - 8} more</div>
+      )}
+    </div>
   );
 }
