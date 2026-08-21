@@ -26,6 +26,7 @@ export function KanbanBoard<T>({
   idOf,
   labelOf,
   renderCard,
+  renderActions,
   onMove,
   canMove,
   onCardClick,
@@ -39,6 +40,8 @@ export function KanbanBoard<T>({
   /** Accessible name of a card, used in the live region. */
   labelOf: (item: T) => string;
   renderCard: (item: T) => ReactNode;
+  /** Quick actions rendered on hover / focus at the bottom of a card. */
+  renderActions?: (item: T) => ReactNode;
   onMove: (item: T, columnKey: string) => void;
   /** Optional guard — return false to reject a drop. */
   canMove?: (item: T, columnKey: string) => boolean;
@@ -46,6 +49,7 @@ export function KanbanBoard<T>({
   className?: string;
   minHeight?: string;
 }) {
+
   const [dragId, setDragId] = useState<string | null>(null);
   const [overKey, setOverKey] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
