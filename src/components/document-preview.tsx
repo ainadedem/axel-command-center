@@ -42,6 +42,9 @@ export interface DocumentData {
   paidDate?: string;
   amount: number;
   paid?: number;
+  /** Invoice cancellation metadata. */
+  cancelledAt?: string | null;
+  cancellationReason?: string | null;
   currency: Currency;
   lines?: QuoteLine[];
   notes?: string;
@@ -86,6 +89,9 @@ interface Props {
     stampDirty?: boolean;
     status?: string;
     paidDate?: string;
+    paid?: number;
+    cancelledAt?: string | null;
+    cancellationReason?: string | null;
   }) => void;
   /** When provided, the preview lets the user change the document status. */
   statusOptions?: string[];
@@ -176,9 +182,40 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
   const changeStatus = useCallback(
     (next: string) => {
       if (!doc || !onDocChange || next === status) return;
-      if (next === "cancelled" && !window.confirm("Mark this document as cancelled?")) return;
-      const patch: { status: string; paidDate?: string } = { status: next };
-      if (next === "paid" && !doc.paidDate) patch.paidDate = new Date().toISOString().slice(0, 10);
+      const isInvoice = doc.paid !== undefined;
+      const patch: {
+        status: string;
+        paidDate?: string;
+        paid?: number;
+        cancelledAt?: string | null;
+        cancellationReason?: string | null;
+      } = { status: next };
+      let reason: string | null = null;
+      if (next === "cancelled") {
+        if (isInvoice) {
+          const input = window.prompt("Reason for cancelling this invoice?", doc.cancellationReason ?? "");
+          if (input == null) return;
+          reason = input.trim();
+          if (!reason) {
+            window.alert("A cancellation reason is required.");
+            return;
+          }
+          patch.cancellationReason = reason;
+          patch.cancelledAt = new Date().toISOString();
+        } else if (!window.confirm("Mark this document as cancelled?")) {
+          return;
+        }
+      }
+      const payable =
+        (Number(doc.totalAmount) > 0 ? Number(doc.totalAmount) : (Number(doc.amount) || 0) + (Number(doc.taxAmount) || 0));
+      if (next === "paid") {
+        if (!doc.paidDate) patch.paidDate = new Date().toISOString().slice(0, 10);
+        if (isInvoice && (doc.paid ?? 0) < payable) patch.paid = payable;
+      }
+      if (isInvoice && next !== "cancelled" && doc.cancelledAt) {
+        patch.cancelledAt = null;
+        patch.cancellationReason = null;
+      }
       setStatusLocal(next);
       onDocChange(patch);
       if (audit) {
@@ -187,12 +224,13 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
           docNumber: doc.number,
           action: "status_changed",
           summary: `Status changed from ${status} to ${next}`,
-          details: { before: status, after: next },
+          details: { before: status, after: next, ...(patch.paid != null ? { paid: patch.paid } : {}), ...(reason ? { reason } : {}) },
         });
       }
     },
     [doc, onDocChange, status, audit],
   );
+
   const [showClientEmail, setShowClientEmail] = useState(true);
   const [showUnit, setShowUnit] = useState(true);
   const [showPayment, setShowPayment] = useState(company?.showPaymentDetails !== false);
