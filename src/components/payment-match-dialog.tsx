@@ -16,7 +16,10 @@ import {
   fmtFull, invoicesStore, transactionsStore,
   useTransactions, useQuotes, usePurchaseOrders, useClients, useInvoices,
   type Invoice,
+  type Currency,
 } from "@/lib/mock-data";
+const money = (v: number, c: string) => fmtFull(v, c as Currency);
+
 import { invoicePayable } from "@/lib/invoice-money";
 import { proposeMatches, type MatchProposal, type ProofInvoice } from "@/lib/payment-proof";
 import { logActivity } from "@/lib/document-activity";

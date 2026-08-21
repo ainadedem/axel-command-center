@@ -14,7 +14,10 @@ import {
   useQuotes,
   usePurchaseOrders,
   type Invoice,
+  type Currency,
 } from "@/lib/mock-data";
+const money = (v: number, c: string) => fmtFull(v, c as Currency);
+
 import { buildPaymentProof, type ProofInvoice } from "@/lib/payment-proof";
 import { PaymentMatchDialog } from "@/components/payment-match-dialog";
 
