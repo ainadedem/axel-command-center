@@ -1,8 +1,8 @@
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Building2, Wallet, ArrowLeftRight, FileText,
   Users, Briefcase, TrendingUp, BarChart3, Settings, Search, Bell, Plus, Truck,
-  ChevronDown, Check, LogOut, Target, UserCog, Handshake,
+  ChevronDown, ChevronLeft, ChevronRight, Check, LogOut, Target, UserCog, Handshake,
   BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList, RefreshCw,
   Sparkles, CreditCard, Repeat, Wallet2, ExternalLink, Info, ShieldCheck, Menu, X, Undo2, Redo2,
   PanelLeftClose, PanelLeftOpen,
@@ -553,6 +553,48 @@ function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
+/**
+ * Derive a compact breadcrumb trail (Home / Section / Page) from the pathname
+ * using the static `sections` nav map. No DB lookups.
+ */
+function useBreadcrumbs(pathname: string): { label: string; to: string }[] {
+  const crumbs: { label: string; to: string }[] = [];
+  if (pathname !== "/") crumbs.push({ label: "Home", to: "/" });
+  // Find the matching nav item.
+  let matched:
+    | { label: string; to: string; sectionLabel: string }
+    | null = null;
+  for (const section of sections) {
+    for (const item of section.items) {
+      if (item.to === "/") continue;
+      if (pathname === item.to || pathname.startsWith(item.to + "/")) {
+        matched = { label: item.label, to: item.to, sectionLabel: section.label };
+        break;
+      }
+    }
+    if (matched) break;
+  }
+  if (matched) {
+    if (pathname !== matched.to) {
+      // We're on a detail/sub page — show section, then list, then "Detail".
+      crumbs.push({ label: matched.sectionLabel, to: matched.to });
+      crumbs.push({ label: matched.label, to: matched.to });
+      crumbs.push({ label: "Detail", to: pathname });
+    } else {
+      crumbs.push({ label: matched.sectionLabel, to: matched.to });
+      crumbs.push({ label: matched.label, to: pathname });
+    }
+  } else if (pathname !== "/") {
+    // Unknown route: title-case the last segment.
+    const seg = pathname.split("/").filter(Boolean).pop() ?? "";
+    const label = seg
+      .replace(/[-_]/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+    crumbs.push({ label: label || "Page", to: pathname });
+  }
+  return crumbs;
+}
+
 const NEW_BUTTON_ROUTES: { match: (p: string) => boolean; to: string; label: string }[] = [
   { match: (p) => p.startsWith("/accounts"), to: "/accounts", label: "New account" },
   { match: (p) => p.startsWith("/transactions"), to: "/transactions", label: "New transaction" },
@@ -597,6 +639,13 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
   const newAction = NEW_BUTTON_ROUTES.find((route) => route.match(pathname));
   const newLabel = newAction?.label ?? "New";
   const history = useHistory();
+  const router = useRouter();
+  const canGoBack = router.history.canGoBack?.() ?? window.history.length > 1;
+  const crumbs = useBreadcrumbs(pathname);
+  const goBack = () => {
+    if (router.history.back) router.history.back();
+    else window.history.back();
+  };
 
   const runUndo = async () => {
     try {
@@ -680,6 +729,48 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
         <Menu className="h-5 w-5" aria-hidden="true" />
       </button>
       <AxelBraceMark title="AXEL" className="lg:hidden h-5 w-5 shrink-0 text-foreground" />
+
+      {/* Back button + breadcrumbs */}
+      <button
+        type="button"
+        onClick={goBack}
+        disabled={!canGoBack}
+        aria-label="Go back"
+        title="Back"
+        className="hidden sm:grid h-9 w-9 shrink-0 place-items-center rounded-full focus-ring hover:bg-[var(--surface-container)] hover:text-foreground active:scale-95 transition-all duration-200 disabled:opacity-35 disabled:pointer-events-none"
+      >
+        <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+      </button>
+      {crumbs.length > 0 && (
+        <nav aria-label="Breadcrumb" className="hidden md:flex items-center gap-1 min-w-0 max-w-[40ch] shrink">
+          {crumbs.map((crumb, i) => {
+            const isLast = i === crumbs.length - 1;
+            return (
+              <span key={crumb.to + i} className="flex items-center gap-1 min-w-0">
+                {i > 0 && (
+                  <ChevronRight className="h-3.5 w-3.5 text-foreground/30 shrink-0" aria-hidden="true" />
+                )}
+                {isLast ? (
+                  <span
+                    aria-current="page"
+                    className="truncate max-w-[20ch] text-sm font-medium text-foreground"
+                  >
+                    {crumb.label}
+                  </span>
+                ) : (
+                  <Link
+                    to={crumb.to as never}
+                    className="truncate max-w-[20ch] text-sm text-muted-foreground hover:text-foreground transition-colors duration-150"
+                  >
+                    {crumb.label}
+                  </Link>
+                )}
+              </span>
+            );
+          })}
+        </nav>
+      )}
+
       <form onSubmit={submitSearch} className="flex-1 min-w-0 max-w-xl relative">
         <Search className="h-5 w-5 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2" aria-hidden="true" />
         <input
