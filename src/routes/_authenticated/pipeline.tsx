@@ -133,6 +133,7 @@ function Body() {
               <TabsTrigger value="kanban">Kanban</TabsTrigger>
               <TabsTrigger value="list">List</TabsTrigger>
               <TabsTrigger value="revenue">Revenue</TabsTrigger>
+              <TabsTrigger value="conversion">Conversion</TabsTrigger>
               <TabsTrigger value="acquisition">By acquisition</TabsTrigger>
               <TabsTrigger value="closer">By closer</TabsTrigger>
               <TabsTrigger value="forecast">Forecast</TabsTrigger>
@@ -146,6 +147,9 @@ function Body() {
             </TabsContent>
             <TabsContent value="revenue" className="mt-4">
               <RevenueView list={list} rollups={rollups} variances={variances} onDrill={setDrill} />
+            </TabsContent>
+            <TabsContent value="conversion" className="mt-4">
+              <ConversionGapPanel />
             </TabsContent>
             <TabsContent value="acquisition" className="mt-4">
               <PeopleView list={list} onEdit={onEdit} role="acquisition" acqOf={acqOf} />
