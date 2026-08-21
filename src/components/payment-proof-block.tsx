@@ -5,7 +5,7 @@
  */
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { FileText, FileCheck2, Landmark, ExternalLink, Search } from "lucide-react";
+import { FileText, FileCheck2, Landmark, ExternalLink, Search, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VerifiedBadge } from "@/components/status-badge";
 import {
@@ -18,7 +18,9 @@ import {
 } from "@/lib/mock-data";
 const money = (v: number, c: string) => fmtFull(v, c as Currency);
 
-import { buildPaymentProof, type ProofInvoice } from "@/lib/payment-proof";
+import { buildPaymentProof, badgeState, type ProofInvoice } from "@/lib/payment-proof";
+import { usePaymentAudit, describeMatchedFields } from "@/lib/payment-audit";
+import { useOwnerNames } from "@/hooks/use-owner-names";
 import { PaymentMatchDialog } from "@/components/payment-match-dialog";
 
 function Row({
@@ -82,7 +84,7 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
     <section className="rounded-2xl bg-[var(--surface-container)]/60 px-4 py-3">
       <div className="mb-1 flex items-center justify-between gap-2">
         <h3 className="text-[11px] tracking-[0.06em] text-muted-foreground">Payment proof</h3>
-        <VerifiedBadge state={proof.verification} showLabel />
+        <VerifiedBadge state={badgeState(proof.verification)} showLabel />
       </div>
 
       <Row
@@ -109,7 +111,7 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
         missing={!proof.po}
       />
 
-      {proof.payments.length === 0 ? (
+      {proof.installments.length === 0 ? (
         <Row
           icon={<Landmark className="h-4 w-4" />}
           label="Payment"
@@ -117,23 +119,36 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
           missing
         />
       ) : (
-        proof.payments.map((t) => (
-          <Row
-            key={t.id}
-            icon={<Landmark className="h-4 w-4" />}
-            label="Payment"
-            primary={`${t.date} · ${t.description}`}
-            secondary={money(t.amount, t.currency)}
-            href={{ to: "/transactions", search: { q: t.description.slice(0, 40) } }}
-          />
+        proof.installments.map((it, idx) => (
+          <div key={it.transaction.id}>
+            <Row
+              icon={<Landmark className="h-4 w-4" />}
+              label={proof.installments.length > 1 ? `Payment ${idx + 1}` : "Payment"}
+              primary={`${it.transaction.date} · ${it.transaction.description}`}
+              secondary={money(it.transaction.amount, it.transaction.currency)}
+              href={{ to: "/transactions", search: { q: it.transaction.description.slice(0, 40) } }}
+            />
+            {proof.installments.length > 1 && (
+              <p className="pl-[7.1rem] text-[11px] text-muted-foreground">
+                covered {money(it.runningCovered, invoice.currency)} · remaining{" "}
+                {money(it.remainingAfter, invoice.currency)}
+              </p>
+            )}
+          </div>
         ))
       )}
 
-      {proof.verification === "partial" && (
-        <p className="mt-1 text-xs text-warning">
-          Shortfall of {money(proof.shortfall, invoice.currency)} between the recorded payment and the
-          linked bank transactions.
-        </p>
+      {proof.verification === "installment" && (
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-warning">
+          <span>
+            Part-paid: {money(proof.covered, invoice.currency)} of{" "}
+            {money(proof.payable, invoice.currency)} matched — {money(proof.outstanding, invoice.currency)}{" "}
+            still outstanding.
+          </span>
+          <Button size="sm" variant="ghost" className="h-6 gap-1 px-2" onClick={() => setMatching(true)}>
+            <Search className="h-3.5 w-3.5" /> Find the next payment
+          </Button>
+        </div>
       )}
 
       {proof.verification !== "verified" && (
@@ -144,11 +159,54 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
         </div>
       )}
 
+      <VerificationHistory invoiceId={invoice.id} />
+
       <PaymentMatchDialog
         open={matching}
         onOpenChange={setMatching}
         invoices={[invoice]}
       />
     </section>
+  );
+}
+
+/** Who confirmed each payment match, and on what evidence. */
+function VerificationHistory({ invoiceId }: { invoiceId: string }) {
+  const { entries } = usePaymentAudit(invoiceId);
+  const [open, setOpen] = useState(false);
+  const { ownerName } = useOwnerNames(entries.map((e) => e.actorId));
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="mt-2 border-t border-border/60 pt-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <History className="h-3.5 w-3.5" />
+        Verification history ({entries.length})
+      </button>
+      {open && (
+        <ul className="mt-1.5 space-y-1.5">
+          {entries.map((e) => (
+            <li key={e.id} className="text-xs">
+              <div className="flex flex-wrap items-baseline gap-x-2">
+                <span className="text-foreground">{e.summary ?? e.action}</span>
+                <span className="text-muted-foreground">
+                  {ownerName(e.actorId) ?? "Unknown user"} ·{" "}
+                  {new Date(e.createdAt).toLocaleString(undefined, {
+                    day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+                  })}
+                </span>
+              </div>
+              {describeMatchedFields(e.details) && (
+                <div className="text-[11px] text-muted-foreground">{describeMatchedFields(e.details)}</div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
