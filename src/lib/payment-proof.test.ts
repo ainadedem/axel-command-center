@@ -254,8 +254,8 @@ describe("30-day payers and repeated monthly amounts", () => {
     inv({
       id: `m${n}`,
       number: `FA-2026-10${n}`,
-      status: "sent",
-      paid: 0,
+      status: "paid",
+      paid: 1_200_000,
       paidDate: undefined,
       issueDate: `2026-${month}-01`,
       amount: 1_000_000,
