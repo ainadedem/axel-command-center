@@ -42,6 +42,9 @@ export interface DocumentData {
   paidDate?: string;
   amount: number;
   paid?: number;
+  /** Invoice cancellation metadata. */
+  cancelledAt?: string | null;
+  cancellationReason?: string | null;
   currency: Currency;
   lines?: QuoteLine[];
   notes?: string;
