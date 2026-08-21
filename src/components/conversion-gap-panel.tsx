@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const money = (n: number) => `${fmtCompact(n)} MGA`;
+const money = (n: number) => fmtCompact(n, "MGA");
 
 function DocList({ quotes, invoices }: { quotes: Quote[]; invoices: Invoice[] }) {
   if (!quotes.length && !invoices.length) return null;
