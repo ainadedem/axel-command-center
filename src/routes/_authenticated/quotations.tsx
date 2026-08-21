@@ -524,6 +524,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const [taxRate, setTaxRate] = useState<number>(0);
   const [discountPct, setDiscountPct] = useState<number>(0);
   const [assignedTo, setAssignedTo] = useState<string[]>([]);
+  const [opportunityId, setOpportunityId] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -541,6 +542,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setTaxRate(editing.taxRate ?? 0);
       setDiscountPct(editing.discountPct ?? 0);
       setAssignedTo(editing.assignedTo ?? []);
+      setOpportunityId(editing.opportunityId ?? "");
     } else {
       const cid = companies[0]?.id ?? "";
       numberTouched.current = false; setNumber(cid ? nextNumber("quote", cid, today) : ""); setCompanyId(cid); setClientId("");
@@ -548,6 +550,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setCurrency(companies[0]?.baseCurrency ?? "EUR"); setStatus("draft");
       setMode("rate-card");
       setAssignedTo([]);
+      setOpportunityId("");
       setLines([]); setNotes(""); setSubject(""); setBankAccountId(""); setTaxRate(defaultTaxRate(companies[0], today)); setDiscountPct(0);
     }
     // Only re-initialise when the dialog opens (or switches record) — background
@@ -716,8 +719,26 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       assignedTo: assignedTo.slice(0, MAX_QUOTE_ASSIGNEES),
       ...fxFields,
     };
+
+    // ── Pipeline link ────────────────────────────────────────────────
+    // Every quotation ends up attached to a deal: the one the user picked,
+    // the obvious open deal for this client, or a brand-new one.
+    const clientName = clients.find((c) => c.id === clientId)?.name ?? "";
+    let oppId: string | undefined = opportunityId && opportunityId !== NEW_OPPORTUNITY ? opportunityId : undefined;
+    let createdOpp: string | null = null;
+    if (opportunityId === NEW_OPPORTUNITY) {
+      createdOpp = createOpportunityFromQuote({ ...data, number, companyId, clientId }, clientName).id;
+      oppId = createdOpp;
+    } else if (!oppId && !editing) {
+      const ensured = ensureOpportunityForQuote({ ...data, id: "", opportunityId: undefined } as unknown as Quote, opportunities, clientName);
+      oppId = ensured.opportunityId;
+      if (ensured.created) createdOpp = ensured.opportunityId;
+    }
+    if (createdOpp) toast.success("Deal created in the pipeline");
+    const withOpp = { ...data, opportunityId: oppId };
+
     if (editing) {
-      quotesStore.update(editing.id, { ...data, updatedBy: user?.id, updatedAt: new Date().toISOString() });
+      quotesStore.update(editing.id, { ...withOpp, updatedBy: user?.id, updatedAt: new Date().toISOString() });
       const summary = diffDocument(editing as unknown as Record<string, unknown>, data as unknown as Record<string, unknown>);
       if (editing.status !== status) {
         logActivity({
@@ -732,9 +753,27 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     } else {
       const id = newId("q");
       quotesStore.add(
-        { id, ...data, createdBy: user?.id, updatedBy: user?.id, updatedAt: new Date().toISOString() },
+        { id, ...withOpp, createdBy: user?.id, updatedBy: user?.id, updatedAt: new Date().toISOString() },
         { onSynced: (dbId) => logActivity({ docType: "quote", docId: dbId, docNumber: number, companyId, action: "created", summary: `Quotation ${number} created` }) },
       );
+    }
+
+    // Suggest a stage move when the quotation status implies one.
+    const prevStatus = editing?.status;
+    if (status !== prevStatus) {
+      const event =
+        status === "sent" ? "quote_sent"
+        : status === "accepted" ? "quote_accepted"
+        : status === "rejected" ? "quote_rejected"
+        : null;
+      if (event && oppId) {
+        const hasInvoice = invoices.some((i) => i.opportunityId === oppId && i.status !== "cancelled");
+        const hasOtherOpenQuote = quotes.some(
+          (q) => q.opportunityId === oppId && q.id !== editing?.id && q.status !== "rejected" && q.status !== "expired",
+        );
+        proposeStageChange(oppId, event, { hasInvoice, hasOtherOpenQuote },
+          editing ? { docType: "quote", docId: editing.id, docNumber: number } : undefined);
+      }
     }
     onOpenChange(false);
   };
@@ -797,6 +836,16 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                 </SelectContent>
               </Select>
             </div>
+            <OpportunitySelect
+              companyId={companyId}
+              clientId={clientId}
+              subject={subject}
+              issueDate={issueDate}
+              value={opportunityId}
+              onChange={setOpportunityId}
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Currency</Label>
               <div className="mt-1 inline-flex rounded-md border border-border overflow-hidden text-xs">
