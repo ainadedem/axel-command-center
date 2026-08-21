@@ -199,3 +199,32 @@ describe("proposeMatchesForTransaction", () => {
     expect(res).toHaveLength(0);
   });
 });
+
+describe("unlinking a payment", () => {
+  const half = 600_000;
+
+  it("falls back to partly-matched when one of two installments is removed", () => {
+    const txs = [
+      tx({ id: "p1", invoiceId: "inv1", amount: half, date: "2026-06-12" }),
+      tx({ id: "p2", invoiceId: "inv1", amount: half, date: "2026-07-02" }),
+    ];
+    const before = buildPaymentProof(inv({ paid: 1_200_000 }), txs, [], []);
+    expect(before.verification).toBe("verified");
+
+    const after = buildPaymentProof(
+      inv({ paid: 1_200_000 }),
+      txs.filter((t) => t.id !== "p2"),
+      [], [],
+    );
+    expect(after.verification).toBe("partial");
+    expect(after.covered).toBe(half);
+    expect(after.installments).toHaveLength(1);
+  });
+
+  it("falls back to unverified when the only payment is removed", () => {
+    const after = buildPaymentProof(inv(), [tx({ id: "p1" })], [], []);
+    expect(after.verification).toBe("unverified");
+    expect(after.installments).toHaveLength(0);
+    expect(badgeState(after.verification)).toBe("unverified");
+  });
+});

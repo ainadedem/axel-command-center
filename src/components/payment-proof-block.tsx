@@ -5,7 +5,7 @@
  */
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { FileText, FileCheck2, Landmark, ExternalLink, Search, History } from "lucide-react";
+import { FileText, FileCheck2, Landmark, ExternalLink, Search, History, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VerifiedBadge } from "@/components/status-badge";
 import {
@@ -22,6 +22,8 @@ import { buildPaymentProof, badgeState, type ProofInvoice } from "@/lib/payment-
 import { usePaymentAudit, describeMatchedFields } from "@/lib/payment-audit";
 import { useOwnerNames } from "@/hooks/use-owner-names";
 import { PaymentMatchDialog } from "@/components/payment-match-dialog";
+import { PaymentUnlinkDialog } from "@/components/payment-unlink-dialog";
+import type { ProofTransaction } from "@/lib/payment-proof";
 
 function Row({
   icon,
@@ -66,6 +68,7 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
   const quotes = useQuotes();
   const pos = usePurchaseOrders();
   const [matching, setMatching] = useState(false);
+  const [unlinking, setUnlinking] = useState<ProofTransaction | null>(null);
 
   const proof = useMemo(
     () =>
@@ -120,7 +123,16 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
         />
       ) : (
         proof.installments.map((it, idx) => (
-          <div key={it.transaction.id}>
+          <div key={it.transaction.id} className="group/pay relative">
+            <button
+              type="button"
+              aria-label="Unlink this payment"
+              title="Unlink this payment"
+              onClick={() => setUnlinking(it.transaction)}
+              className="absolute right-1 top-1.5 z-10 rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 group-hover/pay:opacity-100"
+            >
+              <Unlink className="h-3.5 w-3.5" />
+            </button>
             <Row
               icon={<Landmark className="h-4 w-4" />}
               label={proof.installments.length > 1 ? `Payment ${idx + 1}` : "Payment"}
@@ -166,6 +178,15 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
         onOpenChange={setMatching}
         invoices={[invoice]}
       />
+
+      {unlinking && (
+        <PaymentUnlinkDialog
+          open
+          onOpenChange={(v) => !v && setUnlinking(null)}
+          invoice={invoice}
+          transaction={unlinking}
+        />
+      )}
     </section>
   );
 }

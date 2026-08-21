@@ -18,10 +18,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, Link2 } from "lucide-react";
+import { Pencil, Trash2, Link2, Unlink } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { VerifiedBadge } from "@/components/status-badge";
 import { PaymentMatchDialog } from "@/components/payment-match-dialog";
+import { PaymentUnlinkDialog } from "@/components/payment-unlink-dialog";
 import { buildPaymentProof, badgeState, type ProofInvoice, type ProofTransaction } from "@/lib/payment-proof";
 import { useQuotes, usePurchaseOrders } from "@/lib/mock-data";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
@@ -78,6 +79,7 @@ function Body() {
   const { q } = Route.useSearch();
   const [unlinkedOnly, setUnlinkedOnly] = useState(false);
   const [linking, setLinking] = useState<Transaction | null>(null);
+  const [unlinking, setUnlinking] = useState<Transaction | null>(null);
 
   /** Invoice + quotation a receipt points at, with the shared payment verdict. */
   const linkOf = useCallback((t: Transaction) => {
@@ -338,6 +340,9 @@ function Body() {
                         {t.type === "income" && !t.invoiceId && (
                           <RowAction icon={<Link2 className="h-3.5 w-3.5" />} label="Link to invoice" onClick={() => setLinking(t)} />
                         )}
+                        {t.invoiceId && linkOf(t) && (
+                          <RowAction icon={<Unlink className="h-3.5 w-3.5" />} label="Unlink payment" onClick={() => setUnlinking(t)} />
+                        )}
                         <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm("Delete this transaction?")) transactionsStore.remove(t.id); }} />
                       </ListRowActions>
 
@@ -447,6 +452,15 @@ function Body() {
         invoices={[]}
         transaction={(linking as unknown as ProofTransaction) ?? undefined}
       />
+
+      {unlinking && linkOf(unlinking) && (
+        <PaymentUnlinkDialog
+          open
+          onOpenChange={(v) => { if (!v) setUnlinking(null); }}
+          invoice={linkOf(unlinking)!.invoice}
+          transaction={unlinking as unknown as ProofTransaction}
+        />
+      )}
     </div>
   );
 }

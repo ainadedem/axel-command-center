@@ -72,15 +72,31 @@ export function logPaymentReviewed(
 }
 
 /** Records an undo / manual removal of a payment link (reversal entry). */
-export function logPaymentUnlinked(doc: DocRef, info: { transactionId: string; reason: string }) {
+export function logPaymentUnlinked(
+  doc: DocRef,
+  info: {
+    transactionId: string;
+    transactionDate?: string;
+    transactionAmount?: number;
+    transactionCurrency?: string;
+    reason: string;
+    source?: "manual" | "undo";
+  },
+) {
+  const what =
+    info.transactionDate && info.transactionAmount != null
+      ? ` (${info.transactionDate} · ${Math.round(info.transactionAmount).toLocaleString()} ${
+          info.transactionCurrency ?? ""
+        })`.trimEnd()
+      : "";
   void logActivity({
     docType: "invoice",
     docId: doc.invoiceId,
     docNumber: doc.invoiceNumber,
     companyId: doc.companyId,
     action: "payment_unlinked",
-    summary: `Payment link removed — ${info.reason}`,
-    details: info,
+    summary: `Payment link removed${what} — ${info.reason}`,
+    details: { ...info, source: info.source ?? "manual" },
   });
 }
 
