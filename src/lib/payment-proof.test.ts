@@ -248,3 +248,70 @@ describe("unlinking a payment", () => {
     expect(none.installments).toHaveLength(0);
   });
 });
+
+describe("30-day payers and repeated monthly amounts", () => {
+  const monthly = (n: number, month: string): ProofInvoice =>
+    inv({
+      id: `m${n}`,
+      number: `FA-2026-10${n}`,
+      status: "sent",
+      paid: 0,
+      paidDate: undefined,
+      issueDate: `2026-${month}-01`,
+      amount: 1_000_000,
+      taxAmount: 200_000,
+      totalAmount: 1_200_000,
+    });
+
+  it("does not penalise a receipt that lands on the client's 30-day terms", () => {
+    const invoice = monthly(1, "05");
+    const late = tx({ date: "2026-05-31", description: "VIREMENT AIRTEL" });
+    const withTerms = scoreCandidate(invoice, late, "Airtel", undefined, {
+      behaviour: { termsDays: 30 },
+    });
+    const without = scoreCandidate(invoice, late, "Airtel");
+    expect(withTerms.dayGap).toBeLessThanOrEqual(7);
+    expect(withTerms.score).toBeGreaterThan(without.score);
+    expect(withTerms.expectedDate).toBe("2026-05-31");
+  });
+
+  it("flags identical monthly amounts as ambiguous and never auto-confirms them", () => {
+    const c = scoreCandidate(monthly(1, "05"), tx({ date: "2026-05-31" }), "Airtel", undefined, {
+      behaviour: { termsDays: 30 },
+      ambiguousWith: 2,
+    });
+    expect(c.ambiguousWith).toBe(2);
+    expect(c.confidence).not.toBe("high");
+  });
+
+  it("keeps high confidence when the narrative names the billing period", () => {
+    const c = scoreCandidate(
+      monthly(1, "05"),
+      tx({ date: "2026-05-31", description: "AIRTEL MAI 2026 ABONNEMENT" }),
+      "Airtel",
+      undefined,
+      { behaviour: { termsDays: 30 }, ambiguousWith: 2 },
+    );
+    expect(c.narrativeMatch).toBe(true);
+    expect(c.confidence).toBe("high");
+  });
+
+  it("matches a monthly stream in order instead of arbitrarily", () => {
+    const invoices = [monthly(1, "05"), monthly(2, "06"), monthly(3, "07")];
+    const receipts = [
+      tx({ id: "t3", date: "2026-07-31", description: "VIREMENT AIRTEL" }),
+      tx({ id: "t1", date: "2026-05-31", description: "VIREMENT AIRTEL" }),
+      tx({ id: "t2", date: "2026-06-30", description: "VIREMENT AIRTEL" }),
+    ];
+    const out = proposeMatches({
+      invoices,
+      transactions: receipts,
+      quotes: [],
+      pos: [],
+      clientName: () => "Airtel",
+      clientTerms: () => 30,
+    });
+    const picked = Object.fromEntries(out.map((p) => [p.invoice.id, p.best.transaction.id]));
+    expect(picked).toEqual({ m1: "t1", m2: "t2", m3: "t3" });
+  });
+});
