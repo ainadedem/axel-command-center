@@ -193,7 +193,25 @@ function Body() {
     { key: "owner", label: "Owner", type: "enum", accessor: (q) => ownerName(q) },
   ];
   const view = useDataView<Quote>("quotations", fields);
-  const groups = view.apply(baseList);
+  // Quick status chips layered on top of the saved view filters (same as invoices).
+  const [chipStatuses, setChipStatuses] = useState<string[]>([]);
+  const presets = useFilterPresets("quotations", QUOTE_PRESETS);
+  const isMobile = useIsMobile();
+  const chipFiltered = useMemo(
+    () => baseList.filter((q) => chipStatuses.length === 0 || chipStatuses.includes(q.status)),
+    [baseList, chipStatuses],
+  );
+  const filtersActive =
+    chipStatuses.length > 0 ||
+    Boolean(view.state.q.trim()) ||
+    Object.values(view.state.filters).some(Boolean) ||
+    Boolean(view.state.sort) ||
+    Boolean(view.state.group);
+  const clearAllFilters = () => {
+    setChipStatuses([]);
+    view.reset();
+  };
+  const groups = view.apply(chipFiltered);
   const list = groups.flatMap((g) => g.items);
   const cp = useColumnPrefs("quotations", QUOTE_COLUMNS);
   const colCount = 2 + cp.count;
