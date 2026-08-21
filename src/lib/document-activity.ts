@@ -21,7 +21,8 @@ export type ActivityAction =
   | "signer_changed"
   | "payment_verified"
   | "payment_unlinked"
-  | "payment_reviewed";
+  | "payment_reviewed"
+  | "comment";
 
 
 export interface ActivityEntry {
