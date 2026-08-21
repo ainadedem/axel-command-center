@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Bell, CheckCheck, Circle, Dot, Trash2 } from "lucide-react";
 import { useNotifications, type AppNotification } from "@/lib/notifications";
 import { EVENT_LABEL, EVENT_GROUPS, groupOfKind, type EventGroupKey } from "@/lib/notification-events";
-import { usePersistentState } from "@/hooks/use-persistent-state";
+import { usePersistentState } from "@/lib/persistent-state";
 import { cn } from "@/lib/utils";
 
 type FilterKey = "all" | "unread" | EventGroupKey;
