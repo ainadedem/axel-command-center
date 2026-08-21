@@ -201,6 +201,8 @@ export interface Client {
   categories?: ContactCategory[];
   /** Days after invoicing this client normally pays (e.g. Airtel at 30). */
   paymentTermsDays?: number;
+  /** Per-currency override of the default terms, e.g. { EUR: 60 }. */
+  paymentTermsByCurrency?: Record<string, number>;
 }
 
 /** Multi-select contact category, shared between Client and Supplier records. */
