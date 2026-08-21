@@ -7,6 +7,7 @@
  * together with the status, are written to the audit trail, and can be undone.
  */
 import { useSyncExternalStore } from "react";
+import { proposeStageChange } from "@/lib/pipeline-automation";
 import { invoicesStore, transactionsStore, type Invoice } from "@/lib/mock-data";
 import { invoiceBalance, invoicePayable } from "@/lib/invoice-money";
 import { logActivity } from "@/lib/document-activity";
@@ -201,6 +202,19 @@ export function commitStatusChange(
       details: { before: next, after: invoice.status, undo: true },
     });
   };
+
+  // A paid invoice can move its deal forward in the pipeline (user confirms).
+  if (next === "paid" && invoice.opportunityId) {
+    try {
+      const siblings = invoicesStore.items.filter(
+        (i) => i.opportunityId === invoice.opportunityId && i.status !== "cancelled",
+      );
+      const allPaid = siblings.every((i) => (i.id === invoice.id ? true : i.status === "paid"));
+      proposeStageChange(invoice.opportunityId, "invoice_paid", { allInvoicesPaid: allPaid }, {
+        docType: "invoice", docId: invoice.id, docNumber: invoice.number,
+      });
+    } catch { /* pipeline suggestion is best-effort */ }
+  }
 
   return { summary, diff, revert };
 }

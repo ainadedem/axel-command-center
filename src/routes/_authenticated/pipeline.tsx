@@ -21,6 +21,9 @@ import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { KpiCard } from "@/components/kpi-card";
+import { useQuotes, useInvoices } from "@/lib/mock-data";
+import { buildRollups, type OpportunityRollup } from "@/lib/pipeline-link";
+import { OpportunityRevenueDrawer } from "@/components/opportunity-revenue-drawer";
 
 export const Route = createFileRoute("/_authenticated/pipeline")({ component: PipelinePage });
 
@@ -83,7 +86,11 @@ function Body() {
   const acqOf = useAcqLookup(clients);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Opportunity | null>(null);
-  const [view, setView] = useState<"kanban" | "list" | "acquisition" | "closer" | "forecast">("kanban");
+  const [view, setView] = useState<"kanban" | "list" | "revenue" | "acquisition" | "closer" | "forecast">("kanban");
+  const quotes = useQuotes();
+  const invoices = useInvoices();
+  const rollups = useMemo(() => buildRollups(list, quotes, invoices), [list, quotes, invoices]);
+  const [drill, setDrill] = useState<Opportunity | null>(null);
 
   const active = list.filter((o) => o.stage !== "Closed" && o.stage !== "Lost");
   const total = active.reduce((s, o) => s + toMGA(o.value, o.currency), 0);
@@ -122,6 +129,7 @@ function Body() {
             <TabsList>
               <TabsTrigger value="kanban">Kanban</TabsTrigger>
               <TabsTrigger value="list">List</TabsTrigger>
+              <TabsTrigger value="revenue">Revenue</TabsTrigger>
               <TabsTrigger value="acquisition">By acquisition</TabsTrigger>
               <TabsTrigger value="closer">By closer</TabsTrigger>
               <TabsTrigger value="forecast">Forecast</TabsTrigger>
@@ -132,6 +140,9 @@ function Body() {
             </TabsContent>
             <TabsContent value="list" className="mt-4">
               <ListView list={list} onEdit={onEdit} acqOf={acqOf} />
+            </TabsContent>
+            <TabsContent value="revenue" className="mt-4">
+              <RevenueView list={list} rollups={rollups} onDrill={setDrill} />
             </TabsContent>
             <TabsContent value="acquisition" className="mt-4">
               <PeopleView list={list} onEdit={onEdit} role="acquisition" acqOf={acqOf} />
@@ -146,7 +157,105 @@ function Body() {
         </>
       )}
 
+      <OpportunityRevenueDrawer
+        opportunity={drill}
+        rollup={drill ? rollups.get(drill.id) ?? null : null}
+        open={!!drill}
+        onOpenChange={(v) => { if (!v) setDrill(null); }}
+      />
       <OpportunityDialog open={open} onOpenChange={setOpen} editing={editing} />
+    </div>
+  );
+}
+
+/* ─── Revenue view: quoted → invoiced → collected per deal ─────────── */
+
+function RevenueView({ list, rollups, onDrill }: {
+  list: Opportunity[];
+  rollups: Map<string, OpportunityRollup>;
+  onDrill: (o: Opportunity) => void;
+}) {
+  const rows = useMemo(() => {
+    return list
+      .map((o) => ({ o, r: rollups.get(o.id) }))
+      .filter((x): x is { o: Opportunity; r: OpportunityRollup } => !!x.r)
+      .sort((a, b) => (b.r.invoiced || b.r.quoted) - (a.r.invoiced || a.r.quoted));
+  }, [list, rollups]);
+
+  const sum = (pick: (r: OpportunityRollup) => number) => rows.reduce((s, x) => s + pick(x.r), 0);
+  const totals = {
+    quoted: sum((r) => r.quoted),
+    invoiced: sum((r) => r.invoiced),
+    collected: sum((r) => r.collected),
+    outstanding: sum((r) => r.outstanding),
+  };
+  const unlinked = rows.filter((x) => x.r.quotes.length === 0 && x.r.invoices.length === 0).length;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Stat label="Quoted" value={fmtCompact(totals.quoted, "MGA")} />
+        <Stat label="Invoiced" value={fmtCompact(totals.invoiced, "MGA")} />
+        <Stat label="Collected" value={fmtCompact(totals.collected, "MGA")} />
+        <Stat label="Outstanding" value={fmtCompact(totals.outstanding, "MGA")} />
+      </div>
+
+      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-border text-[10px] uppercase tracking-wider text-muted-foreground">
+                <th className="text-left font-medium px-3 py-2">Deal</th>
+                <th className="text-left font-medium px-3 py-2 hidden sm:table-cell">Stage</th>
+                <th className="text-right font-medium px-3 py-2">Value</th>
+                <th className="text-right font-medium px-3 py-2">Quoted</th>
+                <th className="text-right font-medium px-3 py-2">Invoiced</th>
+                <th className="text-right font-medium px-3 py-2">Collected</th>
+                <th className="text-right font-medium px-3 py-2 hidden md:table-cell">Outstanding</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(({ o, r }) => {
+                const value = toMGA(o.value, o.currency);
+                const pct = value ? Math.min(100, Math.round((r.invoiced / value) * 100)) : 0;
+                return (
+                  <tr
+                    key={o.id}
+                    onClick={() => onDrill(o)}
+                    className="border-b border-border last:border-0 hover:bg-surface-elevated cursor-pointer transition-colors"
+                  >
+                    <td className="px-3 py-2">
+                      <div className="font-medium truncate max-w-[220px]">{o.name}</div>
+                      <div className="text-[11px] text-muted-foreground truncate max-w-[220px]">
+                        {o.client || "—"} · {r.quotes.length} quote{r.quotes.length === 1 ? "" : "s"} · {r.invoices.length} invoice{r.invoices.length === 1 ? "" : "s"}
+                      </div>
+                      <div className="mt-1 h-1 w-full max-w-[180px] rounded-full bg-surface-elevated overflow-hidden">
+                        <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 hidden sm:table-cell">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className={`h-1.5 w-1.5 rounded-full ${STAGE_STYLES[o.stage].dot}`} />
+                        <span className="text-muted-foreground">{o.stage}</span>
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-right font-tnum">{fmtCompact(value, "MGA")}</td>
+                    <td className="px-3 py-2 text-right font-tnum">{fmtCompact(r.quoted, "MGA")}</td>
+                    <td className="px-3 py-2 text-right font-tnum">{fmtCompact(r.invoiced, "MGA")}</td>
+                    <td className="px-3 py-2 text-right font-tnum text-success">{fmtCompact(r.collected, "MGA")}</td>
+                    <td className="px-3 py-2 text-right font-tnum hidden md:table-cell">{fmtCompact(r.outstanding, "MGA")}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {unlinked > 0 && (
+        <p className="text-[11px] text-muted-foreground">
+          {unlinked} deal{unlinked === 1 ? "" : "s"} have no linked quotation or invoice yet — link them from the document form to track revenue.
+        </p>
+      )}
     </div>
   );
 }
