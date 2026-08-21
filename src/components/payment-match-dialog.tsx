@@ -149,7 +149,14 @@ export function PaymentMatchDialog({
         });
         logPaymentUnlinked(
           { invoiceId: inv.id, invoiceNumber: inv.number, companyId: inv.companyId },
-          { transactionId: tx.id, reason: "undone by the user" },
+          {
+            transactionId: tx.id,
+            transactionDate: tx.date,
+            transactionAmount: tx.amount,
+            transactionCurrency: tx.currency,
+            reason: "undone by the user",
+            source: "undo",
+          },
         );
       });
     }
