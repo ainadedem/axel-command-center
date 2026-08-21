@@ -95,6 +95,11 @@ interface Props {
   }) => void;
   /** When provided, the preview lets the user change the document status. */
   statusOptions?: string[];
+  /**
+   * When provided, the parent owns the status transition (validation, payment
+   * capture, audit trail, undo) and the preview only requests the change.
+   */
+  onStatusChange?: (next: string) => void;
   /** Identifies the document so stamp/signer changes are written to the audit trail. */
   audit?: { docType: DocType; docId: string; companyId: string };
 }
@@ -172,7 +177,7 @@ function saveView(kind: DocKind, v: SavedView) {
   } catch { /* storage unavailable — non-fatal */ }
 }
 
-export function DocumentPreview({ open, onOpenChange, doc, company, client, project, signers, onDocChange, audit, statusOptions }: Props) {
+export function DocumentPreview({ open, onOpenChange, doc, company, client, project, signers, onDocChange, audit, statusOptions, onStatusChange }: Props) {
   const [showStatus, setShowStatus] = useState(true);
   // Optimistic status so the printed pill updates the moment it is changed.
   const [statusLocal, setStatusLocal] = useState<string | null>(null);
@@ -181,7 +186,9 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
 
   const changeStatus = useCallback(
     (next: string) => {
-      if (!doc || !onDocChange || next === status) return;
+      if (!doc || next === status) return;
+      if (onStatusChange) { onStatusChange(next); return; }
+      if (!onDocChange) return;
       const isInvoice = doc.paid !== undefined;
       const patch: {
         status: string;
@@ -228,7 +235,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
         });
       }
     },
-    [doc, onDocChange, status, audit],
+    [doc, onDocChange, status, audit, onStatusChange],
   );
 
   const [showClientEmail, setShowClientEmail] = useState(true);
