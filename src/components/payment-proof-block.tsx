@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { FileText, FileCheck2, Landmark, ExternalLink, Search, History, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { VerifiedBadge } from "@/components/status-badge";
 import {
   fmtFull,
@@ -82,6 +83,8 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
       ),
     [invoice, transactions, quotes, pos],
   );
+
+  const multi = proof.installments.length > 1;
 
   if (proof.verification === "n/a") return null;
 
@@ -235,6 +238,21 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
           onOpenChange={(v) => !v && setUnlinking(null)}
           invoice={invoice}
           transaction={unlinking}
+        />
+      )}
+
+      {bulkUnlink && picked.length > 0 && (
+        <PaymentUnlinkDialog
+          open
+          onOpenChange={(v) => {
+            if (!v) {
+              setBulkUnlink(false);
+              setPicked([]);
+            }
+          }}
+          items={proof.installments
+            .filter((it) => picked.includes(it.transaction.id))
+            .map((it) => ({ invoice, transaction: it.transaction }))}
         />
       )}
     </section>
