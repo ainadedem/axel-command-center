@@ -69,6 +69,8 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
   const pos = usePurchaseOrders();
   const [matching, setMatching] = useState(false);
   const [unlinking, setUnlinking] = useState<ProofTransaction | null>(null);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [bulkUnlink, setBulkUnlink] = useState(false);
 
   const proof = useMemo(
     () =>
