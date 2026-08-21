@@ -1,25 +1,64 @@
+import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Bell, CheckCheck, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { Bell, CheckCheck, Circle, Dot, Trash2 } from "lucide-react";
 import { useNotifications, type AppNotification } from "@/lib/notifications";
-import { EVENT_LABEL } from "@/lib/notification-events";
+import { EVENT_LABEL, EVENT_GROUPS, groupOfKind, type EventGroupKey } from "@/lib/notification-events";
+import { usePersistentState } from "@/lib/persistent-state";
 import { cn } from "@/lib/utils";
 
-/** Bell popover: unread badge, grouped feed, click-through to the document. */
+type FilterKey = "all" | "unread" | EventGroupKey;
+
+/** Bell popover: unread badge, filters, grouped feed, click-through to the document. */
 export function NotificationCenter({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { items, loading, unread, markRead, markAllRead, clearAll } = useNotifications();
+  const { items, loading, unread, markRead, markUnread, markAllRead, restoreUnread, clearAll } = useNotifications();
   const navigate = useNavigate();
+  const [filter, setFilter] = usePersistentState<FilterKey>("notifications.filter", "all");
+  const [busy, setBusy] = useState(false);
+
+  const counts = useMemo(() => {
+    const out: Record<string, number> = { all: items.length, unread: items.filter((n) => !n.readAt).length };
+    for (const g of EVENT_GROUPS) out[g.key] = items.filter((n) => groupOfKind(n.kind) === g.key).length;
+    return out;
+  }, [items]);
+
+  const visible = useMemo(() => {
+    if (filter === "all") return items;
+    if (filter === "unread") return items.filter((n) => !n.readAt);
+    return items.filter((n) => groupOfKind(n.kind) === filter);
+  }, [items, filter]);
 
   const today = new Date().toDateString();
   const groups: { label: string; rows: AppNotification[] }[] = [
-    { label: "Today", rows: items.filter((n) => new Date(n.createdAt).toDateString() === today) },
-    { label: "Earlier", rows: items.filter((n) => new Date(n.createdAt).toDateString() !== today) },
+    { label: "Today", rows: visible.filter((n) => new Date(n.createdAt).toDateString() === today) },
+    { label: "Earlier", rows: visible.filter((n) => new Date(n.createdAt).toDateString() !== today) },
   ].filter((g) => g.rows.length > 0);
 
   const openItem = (n: AppNotification) => {
     void markRead(n.id);
     onClose();
-    if (n.href) navigate({ to: n.href as never }).catch(() => {});
+    if (!n.href) return;
+    // Links are stored as `/path?focus=…&view=…`; split them for the router.
+    const [path, query] = n.href.split("?");
+    const search = Object.fromEntries(new URLSearchParams(query ?? ""));
+    navigate({ to: path as never, search: search as never }).catch(() => {});
   };
+
+  const onMarkAll = async () => {
+    setBusy(true);
+    const ids = await markAllRead();
+    setBusy(false);
+    if (ids.length === 0) return;
+    toast.success(`${ids.length} notification${ids.length > 1 ? "s" : ""} marked as read`, {
+      action: { label: "Undo", onClick: () => void restoreUnread(ids) },
+    });
+  };
+
+  const chips: { key: FilterKey; label: string }[] = [
+    { key: "all", label: "All" },
+    { key: "unread", label: "Unread" },
+    ...EVENT_GROUPS.map((g) => ({ key: g.key as FilterKey, label: g.label })),
+  ];
 
   return (
     <>
@@ -34,7 +73,7 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
           aria-hidden
           className="pointer-events-none absolute right-1.5 top-1.5 min-w-[15px] h-[15px] px-[3px] rounded-full bg-[var(--destructive,#C5221F)] text-[9px] leading-[15px] text-center font-semibold text-white"
         >
-          {unread > 9 ? "9+" : unread}
+          {unread > 99 ? "99+" : unread}
         </span>
       )}
       {open && (
@@ -43,7 +82,7 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
           <div
             role="dialog"
             aria-label="Notifications"
-            className="absolute right-0 mt-2 w-[22rem] max-w-[calc(100vw-1.5rem)] rounded-2xl border-0 bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-150"
+            className="absolute right-0 mt-2 w-[23rem] max-w-[calc(100vw-1.5rem)] rounded-2xl border-0 bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-150"
           >
             <div className="px-3 py-2.5 border-b border-border flex items-center justify-between gap-2">
               <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
@@ -51,8 +90,8 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
               </span>
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => void markAllRead()}
-                  disabled={unread === 0}
+                  onClick={() => void onMarkAll()}
+                  disabled={unread === 0 || busy}
                   title="Mark all as read"
                   aria-label="Mark all as read"
                   className="h-7 w-7 grid place-items-center rounded-full hover:bg-accent disabled:opacity-40 transition-colors"
@@ -71,40 +110,76 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
               </div>
             </div>
 
+            <div className="flex flex-wrap gap-1 px-2.5 py-2 border-b border-border/60">
+              {chips.map((c) => {
+                const on = filter === c.key;
+                const n = counts[c.key] ?? 0;
+                return (
+                  <button
+                    key={c.key}
+                    onClick={() => setFilter(c.key)}
+                    aria-pressed={on}
+                    className={cn(
+                      "px-2.5 py-1 rounded-full text-[11px] border transition-colors press-scale",
+                      on
+                        ? "border-primary/40 bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {c.label}
+                    {n > 0 && <span className="ml-1 opacity-70 font-tnum">{n}</span>}
+                  </button>
+                );
+              })}
+            </div>
+
             <div className="max-h-[26rem] overflow-y-auto">
               {loading ? (
                 <div className="p-6 text-center text-sm text-muted-foreground">Loading…</div>
-              ) : items.length === 0 ? (
+              ) : visible.length === 0 ? (
                 <div className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
                   <Bell className="h-5 w-5 opacity-50" />
-                  You're all caught up.
+                  {items.length === 0 ? "You're all caught up." : "Nothing in this filter."}
                 </div>
               ) : (
                 groups.map((g) => (
                   <div key={g.label}>
                     <div className="px-3 pt-2.5 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">{g.label}</div>
                     {g.rows.map((n) => (
-                      <button
+                      <div
                         key={n.id}
-                        onClick={() => openItem(n)}
                         className={cn(
-                          "w-full text-left px-3 py-2.5 flex gap-2.5 hover:bg-accent transition-colors border-b border-border/40 last:border-b-0",
+                          "group relative flex items-stretch border-b border-border/40 last:border-b-0 hover:bg-accent transition-colors",
                           !n.readAt && "bg-[var(--primary-container)]/25",
                         )}
                       >
-                        <span className={cn("mt-1.5 h-1.5 w-1.5 rounded-full shrink-0", n.readAt ? "bg-transparent" : "bg-primary")} />
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
-                            {EVENT_LABEL[n.kind] ?? n.kind}
+                        <button
+                          onClick={() => openItem(n)}
+                          className="min-w-0 flex-1 text-left px-3 py-2.5 flex gap-2.5"
+                        >
+                          <span className={cn("mt-1.5 h-1.5 w-1.5 rounded-full shrink-0", n.readAt ? "bg-transparent" : "bg-primary")} />
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
+                              {EVENT_LABEL[n.kind] ?? n.kind}
+                              {n.docNumber ? ` · ${n.docNumber}` : ""}
+                            </span>
+                            <span className="block text-sm truncate">{n.title}</span>
+                            {n.body && <span className="block text-xs text-muted-foreground line-clamp-2">{n.body}</span>}
+                            <span className="block text-[10px] text-muted-foreground mt-0.5">
+                              {n.actorName ? `${n.actorName} · ` : ""}
+                              {new Date(n.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+                            </span>
                           </span>
-                          <span className="block text-sm truncate">{n.title}</span>
-                          {n.body && <span className="block text-xs text-muted-foreground line-clamp-2">{n.body}</span>}
-                          <span className="block text-[10px] text-muted-foreground mt-0.5">
-                            {n.actorName ? `${n.actorName} · ` : ""}
-                            {new Date(n.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
-                          </span>
-                        </span>
-                      </button>
+                        </button>
+                        <button
+                          onClick={() => void (n.readAt ? markUnread(n.id) : markRead(n.id))}
+                          title={n.readAt ? "Mark as unread" : "Mark as read"}
+                          aria-label={n.readAt ? "Mark as unread" : "Mark as read"}
+                          className="w-8 shrink-0 grid place-items-center text-muted-foreground opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-foreground transition-opacity"
+                        >
+                          {n.readAt ? <Dot className="h-5 w-5" /> : <Circle className="h-3 w-3 fill-current" />}
+                        </button>
+                      </div>
                     ))}
                   </div>
                 ))

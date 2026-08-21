@@ -1089,13 +1089,61 @@ export type Database = {
           },
         ]
       }
+      notification_email_queue: {
+        Row: {
+          actor_name: string | null
+          body: string | null
+          company_id: string | null
+          created_at: string
+          doc_number: string | null
+          href: string | null
+          id: string
+          kind: string
+          scheduled_for: string
+          sent_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          actor_name?: string | null
+          body?: string | null
+          company_id?: string | null
+          created_at?: string
+          doc_number?: string | null
+          href?: string | null
+          id?: string
+          kind: string
+          scheduled_for?: string
+          sent_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          actor_name?: string | null
+          body?: string | null
+          company_id?: string | null
+          created_at?: string
+          doc_number?: string | null
+          href?: string | null
+          id?: string
+          kind?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_prefs: {
         Row: {
           ar_alerts_enabled: boolean
           created_at: string
+          digest_modes: Json
           events: Json
           id: string
+          quiet_hours: Json
           stages: number[]
+          time_zone: string | null
           updated_at: string
           user_id: string
           watch_company_ids: string[]
@@ -1104,9 +1152,12 @@ export type Database = {
         Insert: {
           ar_alerts_enabled?: boolean
           created_at?: string
+          digest_modes?: Json
           events?: Json
           id?: string
+          quiet_hours?: Json
           stages?: number[]
+          time_zone?: string | null
           updated_at?: string
           user_id: string
           watch_company_ids?: string[]
@@ -1115,9 +1166,12 @@ export type Database = {
         Update: {
           ar_alerts_enabled?: boolean
           created_at?: string
+          digest_modes?: Json
           events?: Json
           id?: string
+          quiet_hours?: Json
           stages?: number[]
+          time_zone?: string | null
           updated_at?: string
           user_id?: string
           watch_company_ids?: string[]

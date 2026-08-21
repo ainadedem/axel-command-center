@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { focusSearch, useFocusRow } from "@/hooks/use-focus-row";
+import { docDeepLink, focusSearch, useFocusRow } from "@/hooks/use-focus-row";
 import { BankAccountSelect } from "@/components/bank-account-select";
 import { defaultBankAccount } from "@/lib/payment-details";
 import { AppShell } from "@/components/app-shell";
@@ -151,6 +151,13 @@ function Body() {
   const [followingUp, setFollowingUp] = useState<Quote | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [layout, setLayout] = usePersistentState<"list" | "board">("quotations.layout", "list");
+  // A deep link may ask for a specific layout (?view=board) — honour it once.
+  const wantedView = Route.useSearch().view;
+  useEffect(() => {
+    if (wantedView && wantedView !== layout) setLayout(wantedView);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantedView]);
+
   const { user } = useAuth();
   const openCreate = () => { setEditing(null); setOpen(true); };
 
@@ -1300,7 +1307,7 @@ function QuoteBoard({
     quotesStore.update(q.id, { assignedTo: [...current, user.id] });
     notify({
       kind: "assignment", companyId: q.companyId, docType: "quote", docId: q.id, docNumber: q.number,
-      title: `${q.number} assigned`, body: "Assigned from the board.", href: "/quotations",
+      title: `${q.number} assigned`, body: "Assigned from the board.", href: docDeepLink("/quotations", q.id, "board"),
       recipients: [user.id],
     });
     toast.success(`Assigned ${q.number} to you`);
@@ -1318,7 +1325,7 @@ function QuoteBoard({
     });
     notify({
       kind: "comment", companyId: q.companyId, docType: "quote", docId: q.id, docNumber: q.number,
-      title: `New note on ${q.number}`, body: text, href: "/quotations",
+      title: `New note on ${q.number}`, body: text, href: docDeepLink("/quotations", q.id, "board"),
       recipients: q.assignedTo ?? [],
     });
     toast.success(`Note added to ${q.number}`);

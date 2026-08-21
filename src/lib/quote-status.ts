@@ -2,6 +2,7 @@ import { toast } from "sonner";
 import { quotesStore, invoicesStore, type Quote, type QuoteStatus } from "@/lib/mock-data";
 import { logActivity } from "@/lib/document-activity";
 import { proposeStageChange } from "@/lib/pipeline-automation";
+import { docDeepLink } from "@/hooks/use-focus-row";
 import { notify } from "@/lib/notifications";
 import { withoutHistory } from "@/lib/history";
 import { confirmStatusChanges, conflictMessage, statusLabel } from "@/lib/status-guard";
@@ -74,7 +75,7 @@ export function applyQuoteStatus(
   notify({
     kind: "status_change", companyId: quote.companyId, docType: "quote", docId: quote.id, docNumber: quote.number,
     title: `${quote.number} is now ${next}`, body: `Status changed from ${previous} to ${next}.`,
-    href: "/quotations", recipients: quote.assignedTo ?? [], amount: quote.amount,
+    href: docDeepLink("/quotations", quote.id), recipients: quote.assignedTo ?? [], amount: quote.amount,
   });
 
   // Confirm against the database; roll back whatever the server refuses.

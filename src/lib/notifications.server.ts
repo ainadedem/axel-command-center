@@ -8,7 +8,10 @@
  * Runs with the service role because one user cannot read another user's
  * notification preferences.
  */
-import { resolveEventPrefs, resolveWatchRules, EVENT_LABEL } from "./notification-events";
+import {
+  resolveEventPrefs, resolveWatchRules, EVENT_LABEL,
+  resolveEmailModes, resolveQuietHours, isQuiet, quietEndsAt, nextDigestAt,
+} from "./notification-events";
 import type { FanOutInput } from "./notifications.types";
 
 const isUuid = (v?: string | null) =>
@@ -17,7 +20,7 @@ const isUuid = (v?: string | null) =>
 export async function fanOut(actorId: string, input: FanOutInput) {
   const url = process.env["SUPABASE_URL"];
   const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
-  if (!url || !serviceKey) return { delivered: 0, emailed: 0 };
+  if (!url || !serviceKey) return { delivered: 0, emailed: 0, queued: 0 };
 
   const { createClient } = await import("@supabase/supabase-js");
   const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
@@ -29,15 +32,22 @@ export async function fanOut(actorId: string, input: FanOutInput) {
   // Everyone who has ever saved preferences is a fan-out candidate.
   const { data: prefRows } = await admin
     .from("notification_prefs")
-    .select("user_id, events, watch_company_ids, watch_rules");
-  const prefs = new Map<string, { events: unknown; companies: string[]; rules: unknown }>();
+    .select("user_id, events, watch_company_ids, watch_rules, quiet_hours, digest_modes, time_zone");
+  const prefs = new Map<
+    string,
+    { events: unknown; companies: string[]; rules: unknown; quiet: unknown; modes: unknown; tz: string | null }
+  >();
   for (const r of prefRows ?? []) {
     prefs.set(r.user_id as string, {
       events: r.events,
       companies: ((r.watch_company_ids as string[]) ?? []),
       rules: r.watch_rules,
+      quiet: (r as Record<string, unknown>)["quiet_hours"],
+      modes: (r as Record<string, unknown>)["digest_modes"],
+      tz: ((r as Record<string, unknown>)["time_zone"] as string | null) ?? null,
     });
   }
+
 
   // Watchers: opted into this event, scope covers this company, and they
   // actually have access to it.
@@ -75,14 +85,31 @@ export async function fanOut(actorId: string, input: FanOutInput) {
   };
 
   const targets = [...new Set([...direct, ...watchers])].filter((u) => u !== actorId);
-  if (targets.length === 0) return { delivered: 0, emailed: 0 };
+  if (targets.length === 0) return { delivered: 0, emailed: 0, queued: 0 };
 
   const { data: actorProfile } = await admin
     .from("profiles").select("display_name, email").eq("user_id", actorId).maybeSingle();
   const actorName = (actorProfile?.display_name as string) || (actorProfile?.email as string) || "A teammate";
 
   const inAppTargets = targets.filter((u) => channelsFor(u).inApp);
-  const emailTargets = targets.filter((u) => channelsFor(u).email);
+
+  /**
+   * Email routing per user: `immediate` sends now, `digest` (or an immediate
+   * email that lands inside quiet hours) is queued for the next digest run.
+   * In-app delivery is never delayed.
+   */
+  const emailPlan = targets.map((userId) => {
+    const stored = prefs.get(userId);
+    const channels = resolveEventPrefs(stored?.events);
+    const mode = resolveEmailModes(stored?.modes, channels)[input.kind];
+    const quiet = resolveQuietHours(stored?.quiet, stored?.tz);
+    if (mode === "off") return { userId, action: "none" as const, at: null as Date | null };
+    if (mode === "digest") return { userId, action: "queue" as const, at: nextDigestAt(quiet) };
+    if (isQuiet(quiet)) return { userId, action: "queue" as const, at: quietEndsAt(quiet) };
+    return { userId, action: "send" as const, at: null as Date | null };
+  });
+  const emailTargets = emailPlan.filter((p) => p.action === "send").map((p) => p.userId);
+  const queuedPlan = emailPlan.filter((p) => p.action === "queue");
 
   let delivered = 0;
   if (inAppTargets.length > 0) {
@@ -102,6 +129,24 @@ export async function fanOut(actorId: string, input: FanOutInput) {
     const { error } = await admin.from("notifications").insert(rows);
     if (!error) delivered = rows.length;
     else console.warn("[notifications]", error.message);
+  }
+
+  let queued = 0;
+  if (queuedPlan.length > 0) {
+    const rows = queuedPlan.map((p) => ({
+      user_id: p.userId,
+      company_id: companyId,
+      kind: input.kind,
+      title: input.title,
+      body: input.body ?? null,
+      href: input.href ?? null,
+      doc_number: input.docNumber ?? null,
+      actor_name: actorName,
+      scheduled_for: (p.at ?? new Date()).toISOString(),
+    }));
+    const { error } = await admin.from("notification_email_queue").insert(rows);
+    if (!error) queued = rows.length;
+    else console.warn("[notifications:queue]", error.message);
   }
 
   let emailed = 0;
@@ -136,5 +181,6 @@ export async function fanOut(actorId: string, input: FanOutInput) {
     }
   }
 
-  return { delivered, emailed };
+  return { delivered, emailed, queued };
+
 }

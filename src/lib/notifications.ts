@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { dbCompanyId } from "@/lib/db-sync";
 import { pushNotification } from "@/lib/notifications.functions";
@@ -83,21 +83,33 @@ const fromRow = (r: Record<string, unknown>): AppNotification => ({
 });
 
 /** Live inbox for the signed-in user, refreshed by realtime and on demand. */
-export function useNotifications(limit = 30) {
+export function useNotifications(limit = 40) {
   const [items, setItems] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [unread, setUnread] = useState(0);
+  const userIdRef = useRef<string | undefined>(undefined);
 
   const load = useCallback(async () => {
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth.user?.id;
-    if (!uid) { setItems([]); setLoading(false); return; }
-    const { data } = await supabase
-      .from("notifications")
-      .select("*")
-      .eq("user_id", uid)
-      .order("created_at", { ascending: false })
-      .limit(limit);
+    userIdRef.current = uid;
+    if (!uid) { setItems([]); setUnread(0); setLoading(false); return; }
+    const [{ data }, { count }] = await Promise.all([
+      supabase
+        .from("notifications")
+        .select("*")
+        .eq("user_id", uid)
+        .order("created_at", { ascending: false })
+        .limit(limit),
+      supabase
+        .from("notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", uid)
+        .is("read_at", null),
+    ]);
     setItems((data ?? []).map((r) => fromRow(r as Record<string, unknown>)));
+    // The exact count comes from the database, not just the loaded page.
+    setUnread(count ?? 0);
     setLoading(false);
   }, [limit]);
 
@@ -114,25 +126,58 @@ export function useNotifications(limit = 30) {
     };
   }, [load]);
 
-  const markRead = useCallback(async (id: string) => {
-    setItems((prev) => prev.map((n) => (n.id === id ? { ...n, readAt: new Date().toISOString() } : n)));
-    await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("id", id);
+  /** Flip one item read or unread (optimistic, reconciled by the reload). */
+  const setRead = useCallback(async (id: string, read: boolean) => {
+    const at = read ? new Date().toISOString() : null;
+    let changed = false;
+    setItems((prev) =>
+      prev.map((n) => {
+        if (n.id !== id) return n;
+        changed = Boolean(n.readAt) !== read;
+        return { ...n, readAt: at ?? undefined };
+      }),
+    );
+    if (changed) setUnread((u) => Math.max(0, u + (read ? -1 : 1)));
+    await supabase.from("notifications").update({ read_at: at }).eq("id", id);
   }, []);
 
-  const markAllRead = useCallback(async () => {
+  const markRead = useCallback((id: string) => setRead(id, true), [setRead]);
+  const markUnread = useCallback((id: string) => setRead(id, false), [setRead]);
+
+  /**
+   * Marks *every* unread row for the user, not only the loaded page. Returns
+   * the ids that changed so the caller can offer an Undo.
+   */
+  const markAllRead = useCallback(async (): Promise<string[]> => {
+    const uid = userIdRef.current;
+    if (!uid) return [];
     const now = new Date().toISOString();
-    const unread = items.filter((n) => !n.readAt).map((n) => n.id);
-    if (unread.length === 0) return;
     setItems((prev) => prev.map((n) => (n.readAt ? n : { ...n, readAt: now })));
-    await supabase.from("notifications").update({ read_at: now }).in("id", unread);
-  }, [items]);
+    setUnread(0);
+    const { data } = await supabase
+      .from("notifications")
+      .update({ read_at: now })
+      .eq("user_id", uid)
+      .is("read_at", null)
+      .select("id");
+    return (data ?? []).map((r) => r.id as string);
+  }, []);
+
+  /** Undo for {@link markAllRead}. */
+  const restoreUnread = useCallback(async (ids: string[]) => {
+    if (ids.length === 0) return;
+    await supabase.from("notifications").update({ read_at: null }).in("id", ids);
+    await load();
+  }, [load]);
 
   const clearAll = useCallback(async () => {
-    const ids = items.map((n) => n.id);
-    if (ids.length === 0) return;
+    const uid = userIdRef.current;
+    if (!uid) return;
     setItems([]);
-    await supabase.from("notifications").delete().in("id", ids);
-  }, [items]);
+    setUnread(0);
+    await supabase.from("notifications").delete().eq("user_id", uid);
+  }, []);
 
-  return { items, loading, unread: items.filter((n) => !n.readAt).length, reload: load, markRead, markAllRead, clearAll };
+  return { items, loading, unread, reload: load, markRead, markUnread, markAllRead, restoreUnread, clearAll };
 }
+

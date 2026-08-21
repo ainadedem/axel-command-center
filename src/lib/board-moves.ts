@@ -1,5 +1,6 @@
 import { logActivity, type DocType } from "@/lib/document-activity";
 import { notify } from "@/lib/notifications";
+import { docDeepLink } from "@/hooks/use-focus-row";
 
 /** Notified whenever a board move is recorded, so open history panels refresh. */
 export const boardMoveListeners = new Set<() => void>();
@@ -40,7 +41,12 @@ export function logBoardMove(input: {
       docNumber: input.docNumber,
       title: `${input.docNumber ?? "Document"} moved to ${input.to}`,
       body: `Moved from ${input.from} to ${input.to} on the board.`,
-      href: input.docType === "quote" ? "/quotations" : input.docType === "invoice" ? "/invoices" : "/purchase-orders",
+      href: docDeepLink(
+        input.docType === "quote" ? "/quotations" : input.docType === "invoice" ? "/invoices" : "/purchase-orders",
+        input.docId,
+        "board",
+      ),
+
     });
   }
 }
