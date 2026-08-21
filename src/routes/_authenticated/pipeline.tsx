@@ -28,6 +28,7 @@ import { buildVariances, hasVariance, type QuoteInvoiceVariance } from "@/lib/qu
 import { SignedAmount } from "@/components/signed-amount";
 import { ConversionGapPanel } from "@/components/conversion-gap-panel";
 import { KanbanBoard, type KanbanColumnDef } from "@/components/kanban-board";
+import { OpportunityDocChips, type DocSection } from "@/components/opportunity-doc-chips";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/pipeline")({ component: PipelinePage });
@@ -97,6 +98,8 @@ function Body() {
   const rollups = useMemo(() => buildRollups(list, quotes, invoices), [list, quotes, invoices]);
   const variances = useMemo(() => buildVariances(rollups), [rollups]);
   const [drill, setDrill] = useState<Opportunity | null>(null);
+  const [drillSection, setDrillSection] = useState<DocSection | null>(null);
+  const openDocs = (o: Opportunity, section: DocSection | null = null) => { setDrillSection(section); setDrill(o); };
 
   const active = list.filter((o) => o.stage !== "Closed" && o.stage !== "Lost");
   const total = active.reduce((s, o) => s + toMGA(o.value, o.currency), 0);
@@ -143,22 +146,22 @@ function Body() {
             </TabsList>
 
             <TabsContent value="kanban" className="mt-4">
-              <KanbanView list={list} companies={companies} onEdit={onEdit} acqOf={acqOf} />
+              <KanbanView list={list} companies={companies} onEdit={onEdit} acqOf={acqOf} rollups={rollups} onDocs={openDocs} />
             </TabsContent>
             <TabsContent value="list" className="mt-4">
-              <ListView list={list} onEdit={onEdit} acqOf={acqOf} />
+              <ListView list={list} onEdit={onEdit} acqOf={acqOf} rollups={rollups} onDocs={openDocs} />
             </TabsContent>
             <TabsContent value="revenue" className="mt-4">
-              <RevenueView list={list} rollups={rollups} variances={variances} onDrill={setDrill} />
+              <RevenueView list={list} rollups={rollups} variances={variances} onDrill={(o) => openDocs(o)} />
             </TabsContent>
             <TabsContent value="conversion" className="mt-4">
               <ConversionGapPanel />
             </TabsContent>
             <TabsContent value="acquisition" className="mt-4">
-              <PeopleView list={list} onEdit={onEdit} role="acquisition" acqOf={acqOf} />
+              <PeopleView list={list} onEdit={onEdit} role="acquisition" acqOf={acqOf} rollups={rollups} onDocs={openDocs} />
             </TabsContent>
             <TabsContent value="closer" className="mt-4">
-              <PeopleView list={list} onEdit={onEdit} role="closer" acqOf={acqOf} />
+              <PeopleView list={list} onEdit={onEdit} role="closer" acqOf={acqOf} rollups={rollups} onDocs={openDocs} />
             </TabsContent>
             <TabsContent value="forecast" className="mt-4">
               <ForecastView list={list} />
@@ -171,10 +174,11 @@ function Body() {
         opportunity={drill}
         rollup={drill ? rollups.get(drill.id) ?? null : null}
         variance={drill ? variances.get(drill.id) ?? null : null}
+        initialSection={drillSection}
         open={!!drill}
-        onOpenChange={(v) => { if (!v) setDrill(null); }}
+        onOpenChange={(v) => { if (!v) { setDrill(null); setDrillSection(null); } }}
       />
-      <OpportunityDialog open={open} onOpenChange={setOpen} editing={editing} />
+      <OpportunityDialog open={open} onOpenChange={setOpen} editing={editing} rollup={editing ? rollups.get(editing.id) : undefined} />
     </div>
   );
 }
@@ -345,7 +349,7 @@ function StageDistribution({ list }: { list: Opportunity[] }) {
 
 /* ─── Kanban view (draggable) ─────────────────────────────────────── */
 
-function KanbanView({ list, companies, onEdit, acqOf }: { list: Opportunity[]; companies: ReturnType<typeof useCompanies>; onEdit: (o: Opportunity) => void; acqOf: (o: Opportunity) => string }) {
+function KanbanView({ list, companies, onEdit, acqOf, rollups, onDocs }: { list: Opportunity[]; companies: ReturnType<typeof useCompanies>; onEdit: (o: Opportunity) => void; acqOf: (o: Opportunity) => string; rollups: Map<string, OpportunityRollup>; onDocs: (o: Opportunity, section?: DocSection | null) => void }) {
   const columns: KanbanColumnDef[] = stages.map((s) => {
     const col = list.filter((o) => o.stage === s);
     const sum = col.reduce((acc, o) => acc + toMGA(o.value, o.currency), 0);
@@ -412,6 +416,9 @@ function KanbanView({ list, companies, onEdit, acqOf }: { list: Opportunity[]; c
                 <div className="text-[10px] text-muted-foreground font-tnum">{format(parseISO(o.expectedClose), "MMM d")}</div>
               )}
             </div>
+            <div className="mt-2">
+              <OpportunityDocChips size="xs" rollup={rollups.get(o.id)} onOpen={(section) => onDocs(o, section)} />
+            </div>
             <div className="opacity-0 group-hover:opacity-100 flex gap-1 mt-2">
               <button onClick={(e) => { e.stopPropagation(); onEdit(o); }} className="h-6 px-2 text-[10px] rounded hover:bg-surface text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><Pencil className="h-3 w-3" /> Edit</button>
               <button onClick={(e) => { e.stopPropagation(); if (confirm(`Delete ${o.name}?`)) opportunitiesStore.remove(o.id); }} className="h-6 px-2 text-[10px] rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive inline-flex items-center gap-1"><Trash2 className="h-3 w-3" /> Delete</button>
@@ -426,15 +433,15 @@ function KanbanView({ list, companies, onEdit, acqOf }: { list: Opportunity[]; c
 
 /* ─── List view ───────────────────────────────────────────────────── */
 
-function ListView({ list, onEdit, acqOf }: { list: Opportunity[]; onEdit: (o: Opportunity) => void; acqOf: (o: Opportunity) => string }) {
+function ListView({ list, onEdit, acqOf, rollups, onDocs }: { list: Opportunity[]; onEdit: (o: Opportunity) => void; acqOf: (o: Opportunity) => string; rollups: Map<string, OpportunityRollup>; onDocs: (o: Opportunity, section?: DocSection | null) => void }) {
   const sorted = [...list].sort((a, b) => toMGA(b.value, b.currency) - toMGA(a.value, a.currency));
   return (
     <div className="rounded-lg border border-border bg-surface overflow-hidden">
       <div className="grid grid-cols-12 gap-2 px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
         <div className="col-span-3">Opportunity</div>
         <div className="col-span-2">Stage</div>
-        <div className="col-span-2">Acquisition</div>
-        <div className="col-span-1">Deal Closer</div>
+        <div className="col-span-2">Documents</div>
+        <div className="col-span-1">Closer</div>
         <div className="col-span-2 text-right">Value</div>
         <div className="col-span-2 text-right">Close</div>
       </div>
@@ -453,7 +460,10 @@ function ListView({ list, onEdit, acqOf }: { list: Opportunity[]; onEdit: (o: Op
                 <span className={st.text}>{o.stage}</span>
               </span>
             </div>
-            <div className="col-span-2 text-xs text-muted-foreground truncate">{acqOf(o) || "—"}</div>
+            <div className="col-span-2 min-w-0">
+              <OpportunityDocChips rollup={rollups.get(o.id)} onOpen={(section) => onDocs(o, section)} showOutstanding={false} />
+              <div className="text-[10px] text-muted-foreground truncate mt-0.5">acq: {acqOf(o) || "—"}</div>
+            </div>
             <div className="col-span-1 text-xs text-muted-foreground truncate">{o.closer || "—"}</div>
             <div className="col-span-2 text-right font-tnum text-sm font-semibold">{fmtCompact(o.value, o.currency)}</div>
             <div className="col-span-2 text-right">
@@ -473,7 +483,7 @@ function ListView({ list, onEdit, acqOf }: { list: Opportunity[]; onEdit: (o: Op
 
 /* ─── People view (by acquisition or closer) ──────────────────────── */
 
-function PeopleView({ list, onEdit, role, acqOf }: { list: Opportunity[]; onEdit: (o: Opportunity) => void; role: "acquisition" | "closer"; acqOf: (o: Opportunity) => string }) {
+function PeopleView({ list, onEdit, role, acqOf, rollups, onDocs }: { list: Opportunity[]; onEdit: (o: Opportunity) => void; role: "acquisition" | "closer"; acqOf: (o: Opportunity) => string; rollups: Map<string, OpportunityRollup>; onDocs: (o: Opportunity, section?: DocSection | null) => void }) {
   const grouped = useMemo(() => {
     const m = new Map<string, Opportunity[]>();
     list.forEach((o) => {
@@ -518,6 +528,9 @@ function PeopleView({ list, onEdit, role, acqOf }: { list: Opportunity[]; onEdit
                           {o.client}
                           {role === "acquisition" && o.closer ? ` · closer: ${o.closer}` : ""}
                           {role === "closer" && otherAcq ? ` · acq: ${otherAcq}` : ""}
+                        </div>
+                        <div className="mt-1">
+                          <OpportunityDocChips size="xs" rollup={rollups.get(o.id)} onOpen={(section) => onDocs(o, section)} showOutstanding={false} />
                         </div>
                       </div>
                     </div>
@@ -585,7 +598,7 @@ function ForecastView({ list }: { list: Opportunity[] }) {
 
 /* ─── Dialog (unchanged) ──────────────────────────────────────────── */
 
-function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Opportunity | null }) {
+function OpportunityDialog({ open, onOpenChange, editing, rollup }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Opportunity | null; rollup?: OpportunityRollup }) {
   const companies = useCompanies();
   const clients = useClients();
   const closerPeople = useSalesPeople("closer");
@@ -793,6 +806,23 @@ function OpportunityDialog({ open, onOpenChange, editing }: { open: boolean; onO
             </div>
           </div>
           <div><Label>Expected close</Label><Input type="date" value={expectedClose} onChange={(e) => setExpectedClose(e.target.value)} /></div>
+          {editing && rollup && (rollup.quotes.length > 0 || rollup.invoices.length > 0) && (
+            <div className="rounded-lg border border-border bg-surface-elevated/50 p-3 space-y-1.5">
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Linked documents</div>
+              {rollup.quotes.map((q) => (
+                <Link key={q.id} to="/quotations" search={{ focus: q.id }} className="flex items-center justify-between gap-2 text-xs hover:text-primary">
+                  <span className="truncate">Quotation {q.number}</span>
+                  <span className="font-tnum shrink-0">{fmtCompact(q.amount, q.currency)}</span>
+                </Link>
+              ))}
+              {rollup.invoices.map((i) => (
+                <Link key={i.id} to="/invoices" search={{ focus: i.id }} className="flex items-center justify-between gap-2 text-xs hover:text-primary">
+                  <span className="truncate">Invoice {i.number}</span>
+                  <span className="font-tnum shrink-0">{fmtCompact(i.amount, i.currency)}</span>
+                </Link>
+              ))}
+            </div>
+          )}
           <div>
             <Label>Win probability % <span className="ml-1 text-[11px] text-muted-foreground font-normal">(blank = stage default: {Math.round(stageProbability[stage] * 100)}%)</span></Label>
             <Input type="number" min="0" max="100" value={probability} onChange={(e) => setProbability(e.target.value)} placeholder={String(Math.round(stageProbability[stage] * 100))} />
