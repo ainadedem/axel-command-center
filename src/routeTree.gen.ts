@@ -44,6 +44,7 @@ import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/about'
 import { Route as AuthenticatedAxelIndexRouteImport } from './routes/_authenticated/axel.index'
 import { Route as AuthenticatedAxelThreadIdRouteImport } from './routes/_authenticated/axel.$threadId'
+import { Route as ApiPublicHooksNotificationDigestRouteImport } from './routes/api/public/hooks/notification-digest'
 import { Route as ApiPublicHooksArEscalationAlertsRouteImport } from './routes/api/public/hooks/ar-escalation-alerts'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -226,6 +227,12 @@ const AuthenticatedAxelThreadIdRoute =
     path: '/$threadId',
     getParentRoute: () => AuthenticatedAxelRoute,
   } as any)
+const ApiPublicHooksNotificationDigestRoute =
+  ApiPublicHooksNotificationDigestRouteImport.update({
+    id: '/api/public/hooks/notification-digest',
+    path: '/api/public/hooks/notification-digest',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksArEscalationAlertsRoute =
   ApiPublicHooksArEscalationAlertsRouteImport.update({
     id: '/api/public/hooks/ar-escalation-alerts',
@@ -269,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
   '/axel/': typeof AuthenticatedAxelIndexRoute
   '/api/public/hooks/ar-escalation-alerts': typeof ApiPublicHooksArEscalationAlertsRoute
+  '/api/public/hooks/notification-digest': typeof ApiPublicHooksNotificationDigestRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -305,6 +313,7 @@ export interface FileRoutesByTo {
   '/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
   '/axel': typeof AuthenticatedAxelIndexRoute
   '/api/public/hooks/ar-escalation-alerts': typeof ApiPublicHooksArEscalationAlertsRoute
+  '/api/public/hooks/notification-digest': typeof ApiPublicHooksNotificationDigestRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -344,6 +353,7 @@ export interface FileRoutesById {
   '/_authenticated/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
   '/_authenticated/axel/': typeof AuthenticatedAxelIndexRoute
   '/api/public/hooks/ar-escalation-alerts': typeof ApiPublicHooksArEscalationAlertsRoute
+  '/api/public/hooks/notification-digest': typeof ApiPublicHooksNotificationDigestRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -383,6 +393,7 @@ export interface FileRouteTypes {
     | '/axel/$threadId'
     | '/axel/'
     | '/api/public/hooks/ar-escalation-alerts'
+    | '/api/public/hooks/notification-digest'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -419,6 +430,7 @@ export interface FileRouteTypes {
     | '/axel/$threadId'
     | '/axel'
     | '/api/public/hooks/ar-escalation-alerts'
+    | '/api/public/hooks/notification-digest'
   id:
     | '__root__'
     | '/_authenticated'
@@ -457,6 +469,7 @@ export interface FileRouteTypes {
     | '/_authenticated/axel/$threadId'
     | '/_authenticated/axel/'
     | '/api/public/hooks/ar-escalation-alerts'
+    | '/api/public/hooks/notification-digest'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -465,6 +478,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiAxelChatRoute: typeof ApiAxelChatRoute
   ApiPublicHooksArEscalationAlertsRoute: typeof ApiPublicHooksArEscalationAlertsRoute
+  ApiPublicHooksNotificationDigestRoute: typeof ApiPublicHooksNotificationDigestRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -714,6 +728,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAxelThreadIdRouteImport
       parentRoute: typeof AuthenticatedAxelRoute
     }
+    '/api/public/hooks/notification-digest': {
+      id: '/api/public/hooks/notification-digest'
+      path: '/api/public/hooks/notification-digest'
+      fullPath: '/api/public/hooks/notification-digest'
+      preLoaderRoute: typeof ApiPublicHooksNotificationDigestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/ar-escalation-alerts': {
       id: '/api/public/hooks/ar-escalation-alerts'
       path: '/api/public/hooks/ar-escalation-alerts'
@@ -811,6 +832,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiAxelChatRoute: ApiAxelChatRoute,
   ApiPublicHooksArEscalationAlertsRoute: ApiPublicHooksArEscalationAlertsRoute,
+  ApiPublicHooksNotificationDigestRoute: ApiPublicHooksNotificationDigestRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
