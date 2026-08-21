@@ -123,7 +123,34 @@ function Body() {
     { key: "owner", label: "Owner", type: "enum", accessor: (p) => ownerName(p.createdBy) },
   ];
   const view = useDataView<PurchaseOrder>("purchase-orders", fields);
-  const groups = view.apply(baseList);
+  // Quick status / document chips layered on top of the saved view filters.
+  const [chipStatuses, setChipStatuses] = useState<string[]>([]);
+  const [chipDoc, setChipDoc] = useState<string[]>([]);
+  const presets = useFilterPresets("purchase-orders", PO_PRESETS);
+  const isMobile = useIsMobile();
+  const docStateOf = (p: PurchaseOrder) => (p.documentUrl ? "has" : "missing");
+  const chipFiltered = useMemo(
+    () =>
+      baseList.filter(
+        (p) =>
+          (chipStatuses.length === 0 || chipStatuses.includes(p.status)) &&
+          (chipDoc.length === 0 || chipDoc.includes(p.documentUrl ? "has" : "missing")),
+      ),
+    [baseList, chipStatuses, chipDoc],
+  );
+  const filtersActive =
+    chipStatuses.length > 0 ||
+    chipDoc.length > 0 ||
+    Boolean(view.state.q.trim()) ||
+    Object.values(view.state.filters).some(Boolean) ||
+    Boolean(view.state.sort) ||
+    Boolean(view.state.group);
+  const clearAllFilters = () => {
+    setChipStatuses([]);
+    setChipDoc([]);
+    view.reset();
+  };
+  const groups = view.apply(chipFiltered);
   const list = groups.flatMap((g) => g.items);
   const cp = useColumnPrefs("purchase-orders", PO_COLUMNS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
