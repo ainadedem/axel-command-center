@@ -1,20 +1,46 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Bell, CheckCheck, Circle, Dot, Trash2 } from "lucide-react";
+import { Bell, CheckCheck, Circle, Dot, Search, Trash2, X } from "lucide-react";
 import { useNotifications, type AppNotification } from "@/lib/notifications";
 import { EVENT_LABEL, EVENT_GROUPS, groupOfKind, type EventGroupKey } from "@/lib/notification-events";
+import { useClients, useQuotes, useInvoices, usePurchaseOrders } from "@/lib/mock-data";
 import { usePersistentState } from "@/lib/persistent-state";
 import { cn } from "@/lib/utils";
 
 type FilterKey = "all" | "unread" | EventGroupKey;
 
-/** Bell popover: unread badge, filters, grouped feed, click-through to the document. */
+/** Lowercased, accent-stripped text so "Sté" matches "ste". */
+const norm = (s: string) =>
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+/** Bell popover: unread badge, search, filters, grouped feed, click-through. */
 export function NotificationCenter({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { items, loading, unread, markRead, markUnread, markAllRead, restoreUnread, clearAll } = useNotifications();
   const navigate = useNavigate();
   const [filter, setFilter] = usePersistentState<FilterKey>("notifications.filter", "all");
+  const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
+
+  // Documents referenced by notifications, so search can match the client too.
+  const clients = useClients();
+  const quotes = useQuotes();
+  const invoices = useInvoices();
+  const pos = usePurchaseOrders();
+
+  const clientOfDoc = useMemo(() => {
+    const byId = new Map(clients.map((c) => [c.id, c]));
+    const map = new Map<string, string>();
+    const add = (docId: string | undefined, clientId: string | undefined | null) => {
+      if (!docId || !clientId) return;
+      const c = byId.get(clientId);
+      if (c) map.set(docId, [c.name, (c as { displayName?: string }).displayName].filter(Boolean).join(" "));
+    };
+    for (const q of quotes) add(q.id, q.clientId);
+    for (const i of invoices) add(i.id, i.clientId);
+    for (const p of pos) add(p.id, (p as { clientId?: string }).clientId);
+    return map;
+  }, [clients, quotes, invoices, pos]);
 
   const counts = useMemo(() => {
     const out: Record<string, number> = { all: items.length, unread: items.filter((n) => !n.readAt).length };
@@ -23,10 +49,32 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
   }, [items]);
 
   const visible = useMemo(() => {
-    if (filter === "all") return items;
-    if (filter === "unread") return items.filter((n) => !n.readAt);
-    return items.filter((n) => groupOfKind(n.kind) === filter);
-  }, [items, filter]);
+    const base =
+      filter === "all"
+        ? items
+        : filter === "unread"
+          ? items.filter((n) => !n.readAt)
+          : items.filter((n) => groupOfKind(n.kind) === filter);
+    const q = norm(query.trim());
+    if (!q) return base;
+    const terms = q.split(/\s+/);
+    return base.filter((n) => {
+      const hay = norm(
+        [
+          n.title,
+          n.body,
+          n.docNumber,
+          n.actorName,
+          EVENT_LABEL[n.kind] ?? n.kind,
+          n.docId ? clientOfDoc.get(n.docId) : undefined,
+        ]
+          .filter(Boolean)
+          .join(" "),
+      );
+      return terms.every((t) => hay.includes(t));
+    });
+  }, [items, filter, query, clientOfDoc]);
+
 
   const today = new Date().toDateString();
   const groups: { label: string; rows: AppNotification[] }[] = [
