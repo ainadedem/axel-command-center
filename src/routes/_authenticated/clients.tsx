@@ -549,6 +549,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   const [companyId, setCompanyId] = useState("");
   const [companyIds, setCompanyIds] = useState<string[]>([]);
   const [name, setName] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [country, setCountry] = useState("");
   const [acquisition, setAcquisition] = useState("");
   const [referral, setReferral] = useState("");
@@ -572,7 +573,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   useEffect(() => {
     if (!open) return;
     if (editing) {
-      setCompanyId(editing.companyId); setCompanyIds(contactCompanyIds(editing)); setName(editing.name); setCountry(editing.country);
+      setCompanyId(editing.companyId); setCompanyIds(contactCompanyIds(editing)); setName(editing.name); setDisplayName(editing.displayName ?? ""); setCountry(editing.country);
       setAcquisition(editing.acquisition ?? "");
       setReferral(editing.referral ?? "");
       setAcquiredAt(editing.acquiredAt ?? "");
@@ -596,7 +597,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
           ? scope.companyId
           : companies[0]?.id ?? "";
       const fallback = scopeFallback;
-      setCompanyId(fallback); setCompanyIds(fallback ? [fallback] : []); setName(""); setCountry(""); setAcquisition(""); setReferral("");
+      setCompanyId(fallback); setCompanyIds(fallback ? [fallback] : []); setName(""); setDisplayName(""); setCountry(""); setAcquisition(""); setReferral("");
       setAcquiredAt(new Date().toISOString().slice(0, 10));
       setWebsite(""); setEmail(""); setPhone(""); setAddress(""); setIndustry(""); setContacts(""); setPaymentTermsDays("");
       setNif(""); setStat(""); setRcs("");
@@ -624,7 +625,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
     }
     const ids = Array.from(new Set([companyId, ...companyIds].filter(Boolean)));
     const data = {
-      companyId, companyIds: ids, name, country,
+      companyId, companyIds: ids, name, displayName: displayName.trim() || undefined, country,
       status,
       acquisition: acquisition.trim() || undefined,
       referral: referral.trim() || undefined,
@@ -699,7 +700,12 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
           <div className="flex items-start gap-4">
             <AvatarUpload value={avatarUrl} onChange={setAvatarUrl} name={name} size={72} />
             <div className="flex-1 space-y-3">
-              <div><Label><RequiredLabel>Client name</RequiredLabel></Label><Input value={name} onChange={(e) => setName(e.target.value)} className={invalidFieldClassName(showErrors && !name.trim())} aria-invalid={showErrors && !name.trim()} /></div>
+              <div><Label><RequiredLabel>Legal name</RequiredLabel></Label><Input value={name} onChange={(e) => setName(e.target.value)} className={invalidFieldClassName(showErrors && !name.trim())} aria-invalid={showErrors && !name.trim()} /></div>
+              <div>
+                <Label>Display name</Label>
+                <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={name ? `Short label, e.g. ${name.split(" ")[0]}` : "Short label used in lists"} />
+                <p className="text-[11px] text-muted-foreground mt-1">Shown in lists and boards. Invoices and quotations always use the legal name.</p>
+              </div>
               <div>
                 <Label><RequiredLabel>Linked companies</RequiredLabel></Label>
                 <div className="flex flex-wrap gap-1.5 mt-1.5">
