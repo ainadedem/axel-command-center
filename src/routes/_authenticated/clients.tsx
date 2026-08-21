@@ -568,6 +568,10 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
   const [termsByCurrency, setTermsByCurrency] = useState<Record<string, number>>({});
   // Receipts to re-review after the terms change; opens the match dialog.
   const [rematchInvoices, setRematchInvoices] = useState<string[]>([]);
+  const allInvoices = useInvoices();
+  const allTransactions = useTransactions();
+  const allQuotes = useQuotes();
+  const allPos = usePurchaseOrders();
   const [contacts, setContacts] = useState("");
   const [nif, setNif] = useState("");
   const [stat, setStat] = useState("");
@@ -664,6 +668,29 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
         clientsStore.update(editing.id, data);
         if (dbId !== editing.id) {
           clientsStore.replaceAll(clientsStore.items.map((client) => client.id === editing.id ? { ...client, id: dbId } : client));
+        }
+        // Terms drive the matching engine: re-score this client's pending
+        // receipts and offer a review when anything moved.
+        if (termsChanged(editing, persisted)) {
+          const summary = rematchClient({
+            clientId: dbId,
+            before: editing,
+            after: persisted,
+            invoices: allInvoices as unknown as ProofInvoice[],
+            transactions: allTransactions as unknown as ProofTransaction[],
+            quotes: allQuotes as unknown as ProofQuote[],
+            pos: allPos as unknown as ProofPO[],
+            clientName: persisted.name,
+          });
+          if (summary.changed.length > 0) {
+            toast.info(
+              `${summary.changed.length} pending receipt${summary.changed.length !== 1 ? "s" : ""} re-scored · ` +
+                `${summary.highBefore} → ${summary.highAfter} high confidence`,
+              { action: { label: "Review", onClick: () => setRematchInvoices(summary.changed) } },
+            );
+          } else if (summary.pending.length > 0) {
+            toast.success("Terms saved — no pending receipt changed.");
+          }
         }
       } else {
         const localId = newId("cli");
@@ -871,6 +898,11 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
           {!readOnly && <Button onClick={handleSubmit} disabled={isSubmitting}>{editing ? "Save" : "Create"}</Button>}
         </DialogFooter>
       </DialogContent>
+      <PaymentMatchDialog
+        open={rematchInvoices.length > 0}
+        onOpenChange={(v) => { if (!v) setRematchInvoices([]); }}
+        invoices={allInvoices.filter((i) => rematchInvoices.includes(i.id))}
+      />
     </Dialog>
   );
 }
