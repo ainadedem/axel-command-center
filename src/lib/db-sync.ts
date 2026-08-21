@@ -26,6 +26,7 @@ import {
   type TeamMember, type SalesMember,
   type SalaryRegisterEntry, type PayrollRun, type PayrollEntry,
 } from "./mock-data";
+import { journalEntriesStore, type JournalEntry } from "./pcg";
 
 export type HydrationScope =
   | { mode: "all" }
@@ -1808,4 +1809,67 @@ export async function saveReconciliation(input: {
     created_by: auth.user?.id ?? null,
   });
   if (error) console.warn("[db-sync] saveReconciliation", error.message);
+}
+
+/* ═════════════════════ JOURNAL ENTRIES (Grand Livre) ═════════════════════ */
+
+const journalEntryToDb = (e: JournalEntry) => {
+  const dbCompany = toDbCompanyId(e.companyId);
+  if (!dbCompany) return null;
+  return {
+    id: isUuid(e.id) ? e.id : undefined,
+    company_id: dbCompany,
+    journal: e.journal,
+    date: e.date,
+    piece: e.piece,
+    description: e.description ?? "",
+    lines: JSON.parse(JSON.stringify(e.lines ?? [])) as unknown as never,
+  };
+};
+
+const journalEntryFromDb = (r: Record<string, unknown>): JournalEntry => ({
+  id: r.id as string,
+  companyId: toLocalCompanyId(r.company_id as string),
+  journal: r.journal as string,
+  date: r.date as string,
+  piece: (r.piece as string) ?? "",
+  description: (r.description as string) ?? "",
+  lines: (r.lines as JournalEntry["lines"]) ?? [],
+});
+
+export async function upsertJournalEntry(e: JournalEntry): Promise<string | null> {
+  const row = journalEntryToDb(e);
+  if (!row || !canWriteCompany(row.company_id)) return null;
+  const { data, error } = await supabase
+    .from("journal_entries")
+    .upsert(row, { onConflict: "company_id,journal,date,piece" })
+    .select("id")
+    .single();
+  if (error) { reportWriteError("upsertJournalEntry", error.message); return null; }
+  return (data?.id as string | undefined) ?? null;
+}
+
+export async function deleteJournalEntryDb(id: string) {
+  if (!isUuid(id)) return;
+  const { error } = await supabase.from("journal_entries").delete().eq("id", id);
+  if (error) console.warn("[db-sync] deleteJournalEntry", error.message);
+}
+
+export function registerJournalSync() {
+  journalEntriesStore.setSync({ upsert: upsertJournalEntry, remove: deleteJournalEntryDb });
+}
+
+/**
+ * Pull the Grand Livre from the backend. The backend is the source of truth
+ * whenever it holds entries for a company: the bundled snapshot only serves as
+ * a fallback for companies that were never imported.
+ */
+export async function hydrateJournalEntries(scope: HydrationScope = { mode: "all" }) {
+  const rows = await fetchScopedRows("journal_entries", scope);
+  if (rows.length === 0) return 0;
+  const fetched = rows.map((r) => journalEntryFromDb(r));
+  const backendCompanies = new Set(fetched.map((e) => e.companyId));
+  const kept = journalEntriesStore.items.filter((e) => !backendCompanies.has(e.companyId));
+  journalEntriesStore.replaceAll([...kept, ...fetched]);
+  return fetched.length;
 }

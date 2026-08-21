@@ -13,11 +13,13 @@ import {
   setCompanyIdMap, setWritableCompanies, hydrateContacts, pushLocalSeed,
   registerFinancialSync, hydrateFinancials, pushLocalFinancialSeed,
   registerExtraSync, hydrateExtras, pushLocalExtrasSeed, type HydrationScope,
+  registerJournalSync, hydrateJournalEntries,
 } from "./db-sync";
 import "./pcg";
 
 registerFinancialSync();
 registerExtraSync();
+registerJournalSync();
 
 const FALLBACK_COLORS = ["#7c3aed", "#0ea5e9", "#f59e0b", "#10b981", "#ef4444", "#ec4899"];
 
@@ -495,6 +497,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
             hydrateContacts(hydrationScope).catch((e) => console.warn("[hydrateContacts]", e)),
             hydrateFinancials(hydrationScope).catch((e) => console.warn("[hydrateFinancials]", e)),
             hydrateExtras(hydrationScope).catch((e) => console.warn("[hydrateExtras]", e)),
+            hydrateJournalEntries(hydrationScope).catch((e) => console.warn("[hydrateJournalEntries]", e)),
           ]),
           BOOTSTRAP_TIMEOUT_MS,
           "your workspace data",
@@ -574,6 +577,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         hydrateContacts(hydrationScope).catch((e) => console.warn("[hydrateContacts]", e)),
         hydrateFinancials(hydrationScope).catch((e) => console.warn("[hydrateFinancials]", e)),
         hydrateExtras(hydrationScope).catch((e) => console.warn("[hydrateExtras]", e)),
+        hydrateJournalEntries(hydrationScope).catch((e) => console.warn("[hydrateJournalEntries]", e)),
       ]);
 
       if (cancelled || requestId !== scopeReloadSeq.current) return;
