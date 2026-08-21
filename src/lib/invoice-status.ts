@@ -1,5 +1,4 @@
 /**
-import { notify } from "@/lib/notifications";
  * Controlled invoice status transitions.
  *
  * Every status change (preview dropdown, bulk action, reconcile fix) should go
@@ -11,6 +10,7 @@ import { useSyncExternalStore } from "react";
 import { proposeStageChange } from "@/lib/pipeline-automation";
 import { invoicesStore, transactionsStore, type Invoice } from "@/lib/mock-data";
 import { invoiceBalance, invoicePayable } from "@/lib/invoice-money";
+import { notify } from "@/lib/notifications";
 import { logActivity } from "@/lib/document-activity";
 import { withoutHistory } from "@/lib/history";
 
