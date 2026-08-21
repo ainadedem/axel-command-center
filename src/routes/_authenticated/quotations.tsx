@@ -49,7 +49,7 @@ import { refreshStampsAndSignatures } from "@/lib/stamp-refresh";
 import { useCompanySalesUsers } from "@/hooks/use-company-users";
 import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } from "@/components/bulk-select";
 import { BulkEditDocDialog } from "@/components/bulk-edit-doc-dialog";
-import { bulkUpdateDocuments, type BulkPatch } from "@/lib/bulk-edit";
+import { bulkUpdateDocuments, bulkResultMessage, type BulkPatch } from "@/lib/bulk-edit";
 import { renderDocumentPdfBlob } from "@/lib/pdf-export";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
@@ -434,6 +434,7 @@ function Body() {
         onOpenChange={setBulkOpen}
         rows={selection.selectedRows}
         noun="quote"
+        docType="quote"
         onApply={applyBulk}
       />
 

@@ -55,7 +55,7 @@ import { canWriteCompany, dbCompanyId } from "@/lib/db-sync";
 import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } from "@/components/bulk-select";
 import { refreshStampsAndSignatures } from "@/lib/stamp-refresh";
 import { BulkEditDocDialog } from "@/components/bulk-edit-doc-dialog";
-import { bulkUpdateDocuments, bulkSetFields, type BulkPatch } from "@/lib/bulk-edit";
+import { bulkUpdateDocuments, bulkSetFields, bulkResultMessage, type BulkPatch } from "@/lib/bulk-edit";
 import { type ColumnDef } from "@/lib/column-prefs";
 import { useTablePrefs } from "@/lib/table-prefs";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
@@ -277,7 +277,7 @@ function Body() {
 
   const applyBulk = async (patch: BulkPatch) => {
     const rows = selection.selectedRows;
-    const n = await bulkUpdateDocuments({
+    const result = await bulkUpdateDocuments({
       collection: invoicesStore,
       docType: "invoice",
       rows,
@@ -288,7 +288,14 @@ function Body() {
       projectName: (id) => projects.find((p) => p.id === id)?.name ?? id,
     });
     selection.clear();
-    toast.success(`Updated ${n} invoice${n !== 1 ? "s" : ""}`);
+    const msg = bulkResultMessage(result, "invoice");
+    if (result.failed.length) toast.error(msg, { description: result.failed.map((f) => f.number).join(", ") });
+    else if (result.updated === 0) toast.info(msg);
+    else toast.success(msg, {
+      description: result.skipped.length
+        ? `Skipped: ${result.skipped.slice(0, 4).map((s) => `${s.number} (${s.reason})`).join(", ")}`
+        : undefined,
+    });
   };
 
   const bulkStatus = async (
@@ -874,7 +881,7 @@ function Body() {
 
       <BulkActionBar count={selection.count} noun="invoice" onClear={selection.clear}>
         <Button size="sm" className="h-7 px-3 text-xs" onClick={() => setBulkOpen(true)}>
-          Edit client / project
+          Bulk edit
         </Button>
         <Button
           size="sm" variant="outline" className="h-7 px-3 text-xs"
@@ -914,6 +921,7 @@ function Body() {
         onOpenChange={setBulkOpen}
         rows={selection.selectedRows}
         noun="invoice"
+        docType="invoice"
         onApply={applyBulk}
       />
 
