@@ -729,6 +729,45 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
         <Menu className="h-5 w-5" aria-hidden="true" />
       </button>
       <AxelBraceMark title="AXEL" className="lg:hidden h-5 w-5 shrink-0 text-foreground" />
+
+      {/* Back button + breadcrumbs */}
+      <button
+        type="button"
+        onClick={goBack}
+        disabled={!canGoBack}
+        aria-label="Go back"
+        title="Back"
+        className="hidden sm:grid h-9 w-9 shrink-0 place-items-center rounded-full focus-ring hover:bg-[var(--surface-container)] hover:text-foreground active:scale-95 transition-all duration-200 disabled:opacity-35 disabled:pointer-events-none"
+      >
+        <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+      </button>
+      {crumbs.length > 0 && (
+        <nav aria-label="Breadcrumb" className="hidden md:flex items-center gap-1 min-w-0 max-w-[40ch] shrink">
+          {crumbs.map((crumb, i) => {
+            const isLast = i === crumbs.length - 1;
+            return (
+              <span key={crumb.to + i} className="flex items-center gap-1 min-w-0">
+                {i > 0 && (
+                  <ChevronRight className="h-3.5 w-3.5 text-foreground/30 shrink-0" aria-hidden="true" />
+                )}
+                <Link
+                  to={crumb.to}
+                  aria-current={isLast ? "page" : undefined}
+                  className={cn(
+                    "truncate max-w-[20ch] text-sm transition-colors duration-150",
+                    isLast
+                      ? "font-medium text-foreground pointer-events-none"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {crumb.label}
+                </Link>
+              </span>
+            );
+          })}
+        </nav>
+      )}
+
       <form onSubmit={submitSearch} className="flex-1 min-w-0 max-w-xl relative">
         <Search className="h-5 w-5 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2" aria-hidden="true" />
         <input
