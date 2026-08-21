@@ -14,6 +14,7 @@ import { dbCompanyId } from "@/lib/db-sync";
 import { inScope, useCompany } from "@/lib/company-context";
 import { format, parseISO } from "date-fns";
 import { StatusBadge } from "@/components/status-badge";
+import { StatusMenu } from "@/components/status-menu";
 import { cn } from "@/lib/utils";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
@@ -21,6 +22,7 @@ import { useOwnerNames } from "@/hooks/use-owner-names";
 import { logActivity, diffDocument } from "@/lib/document-activity";
 import { DocumentActivityPanel } from "@/components/document-activity-panel";
 import { useAuth } from "@/lib/auth-context";
+import { toast } from "sonner";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -94,6 +96,7 @@ function POPage() {
 
 function Body() {
   const { scope } = useCompany();
+  const { user } = useAuth();
   const pos = usePurchaseOrders();
   const invoices = useInvoices();
   const navigate = useNavigate();
@@ -154,6 +157,25 @@ function Body() {
   const list = groups.flatMap((g) => g.items);
   const cp = useColumnPrefs("purchase-orders", PO_COLUMNS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  /** One-click status change from the list or detail panel (no full edit). */
+  const changeStatus = (po: PurchaseOrder, next: POStatus) => {
+    if (po.status === next) return;
+    const previous = po.status;
+    purchaseOrdersStore.update(po.id, { status: next, updatedBy: user?.id, updatedAt: new Date().toISOString() });
+    void logActivity({
+      docType: "po", docId: po.id, docNumber: po.number, companyId: po.companyId,
+      action: "status_changed", summary: `From ${previous} to ${next}`,
+      details: { from: previous, to: next },
+    });
+    toast.success(`${po.number} → ${next}`, {
+      action: {
+        label: "Undo",
+        onClick: () => purchaseOrdersStore.update(po.id, { status: previous, updatedBy: user?.id, updatedAt: new Date().toISOString() }),
+      },
+    });
+  };
+
   const selected = selectedId ? list.find((p) => p.id === selectedId) ?? null : null;
   const detail = selected ? (
     <DetailPanel
@@ -185,7 +207,10 @@ function Body() {
 
     >
       <DetailSection>
-        <DetailField label="Status" value={<StatusBadge status={selected.status} />} />
+        <DetailField
+          label="Status"
+          value={<StatusMenu status={selected.status} statuses={PO_STATUSES} onSelect={(next) => changeStatus(selected, next as POStatus)} />}
+        />
         <DetailField label="Client ref" value={selected.clientReference || "—"} />
         <DetailField label="Project" value={projects.find((pr) => pr.id === selected.projectId)?.name ?? "—"} />
         <DetailField label="Company" value={companies.find((c) => c.id === selected.companyId)?.name ?? "—"} />
@@ -301,7 +326,15 @@ function Body() {
                     {cp.on("project") && <ListTd className="text-xs" title={proj?.name}>{proj ? <span className="inline-block max-w-full truncate px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 align-middle">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}</ListTd>}
                     {cp.on("company") && <ListTd title={co?.name}>{co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}</ListTd>}
                     {cp.on("issued") && <ListTd className="text-muted-foreground text-xs font-tnum">{format(parseISO(po.issueDate), "MMM d, yyyy")}</ListTd>}
-                    {cp.on("status") && <ListTd><StatusBadge status={po.status} /></ListTd>}
+                    {cp.on("status") && (
+                      <ListTd wrap>
+                        <StatusMenu
+                          status={po.status}
+                          statuses={PO_STATUSES}
+                          onSelect={(next) => changeStatus(po, next as POStatus)}
+                        />
+                      </ListTd>
+                    )}
                     {cp.on("document") && (
                       <ListTd className="text-xs" title={po.documentName}>
                         {po.documentUrl ? (
