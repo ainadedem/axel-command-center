@@ -149,7 +149,7 @@ export function ClientTermsFields({
             onClick={() => {
               if (!adding) return;
               const s = suggestionFor(adding);
-              onByCurrency({ ...byCurrency, [adding]: s?.days ?? Number(termsDays) || 30 });
+              onByCurrency({ ...byCurrency, [adding]: s?.days ?? (Number(termsDays) || 30) });
               setAdding("");
             }}
           >
