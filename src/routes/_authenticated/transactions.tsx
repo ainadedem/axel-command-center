@@ -10,7 +10,7 @@ import { newId } from "@/lib/data-store";
 import { inScope, useCompany } from "@/lib/company-context";
 import { ReconcileButton, type ReconcileCheck } from "@/components/reconcile-button";
 import { format, parseISO } from "date-fns";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,12 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Link2 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { VerifiedBadge } from "@/components/status-badge";
+import { PaymentMatchDialog } from "@/components/payment-match-dialog";
+import { buildPaymentProof, badgeState, type ProofInvoice, type ProofTransaction } from "@/lib/payment-proof";
+import { useQuotes, usePurchaseOrders } from "@/lib/mock-data";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
@@ -37,6 +42,7 @@ const TX_COLUMNS: ColumnDef[] = [
   { key: "account", label: "Account" },
   { key: "category", label: "Category", priority: "optional" },
   { key: "type", label: "Type" },
+  { key: "linked", label: "Linked to" },
   { key: "amount", label: "Amount", priority: "always" },
 ];
 
@@ -67,13 +73,28 @@ function Body() {
   const suppliers = useSuppliers();
   const projects = useProjects();
   const invoices = useInvoices();
+  const quotes = useQuotes();
+  const pos = usePurchaseOrders();
   const { q } = Route.useSearch();
+  const [unlinkedOnly, setUnlinkedOnly] = useState(false);
+  const [linking, setLinking] = useState<Transaction | null>(null);
+
+  /** Invoice + quotation a receipt points at, with the shared payment verdict. */
+  const linkOf = useCallback((t: Transaction) => {
+    const inv = t.invoiceId ? invoices.find((i) => i.id === t.invoiceId) : undefined;
+    if (!inv) return null;
+    const proof = buildPaymentProof(
+      inv as unknown as ProofInvoice, transactions as never, quotes as never, pos as never,
+    );
+    return { invoice: inv, quote: proof.quote, verification: proof.verification };
+  }, [invoices, transactions, quotes, pos]);
   const [filter, setFilter] = useState<(typeof types)[number]>("all");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
 
   let preList = inScope(transactions, scope);
   if (filter !== "all") preList = preList.filter((t) => t.type === filter);
+  if (unlinkedOnly) preList = preList.filter((t) => t.type === "income" && !t.invoiceId);
   if (q) {
     const qq = q.toLowerCase();
     preList = preList.filter((t) =>
@@ -92,6 +113,7 @@ function Body() {
     { key: "account", label: "Account", type: "enum", accessor: (t) => accounts.find((a) => a.id === t.accountId)?.name ?? "" },
     { key: "category", label: "Category", type: "enum", accessor: (t) => t.category },
     { key: "type", label: "Type", type: "enum", accessor: (t) => t.type },
+    { key: "linked", label: "Linked to", type: "string", accessor: (t) => (t.invoiceId ? invoices.find((i) => i.id === t.invoiceId)?.number ?? "" : "") },
     { key: "amount", label: "Amount", type: "number", accessor: (t) => t.amount, noGroup: true },
   ];
   const view = useDataView<Transaction>("transactions", fields);
@@ -141,6 +163,17 @@ function Body() {
               {t}
             </button>
           ))}
+          <button
+            onClick={() => setUnlinkedOnly((v) => !v)}
+            className={cn(
+              "px-3 py-1.5 rounded-md text-sm transition border",
+              unlinkedOnly
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-border bg-surface hover:bg-surface-elevated text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Unlinked receipts
+          </button>
         </div>
         <div className="flex items-center gap-4">
           <ReconcileButton checks={(() => {
@@ -280,6 +313,7 @@ function Body() {
                 {cp.on("account") && <ListTh width="12%">Account</ListTh>}
                 {cp.on("category") && <ListTh width="12%">Category</ListTh>}
                 {cp.on("type") && <ListTh width="9%">Type</ListTh>}
+                {cp.on("linked") && <ListTh width="16%">Linked to</ListTh>}
                 <ListTh width="13%" align="right">Amount</ListTh>
               </ListHeadRow>
             </thead>
@@ -301,6 +335,9 @@ function Body() {
                       <tr className="hover:bg-surface-elevated/40" data-row-id={t.id}>
 <ListRowActions colSpan={cp.count}>
                         <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(t); setOpen(true); }} />
+                        {t.type === "income" && !t.invoiceId && (
+                          <RowAction icon={<Link2 className="h-3.5 w-3.5" />} label="Link to invoice" onClick={() => setLinking(t)} />
+                        )}
                         <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm("Delete this transaction?")) transactionsStore.remove(t.id); }} />
                       </ListRowActions>
 
@@ -347,6 +384,43 @@ function Body() {
                               t.type === "transfer" && "border-chart-2/30 text-chart-2 bg-chart-2/10",
                               t.type === "intercompany" && "border-chart-4/30 text-chart-4 bg-chart-4/10",
                             )}>{t.type}</span>
+                          </ListTd>
+                        )}
+                        {cp.on("linked") && (
+                          <ListTd className="text-xs">
+                            {(() => {
+                              const link = linkOf(t);
+                              if (!link) {
+                                return t.type === "income"
+                                  ? <span className="text-muted-foreground/60">Not linked</span>
+                                  : <span className="text-muted-foreground/50">—</span>;
+                              }
+                              return (
+                                <span className="inline-flex max-w-full items-center gap-1.5">
+                                  <Link
+                                    to="/invoices"
+                                    search={{ focus: link.invoice.id } as never}
+                                    className="truncate text-primary hover:underline"
+                                    title={`Invoice ${link.invoice.number}`}
+                                  >
+                                    {link.invoice.number}
+                                  </Link>
+                                  {link.quote && (
+                                    <Link
+                                      to="/quotations"
+                                      search={{ focus: link.quote.id } as never}
+                                      className="truncate text-muted-foreground hover:underline"
+                                      title={`Quotation ${link.quote.number}`}
+                                    >
+                                      {link.quote.number}
+                                    </Link>
+                                  )}
+                                  {link.verification !== "n/a" && (
+                                    <VerifiedBadge state={badgeState(link.verification)} />
+                                  )}
+                                </span>
+                              );
+                            })()}
                           </ListTd>
                         )}
                         <ListTd align="right" className={cn("font-tnum font-medium", t.type === "income" && "text-success", t.type === "expense" && "text-destructive")}>
