@@ -335,7 +335,7 @@ export async function approveEntries(entries: TimeEntry[]): Promise<void> {
 
 /* ─── Timesheets ────────────────────────────────────────────────────── */
 
-export async function saveTimesheet(ts: Omit<Timesheet, "id" | "approvedBy" | "approvedAt"> & { id?: string }): Promise<void> {
+export async function saveTimesheet(ts: Omit<Timesheet, "id" | "approvedBy" | "approvedAt"> & { id?: string }): Promise<string> {
   const row = {
     company_id: ts.companyId,
     employee_id: ts.employeeId,
@@ -349,10 +349,13 @@ export async function saveTimesheet(ts: Omit<Timesheet, "id" | "approvedBy" | "a
     status: ts.status,
     note: ts.note,
   };
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("timesheets")
-    .upsert(row as never, { onConflict: "company_id,employee_id,period_start,period_end" });
+    .upsert(row as never, { onConflict: "company_id,employee_id,period_start,period_end" })
+    .select("id")
+    .single();
   if (error) throw new Error(error.message);
+  return (data as { id: string }).id;
 }
 
 export async function approveTimesheet(id: string, approverId: string): Promise<void> {
