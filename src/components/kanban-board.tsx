@@ -159,7 +159,21 @@ export function KanbanBoard<T>({
                       )}
                     >
                       {renderCard(item)}
+                      {renderActions && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                          className={cn(
+                            "flex items-center gap-1 mt-2 pt-2 border-t border-border/40",
+                            "opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100",
+                            "transition-opacity duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
+                          )}
+                        >
+                          {renderActions(item)}
+                        </div>
+                      )}
                     </div>
+
                   );
                 })}
                 {colItems.length === 0 && (
