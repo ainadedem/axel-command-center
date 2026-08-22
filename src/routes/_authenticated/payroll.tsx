@@ -24,6 +24,8 @@ import { cn } from "@/lib/utils";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { useSingleFlightSubmit } from "@/components/form-ux";
 import { KpiCard } from "@/components/kpi-card";
+import { fetchApprovedTimesheets } from "@/lib/time-attendance";
+import { dbCompanyId } from "@/lib/db-sync";
 
 export const Route = createFileRoute("/_authenticated/payroll")({ component: PayrollPage });
 
@@ -596,6 +598,11 @@ function NewRunDialog({ onClose, register }: { onClose: () => void; register: Sa
             </div>
           </div>
           <div className="rounded-md border border-border bg-surface/50 p-3 text-xs">
+            <div className="text-muted-foreground mb-1.5">
+              {timesheetPeople > 0
+                ? `Approved timesheets found for ${timesheetPeople} of ${eligible.length} people — overtime is added and unpaid leave deducted.`
+                : "No approved timesheets for this month — base salaries are used as-is."}
+            </div>
             <div className="text-muted-foreground mb-1.5">Will create a draft run for <span className="text-foreground font-medium">{eligible.length}</span> active register entr{eligible.length === 1 ? "y" : "ies"}.</div>
             {eligible.length === 0 ? (
               <div className="text-muted-foreground italic">No active salary register entries for this company.</div>
