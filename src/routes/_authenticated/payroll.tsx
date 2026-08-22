@@ -504,6 +504,38 @@ function NewRunDialog({ onClose, register }: { onClose: () => void; register: Sa
   const eligible = register.filter((e) => e.active && e.companyId === companyId);
   const currency: Currency = eligible[0]?.currency ?? companies.find((c) => c.id === companyId)?.baseCurrency ?? "MGA";
 
+  // Approved timesheets feed real worked hours into the run: overtime adds to
+  // gross, unpaid leave is deducted.
+  const [worked, setWorked] = useState<Record<string, { overtime: number; unpaid: number; regular: number }>>({});
+  useEffect(() => {
+    const dbId = companyId ? dbCompanyId(companyId) : undefined;
+    if (!dbId || !month) { setWorked({}); return; }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const sheets = await fetchApprovedTimesheets(dbId, month);
+        if (cancelled) return;
+        const acc: Record<string, { overtime: number; unpaid: number; regular: number }> = {};
+        for (const s of sheets) {
+          const cur = acc[s.employeeId] ?? { overtime: 0, unpaid: 0, regular: 0 };
+          acc[s.employeeId] = {
+            overtime: cur.overtime + s.overtimeMinutes,
+            unpaid: cur.unpaid + s.unpaidLeaveMinutes,
+            regular: cur.regular + s.regularMinutes,
+          };
+        }
+        setWorked(acc);
+      } catch { if (!cancelled) setWorked({}); }
+    })();
+    return () => { cancelled = true; };
+  }, [companyId, month]);
+
+  const hoursFor = (teamMemberId: string) => {
+    const userId = team.find((t) => t.id === teamMemberId)?.userId;
+    return (userId && worked[userId]) || null;
+  };
+  const timesheetPeople = eligible.filter((e) => hoursFor(e.teamMemberId)).length;
+
   useReconciledSelection({
     open: true,
     currentValue: companyId,
@@ -515,12 +547,24 @@ function NewRunDialog({ onClose, register }: { onClose: () => void; register: Sa
   const submit = () => {
     if (!companyId || !month || eligible.length === 0) return;
     const entries: PayrollEntry[] = eligible.map((s) => {
-      const cnaps = s.gross * (s.cnapsRate / 100);
-      const ostie = s.gross * (s.ostieRate / 100);
-      const taxable = s.gross - cnaps - ostie;
+      const w = hoursFor(s.teamMemberId);
+      // Madagascar legal monthly base: 173.33 hours.
+      const hourly = s.gross / 173.33;
+      const overtimeAmount = w ? Math.round((w.overtime / 60) * hourly * 1.3) : 0;
+      const unpaidDeduction = w ? Math.round((w.unpaid / 60) * hourly) : 0;
+      const gross = Math.max(0, s.gross + overtimeAmount - unpaidDeduction);
+      const cnaps = gross * (s.cnapsRate / 100);
+      const ostie = gross * (s.ostieRate / 100);
+      const taxable = gross - cnaps - ostie;
       const irsa = Math.max(0, taxable * (s.irsaRate / 100));
-      const net = s.gross - cnaps - ostie - irsa;
-      return { teamMemberId: s.teamMemberId, gross: s.gross, cnaps, ostie, irsa, net, paid: false };
+      const net = gross - cnaps - ostie - irsa;
+      return {
+        teamMemberId: s.teamMemberId, gross, cnaps, ostie, irsa, net, paid: false,
+        regularMinutes: w?.regular, overtimeMinutes: w?.overtime,
+        overtimeAmount: overtimeAmount || undefined,
+        unpaidLeaveMinutes: w?.unpaid,
+        unpaidDeduction: unpaidDeduction || undefined,
+      };
     });
     const run: PayrollRun = {
       id: newId("run"),
