@@ -24,6 +24,8 @@ import { cn } from "@/lib/utils";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { useSingleFlightSubmit } from "@/components/form-ux";
 import { KpiCard } from "@/components/kpi-card";
+import { fetchApprovedTimesheets } from "@/lib/time-attendance";
+import { dbCompanyId } from "@/lib/db-sync";
 
 export const Route = createFileRoute("/_authenticated/payroll")({ component: PayrollPage });
 
@@ -504,6 +506,38 @@ function NewRunDialog({ onClose, register }: { onClose: () => void; register: Sa
   const eligible = register.filter((e) => e.active && e.companyId === companyId);
   const currency: Currency = eligible[0]?.currency ?? companies.find((c) => c.id === companyId)?.baseCurrency ?? "MGA";
 
+  // Approved timesheets feed real worked hours into the run: overtime adds to
+  // gross, unpaid leave is deducted.
+  const [worked, setWorked] = useState<Record<string, { overtime: number; unpaid: number; regular: number }>>({});
+  useEffect(() => {
+    const dbId = companyId ? dbCompanyId(companyId) : undefined;
+    if (!dbId || !month) { setWorked({}); return; }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const sheets = await fetchApprovedTimesheets(dbId, month);
+        if (cancelled) return;
+        const acc: Record<string, { overtime: number; unpaid: number; regular: number }> = {};
+        for (const s of sheets) {
+          const cur = acc[s.employeeId] ?? { overtime: 0, unpaid: 0, regular: 0 };
+          acc[s.employeeId] = {
+            overtime: cur.overtime + s.overtimeMinutes,
+            unpaid: cur.unpaid + s.unpaidLeaveMinutes,
+            regular: cur.regular + s.regularMinutes,
+          };
+        }
+        setWorked(acc);
+      } catch { if (!cancelled) setWorked({}); }
+    })();
+    return () => { cancelled = true; };
+  }, [companyId, month]);
+
+  const hoursFor = (teamMemberId: string) => {
+    const userId = team.find((t) => t.id === teamMemberId)?.userId;
+    return (userId && worked[userId]) || null;
+  };
+  const timesheetPeople = eligible.filter((e) => hoursFor(e.teamMemberId)).length;
+
   useReconciledSelection({
     open: true,
     currentValue: companyId,
@@ -515,12 +549,24 @@ function NewRunDialog({ onClose, register }: { onClose: () => void; register: Sa
   const submit = () => {
     if (!companyId || !month || eligible.length === 0) return;
     const entries: PayrollEntry[] = eligible.map((s) => {
-      const cnaps = s.gross * (s.cnapsRate / 100);
-      const ostie = s.gross * (s.ostieRate / 100);
-      const taxable = s.gross - cnaps - ostie;
+      const w = hoursFor(s.teamMemberId);
+      // Madagascar legal monthly base: 173.33 hours.
+      const hourly = s.gross / 173.33;
+      const overtimeAmount = w ? Math.round((w.overtime / 60) * hourly * 1.3) : 0;
+      const unpaidDeduction = w ? Math.round((w.unpaid / 60) * hourly) : 0;
+      const gross = Math.max(0, s.gross + overtimeAmount - unpaidDeduction);
+      const cnaps = gross * (s.cnapsRate / 100);
+      const ostie = gross * (s.ostieRate / 100);
+      const taxable = gross - cnaps - ostie;
       const irsa = Math.max(0, taxable * (s.irsaRate / 100));
-      const net = s.gross - cnaps - ostie - irsa;
-      return { teamMemberId: s.teamMemberId, gross: s.gross, cnaps, ostie, irsa, net, paid: false };
+      const net = gross - cnaps - ostie - irsa;
+      return {
+        teamMemberId: s.teamMemberId, gross, cnaps, ostie, irsa, net, paid: false,
+        regularMinutes: w?.regular, overtimeMinutes: w?.overtime,
+        overtimeAmount: overtimeAmount || undefined,
+        unpaidLeaveMinutes: w?.unpaid,
+        unpaidDeduction: unpaidDeduction || undefined,
+      };
     });
     const run: PayrollRun = {
       id: newId("run"),
@@ -552,6 +598,11 @@ function NewRunDialog({ onClose, register }: { onClose: () => void; register: Sa
             </div>
           </div>
           <div className="rounded-md border border-border bg-surface/50 p-3 text-xs">
+            <div className="text-muted-foreground mb-1.5">
+              {timesheetPeople > 0
+                ? `Approved timesheets found for ${timesheetPeople} of ${eligible.length} people — overtime is added and unpaid leave deducted.`
+                : "No approved timesheets for this month — base salaries are used as-is."}
+            </div>
             <div className="text-muted-foreground mb-1.5">Will create a draft run for <span className="text-foreground font-medium">{eligible.length}</span> active register entr{eligible.length === 1 ? "y" : "ies"}.</div>
             {eligible.length === 0 ? (
               <div className="text-muted-foreground italic">No active salary register entries for this company.</div>

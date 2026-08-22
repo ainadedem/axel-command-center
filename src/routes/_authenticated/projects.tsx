@@ -31,6 +31,7 @@ import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
 import { MasterDetail, DetailPanel, DetailSection, DetailField } from "@/components/master-detail";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
+import { ProjectTimePanel } from "@/components/time/project-time-panel";
 
 const PROJECT_COLUMNS: ColumnDef[] = [
   { key: "salesRep", label: "Sales rep" },
@@ -53,6 +54,9 @@ function ProjectsPage() {
     <AppShell>
       <PageHeader title="Projects" description="Profitability per engagement." />
       <Body />
+      <div className="px-5 sm:px-10 lg:px-12 pb-10">
+        <ProjectTimePanel />
+      </div>
     </AppShell>
   );
 }

@@ -5,7 +5,7 @@ import {
   ChevronDown, ChevronLeft, ChevronRight, Check, LogOut, Target, UserCog, Handshake,
   BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList, RefreshCw,
   Sparkles, CreditCard, Repeat, Wallet2, ExternalLink, Info, ShieldCheck, Menu, X, Undo2, Redo2,
-  PanelLeftClose, PanelLeftOpen,
+  PanelLeftClose, PanelLeftOpen, Clock, CalendarDays, KeyRound,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -119,13 +119,22 @@ const sections: NavSection[] = [
     ],
   },
   {
+    label: "People",
+    icon: Users,
+    items: [
+      { to: "/team", label: "Team", icon: UserCog },
+      { to: "/time", label: "Time & Attendance", icon: Clock },
+      { to: "/leave", label: "Leave", icon: CalendarDays },
+      { to: "/kiosk", label: "Kiosk", icon: KeyRound },
+      { to: "/payroll", label: "Payroll", icon: Wallet2 },
+    ],
+  },
+  {
 
     label: "Administration",
     icon: Building2,
     items: [
       { to: "/companies", label: "Companies", icon: Building2 },
-      { to: "/team", label: "Team", icon: UserCog },
-      { to: "/payroll", label: "Payroll", icon: Wallet2 },
       { to: "/users-access", label: "Users & Access", icon: Users, requireGroupAdmin: true },
       { to: "/settings", label: "Settings", icon: Settings },
       { to: "/about", label: "About", icon: Info },

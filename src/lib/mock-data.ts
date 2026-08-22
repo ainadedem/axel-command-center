@@ -713,6 +713,14 @@ export interface PayrollEntry {
   irsa: number;
   net: number;
   paid: boolean;
+  /** Approved worked time pulled from Time & Attendance, when available. */
+  regularMinutes?: number;
+  overtimeMinutes?: number;
+  /** Overtime pay added to gross (1.3× hourly rate). */
+  overtimeAmount?: number;
+  unpaidLeaveMinutes?: number;
+  /** Deduction applied for unpaid leave. */
+  unpaidDeduction?: number;
 }
 
 export interface PayrollRun {
