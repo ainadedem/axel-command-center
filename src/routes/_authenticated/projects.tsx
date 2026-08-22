@@ -53,6 +53,9 @@ function ProjectsPage() {
     <AppShell>
       <PageHeader title="Projects" description="Profitability per engagement." />
       <Body />
+      <div className="px-5 sm:px-10 lg:px-12 pb-10">
+        <ProjectTimePanel />
+      </div>
     </AppShell>
   );
 }
