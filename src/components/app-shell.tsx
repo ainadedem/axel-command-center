@@ -5,7 +5,7 @@ import {
   ChevronDown, ChevronLeft, ChevronRight, Check, LogOut, Target, UserCog, Handshake,
   BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList, RefreshCw,
   Sparkles, CreditCard, Repeat, Wallet2, ExternalLink, Info, ShieldCheck, Menu, X, Undo2, Redo2,
-  PanelLeftClose, PanelLeftOpen,
+  PanelLeftClose, PanelLeftOpen, Clock, CalendarDays, KeyRound,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
