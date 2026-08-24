@@ -18,6 +18,7 @@ import { Route as AuthenticatedUsersAccessRouteImport } from './routes/_authenti
 import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
 import { Route as AuthenticatedTimeRouteImport } from './routes/_authenticated/time'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
+import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
 import { Route as AuthenticatedSopsRouteImport } from './routes/_authenticated/sops'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -95,6 +96,11 @@ const AuthenticatedTimeRoute = AuthenticatedTimeRouteImport.update({
 const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
   id: '/team',
   path: '/team',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedSuppliersRoute = AuthenticatedSuppliersRouteImport.update({
@@ -296,6 +302,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/sops': typeof AuthenticatedSopsRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
+  '/tasks': typeof AuthenticatedTasksRoute
   '/team': typeof AuthenticatedTeamRoute
   '/time': typeof AuthenticatedTimeRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
@@ -336,6 +343,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/sops': typeof AuthenticatedSopsRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
+  '/tasks': typeof AuthenticatedTasksRoute
   '/team': typeof AuthenticatedTeamRoute
   '/time': typeof AuthenticatedTimeRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
@@ -380,6 +388,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/sops': typeof AuthenticatedSopsRoute
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
+  '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/_authenticated/time': typeof AuthenticatedTimeRoute
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
@@ -425,6 +434,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sops'
     | '/suppliers'
+    | '/tasks'
     | '/team'
     | '/time'
     | '/transactions'
@@ -465,6 +475,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sops'
     | '/suppliers'
+    | '/tasks'
     | '/team'
     | '/time'
     | '/transactions'
@@ -508,6 +519,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/sops'
     | '/_authenticated/suppliers'
+    | '/_authenticated/tasks'
     | '/_authenticated/team'
     | '/_authenticated/time'
     | '/_authenticated/transactions'
@@ -592,6 +604,13 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/team'
       preLoaderRoute: typeof AuthenticatedTeamRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/tasks': {
+      id: '/_authenticated/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof AuthenticatedTasksRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/suppliers': {
@@ -863,6 +882,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSopsRoute: typeof AuthenticatedSopsRoute
   AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRoute
+  AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
   AuthenticatedTimeRoute: typeof AuthenticatedTimeRoute
   AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRoute
@@ -899,6 +919,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSopsRoute: AuthenticatedSopsRoute,
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRoute,
+  AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
   AuthenticatedTimeRoute: AuthenticatedTimeRoute,
   AuthenticatedTransactionsRoute: AuthenticatedTransactionsRoute,
