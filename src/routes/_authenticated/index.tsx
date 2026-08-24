@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ChevronRight, ArrowRight } from "lucide-react";
 import { AxelWordmark } from "@/components/axel-wordmark";
-import { MODULES, moduleById } from "@/lib/modules";
+import { MODULES } from "@/lib/modules";
 import { lastModuleId, SALES_ROUTES } from "@/components/app-shell";
 import { useEffectiveRole } from "@/lib/use-effective-role";
 import { useAuth } from "@/lib/auth-context";
@@ -100,6 +100,3 @@ function Launcher() {
     </div>
   );
 }
-
-// Keeps the import used when tree-shaking analyses this module.
-void moduleById;
