@@ -73,6 +73,14 @@ const sections: NavSection[] = [
     ],
   },
   {
+    label: "Axel Forge",
+    icon: FolderOpen,
+    items: [
+      { to: "/files", label: "Files", icon: FolderOpen },
+      { to: "/tasks", label: "Tasks", icon: CheckSquare },
+    ],
+  },
+  {
     label: "Billing",
     icon: FileText,
     items: [
