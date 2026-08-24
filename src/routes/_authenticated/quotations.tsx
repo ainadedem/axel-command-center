@@ -144,6 +144,7 @@ function Body() {
   const companies = useCompanies();
   const clients = useClients();
   const projects = useProjects();
+  const opportunities = useOpportunities();
   const baseList = inScope(quotes, scope);
   const team = useTeamMembers();
   const navigate = useNavigate();
