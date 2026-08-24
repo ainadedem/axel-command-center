@@ -730,7 +730,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const clients = useClients();
   const projects = useProjects();
   const opportunities = useOpportunities();
-  const salesPeople = useSalesPeople();
+  const salesPeople = useSalesPeople("closer");
   const invoices = useInvoices();
   const quotes = useQuotes();
   const today = new Date().toISOString().slice(0, 10);
