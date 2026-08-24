@@ -29,6 +29,7 @@ export function KanbanBoard<T>({
   labelOf,
   renderCard,
   renderActions,
+  actionsLabel = "More actions",
   accentOf,
   onMove,
   canMove,
