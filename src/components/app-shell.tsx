@@ -6,6 +6,7 @@ import {
   BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList, RefreshCw,
   Sparkles, CreditCard, Repeat, Wallet2, ExternalLink, Info, ShieldCheck, Menu, X, Undo2, Redo2,
   PanelLeftClose, PanelLeftOpen, Clock, CalendarDays, KeyRound,
+  FolderOpen, CheckSquare, LifeBuoy, Ticket, ClipboardCheck, Plug,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
