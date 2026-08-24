@@ -41,6 +41,16 @@ function SuppliersPage() {
   );
 }
 
+const SUPPLIER_COLUMNS: ColumnDef[] = [
+  { key: "categories", label: "Categories" },
+  { key: "company", label: "Company" },
+  { key: "kind", label: "Kind", priority: "optional" },
+  { key: "country", label: "Country", priority: "optional" },
+  { key: "email", label: "Email", priority: "optional" },
+  { key: "account", label: "PCG account" },
+  { key: "outstanding", label: "Outstanding" },
+];
+
 function Body() {
   const suppliers = useSuppliers();
   const clients = useClients();
@@ -80,32 +90,33 @@ function Body() {
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
-  const [view, setView] = useState<"grid" | "list">("grid");
+  const [view, setView] = useState<"grid" | "list">("list");
   const [filter, setFilter] = useState<ContactCategory | "all">("all");
-  const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<"name_asc" | "name_desc" | "outstanding_desc">("name_asc");
-  const [group, setGroup] = useState<"none" | "company" | "category" | "kind">("none");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Compute outstanding payable per supplier from journal entries.
-  const balances = new Map<string, number>();
-  for (const s of baseList) {
-    const ids = new Set(contactCompanyIds(s));
-    let bal = 0;
-    for (const e of entries) {
-      if (!ids.has(e.companyId)) continue;
-      for (const l of e.lines) {
-        if (l.account === s.account && (l.label || "").trim() === s.name) {
-          bal += l.credit - l.debit;
+  const balances = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const s of baseList) {
+      const ids = new Set(contactCompanyIds(s));
+      let bal = 0;
+      for (const e of entries) {
+        if (!ids.has(e.companyId)) continue;
+        for (const l of e.lines) {
+          if (l.account === s.account && (l.label || "").trim() === s.name) {
+            bal += l.credit - l.debit;
+          }
         }
       }
+      map.set(s.id, bal);
     }
-    balances.set(s.id, bal);
-  }
+    return map;
+  }, [baseList, entries]);
 
-  const tagged = baseList.map((s) => ({
-    ...s,
-    categories: defaultCategoriesFor("supplier", s.categories),
-  }));
+  const tagged = useMemo(
+    () => baseList.map((s) => ({ ...s, categories: defaultCategoriesFor("supplier", s.categories) })),
+    [baseList],
+  );
 
   const counts = useMemo(() => {
     const c: Record<ContactCategory | "all", number> = {
@@ -115,102 +126,207 @@ function Body() {
     return c;
   }, [tagged]);
 
-  const filtered = useMemo(() => {
-    let list = filter === "all" ? tagged : tagged.filter((s) => s.categories.includes(filter));
-    const q = search.trim().toLowerCase();
-    if (q) {
-      list = list.filter((s) =>
-        s.name.toLowerCase().includes(q) ||
-        (s.country ?? "").toLowerCase().includes(q) ||
-        (s.email ?? "").toLowerCase().includes(q)
-      );
-    }
-    return list;
-  }, [tagged, filter, search]);
+  const catFiltered = useMemo(
+    () => (filter === "all" ? tagged : tagged.filter((s) => s.categories.includes(filter))),
+    [tagged, filter],
+  );
 
-  const sorted = useMemo(() => {
-    const arr = filtered.map((s) => ({ s, bal: balances.get(s.id) ?? 0 }));
-    switch (sort) {
-      case "name_asc": return arr.sort((a, b) => a.s.name.localeCompare(b.s.name));
-      case "name_desc": return arr.sort((a, b) => b.s.name.localeCompare(a.s.name));
-      case "outstanding_desc": return arr.sort((a, b) => b.bal - a.bal);
-      default: return arr;
-    }
-  }, [filtered, sort, balances]);
+  const companyName = (s: Supplier) => companies.find((c) => c.id === s.companyId)?.shortName ?? companies.find((c) => c.id === s.companyId)?.name ?? "—";
 
-  const grouped = useMemo(() => {
-    if (group === "none") return [{ key: "", label: "", items: sorted.map((s) => s.s) }];
-    const map = new Map<string, Supplier[]>();
-    for (const { s } of sorted) {
-      let key = "";
-      switch (group) {
-        case "company": key = companies.find((c) => c.id === s.companyId)?.name ?? "—"; break;
-        case "category": key = s.categories[0] ? (s.categories[0][0].toUpperCase() + s.categories[0].slice(1)) : "—"; break;
-        case "kind": key = s.kind === "internal" ? "Internal" : "External"; break;
-      }
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(s);
-    }
-    return Array.from(map.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([key, items]) => ({ key, label: key, items }));
-  }, [sorted, group, companies]);
+  const fields = useMemo<FieldDef<Supplier>[]>(() => [
+    { key: "name", label: "Name", type: "string", accessor: (s) => s.name },
+    { key: "categories", label: "Category", type: "enum", accessor: (s) => (s.categories ?? [])[0] ?? "" },
+    { key: "company", label: "Company", type: "enum", accessor: (s) => companyName(s) },
+    { key: "kind", label: "Kind", type: "enum", accessor: (s) => (s.kind === "internal" ? "Internal" : "External") },
+    { key: "country", label: "Country", type: "string", accessor: (s) => s.country ?? "" },
+    { key: "email", label: "Email", type: "string", accessor: (s) => s.email ?? "" },
+    { key: "account", label: "PCG account", type: "string", accessor: (s) => s.account },
+    { key: "outstanding", label: "Outstanding", type: "number", accessor: (s) => balances.get(s.id) ?? 0, noGroup: true },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [companies, balances]);
 
-  const visibleCount = sorted.length;
+  const dataView = useDataView<Supplier>("suppliers", fields);
+  const groups = useMemo(() => dataView.apply(catFiltered), [dataView, catFiltered]);
+  const rows = useMemo(() => groups.flatMap((g) => g.items), [groups]);
+
+  const cp = useColumnPrefs("suppliers", SUPPLIER_COLUMNS);
+  const colCount = 2 + 1 + cp.count;
+
+  const kpi = useMemo(() => {
+    let outstanding = 0;
+    let internal = 0;
+    for (const s of rows) {
+      outstanding += balances.get(s.id) ?? 0;
+      if (s.kind === "internal") internal++;
+    }
+    return { outstanding, internal };
+  }, [rows, balances]);
+
   const openCreate = () => { setEditing(null); setOpen(true); };
   useCreateAction(openCreate);
 
-  return (
-    <div className="p-6 space-y-5">
-      {/* Toolbar */}
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input
-              placeholder="Search contacts…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-8 text-xs w-44"
-            />
-          </div>
-          <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
-            <SelectTrigger className="h-8 text-xs w-36 gap-1"><ArrowUpDown className="h-3 w-3" /><SelectValue placeholder="Sort" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="name_asc">Name A-Z</SelectItem>
-              <SelectItem value="name_desc">Name Z-A</SelectItem>
-              <SelectItem value="outstanding_desc">Outstanding ↓</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={group} onValueChange={(v) => setGroup(v as typeof group)}>
-            <SelectTrigger className="h-8 text-xs w-32 gap-1"><ChevronDown className="h-3 w-3" /><SelectValue placeholder="Group" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">No group</SelectItem>
-              <SelectItem value="company">By company</SelectItem>
-              <SelectItem value="category">By category</SelectItem>
-              <SelectItem value="kind">By kind</SelectItem>
-            </SelectContent>
-          </Select>
-          <div className="flex-1" />
-          <CategoryFilterTabs value={filter} onChange={setFilter} counts={counts} />
-          <div className="flex items-center border rounded-md overflow-hidden h-8">
-            <button onClick={() => setView("grid")} className={`h-8 w-8 grid place-items-center ${view === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-elevated"}`} title="Grid view"><LayoutGrid className="h-3.5 w-3.5" /></button>
-            <button onClick={() => setView("list")} className={`h-8 w-8 grid place-items-center ${view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-elevated"}`} title="List view"><ListIcon className="h-3.5 w-3.5" /></button>
-          </div>
-          <Button size="sm" onClick={openCreate} className="btn-new h-8 gap-1 text-xs"><Plus className="h-3.5 w-3.5" /> New supplier</Button>
-        </div>
-        <div className="text-[11px] text-muted-foreground font-tnum">{visibleCount} contacts</div>
-      </div>
-
-      {visibleCount === 0 ? (
-        <EmptyState label="contacts" onCreate={openCreate} />
-      ) : view === "grid" ? (
-        <SupplierGridView suppliers={sorted.map((s) => s.s)} companies={companies} balances={balances} onEdit={(s) => { setEditing(s); setOpen(true); }} group={group} grouped={grouped} fromClientIds={fromClientIds} />
-      ) : (
-        <SupplierListView suppliers={sorted.map((s) => s.s)} companies={companies} balances={balances} onEdit={(s) => { setEditing(s); setOpen(true); }} group={group} grouped={grouped} fromClientIds={fromClientIds} />
+  const selected = selectedId ? rows.find((s) => s.id === selectedId) ?? null : null;
+  const detail = selected ? (
+    <DetailPanel
+      eyebrow={companyName(selected)}
+      title={selected.name}
+      subtitle={[selected.kind === "internal" ? "Internal payee" : "External vendor", selected.country].filter(Boolean).join(" · ")}
+      onClose={() => setSelectedId(null)}
+      actions={
+        fromClientIds.has(selected.id) ? undefined : (
+          <Button size="sm" className="gap-1.5" onClick={() => { setEditing(selected); setOpen(true); }}>
+            <Pencil className="h-4 w-4" /> Edit
+          </Button>
+        )
+      }
+    >
+      <DetailSection>
+        <DetailField label="Outstanding" value={fmtAr(balances.get(selected.id) ?? 0)} mono />
+        <DetailField label="PCG account" value={selected.account} mono />
+        <DetailField label="Categories" value={<CategoryChips value={defaultCategoriesFor("supplier", selected.categories)} size="xs" />} />
+        <DetailField label="Companies" value={<CompanyTags ids={contactCompanyIds(selected)} companies={companies} size="xs" />} />
+      </DetailSection>
+      <DetailSection title="Contact">
+        <DetailField label="Contact person" value={selected.contactPerson} />
+        <DetailField label="Email" value={selected.email} />
+        <DetailField label="Phone" value={selected.phone} />
+        <DetailField label="Website" value={selected.website} />
+        <DetailField label="Address" value={selected.address} />
+        <DetailField label="Payment terms" value={selected.paymentTerms != null ? `${selected.paymentTerms} days` : undefined} mono />
+      </DetailSection>
+      <DetailSection title="Legal IDs">
+        <DetailField label="NIF" value={selected.nif} mono />
+        <DetailField label="STAT" value={selected.stat} mono />
+        <DetailField label="RCS" value={selected.rcs} mono />
+        <DetailField label="Tax / VAT" value={selected.taxId} mono />
+      </DetailSection>
+      {selected.notes && (
+        <DetailSection title="Notes">
+          <p className="text-sm text-muted-foreground break-words">{selected.notes}</p>
+        </DetailSection>
       )}
+    </DetailPanel>
+  ) : null;
 
-      <SupplierDialog open={open} onOpenChange={setOpen} editing={editing} />
+  const removeSupplier = (s: Supplier) => {
+    if (!confirm(`Delete ${s.name}?`)) return;
+    suppliersStore.remove(s.id);
+    void deleteSupplierDb(s.id);
+    if (selectedId === s.id) setSelectedId(null);
+  };
+
+  return (
+    <div className="p-5 sm:p-10 lg:p-12">
+      <MasterDetail detail={detail}>
+        <div className="space-y-5">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <CrudToolbar createLabel="New supplier" count={rows.length} label="contacts" onCreate={openCreate} />
+            <div className="flex items-center gap-2 flex-wrap">
+              {view === "list" && <ColumnPicker prefs={cp} />}
+              <DataToolbar view={dataView} items={catFiltered} />
+              <div className="flex items-center rounded-full overflow-hidden h-8 bg-surface">
+                <button onClick={() => setView("grid")} aria-label="Grid view" className={`h-8 w-8 grid place-items-center ${view === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}><LayoutGrid className="h-3.5 w-3.5" /></button>
+                <button onClick={() => setView("list")} aria-label="List view" className={`h-8 w-8 grid place-items-center ${view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}><ListIcon className="h-3.5 w-3.5" /></button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <KpiCard label="Contacts" value={String(rows.length)} />
+            <KpiCard label="Outstanding payable" value={fmtAr(kpi.outstanding)} tone={kpi.outstanding > 0 ? "warning" : "default"} />
+            <KpiCard label="Suppliers" value={String(counts.supplier)} />
+            <KpiCard label="Internal payees" value={String(kpi.internal)} />
+          </div>
+
+          <CategoryFilterTabs value={filter} onChange={setFilter} counts={counts} />
+
+          {rows.length === 0 ? (
+            <EmptyState label="contacts" onCreate={openCreate} />
+          ) : view === "grid" ? (
+            <SupplierGridView
+              suppliers={rows}
+              companies={companies}
+              balances={balances}
+              onEdit={(s) => { setEditing(s); setOpen(true); }}
+              group={groups.length > 1 ? "on" : "none"}
+              grouped={groups}
+              fromClientIds={fromClientIds}
+            />
+          ) : (
+            <ListTableShell>
+              <ListTable>
+                <thead>
+                  <ListHeadRow>
+                    <ListActionsTh />
+                    <ListTh width="26%">Contact</ListTh>
+                    {cp.on("categories") && <ListTh width="14%">Categories</ListTh>}
+                    {cp.on("company") && <ListTh width="12%">Company</ListTh>}
+                    {cp.on("kind") && <ListTh width="9%">Kind</ListTh>}
+                    {cp.on("country") && <ListTh width="10%">Country</ListTh>}
+                    {cp.on("email") && <ListTh width="16%">Email</ListTh>}
+                    {cp.on("account") && <ListTh width="10%" align="right">PCG</ListTh>}
+                    {cp.on("outstanding") && <ListTh width="13%" align="right">Outstanding</ListTh>}
+                  </ListHeadRow>
+                </thead>
+                <tbody>
+                  {groups.map((g) => (
+                    <Fragment key={g.key}>
+                      {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={colCount} />}
+                      {g.items.map((s) => {
+                        const co = companies.find((c) => c.id === s.companyId);
+                        const bal = balances.get(s.id) ?? 0;
+                        const Icon = s.kind === "internal" ? User : Building2;
+                        const fromClient = fromClientIds.has(s.id);
+                        return (
+                          <tr
+                            key={s.id}
+                            data-selected={selectedId === s.id ? "true" : undefined}
+                            onClick={() => setSelectedId(s.id)}
+                            className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 data-[selected=true]:bg-[var(--primary-container)]/40 cursor-pointer transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+                          >
+                            <ListRowActions colSpan={colCount}>
+                              {!fromClient && (
+                                <>
+                                  <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(s); setOpen(true); }} />
+                                  <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => removeSupplier(s)} />
+                                </>
+                              )}
+                            </ListRowActions>
+                            <ListTd className="font-medium" title={s.name}>
+                              <span className="inline-flex items-center gap-2 max-w-full">
+                                <span className="relative shrink-0">
+                                  <Avatar src={s.avatarUrl} name={s.name} size={22} />
+                                  {co && <span className="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full border border-background" style={{ background: co.color }} />}
+                                </span>
+                                <Icon className="h-3 w-3 shrink-0 text-muted-foreground" />
+                                <span className="truncate">{s.name}</span>
+                                {fromClient && <span className="shrink-0 text-[8px] uppercase tracking-wider px-1 py-px rounded bg-accent/60 text-muted-foreground font-mono">from clients</span>}
+                              </span>
+                            </ListTd>
+                            {cp.on("categories") && <ListTd><CategoryChips value={defaultCategoriesFor("supplier", s.categories)} size="xs" /></ListTd>}
+                            {cp.on("company") && (
+                              <ListTd title={co?.name}>
+                                {co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}
+                              </ListTd>
+                            )}
+                            {cp.on("kind") && <ListTd className="text-xs text-muted-foreground">{s.kind === "internal" ? "Internal" : "External"}</ListTd>}
+                            {cp.on("country") && <ListTd className="text-xs text-muted-foreground" title={s.country}>{s.country || <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                            {cp.on("email") && <ListTd className="text-xs text-muted-foreground" title={s.email}>{s.email || <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                            {cp.on("account") && <ListTd align="right" className="font-tnum text-muted-foreground">{s.account}</ListTd>}
+                            {cp.on("outstanding") && <ListTd align="right" className={cn("font-tnum", bal > 0 && "text-warning font-medium")}>{fmtAr(bal)}</ListTd>}
+                          </tr>
+                        );
+                      })}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </ListTable>
+            </ListTableShell>
+          )}
+
+          <SupplierDialog open={open} onOpenChange={setOpen} editing={editing} />
+        </div>
+      </MasterDetail>
     </div>
   );
 }
@@ -293,8 +409,8 @@ function SupplierCard({
         </div>
         {!fromClient && (
           <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button onClick={() => onEdit(s)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
-            <button onClick={() => { if (confirm(`Delete ${s.name}?`)) { suppliersStore.remove(s.id); void deleteSupplierDb(s.id); } }} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+            <button onClick={() => onEdit(s)} aria-label="Edit" className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
+            <button onClick={() => { if (confirm(`Delete ${s.name}?`)) { suppliersStore.remove(s.id); void deleteSupplierDb(s.id); } }} aria-label="Delete" className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
           </div>
         )}
       </div>
@@ -312,89 +428,6 @@ function SupplierCard({
   );
 }
 
-/* ── List View ── */
-function SupplierListView({
-  suppliers, companies, balances, onEdit, group, grouped, fromClientIds,
-}: {
-  suppliers: Supplier[];
-  companies: ReturnType<typeof useCompanies>;
-  balances: Map<string, number>;
-  onEdit: (s: Supplier) => void;
-  group: string;
-  grouped: { key: string; label: string; items: Supplier[] }[];
-  fromClientIds: Set<string>;
-}) {
-  const renderRow = (s: Supplier) => {
-    const co = companies.find((c) => c.id === s.companyId);
-    const bal = balances.get(s.id) ?? 0;
-    const Icon = s.kind === "internal" ? User : Building2;
-    const fromClient = fromClientIds.has(s.id);
-    return (
-      <div key={s.id} className="grid grid-cols-2 sm:grid-cols-[1fr_140px_100px_120px_40px] gap-x-3 gap-y-2 px-4 py-3 sm:py-2.5 sm:items-center border-b border-border/50 last:border-b-0 hover:bg-accent/40 transition group">
-        <div className="col-span-2 sm:col-span-1 flex items-center gap-2.5 min-w-0">
-          <div className="relative shrink-0">
-            <Avatar src={s.avatarUrl} name={s.name} size={28} />
-            {co && <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border-2 border-background" style={{ background: co.color }} title={co.name} />}
-          </div>
-          <div className="min-w-0">
-            <div className="font-medium text-[13px] truncate flex items-center gap-1">
-              <Icon className="h-3 w-3 text-muted-foreground shrink-0" />
-              <span className="truncate">{s.name}</span>
-              {fromClient && <span className="ml-1 text-[8px] uppercase tracking-wider px-1 py-px rounded bg-accent/60 text-muted-foreground font-mono shrink-0" title="Linked from Clients">from clients</span>}
-            </div>
-            <div className="text-[11px] text-muted-foreground truncate">{[s.country, s.email].filter(Boolean).join(" · ")}</div>
-          </div>
-        </div>
-        <div className="col-span-2 sm:col-span-1 flex items-center gap-1 flex-wrap min-w-0"><CategoryChips value={s.categories} size="xs" /><CompanyTags ids={contactCompanyIds(s)} companies={companies} size="xs" /></div>
-        <div className="min-w-0 text-left sm:text-right font-tnum text-[13px] text-muted-foreground">
-          <div className="sm:hidden text-[9px] uppercase tracking-wider font-semibold">PCG</div>
-          {s.account}
-        </div>
-        <div className={`min-w-0 text-left sm:text-right font-tnum text-[13px] ${bal > 0 ? "text-amber-600" : ""}`}>
-          <div className="sm:hidden text-[9px] uppercase tracking-wider text-muted-foreground font-semibold">Outstanding</div>
-          {fmtAr(bal)}
-        </div>
-        <div className="col-span-2 sm:col-span-1 flex justify-end">
-          {!fromClient && (
-            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={() => onEdit(s)} className="h-6 w-6 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
-              <button onClick={() => { if (confirm(`Delete ${s.name}?`)) { suppliersStore.remove(s.id); void deleteSupplierDb(s.id); } }} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
-            </div>
-          )}
-        </div>
-      </div>
-
-    );
-  };
-
-  if (group !== "none") {
-    return (
-      <div className="rounded-xl border border-border bg-surface-elevated overflow-hidden space-y-0">
-        {grouped.map((g, gi) => (
-          <div key={g.key}>
-            <div className={`px-4 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border bg-background/60 ${gi > 0 ? "border-t" : ""}`}>
-              {g.label} <span className="text-muted-foreground/50 font-tnum">{g.items.length}</span>
-            </div>
-            {g.items.map((s) => renderRow(s))}
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-xl border border-border bg-surface-elevated overflow-hidden">
-      <div className="hidden sm:grid grid-cols-[1fr_140px_100px_120px_40px] gap-3 px-4 py-2 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border bg-background/50">
-        <div>Contact</div>
-        <div>Categories</div>
-        <div className="text-right">PCG</div>
-        <div className="text-right">Outstanding</div>
-        <div />
-      </div>
-      {suppliers.map((s) => renderRow(s))}
-    </div>
-  );
-}
 
 function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Supplier | null }) {
   const companies = useCompanies();
