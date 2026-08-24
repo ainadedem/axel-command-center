@@ -1365,6 +1365,7 @@ function QuoteBoard({
   onOpen: (q: Quote) => void;
 }) {
   const { user } = useAuth();
+  const opportunities = useOpportunities();
   const followups = useQuoteFollowups();
   const tpl = useKanbanTemplates("quotations", QUOTE_TEMPLATES);
   const [historyOpen, setHistoryOpen] = useState(false);
