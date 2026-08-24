@@ -1498,6 +1498,14 @@ function QuoteBoard({
               </div>
               <div className="text-sm font-medium leading-snug mt-0.5 break-words" title={clientTitle(cl)}>{clientLabel(cl)}</div>
               {q.subject && <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{q.subject}</div>}
+              <div className="mt-1.5">
+                <QuoteSalesRoles
+                  acquisition={cl?.acquisition}
+                  closer={opportunities.find((o) => o.id === q.opportunityId)?.closer}
+                  opportunityId={q.opportunityId}
+                  size="xs"
+                />
+              </div>
               <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40">
                 <div className="font-tnum text-sm font-semibold">{fmtCompact(q.totalAmount ?? q.amount, q.currency)}</div>
                 <div className="text-[10px] text-muted-foreground font-tnum">{format(parseISO(q.validUntil), "MMM d")}</div>
