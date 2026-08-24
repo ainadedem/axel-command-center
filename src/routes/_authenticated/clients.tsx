@@ -16,7 +16,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useEffectiveRole } from "@/lib/use-effective-role";
 
 import { newId } from "@/lib/data-store";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { CLIENT_PALETTE, clientColor } from "@/lib/client-color";
@@ -26,13 +26,13 @@ import { PaymentDetailsFields, paymentFrom, paymentValues, emptyPayment, type Pa
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { EmptyState } from "@/components/crud-toolbar";
+import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
 import {
   Pencil, Trash2, Eye, Wallet, AlertCircle, TrendingUp, ArrowUpRight, UserCheck, Sparkles,
-  LayoutGrid, List as ListIcon, Search, ArrowUpDown, ChevronDown, Plus,
+  LayoutGrid, List as ListIcon,
 } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategoryChips, CategoryMultiSelect, CompanyTag, CompanyTags, defaultCategoriesFor } from "@/components/category-chips";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { toast } from "sonner";
@@ -42,8 +42,23 @@ import { PaymentMatchDialog } from "@/components/payment-match-dialog";
 import { rematchClient, termsChanged } from "@/lib/rematch";
 import { useQuotes, usePurchaseOrders } from "@/lib/mock-data";
 import type { ProofInvoice, ProofTransaction, ProofQuote, ProofPO } from "@/lib/payment-proof";
+import { useDataView, type FieldDef } from "@/hooks/use-data-view";
+import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
+import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 
 export const Route = createFileRoute("/_authenticated/clients")({ component: ClientsPage, validateSearch: focusSearch });
+
+const CLIENT_COLUMNS: ColumnDef[] = [
+  { key: "company", label: "Company" },
+  { key: "status", label: "Status" },
+  { key: "acquisition", label: "Acquisition", priority: "optional" },
+  { key: "industry", label: "Industry", priority: "optional" },
+  { key: "country", label: "Country", priority: "optional" },
+  { key: "revenue", label: "Revenue" },
+  { key: "outstanding", label: "Outstanding" },
+  { key: "margin", label: "Margin" },
+];
 
 function isWonClient(cl: Client, hasActivity: boolean): boolean {
   if (cl.status === "client") return true;
