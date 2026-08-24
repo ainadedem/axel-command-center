@@ -117,7 +117,7 @@ function Body() {
     const o = list.find((x) => x.id === oppParam);
     if (!o) return; // not loaded yet, or out of company scope
     openDocs(o);
-    void navigate({ search: (prev) => ({ ...prev, opp: undefined }), replace: true } as never);
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, opp: undefined }), replace: true } as never);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [oppParam, list]);
 
