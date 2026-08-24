@@ -87,6 +87,36 @@ export function ThemeControls({ compact = false }: { compact?: boolean }) {
           })}
         </div>
       </div>
+
+      <div>
+        {!compact && (
+          <div className="text-caption uppercase tracking-wider text-muted-foreground mb-1.5">Density</div>
+        )}
+        <div className="segmented w-full" role="radiogroup" aria-label="Interface density">
+          {DENSITIES.map(({ value, label, icon: Icon }) => {
+            const active = density === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                aria-label={`${label} density`}
+                onClick={() => setDensity(value)}
+                className={cn(
+                  "flex-1 min-h-8 px-3 rounded-full text-xs font-medium inline-flex items-center justify-center gap-1.5 focus-ring press-scale",
+                  active
+                    ? "bg-card text-foreground shadow-[var(--shadow-soft)]"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
