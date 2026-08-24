@@ -590,6 +590,12 @@ function Body() {
                               {format(parseISO(q.sentAt), "MMM d")}
                             </span>
                           )}
+                          <QuoteSalesRoles
+                            acquisition={cl?.acquisition}
+                            closer={opportunities.find((o) => o.id === q.opportunityId)?.closer}
+                            opportunityId={q.opportunityId}
+                            size="xs"
+                          />
                         </div>
                       </ListTd>
                     )}
