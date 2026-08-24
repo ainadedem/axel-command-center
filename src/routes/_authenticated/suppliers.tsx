@@ -11,24 +11,30 @@ import { upsertSupplier, deleteSupplierDb } from "@/lib/db-sync";
 import { useJournalEntries, fmtAr } from "@/lib/pcg";
 import { newId } from "@/lib/data-store";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { EmptyState } from "@/components/crud-toolbar";
+import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { PaymentDetailsFields, paymentFrom, paymentValues, emptyPayment, type PaymentFormState } from "@/components/payment-details-fields";
 
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
 import {
   Pencil, Trash2, Building2, User, LayoutGrid, List as ListIcon,
-  Search, ArrowUpDown, ChevronDown, Plus,
 } from "lucide-react";
 import {
-  CategoryChips, CategoryMultiSelect, CategoryFilterTabs, CompanyTag, CompanyTags, defaultCategoriesFor,
+  CategoryChips, CategoryMultiSelect, CategoryFilterTabs, CompanyTags, defaultCategoriesFor,
 } from "@/components/category-chips";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
+import { useDataView, type FieldDef } from "@/hooks/use-data-view";
+import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
+import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
+import { MasterDetail, DetailPanel, DetailSection, DetailField } from "@/components/master-detail";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
+import { KpiCard } from "@/components/kpi-card";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/suppliers")({ component: SuppliersPage });
 
