@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { docDeepLink, focusSearch, useFocusRow } from "@/hooks/use-focus-row";
 import { BankAccountSelect } from "@/components/bank-account-select";
 import { defaultBankAccount } from "@/lib/payment-details";
@@ -8,7 +8,8 @@ import {
   useQuotes, useCompanies, useClients, useProjects, quotesStore, purchaseOrdersStore,
   fmt, fmtCompact, toMGA, FX, type Quote, type QuoteLine, type QuoteStatus, type QuoteMode, type Currency, type Client,
   contactBelongsTo, MAX_QUOTE_ASSIGNEES, useOpportunities, useInvoices,
-  useQuoteFollowups, quoteFollowupsStore,
+  useQuoteFollowups, quoteFollowupsStore, useSalesPeople, useTeamMembers,
+  opportunitiesStore,
 } from "@/lib/mock-data";
 import { KanbanTemplatePicker } from "@/components/kanban-template-picker";
 import { useKanbanTemplates, type KanbanTemplate } from "@/lib/kanban-templates";
@@ -78,6 +79,7 @@ import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
 import { useSingleFlightSubmit } from "@/components/form-ux";
 import { QuoteAssigneePicker, AssigneeStack } from "@/components/quote-assignee-picker";
+import { QuoteSalesRoles } from "@/components/quote-sales-roles";
 import { QuoteFollowupPanel, followUpTone, followUpToneClass } from "@/components/quote-followup-panel";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
 import { MasterDetail, DetailPanel, DetailSection, DetailField } from "@/components/master-detail";
@@ -143,6 +145,25 @@ function Body() {
   const clients = useClients();
   const projects = useProjects();
   const baseList = inScope(quotes, scope);
+  const team = useTeamMembers();
+  const navigate = useNavigate();
+  const salesParam = Route.useSearch().sales;
+  const salesFilterName = useMemo(
+    () => (salesParam ? (team.find((t) => t.userId === salesParam || t.name === salesParam)?.name ?? salesParam) : null),
+    [salesParam, team],
+  );
+  const salesFiltered = useMemo(() => {
+    if (!salesParam) return baseList;
+    const needle = salesParam.toLowerCase();
+    return baseList.filter(
+      (q) =>
+        (q.assignedTo ?? []).includes(salesParam) ||
+        (clients.find((c) => c.id === q.clientId)?.acquisition ?? "").toLowerCase() === needle,
+    );
+  }, [baseList, salesParam, clients]);
+  const clearSalesFilter = () => {
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, sales: undefined }), replace: true } as never);
+  };
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Quote | null>(null);
   const [previewing, setPreviewing] = useState<Quote | null>(null);
@@ -221,17 +242,19 @@ function Body() {
   const presets = useFilterPresets("quotations", QUOTE_PRESETS);
   const isMobile = useIsMobile();
   const chipFiltered = useMemo(
-    () => baseList.filter((q) => chipStatuses.length === 0 || chipStatuses.includes(q.status)),
-    [baseList, chipStatuses],
+    () => salesFiltered.filter((q) => chipStatuses.length === 0 || chipStatuses.includes(q.status)),
+    [salesFiltered, chipStatuses],
   );
   const filtersActive =
     chipStatuses.length > 0 ||
+    Boolean(salesParam) ||
     Boolean(view.state.q.trim()) ||
     Object.values(view.state.filters).some(Boolean) ||
     Boolean(view.state.sort) ||
     Boolean(view.state.group);
   const clearAllFilters = () => {
     setChipStatuses([]);
+    if (salesParam) clearSalesFilter();
     view.reset();
   };
   const groups = view.apply(chipFiltered);
@@ -366,6 +389,32 @@ function Body() {
           mono
         />
       </DetailSection>
+      <DetailSection title="Sales">
+        <div className="flex flex-col gap-2 py-0.5">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground w-20 shrink-0">Acquisition</span>
+            <span className="text-foreground">{clients.find((c) => c.id === selectedQuote.clientId)?.acquisition || "—"}</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground w-20 shrink-0">Closer</span>
+            <span className="text-foreground">{opportunities.find((o) => o.id === selectedQuote.opportunityId)?.closer || "—"}</span>
+          </div>
+          <QuoteSalesRoles
+            acquisition={clients.find((c) => c.id === selectedQuote.clientId)?.acquisition}
+            closer={opportunities.find((o) => o.id === selectedQuote.opportunityId)?.closer}
+            opportunityId={selectedQuote.opportunityId}
+          />
+          {selectedQuote.opportunityId && (
+            <Link
+              to="/pipeline"
+              search={(prev: Record<string, unknown>) => ({ ...prev, opp: selectedQuote.opportunityId })}
+              className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+            >
+              <ExternalLink className="h-3 w-3" /> Open pipeline deal
+            </Link>
+          )}
+        </div>
+      </DetailSection>
     </DetailPanel>
   ) : null;
 
@@ -404,6 +453,18 @@ function Body() {
             overflow
             forceOverflowAll={isMobile}
           />
+          {salesParam && (
+            <button
+              type="button"
+              onClick={clearSalesFilter}
+              title="Clear sales filter"
+              className="inline-flex shrink-0 items-center gap-1 h-8 px-2.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs hover:bg-primary/15 transition"
+            >
+              <UserPlus className="h-3 w-3" />
+              <span className="truncate max-w-[10rem]">{salesFilterName}</span>
+              <X className="h-3 w-3" />
+            </button>
+          )}
           {filtersActive && (
             <button
               type="button"
@@ -662,6 +723,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const clients = useClients();
   const projects = useProjects();
   const opportunities = useOpportunities();
+  const salesPeople = useSalesPeople();
   const invoices = useInvoices();
   const quotes = useQuotes();
   const today = new Date().toISOString().slice(0, 10);
@@ -684,6 +746,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
   const [discountPct, setDiscountPct] = useState<number>(0);
   const [assignedTo, setAssignedTo] = useState<string[]>([]);
   const [opportunityId, setOpportunityId] = useState("");
+  const [closer, setCloser] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -702,6 +765,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setDiscountPct(editing.discountPct ?? 0);
       setAssignedTo(editing.assignedTo ?? []);
       setOpportunityId(editing.opportunityId ?? "");
+      setCloser(opportunities.find((o) => o.id === editing.opportunityId)?.closer ?? "");
     } else {
       const cid = companies[0]?.id ?? "";
       numberTouched.current = false; setNumber(cid ? nextNumber("quote", cid, today) : ""); setCompanyId(cid); setClientId("");
@@ -710,6 +774,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       setMode("rate-card");
       setAssignedTo([]);
       setOpportunityId("");
+      setCloser("");
       setLines([]); setNotes(""); setSubject(""); setBankAccountId(""); setTaxRate(defaultTaxRate(companies[0], today)); setDiscountPct(0);
     }
     // Only re-initialise when the dialog opens (or switches record) — background
@@ -894,6 +959,13 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
       if (ensured.created) createdOpp = ensured.opportunityId;
     }
     if (createdOpp) toast.success("Deal created in the pipeline");
+    // Sync the closer to the linked deal so the pipeline reflects who closes it.
+    if (oppId && closer.trim()) {
+      const opp = opportunities.find((o) => o.id === oppId);
+      if (opp && (opp.closer ?? "") !== closer.trim()) {
+        opportunitiesStore.update(oppId, { closer: closer.trim() });
+      }
+    }
     const withOpp = { ...data, opportunityId: oppId };
 
     if (editing) {
@@ -1003,6 +1075,20 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
               value={opportunityId}
               onChange={setOpportunityId}
             />
+            {opportunityId && opportunityId !== NEW_OPPORTUNITY && (
+              <div>
+                <Label>Closer (pipeline)</Label>
+                <Select value={closer || "__none_closer__"} onValueChange={(v) => setCloser(v === "__none_closer__" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="Assign a closer" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none_closer__">— None —</SelectItem>
+                    {salesPeople.map((s) => (
+                      <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>

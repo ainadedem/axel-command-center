@@ -15,12 +15,15 @@ export interface FocusSearch {
   aging?: string;
   /** Which layout the deep link should land on ("list" or "board"). */
   view?: "list" | "board";
+  /** Sales member identity (auth userId or team-member name) — filters the list to that person's quotations. */
+  sales?: string;
 }
 
 export const focusSearch = (search: Record<string, unknown>): FocusSearch => ({
   focus: typeof search.focus === "string" && search.focus ? search.focus : undefined,
   aging: typeof search.aging === "string" && search.aging ? search.aging : undefined,
   view: search.view === "board" || search.view === "list" ? search.view : undefined,
+  sales: typeof search.sales === "string" && search.sales ? search.sales : undefined,
 });
 
 /** Builds a notification / alert deep link to one document. */
