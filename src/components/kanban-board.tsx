@@ -1,4 +1,6 @@
 import { useState, type ReactNode } from "react";
+import { MoreHorizontal } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 /**
