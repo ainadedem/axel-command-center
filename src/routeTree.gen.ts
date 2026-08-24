@@ -34,6 +34,7 @@ import { Route as AuthenticatedKioskRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedGrandLivreRouteImport } from './routes/_authenticated/grand-livre'
+import { Route as AuthenticatedFilesRouteImport } from './routes/_authenticated/files'
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedCompteResultatRouteImport } from './routes/_authenticated/compte-resultat'
 import { Route as AuthenticatedCompaniesRouteImport } from './routes/_authenticated/companies'
@@ -178,6 +179,11 @@ const AuthenticatedGrandLivreRoute = AuthenticatedGrandLivreRouteImport.update({
   path: '/grand-livre',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedFilesRoute = AuthenticatedFilesRouteImport.update({
+  id: '/files',
+  path: '/files',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedExpensesRoute = AuthenticatedExpensesRouteImport.update({
   id: '/expenses',
   path: '/expenses',
@@ -273,6 +279,7 @@ export interface FileRoutesByFullPath {
   '/companies': typeof AuthenticatedCompaniesRoute
   '/compte-resultat': typeof AuthenticatedCompteResultatRoute
   '/expenses': typeof AuthenticatedExpensesRoute
+  '/files': typeof AuthenticatedFilesRoute
   '/grand-livre': typeof AuthenticatedGrandLivreRoute
   '/invoices': typeof AuthenticatedInvoicesRoute
   '/journal': typeof AuthenticatedJournalRoute
@@ -312,6 +319,7 @@ export interface FileRoutesByTo {
   '/companies': typeof AuthenticatedCompaniesRoute
   '/compte-resultat': typeof AuthenticatedCompteResultatRoute
   '/expenses': typeof AuthenticatedExpensesRoute
+  '/files': typeof AuthenticatedFilesRoute
   '/grand-livre': typeof AuthenticatedGrandLivreRoute
   '/invoices': typeof AuthenticatedInvoicesRoute
   '/journal': typeof AuthenticatedJournalRoute
@@ -355,6 +363,7 @@ export interface FileRoutesById {
   '/_authenticated/companies': typeof AuthenticatedCompaniesRoute
   '/_authenticated/compte-resultat': typeof AuthenticatedCompteResultatRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
+  '/_authenticated/files': typeof AuthenticatedFilesRoute
   '/_authenticated/grand-livre': typeof AuthenticatedGrandLivreRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
@@ -399,6 +408,7 @@ export interface FileRouteTypes {
     | '/companies'
     | '/compte-resultat'
     | '/expenses'
+    | '/files'
     | '/grand-livre'
     | '/invoices'
     | '/journal'
@@ -438,6 +448,7 @@ export interface FileRouteTypes {
     | '/companies'
     | '/compte-resultat'
     | '/expenses'
+    | '/files'
     | '/grand-livre'
     | '/invoices'
     | '/journal'
@@ -480,6 +491,7 @@ export interface FileRouteTypes {
     | '/_authenticated/companies'
     | '/_authenticated/compte-resultat'
     | '/_authenticated/expenses'
+    | '/_authenticated/files'
     | '/_authenticated/grand-livre'
     | '/_authenticated/invoices'
     | '/_authenticated/journal'
@@ -694,6 +706,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGrandLivreRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/files': {
+      id: '/_authenticated/files'
+      path: '/files'
+      fullPath: '/files'
+      preLoaderRoute: typeof AuthenticatedFilesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/expenses': {
       id: '/_authenticated/expenses'
       path: '/expenses'
@@ -827,6 +846,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCompaniesRoute: typeof AuthenticatedCompaniesRoute
   AuthenticatedCompteResultatRoute: typeof AuthenticatedCompteResultatRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
+  AuthenticatedFilesRoute: typeof AuthenticatedFilesRoute
   AuthenticatedGrandLivreRoute: typeof AuthenticatedGrandLivreRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
@@ -862,6 +882,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCompaniesRoute: AuthenticatedCompaniesRoute,
   AuthenticatedCompteResultatRoute: AuthenticatedCompteResultatRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
+  AuthenticatedFilesRoute: AuthenticatedFilesRoute,
   AuthenticatedGrandLivreRoute: AuthenticatedGrandLivreRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
