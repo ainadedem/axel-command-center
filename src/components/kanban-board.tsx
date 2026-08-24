@@ -35,7 +35,7 @@ export function KanbanBoard<T>({
   canMove,
   onCardClick,
   className,
-  minHeight = "min-h-[280px]",
+  minHeight = "min-h-[180px]",
 }: {
   columns: KanbanColumnDef[];
   items: T[];
