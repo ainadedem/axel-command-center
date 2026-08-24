@@ -45,7 +45,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { RICH_TEXT_HINT } from "@/lib/rich-text";
 import { RichTextField } from "@/components/rich-text-field";
-import { Wallet, History, CircleDollarSign, ExternalLink, UserPlus } from "lucide-react";
+import { Wallet, History, CircleDollarSign, ExternalLink, UserPlus, CalendarClock, Link2, Paperclip } from "lucide-react";
+import { CardSignal, CardSignalRow } from "@/components/card-signals";
 import { KanbanTemplatePicker } from "@/components/kanban-template-picker";
 import { useKanbanTemplates, type KanbanTemplate } from "@/lib/kanban-templates";
 import { BoardHistoryPanel } from "@/components/board-history-panel";
@@ -1874,25 +1875,39 @@ function InvoiceBoard({
             <CardCommentAction onSubmit={(text) => comment(inv, text)} />
           </>
         )}
+        actionsLabel="Invoice actions"
         renderCard={(inv) => {
           const cl = clients.find((c) => c.id === inv.clientId);
           const co = companies.find((c) => c.id === inv.companyId);
           const balance = invoiceBalance(inv);
+          const overdue = balance > 0 && parseISO(inv.dueDate) < new Date();
           return (
-            <>
-              <div className="flex items-start justify-between gap-2">
-                <div className="text-xs font-tnum text-muted-foreground break-words">{inv.number}</div>
-                {co && <span className="h-1.5 w-1.5 rounded-full mt-1 shrink-0" style={{ background: co.color }} />}
+            <div
+              className="min-w-0"
+              title={`${inv.number} — ${clientLabel(cl)}${inv.subject ? ` · ${inv.subject}` : ""}`}
+            >
+              <div className="flex items-center gap-1.5 min-w-0 pr-6">
+                {co && <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: co.color }} title={co.name} />}
+                <span className="text-[13px] font-medium leading-tight truncate" title={clientTitle(cl)}>{clientLabel(cl)}</span>
               </div>
-              <div className="text-sm font-medium leading-snug mt-0.5 break-words" title={clientTitle(cl)}>{clientLabel(cl)}</div>
-              {inv.subject && <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{inv.subject}</div>}
-              <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40">
-                <div className="font-tnum text-sm font-semibold">{fmtCompact(invoicePayable(inv), inv.currency)}</div>
-                <div className="text-[10px] text-muted-foreground font-tnum">
-                  {balance > 0 ? `Due ${format(parseISO(inv.dueDate), "MMM d")}` : "Settled"}
-                </div>
+              <div className="flex items-center justify-between gap-2 mt-0.5 min-w-0">
+                <span className="font-tnum text-xs font-semibold truncate">{fmtCompact(invoicePayable(inv), inv.currency)}</span>
+                <CardSignalRow>
+                  {balance > 0 ? (
+                    <CardSignal
+                      icon={CalendarClock}
+                      tone={overdue ? "danger" : "muted"}
+                      label={`${overdue ? "Overdue since" : "Due"} ${format(parseISO(inv.dueDate), "d MMM yyyy")}`}
+                      value={format(parseISO(inv.dueDate), "d MMM")}
+                    />
+                  ) : (
+                    <CardSignal icon={CheckCircle2} tone="success" label="Settled" />
+                  )}
+                  {!!inv.quoteId && <CardSignal icon={Link2} label="Linked to a quotation" />}
+                  {!!inv.poId && <CardSignal icon={Paperclip} label="Linked to a purchase order" />}
+                </CardSignalRow>
               </div>
-            </>
+            </div>
           );
         }}
       />

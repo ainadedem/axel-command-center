@@ -2,9 +2,11 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 
 export type ThemeMode = "light" | "dark" | "system";
 export type TextSize = "default" | "large" | "larger";
+export type Density = "compact" | "comfortable";
 
 const THEME_KEY = "axel.theme";
 const SIZE_KEY = "axel.textSize";
+const DENSITY_KEY = "axel.density";
 
 const SIZE_SCALE: Record<TextSize, string> = {
   default: "100%",
@@ -18,6 +20,9 @@ interface ThemeContextValue {
   resolvedTheme: "light" | "dark";
   textSize: TextSize;
   setTextSize: (s: TextSize) => void;
+  /** Global spacing scale. Compact is the default so more data fits. */
+  density: Density;
+  setDensity: (d: Density) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -44,6 +49,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [textSize, setTextSizeState] = useState<TextSize>(() =>
     readStored(SIZE_KEY, ["default", "large", "larger"] as const, "default"),
   );
+  const [density, setDensityState] = useState<Density>(() =>
+    readStored(DENSITY_KEY, ["compact", "comfortable"] as const, "compact"),
+  );
   const [systemDark, setSystemDark] = useState<boolean>(systemPrefersDark);
 
   // Track live OS preference changes.
@@ -69,6 +77,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset["textSize"] = textSize;
   }, [textSize]);
 
+  useEffect(() => {
+    document.documentElement.dataset["density"] = density;
+  }, [density]);
+
   const setTheme = useCallback((next: ThemeMode) => {
     setThemeState(next);
     try { window.localStorage.setItem(THEME_KEY, next); } catch { /* storage unavailable */ }
@@ -79,9 +91,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     try { window.localStorage.setItem(SIZE_KEY, next); } catch { /* storage unavailable */ }
   }, []);
 
+  const setDensity = useCallback((next: Density) => {
+    setDensityState(next);
+    try { window.localStorage.setItem(DENSITY_KEY, next); } catch { /* storage unavailable */ }
+  }, []);
+
   const value = useMemo(
-    () => ({ theme, setTheme, resolvedTheme, textSize, setTextSize }),
-    [theme, setTheme, resolvedTheme, textSize, setTextSize],
+    () => ({ theme, setTheme, resolvedTheme, textSize, setTextSize, density, setDensity }),
+    [theme, setTheme, resolvedTheme, textSize, setTextSize, density, setDensity],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
@@ -97,6 +114,8 @@ export function useTheme(): ThemeContextValue {
       resolvedTheme: "light",
       textSize: "default",
       setTextSize: () => {},
+      density: "compact",
+      setDensity: () => {},
     };
   }
   return ctx;

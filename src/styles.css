@@ -1383,3 +1383,53 @@ input[type="number"] {
     display: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Compact density (default). One attribute on <html> tightens every shared
+   surface so more rows, cards and KPIs fit on a screen. "comfortable" keeps
+   the original airier scale.
+   --------------------------------------------------------------------------- */
+:root[data-density="compact"] {
+  /* Page shell */
+  & .panel-pad {
+    padding: 1rem;
+  }
+  @media (min-width: 768px) {
+    & .panel-pad {
+      padding: 1.25rem;
+    }
+  }
+  & .panel {
+    border-radius: 18px;
+  }
+
+  /* Tables: shorter rows, quieter separators */
+  & table thead th {
+    padding-top: 0.3125rem;
+    padding-bottom: 0.3125rem;
+  }
+  & table tbody > tr > td {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+  @media (min-width: 768px) {
+    & .panel > .stacked-table {
+      padding: 0.25rem 0.5rem 0.5rem;
+    }
+  }
+
+  /* Pills and focal inputs */
+  & .pill-field {
+    height: 2.5rem;
+    padding-inline: 0.875rem;
+  }
+  & .pill-chip {
+    height: 1.75rem;
+    padding-inline: 0.625rem;
+  }
+
+  /* Quiet rows keep their shape but lose slack */
+  & .quiet-row {
+    border-radius: 12px;
+  }
+}

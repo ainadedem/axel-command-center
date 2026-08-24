@@ -16,7 +16,8 @@ import { useKanbanTemplates, type KanbanTemplate } from "@/lib/kanban-templates"
 import { BoardHistoryPanel } from "@/components/board-history-panel";
 import { logBoardMove } from "@/lib/board-moves";
 import { CardAction, CardCommentAction } from "@/components/kanban-card-actions";
-import { ExternalLink, UserPlus } from "lucide-react";
+import { ExternalLink, UserPlus, CalendarClock, MessageSquare, Link2 } from "lucide-react";
+import { CardSignal, CardSignalRow, CardInitial } from "@/components/card-signals";
 
 import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
 import { useLineReorder, DragHandle, moveItem, ReorderLiveRegion } from "@/components/sortable-row";
@@ -1489,30 +1490,37 @@ function QuoteBoard({
             </>
           );
         }}
+        actionsLabel="Quotation actions"
         renderCard={(q) => {
           const cl = clients.find((c) => c.id === q.clientId);
           const co = companies.find((c) => c.id === q.companyId);
+          const closer = opportunities.find((o) => o.id === q.opportunityId)?.closer;
+          const notes = followups.filter((f) => f.quoteId === q.id).length;
+          const expired = q.status !== "accepted" && q.status !== "rejected" && parseISO(q.validUntil) < new Date();
           return (
-            <>
-              <div className="flex items-start justify-between gap-2">
-                <div className="text-xs font-tnum text-muted-foreground break-words">{q.number}</div>
-                {co && <span className="h-1.5 w-1.5 rounded-full mt-1 shrink-0" style={{ background: co.color }} />}
+            <div
+              className="min-w-0"
+              title={`${q.number} — ${clientLabel(cl)}${q.subject ? ` · ${q.subject}` : ""}`}
+            >
+              <div className="flex items-center gap-1.5 min-w-0 pr-6">
+                {co && <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: co.color }} title={co.name} />}
+                <span className="text-[13px] font-medium leading-tight truncate" title={clientTitle(cl)}>{clientLabel(cl)}</span>
               </div>
-              <div className="text-sm font-medium leading-snug mt-0.5 break-words" title={clientTitle(cl)}>{clientLabel(cl)}</div>
-              {q.subject && <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{q.subject}</div>}
-              <div className="mt-1.5">
-                <QuoteSalesRoles
-                  acquisition={cl?.acquisition}
-                  closer={opportunities.find((o) => o.id === q.opportunityId)?.closer}
-                  opportunityId={q.opportunityId}
-                  size="xs"
-                />
+              <div className="flex items-center justify-between gap-2 mt-0.5 min-w-0">
+                <span className="font-tnum text-xs font-semibold truncate">{fmtCompact(q.totalAmount ?? q.amount, q.currency)}</span>
+                <CardSignalRow>
+                  <CardSignal
+                    icon={CalendarClock}
+                    tone={expired ? "danger" : "muted"}
+                    label={`Valid until ${format(parseISO(q.validUntil), "d MMM yyyy")}`}
+                    value={format(parseISO(q.validUntil), "d MMM")}
+                  />
+                  {closer && <CardInitial name={closer} label={`Closer: ${closer}`} />}
+                  {!!notes && <CardSignal icon={MessageSquare} label={`${notes} follow-up note${notes > 1 ? "s" : ""}`} value={notes} />}
+                  {q.opportunityId && <CardSignal icon={Link2} label="Linked to a pipeline deal" />}
+                </CardSignalRow>
               </div>
-              <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40">
-                <div className="font-tnum text-sm font-semibold">{fmtCompact(q.totalAmount ?? q.amount, q.currency)}</div>
-                <div className="text-[10px] text-muted-foreground font-tnum">{format(parseISO(q.validUntil), "MMM d")}</div>
-              </div>
-            </>
+            </div>
           );
         }}
       />
