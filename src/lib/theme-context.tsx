@@ -91,9 +91,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     try { window.localStorage.setItem(SIZE_KEY, next); } catch { /* storage unavailable */ }
   }, []);
 
+  const setDensity = useCallback((next: Density) => {
+    setDensityState(next);
+    try { window.localStorage.setItem(DENSITY_KEY, next); } catch { /* storage unavailable */ }
+  }, []);
+
   const value = useMemo(
-    () => ({ theme, setTheme, resolvedTheme, textSize, setTextSize }),
-    [theme, setTheme, resolvedTheme, textSize, setTextSize],
+    () => ({ theme, setTheme, resolvedTheme, textSize, setTextSize, density, setDensity }),
+    [theme, setTheme, resolvedTheme, textSize, setTextSize, density, setDensity],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
