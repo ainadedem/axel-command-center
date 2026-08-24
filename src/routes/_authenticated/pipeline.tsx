@@ -407,45 +407,47 @@ function KanbanView({ list, companies, onEdit, acqOf, rollups, onDocs }: { list:
       columnOf={(o) => o.stage}
       onMove={moveStage}
       onCardClick={onEdit}
+      actionsLabel="Deal actions"
       renderCard={(o) => {
         const co = companies.find((c) => c.id === o.companyId);
         const u = urgencyOf(o);
         const acq = acqOf(o);
         return (
-          <>
-            <div className="flex items-start justify-between gap-2">
-              <div className="text-sm font-medium leading-snug truncate">{o.name}</div>
-              {co && <span className="h-1.5 w-1.5 rounded-full mt-1.5 shrink-0" style={{ background: co.color }} />}
+          <div className="min-w-0" title={`${o.name} — ${o.client}`}>
+            <div className="flex items-center gap-1.5 min-w-0 pr-6">
+              {co && <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: co.color }} title={co.name} />}
+              <span className="text-[13px] font-medium leading-tight truncate">{o.name}</span>
+              <span className="text-[11px] text-muted-foreground truncate shrink-0 max-w-[45%]">{o.client}</span>
             </div>
-            <div className="text-xs text-muted-foreground mt-0.5 truncate">{o.client}</div>
-            {(acq || o.closer) && (
-              <div className="text-[10px] text-muted-foreground mt-1.5 truncate">
-                {acq && <span>A: {acq}</span>}
-                {acq && o.closer && <span> · </span>}
-                {o.closer && <span>C: {o.closer}</span>}
-              </div>
-            )}
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40">
-              <div className="font-tnum text-sm font-semibold">{fmtCompact(o.value, o.currency)}</div>
-              {u ? (
-                <span className={`text-[10px] font-tnum inline-flex items-center gap-1 ${u.cls}`}>
-                  {u.label.includes("overdue") && <AlertTriangle className="h-2.5 w-2.5" />}
-                  {u.label}
-                </span>
-              ) : (
-                <div className="text-[10px] text-muted-foreground font-tnum">{format(parseISO(o.expectedClose), "MMM d")}</div>
-              )}
+            <div className="flex items-center justify-between gap-2 mt-0.5 min-w-0">
+              <span className="font-tnum text-xs font-semibold truncate">{fmtCompact(o.value, o.currency)}</span>
+              <CardSignalRow>
+                {u ? (
+                  <span className={`text-[10px] font-tnum inline-flex items-center gap-0.5 shrink-0 ${u.cls}`} title={u.label}>
+                    {u.label.includes("overdue") && <AlertTriangle className="h-3 w-3" />}
+                    {u.label}
+                  </span>
+                ) : (
+                  <CardSignal
+                    icon={CalendarClock}
+                    label={`Expected close ${format(parseISO(o.expectedClose), "d MMM yyyy")}`}
+                    value={format(parseISO(o.expectedClose), "d MMM")}
+                  />
+                )}
+                {o.closer && <CardInitial name={o.closer} label={`Closer: ${o.closer}`} />}
+                {acq && <CardInitial name={acq} label={`Acquisition: ${acq}`} />}
+                <OpportunityDocChips size="xs" rollup={rollups.get(o.id)} onOpen={(section) => onDocs(o, section)} />
+              </CardSignalRow>
             </div>
-            <div className="mt-2">
-              <OpportunityDocChips size="xs" rollup={rollups.get(o.id)} onOpen={(section) => onDocs(o, section)} />
-            </div>
-            <div className="opacity-0 group-hover:opacity-100 flex gap-1 mt-2">
-              <button onClick={(e) => { e.stopPropagation(); onEdit(o); }} className="h-6 px-2 text-[10px] rounded hover:bg-surface text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><Pencil className="h-3 w-3" /> Edit</button>
-              <button onClick={(e) => { e.stopPropagation(); if (confirm(`Delete ${o.name}?`)) opportunitiesStore.remove(o.id); }} className="h-6 px-2 text-[10px] rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive inline-flex items-center gap-1"><Trash2 className="h-3 w-3" /> Delete</button>
-            </div>
-          </>
+          </div>
         );
       }}
+      renderActions={(o) => (
+        <>
+          <button onClick={(e) => { e.stopPropagation(); onEdit(o); }} className="h-7 px-2 text-[11px] rounded hover:bg-surface text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><Pencil className="h-3 w-3" /> Edit</button>
+          <button onClick={(e) => { e.stopPropagation(); if (confirm(`Delete ${o.name}?`)) opportunitiesStore.remove(o.id); }} className="h-7 px-2 text-[11px] rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive inline-flex items-center gap-1"><Trash2 className="h-3 w-3" /> Delete</button>
+        </>
+      )}
     />
   );
 }
