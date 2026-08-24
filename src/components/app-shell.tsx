@@ -11,6 +11,7 @@ import {
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { CREATE_EVENT } from "@/lib/create-action";
+import { MODULES, ADMIN_SECTION, moduleForRoute, type NavSection, type NavItem } from "@/lib/modules";
 import { NotificationCenter } from "@/components/notification-center";
 
 import { useHistory, undo as undoAction, redo as redoAction } from "@/lib/history";
@@ -34,132 +35,20 @@ import { WriteTrailButton } from "@/components/write-trail";
 
 
 
-interface NavItem {
-  to: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  requireGroupAdmin?: boolean;
+export const SALES_ROUTES = ["/", "/quotations", "/clients", "/projects", "/settings"];
+
+/** Every nav section across all modules, plus Administration. */
+const ALL_SECTIONS: NavSection[] = [...MODULES.flatMap((m) => m.sections), ADMIN_SECTION];
+
+const ACTIVE_MODULE_KEY = "axel.activeModule";
+
+/** Remember the module the user is working in, for the launcher's "Continue" hint. */
+function rememberModule(id: string) {
+  try { window.localStorage.setItem(ACTIVE_MODULE_KEY, id); } catch { /* storage blocked */ }
 }
-
-interface NavSection {
-  label: string;
-  /** Rail icon standing for the whole section. */
-  icon: React.ComponentType<{ className?: string }>;
-  items: NavItem[];
+export function lastModuleId(): string | null {
+  try { return window.localStorage.getItem(ACTIVE_MODULE_KEY); } catch { return null; }
 }
-
-/** Routes a sales-only user may reach. Everything else is hidden and redirected. */
-export const SALES_ROUTES = ["/quotations", "/clients", "/projects", "/settings"];
-
-const sections: NavSection[] = [
-  {
-    label: "Overview",
-    icon: LayoutDashboard,
-    items: [
-      { to: "/", label: "Dashboard", icon: LayoutDashboard },
-      ...(AXEL_AI_ENABLED ? [{ to: "/axel", label: "Axel AI", icon: Sparkles }] : []),
-    ],
-  },
-
-
-  {
-    label: "Sales",
-    icon: TrendingUp,
-    items: [
-      { to: "/pipeline", label: "Pipeline", icon: TrendingUp },
-      { to: "/quotations", label: "Quotations", icon: FileSignature },
-      { to: "/clients", label: "Clients", icon: Users },
-      { to: "/projects", label: "Projects", icon: Briefcase },
-      { to: "/sales-team", label: "Sales team", icon: Handshake },
-    ],
-  },
-  {
-    label: "Axel Forge",
-    icon: FolderOpen,
-    items: [
-      { to: "/files", label: "Files", icon: FolderOpen },
-      { to: "/tasks", label: "Tasks", icon: CheckSquare },
-    ],
-  },
-  {
-    label: "Billing",
-    icon: FileText,
-    items: [
-      { to: "/purchase-orders", label: "Purchase orders", icon: ClipboardList },
-      { to: "/invoices", label: "Invoices", icon: FileText },
-      { to: "/billing", label: "Recurring billing", icon: Repeat },
-    ],
-  },
-  {
-    label: "Treasury",
-    icon: Wallet,
-    items: [
-      { to: "/accounts", label: "Accounts", icon: Wallet },
-      { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-      { to: "/expenses", label: "Expenses", icon: CreditCard },
-      { to: "/suppliers", label: "Suppliers", icon: Truck },
-    ],
-  },
-  {
-    label: "Accounting",
-    icon: BookOpen,
-    items: [
-      { to: "/plan-comptable", label: "Plan comptable", icon: Library },
-      { to: "/journal", label: "Journal", icon: BookOpen },
-      { to: "/grand-livre", label: "Grand-livre", icon: BookText },
-      { to: "/balance", label: "Balance", icon: Scale },
-      { to: "/bilan", label: "Bilan", icon: Receipt },
-      { to: "/compte-resultat", label: "Compte de resultat", icon: BarChart3 },
-    ],
-  },
-  {
-    label: "Analysis",
-    icon: BarChart3,
-    items: [
-      { to: "/budgets", label: "Budgets", icon: Target },
-      { to: "/reports", label: "Reports", icon: BarChart3 },
-    ],
-  },
-  {
-    label: "Customer Support",
-    icon: LifeBuoy,
-    items: [
-      { to: "/tickets", label: "Tickets", icon: Ticket },
-      { to: "/service-requests", label: "Service requests", icon: ClipboardCheck },
-    ],
-  },
-  {
-    label: "Operations",
-    icon: ShieldCheck,
-    items: [
-      { to: "/sops", label: "SOPs & Compliance", icon: ShieldCheck },
-    ],
-  },
-  {
-    label: "People",
-    icon: Users,
-    items: [
-      { to: "/team", label: "Team", icon: UserCog },
-      { to: "/time", label: "Time & Attendance", icon: Clock },
-      { to: "/leave", label: "Leave", icon: CalendarDays },
-      { to: "/kiosk", label: "Kiosk", icon: KeyRound },
-      { to: "/payroll", label: "Payroll", icon: Wallet2 },
-    ],
-  },
-  {
-
-    label: "Administration",
-    icon: Building2,
-    items: [
-      { to: "/companies", label: "Companies", icon: Building2 },
-      { to: "/users-access", label: "Users & Access", icon: Users, requireGroupAdmin: true },
-      { to: "/integrations", label: "Integrations Hub", icon: Plug },
-      { to: "/settings", label: "Settings", icon: Settings },
-      { to: "/about", label: "About", icon: Info },
-    ],
-  },
-];
-
 
 function CompanySwitcher() {
   const { scope, setScope, label, accessibleCompanies: companies, isGroupAdmin } = useCompany();
@@ -274,18 +163,55 @@ function SidebarSection({ section, pathname, onNavigate }: { section: NavSection
   );
 }
 
+function useActiveModule() {
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const mod = moduleForRoute(pathname);
+  useEffect(() => {
+    if (mod) rememberModule(mod.id);
+  }, [mod]);
+  return mod;
+}
+
+/** Sidebar shows the active module's sections only, with Administration pinned. */
 function useVisibleSections() {
   const { isSalesOnly, isGroupAdmin } = useEffectiveRole();
-  return sections
+  const mod = useActiveModule();
+  const base: NavSection[] = [...(mod?.sections ?? []), ADMIN_SECTION];
+  return base
     .map((section) => ({
       ...section,
       items: section.items.filter(
-        (item) =>
+        (item: NavItem) =>
           (!item.requireGroupAdmin || isGroupAdmin) &&
           (!isSalesOnly || SALES_ROUTES.includes(item.to)),
       ),
     }))
     .filter((section) => section.items.length > 0);
+}
+
+/** Shows which Axel you are in, with a way back to the launcher. */
+function ModuleHeader({ onNavigate }: { onNavigate?: () => void }) {
+  const mod = useActiveModule();
+  const Icon = mod?.icon ?? LayoutDashboard;
+  return (
+    <div className="px-3 pb-2">
+      <Link
+        to="/"
+        onClick={onNavigate}
+        title="Switch module"
+        className="focus-ring group flex items-center gap-3 rounded-2xl px-3 py-2 text-sm hover:bg-[var(--surface-container)] transition-colors duration-150"
+      >
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[var(--primary-container)] text-[var(--on-primary-container)]">
+          <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-medium">{mod?.label ?? "Axel"}</span>
+          <span className="block text-[10px] uppercase tracking-[0.14em] text-foreground/55">Switch module</span>
+        </span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-foreground/45 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
+      </Link>
+    </div>
+  );
 }
 
 function SidebarInner({ onNavigate, onCollapse }: { onNavigate?: () => void; onCollapse?: () => void }) {
@@ -314,6 +240,7 @@ function SidebarInner({ onNavigate, onCollapse }: { onNavigate?: () => void; onC
       <div className="px-3 pb-3">
         <CompanySwitcher />
       </div>
+      <ModuleHeader onNavigate={onNavigate} />
       <nav aria-label="Main" className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
 
         {visibleSections.map((section) => (
@@ -593,7 +520,7 @@ function useBreadcrumbs(pathname: string): { label: string; to: string }[] {
   let matched:
     | { label: string; to: string; sectionLabel: string }
     | null = null;
-  for (const section of sections) {
+  for (const section of ALL_SECTIONS) {
     for (const item of section.items) {
       if (item.to === "/") continue;
       if (pathname === item.to || pathname.startsWith(item.to + "/")) {
@@ -649,7 +576,7 @@ const NEW_BUTTON_ROUTES: { match: (p: string) => boolean; to: string; label: str
     : []),
 
   // Dashboard has no entity of its own — invoicing is the primary action.
-  { match: (p) => p === "/" || p.startsWith("/dashboard"), to: "/invoices", label: "New invoice" },
+  { match: (p) => p.startsWith("/dashboard"), to: "/invoices", label: "New invoice" },
 ];
 
 

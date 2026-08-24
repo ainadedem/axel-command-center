@@ -40,6 +40,7 @@ import { Route as AuthenticatedIntegrationsRouteImport } from './routes/_authent
 import { Route as AuthenticatedGrandLivreRouteImport } from './routes/_authenticated/grand-livre'
 import { Route as AuthenticatedFilesRouteImport } from './routes/_authenticated/files'
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCompteResultatRouteImport } from './routes/_authenticated/compte-resultat'
 import { Route as AuthenticatedCompaniesRouteImport } from './routes/_authenticated/companies'
 import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
@@ -215,6 +216,11 @@ const AuthenticatedExpensesRoute = AuthenticatedExpensesRouteImport.update({
   path: '/expenses',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedCompteResultatRoute =
   AuthenticatedCompteResultatRouteImport.update({
     id: '/compte-resultat',
@@ -304,6 +310,7 @@ export interface FileRoutesByFullPath {
   '/clients': typeof AuthenticatedClientsRoute
   '/companies': typeof AuthenticatedCompaniesRoute
   '/compte-resultat': typeof AuthenticatedCompteResultatRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/files': typeof AuthenticatedFilesRoute
   '/grand-livre': typeof AuthenticatedGrandLivreRoute
@@ -348,6 +355,7 @@ export interface FileRoutesByTo {
   '/clients': typeof AuthenticatedClientsRoute
   '/companies': typeof AuthenticatedCompaniesRoute
   '/compte-resultat': typeof AuthenticatedCompteResultatRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/files': typeof AuthenticatedFilesRoute
   '/grand-livre': typeof AuthenticatedGrandLivreRoute
@@ -396,6 +404,7 @@ export interface FileRoutesById {
   '/_authenticated/clients': typeof AuthenticatedClientsRoute
   '/_authenticated/companies': typeof AuthenticatedCompaniesRoute
   '/_authenticated/compte-resultat': typeof AuthenticatedCompteResultatRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
   '/_authenticated/files': typeof AuthenticatedFilesRoute
   '/_authenticated/grand-livre': typeof AuthenticatedGrandLivreRoute
@@ -445,6 +454,7 @@ export interface FileRouteTypes {
     | '/clients'
     | '/companies'
     | '/compte-resultat'
+    | '/dashboard'
     | '/expenses'
     | '/files'
     | '/grand-livre'
@@ -489,6 +499,7 @@ export interface FileRouteTypes {
     | '/clients'
     | '/companies'
     | '/compte-resultat'
+    | '/dashboard'
     | '/expenses'
     | '/files'
     | '/grand-livre'
@@ -536,6 +547,7 @@ export interface FileRouteTypes {
     | '/_authenticated/clients'
     | '/_authenticated/companies'
     | '/_authenticated/compte-resultat'
+    | '/_authenticated/dashboard'
     | '/_authenticated/expenses'
     | '/_authenticated/files'
     | '/_authenticated/grand-livre'
@@ -798,6 +810,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedExpensesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/compte-resultat': {
       id: '/_authenticated/compte-resultat'
       path: '/compte-resultat'
@@ -923,6 +942,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedClientsRoute: typeof AuthenticatedClientsRoute
   AuthenticatedCompaniesRoute: typeof AuthenticatedCompaniesRoute
   AuthenticatedCompteResultatRoute: typeof AuthenticatedCompteResultatRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
   AuthenticatedFilesRoute: typeof AuthenticatedFilesRoute
   AuthenticatedGrandLivreRoute: typeof AuthenticatedGrandLivreRoute
@@ -963,6 +983,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedClientsRoute: AuthenticatedClientsRoute,
   AuthenticatedCompaniesRoute: AuthenticatedCompaniesRoute,
   AuthenticatedCompteResultatRoute: AuthenticatedCompteResultatRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
   AuthenticatedFilesRoute: AuthenticatedFilesRoute,
   AuthenticatedGrandLivreRoute: AuthenticatedGrandLivreRoute,
