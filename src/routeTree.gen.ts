@@ -17,6 +17,7 @@ import { Route as ApiAxelChatRouteImport } from './routes/api/axel-chat'
 import { Route as AuthenticatedUsersAccessRouteImport } from './routes/_authenticated/users-access'
 import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
 import { Route as AuthenticatedTimeRouteImport } from './routes/_authenticated/time'
+import { Route as AuthenticatedTicketsRouteImport } from './routes/_authenticated/tickets'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
@@ -91,6 +92,11 @@ const AuthenticatedTransactionsRoute =
 const AuthenticatedTimeRoute = AuthenticatedTimeRouteImport.update({
   id: '/time',
   path: '/time',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedTicketsRoute = AuthenticatedTicketsRouteImport.update({
+  id: '/tickets',
+  path: '/tickets',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
@@ -304,6 +310,7 @@ export interface FileRoutesByFullPath {
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/tickets': typeof AuthenticatedTicketsRoute
   '/time': typeof AuthenticatedTimeRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/users-access': typeof AuthenticatedUsersAccessRoute
@@ -345,6 +352,7 @@ export interface FileRoutesByTo {
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/tickets': typeof AuthenticatedTicketsRoute
   '/time': typeof AuthenticatedTimeRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/users-access': typeof AuthenticatedUsersAccessRoute
@@ -390,6 +398,7 @@ export interface FileRoutesById {
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
+  '/_authenticated/tickets': typeof AuthenticatedTicketsRoute
   '/_authenticated/time': typeof AuthenticatedTimeRoute
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
   '/_authenticated/users-access': typeof AuthenticatedUsersAccessRoute
@@ -436,6 +445,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/tasks'
     | '/team'
+    | '/tickets'
     | '/time'
     | '/transactions'
     | '/users-access'
@@ -477,6 +487,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/tasks'
     | '/team'
+    | '/tickets'
     | '/time'
     | '/transactions'
     | '/users-access'
@@ -521,6 +532,7 @@ export interface FileRouteTypes {
     | '/_authenticated/suppliers'
     | '/_authenticated/tasks'
     | '/_authenticated/team'
+    | '/_authenticated/tickets'
     | '/_authenticated/time'
     | '/_authenticated/transactions'
     | '/_authenticated/users-access'
@@ -597,6 +609,13 @@ declare module '@tanstack/react-router' {
       path: '/time'
       fullPath: '/time'
       preLoaderRoute: typeof AuthenticatedTimeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/tickets': {
+      id: '/_authenticated/tickets'
+      path: '/tickets'
+      fullPath: '/tickets'
+      preLoaderRoute: typeof AuthenticatedTicketsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/team': {
@@ -884,6 +903,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
+  AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRoute
   AuthenticatedTimeRoute: typeof AuthenticatedTimeRoute
   AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRoute
   AuthenticatedUsersAccessRoute: typeof AuthenticatedUsersAccessRoute
@@ -921,6 +941,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
+  AuthenticatedTicketsRoute: AuthenticatedTicketsRoute,
   AuthenticatedTimeRoute: AuthenticatedTimeRoute,
   AuthenticatedTransactionsRoute: AuthenticatedTransactionsRoute,
   AuthenticatedUsersAccessRoute: AuthenticatedUsersAccessRoute,
