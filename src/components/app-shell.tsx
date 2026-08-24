@@ -6,6 +6,7 @@ import {
   BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList, RefreshCw,
   Sparkles, CreditCard, Repeat, Wallet2, ExternalLink, Info, ShieldCheck, Menu, X, Undo2, Redo2,
   PanelLeftClose, PanelLeftOpen, Clock, CalendarDays, KeyRound,
+  FolderOpen, CheckSquare, LifeBuoy, Ticket, ClipboardCheck, Plug,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -73,6 +74,14 @@ const sections: NavSection[] = [
     ],
   },
   {
+    label: "Axel Forge",
+    icon: FolderOpen,
+    items: [
+      { to: "/files", label: "Files", icon: FolderOpen },
+      { to: "/tasks", label: "Tasks", icon: CheckSquare },
+    ],
+  },
+  {
     label: "Billing",
     icon: FileText,
     items: [
@@ -112,6 +121,14 @@ const sections: NavSection[] = [
     ],
   },
   {
+    label: "Customer Support",
+    icon: LifeBuoy,
+    items: [
+      { to: "/tickets", label: "Tickets", icon: Ticket },
+      { to: "/service-requests", label: "Service requests", icon: ClipboardCheck },
+    ],
+  },
+  {
     label: "Operations",
     icon: ShieldCheck,
     items: [
@@ -136,6 +153,7 @@ const sections: NavSection[] = [
     items: [
       { to: "/companies", label: "Companies", icon: Building2 },
       { to: "/users-access", label: "Users & Access", icon: Users, requireGroupAdmin: true },
+      { to: "/integrations", label: "Integrations Hub", icon: Plug },
       { to: "/settings", label: "Settings", icon: Settings },
       { to: "/about", label: "About", icon: Info },
     ],
