@@ -77,6 +77,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset["textSize"] = textSize;
   }, [textSize]);
 
+  useEffect(() => {
+    document.documentElement.dataset["density"] = density;
+  }, [density]);
+
   const setTheme = useCallback((next: ThemeMode) => {
     setThemeState(next);
     try { window.localStorage.setItem(THEME_KEY, next); } catch { /* storage unavailable */ }
