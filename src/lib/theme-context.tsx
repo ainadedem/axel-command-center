@@ -49,6 +49,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [textSize, setTextSizeState] = useState<TextSize>(() =>
     readStored(SIZE_KEY, ["default", "large", "larger"] as const, "default"),
   );
+  const [density, setDensityState] = useState<Density>(() =>
+    readStored(DENSITY_KEY, ["compact", "comfortable"] as const, "compact"),
+  );
   const [systemDark, setSystemDark] = useState<boolean>(systemPrefersDark);
 
   // Track live OS preference changes.
