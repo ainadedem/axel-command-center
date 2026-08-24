@@ -112,19 +112,13 @@ function ClientsPage() {
 
   const base = tab === "clients" ? wonClients : tab === "leads" ? leadClients : scopedClients;
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return base;
-    return base.filter((c) =>
-      c.name.toLowerCase().includes(q) ||
-      (c.country ?? "").toLowerCase().includes(q) ||
-      (c.industry ?? "").toLowerCase().includes(q) ||
-      (c.email ?? "").toLowerCase().includes(q)
-    );
-  }, [base, search]);
+  const { isSalesOnly: salesOnly, roleResolved } = useEffectiveRole();
+  const canEdit = !(roleResolved && salesOnly);
 
-  const sorted = useMemo(() => {
-    const arr = filtered.map((cl) => {
+  // Per-client money metrics, shared by the table, the detail panel and sorting.
+  const metrics = useMemo(() => {
+    const map = new Map<string, { revenue: number; outstanding: number; margin: number; invoiced: number; paid: number; overdue: boolean; projects: number; invoices: number }>();
+    for (const cl of scopedClients) {
       const cliInvoices = invoices.filter((i) => i.clientId === cl.id);
       const cliProjects = projects.filter((p) => p.clientId === cl.id);
       const cliTx = transactions.filter((t) => t.clientId === cl.id);
@@ -134,42 +128,49 @@ function ClientsPage() {
       const incomeTxMGA = cliTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
       const expenseTxMGA = cliTx.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
       const revenue = invoicedMGA || projectRevenue || incomeTxMGA;
-      const projectCost = cliProjects.reduce((s, p) => s + toMGA(p.cost, p.currency), 0);
-      const cost = projectCost + expenseTxMGA;
-      const margin = revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0;
-      const outstanding = Math.max(0, invoicedMGA - paidMGA);
-      return { cl, revenue, outstanding, margin };
-    });
-
-    switch (sort) {
-      case "name_asc": return arr.sort((a, b) => a.cl.name.localeCompare(b.cl.name));
-      case "name_desc": return arr.sort((a, b) => b.cl.name.localeCompare(a.cl.name));
-      case "revenue_desc": return arr.sort((a, b) => b.revenue - a.revenue);
-      case "outstanding_desc": return arr.sort((a, b) => b.outstanding - a.outstanding);
-      case "margin_desc": return arr.sort((a, b) => b.margin - a.margin);
-      default: return arr;
+      const cost = cliProjects.reduce((s, p) => s + toMGA(p.cost, p.currency), 0) + expenseTxMGA;
+      map.set(cl.id, {
+        revenue,
+        outstanding: Math.max(0, invoicedMGA - paidMGA),
+        margin: revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0,
+        invoiced: invoicedMGA,
+        paid: paidMGA,
+        overdue: cliInvoices.some((i) => i.status === "overdue"),
+        projects: cliProjects.length,
+        invoices: cliInvoices.length,
+      });
     }
-  }, [filtered, sort, invoices, projects, transactions]);
+    return map;
+  }, [scopedClients, invoices, projects, transactions]);
 
-  const grouped = useMemo(() => {
-    if (group === "none") return [{ key: "", label: "", items: sorted.map((s) => s.cl) }];
-    const map = new Map<string, Client[]>();
-    for (const s of sorted) {
-      let key = "";
-      switch (group) {
-        case "company": key = companies.find((c) => c.id === s.cl.companyId)?.name ?? "—"; break;
-        case "status": key = s.cl.status === "lead" ? "Leads" : "Clients"; break;
-        case "acquisition": key = s.cl.acquisition ?? "Unassigned"; break;
-      }
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(s.cl);
+  const m = (cl: Client) => metrics.get(cl.id) ?? { revenue: 0, outstanding: 0, margin: 0, invoiced: 0, paid: 0, overdue: false, projects: 0, invoices: 0 };
+
+  const fields = useMemo<FieldDef<Client>[]>(() => {
+    const base: FieldDef<Client>[] = [
+      { key: "name", label: "Name", type: "string", accessor: (c) => c.name },
+      { key: "company", label: "Company", type: "enum", accessor: (c) => companies.find((x) => x.id === c.companyId)?.shortName ?? "—" },
+      { key: "status", label: "Status", type: "enum", accessor: (c) => (c.status === "lead" ? "Lead" : "Client") },
+      { key: "acquisition", label: "Acquisition", type: "enum", accessor: (c) => c.acquisition ?? "Unassigned" },
+      { key: "industry", label: "Industry", type: "string", accessor: (c) => c.industry ?? "" },
+      { key: "country", label: "Country", type: "string", accessor: (c) => c.country ?? "" },
+    ];
+    if (!salesOnly) {
+      base.push(
+        { key: "revenue", label: "Revenue", type: "number", accessor: (c) => metrics.get(c.id)?.revenue ?? 0, noGroup: true },
+        { key: "outstanding", label: "Outstanding", type: "number", accessor: (c) => metrics.get(c.id)?.outstanding ?? 0, noGroup: true },
+        { key: "margin", label: "Margin", type: "number", accessor: (c) => metrics.get(c.id)?.margin ?? 0, noGroup: true },
+      );
     }
-    return Array.from(map.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([key, items]) => ({ key, label: key, items }));
-  }, [sorted, group, companies]);
+    return base;
+  }, [companies, metrics, salesOnly]);
 
-  const visibleCount = sorted.length;
+  const dataView = useDataView<Client>("clients", fields);
+  const groups = useMemo(() => dataView.apply(base), [dataView, base]);
+  const rows = useMemo(() => groups.flatMap((g) => g.items), [groups]);
+  const visibleCount = rows.length;
+
+  const cp = useColumnPrefs("clients", CLIENT_COLUMNS);
+  const colCount = 2 + cp.count;
 
   const promote = (cl: Client) => {
     clientsStore.update(cl.id, {
@@ -180,14 +181,10 @@ function ClientsPage() {
 
   const openCreate = () => { setEditing(null); setOpen(true); };
   useCreateAction(openCreate);
-  const { isSalesOnly: salesOnly } = useEffectiveRole();
 
   const selectedClient = selectedId ? scopedClients.find((c) => c.id === selectedId) ?? null : null;
   const clientDetail = selectedClient ? (() => {
-    const cliInvoices = invoices.filter((i) => i.clientId === selectedClient.id);
-    const cliProjects = projects.filter((p) => p.clientId === selectedClient.id);
-    const invoicedMGA = cliInvoices.reduce((s2, i) => s2 + toMGA(i.amount, i.currency), 0);
-    const paidMGA = cliInvoices.reduce((s2, i) => s2 + toMGA(i.paid, i.currency), 0);
+    const sm = m(selectedClient);
     return (
       <DetailPanel
         eyebrow={selectedClient.status === "lead" ? "Lead" : "Client"}
@@ -203,14 +200,16 @@ function ClientsPage() {
         <DetailSection>
           <DetailField label="Email" value={selectedClient.email || "—"} />
           <DetailField label="Phone" value={selectedClient.phone || "—"} />
-          <DetailField label="Projects" value={String(cliProjects.length)} mono />
-          <DetailField label="Invoices" value={String(cliInvoices.length)} mono />
+          <DetailField label="Companies" value={<CompanyTags ids={contactCompanyIds(selectedClient)} companies={companies} size="xs" />} />
+          <DetailField label="Projects" value={String(sm.projects)} mono />
+          <DetailField label="Invoices" value={String(sm.invoices)} mono />
         </DetailSection>
         {!salesOnly && (
           <DetailSection title="Amounts">
-            <DetailField label="Invoiced" value={fmtCompact(invoicedMGA, "MGA")} mono />
-            <DetailField label="Paid" value={fmtCompact(paidMGA, "MGA")} mono />
-            <DetailField label="Outstanding" value={fmtCompact(Math.max(0, invoicedMGA - paidMGA), "MGA")} mono />
+            <DetailField label="Invoiced" value={fmtCompact(sm.invoiced, "MGA")} mono />
+            <DetailField label="Paid" value={fmtCompact(sm.paid, "MGA")} mono />
+            <DetailField label="Outstanding" value={fmtCompact(sm.outstanding, "MGA")} mono />
+            <DetailField label="Margin" value={`${sm.margin.toFixed(0)}%`} mono />
           </DetailSection>
         )}
       </DetailPanel>
@@ -220,77 +219,142 @@ function ClientsPage() {
   return (
     <AppShell>
       <PageHeader title="Clients" description="Leads from the pipeline and won clients — kept separate." />
-      <div className="p-6">
+      <div className="p-5 sm:p-10 lg:p-12">
       <MasterDetail detail={clientDetail}>
       <div className="space-y-5">
-        {/* KPI strip — money tiles are hidden for sales-only users */}
-        <div className={salesOnly ? "grid grid-cols-1 gap-3" : "grid grid-cols-2 md:grid-cols-4 gap-3"}>
-          <KpiTile icon={<UserCheck className="h-4 w-4" />} label="Won clients" value={String(wonClients.length)} sub={`${leadClients.length} lead${leadClients.length === 1 ? "" : "s"}`} tint="from-primary/25 to-primary/5" ring="ring-primary/30" />
-          {!salesOnly && <KpiTile icon={<Wallet className="h-4 w-4" />} label="Revenue booked" value={fmtCompact(totals.revenue, "MGA")} tint="from-emerald-500/25 to-emerald-500/5" ring="ring-emerald-500/30" />}
-          {!salesOnly && <KpiTile icon={<AlertCircle className="h-4 w-4" />} label="Outstanding" value={fmtCompact(totals.outstanding, "MGA")} sub={`${totals.overdue} overdue`} tint="from-amber-500/25 to-amber-500/5" ring="ring-amber-500/30" />}
-          {!salesOnly && <KpiTile icon={<TrendingUp className="h-4 w-4" />} label="Top client" value={topClient?.cl.name ?? "—"} sub={topClient ? fmtCompact(topClient.r, "MGA") : undefined} tint="from-sky-500/25 to-sky-500/5" ring="ring-sky-500/30" />}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <CrudToolbar createLabel={tab === "leads" ? "New lead" : "New client"} count={visibleCount} label={tab === "leads" ? "leads" : "clients"} onCreate={openCreate} />
+          <div className="flex items-center gap-2 flex-wrap">
+            {view === "list" && <ColumnPicker prefs={cp} />}
+            <DataToolbar view={dataView} items={base} />
+            <div className="flex items-center rounded-full overflow-hidden h-8 bg-surface">
+              <button onClick={() => setView("grid")} aria-label="Grid view" className={`h-8 w-8 grid place-items-center ${view === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}><LayoutGrid className="h-3.5 w-3.5" /></button>
+              <button onClick={() => setView("list")} aria-label="List view" className={`h-8 w-8 grid place-items-center ${view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}><ListIcon className="h-3.5 w-3.5" /></button>
+            </div>
+          </div>
         </div>
 
-
-        {/* Toolbar */}
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                placeholder="Search clients…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-8 h-8 text-xs w-44"
-              />
-            </div>
-            <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
-              <SelectTrigger className="h-8 text-xs w-36 gap-1"><ArrowUpDown className="h-3 w-3" /><SelectValue placeholder="Sort" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name_asc">Name A-Z</SelectItem>
-                <SelectItem value="name_desc">Name Z-A</SelectItem>
-                {!salesOnly && <SelectItem value="revenue_desc">Revenue ↓</SelectItem>}
-                {!salesOnly && <SelectItem value="outstanding_desc">Outstanding ↓</SelectItem>}
-                {!salesOnly && <SelectItem value="margin_desc">Margin ↓</SelectItem>}
-              </SelectContent>
-            </Select>
-            <Select value={group} onValueChange={(v) => setGroup(v as typeof group)}>
-              <SelectTrigger className="h-8 text-xs w-32 gap-1"><ChevronDown className="h-3 w-3" /><SelectValue placeholder="Group" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No group</SelectItem>
-                <SelectItem value="company">By company</SelectItem>
-                <SelectItem value="status">By status</SelectItem>
-                <SelectItem value="acquisition">By acquisition</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="flex-1" />
-            <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-              <TabsList className="h-8">
-                <TabsTrigger value="clients" className="text-xs px-2.5"><UserCheck className="h-3 w-3 mr-1" />Clients <span className="ml-1 text-[10px] opacity-60 font-tnum">{wonClients.length}</span></TabsTrigger>
-                <TabsTrigger value="leads" className="text-xs px-2.5"><Sparkles className="h-3 w-3 mr-1" />Leads <span className="ml-1 text-[10px] opacity-60 font-tnum">{leadClients.length}</span></TabsTrigger>
-                <TabsTrigger value="all" className="text-xs px-2.5">All <span className="ml-1 text-[10px] opacity-60 font-tnum">{scopedClients.length}</span></TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <div className="flex items-center border rounded-md overflow-hidden h-8">
-              <button onClick={() => setView("grid")} className={`h-8 w-8 grid place-items-center ${view === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-elevated"}`} title="Grid view"><LayoutGrid className="h-3.5 w-3.5" /></button>
-              <button onClick={() => setView("list")} className={`h-8 w-8 grid place-items-center ${view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-elevated"}`} title="List view"><ListIcon className="h-3.5 w-3.5" /></button>
-            </div>
-            <Button size="sm" onClick={openCreate} className="btn-new h-8 gap-1 text-xs"><Plus className="h-3.5 w-3.5" /> {tab === "leads" ? "New lead" : "New client"}</Button>
-          </div>
-          <div className="text-[11px] text-muted-foreground font-tnum">{visibleCount} {tab === "leads" ? "leads" : "clients"}</div>
+        {/* KPI strip — money tiles are hidden for sales-only users */}
+        <div className={salesOnly ? "grid grid-cols-1 gap-3" : "grid grid-cols-2 md:grid-cols-4 gap-3"}>
+          <KpiTile icon={<UserCheck className="h-4 w-4" />} label="Won clients" value={String(wonClients.length)} sub={`${leadClients.length} lead${leadClients.length === 1 ? "" : "s"}`} />
+          {!salesOnly && <KpiTile icon={<Wallet className="h-4 w-4" />} label="Revenue booked" value={fmtCompact(totals.revenue, "MGA")} />}
+          {!salesOnly && <KpiTile icon={<AlertCircle className="h-4 w-4" />} label="Outstanding" value={fmtCompact(totals.outstanding, "MGA")} sub={`${totals.overdue} overdue`} />}
+          {!salesOnly && <KpiTile icon={<TrendingUp className="h-4 w-4" />} label="Top client" value={topClient?.cl.name ?? "—"} sub={topClient ? fmtCompact(topClient.r, "MGA") : undefined} />}
         </div>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-          <TabsContent value={tab}>
-            {visibleCount === 0 ? (
-              <EmptyState label={tab === "leads" ? "leads" : "clients"} onCreate={openCreate} />
-            ) : view === "list" ? (
-              <ClientListView clients={sorted.map((s) => s.cl)} companies={companies} invoices={invoices} projects={projects} transactions={transactions} onEdit={(cl) => { setEditing(cl); setOpen(true); }} onPromote={promote} group={group} grouped={grouped} selectedId={selectedId} onSelect={setSelectedId} />
-            ) : (
-              <ClientGridView clients={sorted.map((s) => s.cl)} companies={companies} invoices={invoices} projects={projects} transactions={transactions} onEdit={(cl) => { setEditing(cl); setOpen(true); }} onPromote={promote} group={group} grouped={grouped} selectedId={selectedId} onSelect={setSelectedId} />
-            )}
-          </TabsContent>
+          <TabsList className="h-8">
+            <TabsTrigger value="clients" className="text-xs px-2.5"><UserCheck className="h-3 w-3 mr-1" />Clients <span className="ml-1 text-[10px] opacity-60 font-tnum">{wonClients.length}</span></TabsTrigger>
+            <TabsTrigger value="leads" className="text-xs px-2.5"><Sparkles className="h-3 w-3 mr-1" />Leads <span className="ml-1 text-[10px] opacity-60 font-tnum">{leadClients.length}</span></TabsTrigger>
+            <TabsTrigger value="all" className="text-xs px-2.5">All <span className="ml-1 text-[10px] opacity-60 font-tnum">{scopedClients.length}</span></TabsTrigger>
+          </TabsList>
         </Tabs>
+
+        {visibleCount === 0 ? (
+          <EmptyState label={tab === "leads" ? "leads" : "clients"} onCreate={openCreate} />
+        ) : view === "grid" ? (
+          <ClientGridView
+            clients={rows}
+            companies={companies}
+            invoices={invoices}
+            projects={projects}
+            transactions={transactions}
+            onEdit={(cl) => { setEditing(cl); setOpen(true); }}
+            onPromote={promote}
+            group={groups.length > 1 ? "on" : "none"}
+            grouped={groups}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+          />
+        ) : (
+          <ListTableShell>
+            <ListTable>
+              <thead>
+                <ListHeadRow>
+                  <ListActionsTh />
+                  <ListTh width="26%">Client</ListTh>
+                  {cp.on("company") && <ListTh width="12%">Company</ListTh>}
+                  {cp.on("status") && <ListTh width="9%">Status</ListTh>}
+                  {cp.on("acquisition") && <ListTh width="12%">Acquisition</ListTh>}
+                  {cp.on("industry") && <ListTh width="12%">Industry</ListTh>}
+                  {cp.on("country") && <ListTh width="10%">Country</ListTh>}
+                  {!salesOnly && cp.on("revenue") && <ListTh width="12%" align="right">Revenue</ListTh>}
+                  {!salesOnly && cp.on("outstanding") && <ListTh width="12%" align="right">Outstanding</ListTh>}
+                  {!salesOnly && cp.on("margin") && <ListTh width="8%" align="right">Margin</ListTh>}
+                </ListHeadRow>
+              </thead>
+              <tbody>
+                {groups.map((g) => (
+                  <Fragment key={g.key}>
+                    {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={colCount} />}
+                    {g.items.map((cl) => {
+                      const co = companies.find((c) => c.id === cl.companyId);
+                      const cm = m(cl);
+                      const isLead = cl.status === "lead";
+                      return (
+                        <tr
+                          key={cl.id}
+                          data-focus-id={cl.id}
+                          data-selected={selectedId === cl.id ? "true" : undefined}
+                          onClick={() => setSelectedId(cl.id)}
+                          className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40 data-[selected=true]:bg-[var(--primary-container)]/40 cursor-pointer transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+                        >
+                          <ListRowActions colSpan={colCount}>
+                            {isLead && canEdit && (
+                              <RowAction icon={<UserCheck className="h-3.5 w-3.5" />} label="Promote to client" tone="success" onClick={() => promote(cl)} />
+                            )}
+                            <RowAction
+                              icon={canEdit ? <Pencil className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                              label={canEdit ? "Edit" : "View details"}
+                              onClick={() => { setEditing(cl); setOpen(true); }}
+                            />
+                            {canEdit && (
+                              <RowAction
+                                icon={<Trash2 className="h-3.5 w-3.5" />}
+                                label="Delete"
+                                tone="danger"
+                                onClick={() => { if (confirm(`Delete ${cl.name}?`)) { clientsStore.remove(cl.id); void deleteClientDb(cl.id); if (selectedId === cl.id) setSelectedId(null); } }}
+                              />
+                            )}
+                          </ListRowActions>
+                          <ListTd className="font-medium" title={cl.name}>
+                            <span className="inline-flex items-center gap-2 max-w-full">
+                              <span className="relative shrink-0">
+                                <Avatar src={cl.avatarUrl} name={cl.name} size={22} />
+                                {co && <span className="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full border border-background" style={{ background: co.color }} />}
+                              </span>
+                              <span className="truncate">{cl.displayName || cl.name}</span>
+                              {isLead && <span className="shrink-0 text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/30 font-semibold">Lead</span>}
+                              {cm.overdue && <span className="shrink-0 text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30 font-semibold">Overdue</span>}
+                            </span>
+                          </ListTd>
+                          {cp.on("company") && (
+                            <ListTd title={co?.name}>
+                              {co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}
+                            </ListTd>
+                          )}
+                          {cp.on("status") && <ListTd className="text-xs text-muted-foreground">{isLead ? "Lead" : "Client"}</ListTd>}
+                          {cp.on("acquisition") && <ListTd className="text-xs text-muted-foreground" title={cl.acquisition}>{cl.acquisition || <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                          {cp.on("industry") && <ListTd className="text-xs text-muted-foreground" title={cl.industry}>{cl.industry || <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                          {cp.on("country") && <ListTd className="text-xs text-muted-foreground" title={cl.country}>{cl.country || <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                          {!salesOnly && cp.on("revenue") && <ListTd align="right" className="font-tnum">{isLead ? <span className="text-muted-foreground/50">—</span> : fmtCompact(cm.revenue, "MGA")}</ListTd>}
+                          {!salesOnly && cp.on("outstanding") && <ListTd align="right" className={cn("font-tnum", cm.outstanding > 0 && "text-warning font-medium")}>{isLead ? <span className="text-muted-foreground/50">—</span> : fmtCompact(cm.outstanding, "MGA")}</ListTd>}
+                          {!salesOnly && cp.on("margin") && (
+                            <ListTd align="right" className="font-tnum">
+                              {isLead ? <span className="text-muted-foreground/50">—</span> : (
+                                <span className={cm.margin >= 30 ? "text-success" : cm.margin < 0 ? "text-destructive" : ""}>{cm.margin.toFixed(0)}%</span>
+                              )}
+                            </ListTd>
+                          )}
+                        </tr>
+                      );
+                    })}
+                  </Fragment>
+                ))}
+              </tbody>
+            </ListTable>
+          </ListTableShell>
+        )}
       </div>
       </MasterDetail>
       </div>
@@ -298,6 +362,7 @@ function ClientsPage() {
     </AppShell>
   );
 }
+
 
 /* ── Grid View ── */
 function ClientGridView({
