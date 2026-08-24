@@ -23,6 +23,7 @@ import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
 import { Route as AuthenticatedSopsRouteImport } from './routes/_authenticated/sops'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedServiceRequestsRouteImport } from './routes/_authenticated/service-requests'
 import { Route as AuthenticatedSalesTeamRouteImport } from './routes/_authenticated/sales-team'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedQuotationsRouteImport } from './routes/_authenticated/quotations'
@@ -35,6 +36,7 @@ import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedKioskRouteImport } from './routes/_authenticated/kiosk'
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
+import { Route as AuthenticatedIntegrationsRouteImport } from './routes/_authenticated/integrations'
 import { Route as AuthenticatedGrandLivreRouteImport } from './routes/_authenticated/grand-livre'
 import { Route as AuthenticatedFilesRouteImport } from './routes/_authenticated/files'
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
@@ -124,6 +126,12 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedServiceRequestsRoute =
+  AuthenticatedServiceRequestsRouteImport.update({
+    id: '/service-requests',
+    path: '/service-requests',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSalesTeamRoute = AuthenticatedSalesTeamRouteImport.update({
   id: '/sales-team',
   path: '/sales-team',
@@ -186,6 +194,12 @@ const AuthenticatedInvoicesRoute = AuthenticatedInvoicesRouteImport.update({
   path: '/invoices',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedIntegrationsRoute =
+  AuthenticatedIntegrationsRouteImport.update({
+    id: '/integrations',
+    path: '/integrations',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedGrandLivreRoute = AuthenticatedGrandLivreRouteImport.update({
   id: '/grand-livre',
   path: '/grand-livre',
@@ -293,6 +307,7 @@ export interface FileRoutesByFullPath {
   '/expenses': typeof AuthenticatedExpensesRoute
   '/files': typeof AuthenticatedFilesRoute
   '/grand-livre': typeof AuthenticatedGrandLivreRoute
+  '/integrations': typeof AuthenticatedIntegrationsRoute
   '/invoices': typeof AuthenticatedInvoicesRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/kiosk': typeof AuthenticatedKioskRoute
@@ -305,6 +320,7 @@ export interface FileRoutesByFullPath {
   '/quotations': typeof AuthenticatedQuotationsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/sales-team': typeof AuthenticatedSalesTeamRoute
+  '/service-requests': typeof AuthenticatedServiceRequestsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/sops': typeof AuthenticatedSopsRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
@@ -335,6 +351,7 @@ export interface FileRoutesByTo {
   '/expenses': typeof AuthenticatedExpensesRoute
   '/files': typeof AuthenticatedFilesRoute
   '/grand-livre': typeof AuthenticatedGrandLivreRoute
+  '/integrations': typeof AuthenticatedIntegrationsRoute
   '/invoices': typeof AuthenticatedInvoicesRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/kiosk': typeof AuthenticatedKioskRoute
@@ -347,6 +364,7 @@ export interface FileRoutesByTo {
   '/quotations': typeof AuthenticatedQuotationsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/sales-team': typeof AuthenticatedSalesTeamRoute
+  '/service-requests': typeof AuthenticatedServiceRequestsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/sops': typeof AuthenticatedSopsRoute
   '/suppliers': typeof AuthenticatedSuppliersRoute
@@ -381,6 +399,7 @@ export interface FileRoutesById {
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
   '/_authenticated/files': typeof AuthenticatedFilesRoute
   '/_authenticated/grand-livre': typeof AuthenticatedGrandLivreRoute
+  '/_authenticated/integrations': typeof AuthenticatedIntegrationsRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
   '/_authenticated/kiosk': typeof AuthenticatedKioskRoute
@@ -393,6 +412,7 @@ export interface FileRoutesById {
   '/_authenticated/quotations': typeof AuthenticatedQuotationsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/sales-team': typeof AuthenticatedSalesTeamRoute
+  '/_authenticated/service-requests': typeof AuthenticatedServiceRequestsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/sops': typeof AuthenticatedSopsRoute
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
@@ -428,6 +448,7 @@ export interface FileRouteTypes {
     | '/expenses'
     | '/files'
     | '/grand-livre'
+    | '/integrations'
     | '/invoices'
     | '/journal'
     | '/kiosk'
@@ -440,6 +461,7 @@ export interface FileRouteTypes {
     | '/quotations'
     | '/reports'
     | '/sales-team'
+    | '/service-requests'
     | '/settings'
     | '/sops'
     | '/suppliers'
@@ -470,6 +492,7 @@ export interface FileRouteTypes {
     | '/expenses'
     | '/files'
     | '/grand-livre'
+    | '/integrations'
     | '/invoices'
     | '/journal'
     | '/kiosk'
@@ -482,6 +505,7 @@ export interface FileRouteTypes {
     | '/quotations'
     | '/reports'
     | '/sales-team'
+    | '/service-requests'
     | '/settings'
     | '/sops'
     | '/suppliers'
@@ -515,6 +539,7 @@ export interface FileRouteTypes {
     | '/_authenticated/expenses'
     | '/_authenticated/files'
     | '/_authenticated/grand-livre'
+    | '/_authenticated/integrations'
     | '/_authenticated/invoices'
     | '/_authenticated/journal'
     | '/_authenticated/kiosk'
@@ -527,6 +552,7 @@ export interface FileRouteTypes {
     | '/_authenticated/quotations'
     | '/_authenticated/reports'
     | '/_authenticated/sales-team'
+    | '/_authenticated/service-requests'
     | '/_authenticated/settings'
     | '/_authenticated/sops'
     | '/_authenticated/suppliers'
@@ -653,6 +679,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/service-requests': {
+      id: '/_authenticated/service-requests'
+      path: '/service-requests'
+      fullPath: '/service-requests'
+      preLoaderRoute: typeof AuthenticatedServiceRequestsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/sales-team': {
       id: '/_authenticated/sales-team'
       path: '/sales-team'
@@ -735,6 +768,13 @@ declare module '@tanstack/react-router' {
       path: '/invoices'
       fullPath: '/invoices'
       preLoaderRoute: typeof AuthenticatedInvoicesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/integrations': {
+      id: '/_authenticated/integrations'
+      path: '/integrations'
+      fullPath: '/integrations'
+      preLoaderRoute: typeof AuthenticatedIntegrationsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/grand-livre': {
@@ -886,6 +926,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
   AuthenticatedFilesRoute: typeof AuthenticatedFilesRoute
   AuthenticatedGrandLivreRoute: typeof AuthenticatedGrandLivreRoute
+  AuthenticatedIntegrationsRoute: typeof AuthenticatedIntegrationsRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
   AuthenticatedKioskRoute: typeof AuthenticatedKioskRoute
@@ -898,6 +939,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedQuotationsRoute: typeof AuthenticatedQuotationsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSalesTeamRoute: typeof AuthenticatedSalesTeamRoute
+  AuthenticatedServiceRequestsRoute: typeof AuthenticatedServiceRequestsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSopsRoute: typeof AuthenticatedSopsRoute
   AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRoute
@@ -924,6 +966,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
   AuthenticatedFilesRoute: AuthenticatedFilesRoute,
   AuthenticatedGrandLivreRoute: AuthenticatedGrandLivreRoute,
+  AuthenticatedIntegrationsRoute: AuthenticatedIntegrationsRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
   AuthenticatedKioskRoute: AuthenticatedKioskRoute,
@@ -936,6 +979,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedQuotationsRoute: AuthenticatedQuotationsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSalesTeamRoute: AuthenticatedSalesTeamRoute,
+  AuthenticatedServiceRequestsRoute: AuthenticatedServiceRequestsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSopsRoute: AuthenticatedSopsRoute,
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRoute,
