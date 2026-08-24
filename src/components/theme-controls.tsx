@@ -1,7 +1,12 @@
-import { Monitor, Moon, Sun, Type } from "lucide-react";
+import { AlignJustify, Monitor, Moon, Rows3, Sun, Type } from "lucide-react";
 
-import { useTheme, type TextSize, type ThemeMode } from "@/lib/theme-context";
+import { useTheme, type Density, type TextSize, type ThemeMode } from "@/lib/theme-context";
 import { cn } from "@/lib/utils";
+
+const DENSITIES: { value: Density; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { value: "compact", label: "Compact", icon: AlignJustify },
+  { value: "comfortable", label: "Comfortable", icon: Rows3 },
+];
 
 const THEMES: { value: ThemeMode; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { value: "light", label: "Light", icon: Sun },
