@@ -2,9 +2,11 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 
 export type ThemeMode = "light" | "dark" | "system";
 export type TextSize = "default" | "large" | "larger";
+export type Density = "compact" | "comfortable";
 
 const THEME_KEY = "axel.theme";
 const SIZE_KEY = "axel.textSize";
+const DENSITY_KEY = "axel.density";
 
 const SIZE_SCALE: Record<TextSize, string> = {
   default: "100%",
