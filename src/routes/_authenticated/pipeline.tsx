@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -31,7 +31,14 @@ import { KanbanBoard, type KanbanColumnDef } from "@/components/kanban-board";
 import { OpportunityDocChips, type DocSection } from "@/components/opportunity-doc-chips";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/pipeline")({ component: PipelinePage });
+const pipelineSearch = (search: Record<string, unknown>): { opp?: string } => ({
+  opp: typeof search.opp === "string" && search.opp ? search.opp : undefined,
+});
+
+export const Route = createFileRoute("/_authenticated/pipeline")({
+  component: PipelinePage,
+  validateSearch: pipelineSearch,
+});
 
 /* ─── Stage visual system (minimal — just a colored dot) ───────────── */
 
@@ -100,6 +107,19 @@ function Body() {
   const [drill, setDrill] = useState<Opportunity | null>(null);
   const [drillSection, setDrillSection] = useState<DocSection | null>(null);
   const openDocs = (o: Opportunity, section: DocSection | null = null) => { setDrillSection(section); setDrill(o); };
+
+  // Deep link: ?opp=<id> opens the deal drawer, then clears itself so the
+  // drawer isn't forced open on every visit.
+  const oppParam = Route.useSearch().opp;
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!oppParam) return;
+    const o = list.find((x) => x.id === oppParam);
+    if (!o) return; // not loaded yet, or out of company scope
+    openDocs(o);
+    void navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, opp: undefined }), replace: true } as never);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [oppParam, list]);
 
   const active = list.filter((o) => o.stage !== "Closed" && o.stage !== "Lost");
   const total = active.reduce((s, o) => s + toMGA(o.value, o.currency), 0);

@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useTeamMembers, useSalesMembers, useClients, useOpportunities,
+  useTeamMembers, useSalesMembers, useClients, useOpportunities, useQuotes,
   salesMembersStore,
   type SalesMember, type SalesRole,
 } from "@/lib/mock-data";
@@ -32,6 +32,7 @@ function SalesTeamPage() {
   const sales = useSalesMembers();
   const clients = useClients();
   const opportunities = useOpportunities();
+  const quotes = useQuotes();
   useSalesRoleSync();
 
   const [open, setOpen] = useState(false);
@@ -66,6 +67,12 @@ function SalesTeamPage() {
               const closerOpps = s.role !== "acquisition"
                 ? opportunities.filter((o) => (o.closer ?? "").toLowerCase() === tm.name.toLowerCase()).length
                 : 0;
+              const memberKey = tm.userId || tm.name;
+              const quotesCount = quotes.filter(
+                (q) =>
+                  (q.assignedTo ?? []).some((id) => id === tm.userId || id === tm.name) ||
+                  (clients.find((c) => c.id === q.clientId)?.acquisition ?? "").toLowerCase() === tm.name.toLowerCase(),
+              ).length;
               return (
                 <div key={s.id} className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 hover:border-primary/40 transition group">
                   <div className="flex items-start justify-between mb-4">
@@ -104,6 +111,14 @@ function SalesTeamPage() {
                     <div className="flex gap-3 text-[11px] text-muted-foreground font-tnum">
                       {s.role !== "closer" && <div><span className="text-foreground font-semibold">{acqClients}</span> clients</div>}
                       {s.role !== "acquisition" && <div><span className="text-foreground font-semibold">{closerOpps}</span> deals</div>}
+                      <Link
+                        to="/quotations"
+                        search={{ sales: memberKey } as never}
+                        className="hover:text-primary transition"
+                        title={`Quotations for ${tm.name}`}
+                      >
+                        <span className="text-foreground font-semibold">{quotesCount}</span> quotes
+                      </Link>
                     </div>
                   </div>
                 </div>
