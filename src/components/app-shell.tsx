@@ -136,6 +136,7 @@ const sections: NavSection[] = [
     items: [
       { to: "/companies", label: "Companies", icon: Building2 },
       { to: "/users-access", label: "Users & Access", icon: Users, requireGroupAdmin: true },
+      { to: "/integrations", label: "Integrations Hub", icon: Plug },
       { to: "/settings", label: "Settings", icon: Settings },
       { to: "/about", label: "About", icon: Info },
     ],
