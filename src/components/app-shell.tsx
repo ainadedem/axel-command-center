@@ -112,6 +112,14 @@ const sections: NavSection[] = [
     ],
   },
   {
+    label: "Customer Support",
+    icon: LifeBuoy,
+    items: [
+      { to: "/tickets", label: "Tickets", icon: Ticket },
+      { to: "/service-requests", label: "Service requests", icon: ClipboardCheck },
+    ],
+  },
+  {
     label: "Operations",
     icon: ShieldCheck,
     items: [
