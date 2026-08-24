@@ -16,7 +16,8 @@ import { useKanbanTemplates, type KanbanTemplate } from "@/lib/kanban-templates"
 import { BoardHistoryPanel } from "@/components/board-history-panel";
 import { logBoardMove } from "@/lib/board-moves";
 import { CardAction, CardCommentAction } from "@/components/kanban-card-actions";
-import { ExternalLink, UserPlus } from "lucide-react";
+import { ExternalLink, UserPlus, CalendarClock, MessageSquare, Link2 } from "lucide-react";
+import { CardSignal, CardSignalRow, CardInitial } from "@/components/card-signals";
 
 import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
 import { useLineReorder, DragHandle, moveItem, ReorderLiveRegion } from "@/components/sortable-row";
