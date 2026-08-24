@@ -189,6 +189,31 @@ function useVisibleSections() {
     .filter((section) => section.items.length > 0);
 }
 
+/** Shows which Axel you are in, with a way back to the launcher. */
+function ModuleHeader({ onNavigate }: { onNavigate?: () => void }) {
+  const mod = useActiveModule();
+  const Icon = mod?.icon ?? LayoutDashboard;
+  return (
+    <div className="px-3 pb-2">
+      <Link
+        to="/"
+        onClick={onNavigate}
+        title="Switch module"
+        className="focus-ring group flex items-center gap-3 rounded-2xl px-3 py-2 text-sm hover:bg-[var(--surface-container)] transition-colors duration-150"
+      >
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[var(--primary-container)] text-[var(--on-primary-container)]">
+          <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-medium">{mod?.label ?? "Axel"}</span>
+          <span className="block text-[10px] uppercase tracking-[0.14em] text-foreground/55">Switch module</span>
+        </span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-foreground/45 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
+      </Link>
+    </div>
+  );
+}
+
 function SidebarInner({ onNavigate, onCollapse }: { onNavigate?: () => void; onCollapse?: () => void }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const visibleSections = useVisibleSections();
@@ -215,6 +240,7 @@ function SidebarInner({ onNavigate, onCollapse }: { onNavigate?: () => void; onC
       <div className="px-3 pb-3">
         <CompanySwitcher />
       </div>
+      <ModuleHeader onNavigate={onNavigate} />
       <nav aria-label="Main" className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
 
         {visibleSections.map((section) => (
