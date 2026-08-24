@@ -43,8 +43,13 @@ export function KanbanBoard<T>({
   /** Accessible name of a card, used in the live region. */
   labelOf: (item: T) => string;
   renderCard: (item: T) => ReactNode;
-  /** Quick actions rendered on hover / focus at the bottom of a card. */
+  /**
+   * Quick actions. Rendered inside an overflow (…) menu in the card corner so
+   * the card itself stays two lines tall.
+   */
   renderActions?: (item: T) => ReactNode;
+  /** Optional accessible label for the overflow button. */
+  actionsLabel?: string;
   /** Optional colour code (e.g. per client) shown as a left accent bar. */
   accentOf?: (item: T) => string | undefined;
   onMove: (item: T, columnKey: string) => void;
