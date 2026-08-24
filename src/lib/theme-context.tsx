@@ -114,6 +114,8 @@ export function useTheme(): ThemeContextValue {
       resolvedTheme: "light",
       textSize: "default",
       setTextSize: () => {},
+      density: "compact",
+      setDensity: () => {},
     };
   }
   return ctx;
