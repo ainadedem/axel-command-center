@@ -22,7 +22,7 @@ const SIZES: { value: TextSize; label: string; sample: string }[] = [
 
 /** Segmented appearance switcher — theme + Dynamic-Type-style text size. */
 export function ThemeControls({ compact = false }: { compact?: boolean }) {
-  const { theme, setTheme, textSize, setTextSize } = useTheme();
+  const { theme, setTheme, textSize, setTextSize, density, setDensity } = useTheme();
 
   return (
     <div className={cn("space-y-3", compact && "space-y-2")}>
