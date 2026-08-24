@@ -20,6 +20,9 @@ interface ThemeContextValue {
   resolvedTheme: "light" | "dark";
   textSize: TextSize;
   setTextSize: (s: TextSize) => void;
+  /** Global spacing scale. Compact is the default so more data fits. */
+  density: Density;
+  setDensity: (d: Density) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
