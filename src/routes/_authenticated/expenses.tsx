@@ -10,7 +10,7 @@ import {
 import { newId } from "@/lib/data-store";
 import { useAuth } from "@/lib/auth-context";
 import { inScope, useCompany } from "@/lib/company-context";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,11 @@ import { Pencil, Trash2, Receipt, FileText, BanknoteIcon, AlertTriangle } from "
 import { cn } from "@/lib/utils";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
+import { useDataView, type FieldDef } from "@/hooks/use-data-view";
+import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
+import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
+import { MasterDetail, DetailPanel, DetailSection, DetailField } from "@/components/master-detail";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 
 export const Route = createFileRoute("/_authenticated/expenses")({ component: ExpensesPage, validateSearch: focusSearch });
 
