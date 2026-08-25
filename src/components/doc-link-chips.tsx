@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, CheckCircle2, FileCheck2, ReceiptText, FileText } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FileCheck2, ReceiptText, FileText, HelpCircle, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fmtCompact, type Currency } from "@/lib/mock-data";
 import type { QuoteInvoiceLink } from "@/lib/quote-accept";
+import type { LinkSource } from "@/lib/doc-number-link";
 
 const base =
   "inline-flex max-w-full items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium leading-none transition-colors";
@@ -14,6 +15,9 @@ const tones = {
   link: "border-primary/30 bg-primary/5 text-primary hover:bg-primary/10",
 } as const;
 
+/** Inferred links are drawn with a dashed outline so they read as "not confirmed". */
+const inferred = "border-dashed";
+
 export function DocChip({
   icon: Icon,
   label,
@@ -22,6 +26,8 @@ export function DocChip({
   to,
   focusId,
   onClick,
+  source = "stored",
+  onConfirm,
 }: {
   icon: typeof FileText;
   label: string;
@@ -30,34 +36,69 @@ export function DocChip({
   to?: "/invoices" | "/quotations" | "/purchase-orders";
   focusId?: string;
   onClick?: () => void;
+  source?: LinkSource;
+  /** Shown next to an inferred chip: writes the real link. */
+  onConfirm?: () => void;
 }) {
+  const dashed = source === "number" ? inferred : "";
+  const fullTitle = source === "number" ? `${title ?? label} — matched by number, not confirmed` : (title ?? label);
   const inner = (
     <>
       <Icon className="h-3 w-3 shrink-0" aria-hidden="true" />
       <span className="truncate">{label}</span>
     </>
   );
-  if (to && focusId) {
-    return (
+
+  const chip =
+    to && focusId ? (
       <Link
         to={to}
         search={{ focus: focusId } as never}
-        title={title ?? label}
+        title={fullTitle}
         onClick={(e) => e.stopPropagation()}
-        className={cn(base, tones.link)}
+        className={cn(base, tones.link, dashed)}
       >
         {inner}
       </Link>
-    );
-  }
-  if (onClick) {
-    return (
-      <button type="button" title={title ?? label} onClick={(e) => { e.stopPropagation(); onClick(); }} className={cn(base, tones[tone])}>
+    ) : onClick ? (
+      <button type="button" title={fullTitle} onClick={(e) => { e.stopPropagation(); onClick(); }} className={cn(base, tones[tone], dashed)}>
         {inner}
       </button>
+    ) : (
+      <span title={fullTitle} className={cn(base, tones[tone], dashed)}>{inner}</span>
+    );
+
+  if (source === "number" && onConfirm) {
+    return (
+      <span className="inline-flex items-center gap-1">
+        {chip}
+        <button
+          type="button"
+          title="Confirm this link so it is stored on the document"
+          onClick={(e) => { e.stopPropagation(); onConfirm(); }}
+          className={cn(base, tones.muted, "hover:text-foreground press-scale")}
+        >
+          <Link2 className="h-3 w-3" aria-hidden="true" />
+          <span className="truncate">Confirm</span>
+        </button>
+      </span>
     );
   }
-  return <span title={title ?? label} className={cn(base, tones[tone])}>{inner}</span>;
+  return chip;
+}
+
+/** Several documents carry the same number — a person has to choose. */
+export function AmbiguousChip({ count, what, className }: { count: number; what: string; className?: string }) {
+  return (
+    <span className={className}>
+      <DocChip
+        icon={HelpCircle}
+        label={`${count} possible ${what}`}
+        tone="warn"
+        title={`This number matches ${count} ${what} — open the document and pick the right one`}
+      />
+    </span>
+  );
 }
 
 /** "Was this quotation invoiced?" — shown on quotation rows and cards. */
@@ -66,11 +107,13 @@ export function QuoteInvoiceChip({
   currency,
   status,
   className,
+  onConfirm,
 }: {
   link: QuoteInvoiceLink;
   currency: Currency;
   status: string;
   className?: string;
+  onConfirm?: () => void;
 }) {
   const first = link.invoices[0];
   if (link.state === "invoiced" && first) {
@@ -83,6 +126,8 @@ export function QuoteInvoiceChip({
           title={`Invoiced: ${link.invoices.map((i) => i.number).join(", ")}`}
           to="/invoices"
           focusId={first.id}
+          source={link.source}
+          onConfirm={onConfirm}
         />
       </span>
     );
@@ -97,6 +142,8 @@ export function QuoteInvoiceChip({
           title={`Partially invoiced: ${link.invoices.map((i) => i.number).join(", ")}`}
           to="/invoices"
           focusId={first.id}
+          source={link.source}
+          onConfirm={onConfirm}
         />
       </span>
     );
@@ -115,28 +162,59 @@ export function QuoteInvoiceChip({
 export function InvoiceSourceChips({
   quoteId,
   quoteNumber,
+  quoteSource = "stored",
+  onConfirmQuote,
+  quoteAmbiguous = 0,
   poId,
   poNumber,
+  poSource = "stored",
+  onConfirmPo,
+  poAmbiguous = 0,
   poWaived,
   className,
 }: {
   quoteId?: string;
   quoteNumber?: string;
+  quoteSource?: LinkSource;
+  onConfirmQuote?: () => void;
+  quoteAmbiguous?: number;
   poId?: string;
   poNumber?: string;
+  poSource?: LinkSource;
+  onConfirmPo?: () => void;
+  poAmbiguous?: number;
   poWaived?: boolean;
   className?: string;
 }) {
-  const hasAny = (quoteId && quoteNumber) || (poId && poNumber) || poWaived;
+  const hasAny =
+    (quoteId && quoteNumber) || (poId && poNumber) || poWaived || quoteAmbiguous > 0 || poAmbiguous > 0;
   if (!hasAny) return null;
   return (
     <span className={cn("inline-flex flex-wrap items-center gap-1", className)}>
       {quoteId && quoteNumber && (
-        <DocChip icon={FileText} label={quoteNumber} title={`Source quotation ${quoteNumber}`} to="/quotations" focusId={quoteId} />
+        <DocChip
+          icon={FileText}
+          label={quoteNumber}
+          title={`Source quotation ${quoteNumber}`}
+          to="/quotations"
+          focusId={quoteId}
+          source={quoteSource}
+          onConfirm={onConfirmQuote}
+        />
       )}
+      {!quoteId && quoteAmbiguous > 1 && <AmbiguousChip count={quoteAmbiguous} what="quotations" />}
       {poId && poNumber && (
-        <DocChip icon={FileCheck2} label={poNumber} title={`Purchase order ${poNumber}`} to="/purchase-orders" focusId={poId} />
+        <DocChip
+          icon={FileCheck2}
+          label={poNumber}
+          title={`Purchase order ${poNumber}`}
+          to="/purchase-orders"
+          focusId={poId}
+          source={poSource}
+          onConfirm={onConfirmPo}
+        />
       )}
+      {!poId && poAmbiguous > 1 && <AmbiguousChip count={poAmbiguous} what="purchase orders" />}
       {!poId && poWaived && <DocChip icon={AlertTriangle} label="PO waived" tone="warn" title="Invoice approved without a client PO" />}
     </span>
   );

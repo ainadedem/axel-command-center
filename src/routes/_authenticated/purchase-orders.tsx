@@ -1,3 +1,4 @@
+import { DocNumberPicker } from "@/components/doc-number-picker";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { PoNextStepHint } from "@/components/next-step-hint";
 import { focusSearch, useFocusRow } from "@/hooks/use-focus-row";
@@ -480,6 +481,17 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
     editing ? quoteId : undefined,
     quotes,
   );
+  // Searchable list: this client's quotes first, then the rest of the company's
+  // so an older number can still be found by typing it.
+  const pickableQuotes = useMemo(() => {
+    const rows = quotes.filter((q) => q.companyId === companyId && q.status !== "cancelled");
+    const ordered = [...rows].sort((a, b) => Number(b.clientId === clientId) - Number(a.clientId === clientId));
+    return ordered.map((q) => ({
+      id: q.id, number: q.number, status: q.status, issueDate: q.issueDate,
+      amount: q.amount, currency: q.currency,
+      clientName: clients.find((c) => c.id === q.clientId)?.name,
+    }));
+  }, [quotes, companyId, clientId, clients]);
 
 
   useReconciledSelection({
@@ -505,7 +517,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
   useReconciledSelection({
     open,
     currentValue: quoteId,
-    options: clientQuotes,
+    options: pickableQuotes,
     getId: (quote) => quote.id,
     allowEmpty: true,
     loading: quotes.length === 0,
@@ -597,13 +609,14 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
           </div>
           <div>
             <Label>From quote</Label>
-            <Select value={quoteId || "__none__"} onValueChange={(v) => setQuoteId(v === "__none__" ? "" : v)} disabled={!clientId}>
-              <SelectTrigger><SelectValue placeholder={clientId ? (clientQuotes.length ? "Pick a quote" : "No quote yet (recommended)") : "Select client first"} /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">— None —</SelectItem>
-                {clientQuotes.map((q) => <SelectItem key={q.id} value={q.id}>{q.number} · {fmtCompact(q.amount, q.currency)} · {q.status}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <DocNumberPicker
+              value={quoteId}
+              onChange={setQuoteId}
+              docs={pickableQuotes}
+              disabled={!clientId}
+              placeholder={clientId ? "Search quote by number, client or amount" : "Select client first"}
+              companyLabel={companies.find((c) => c.id === companyId)?.name}
+            />
             <p className="text-[11px] text-muted-foreground mt-1">A PO should descend from an accepted quote.</p>
           </div>
           <div>

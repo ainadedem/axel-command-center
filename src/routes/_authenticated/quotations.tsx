@@ -79,6 +79,9 @@ import { useQuoteStatusRequest } from "@/components/quote-status-request";
 import { useAcceptQuote } from "@/components/accept-quote-dialog";
 import { quoteInvoiceLink } from "@/lib/quote-accept";
 import { QuoteInvoiceChip, DocChip } from "@/components/doc-link-chips";
+import { LinkBackfillBanner } from "@/components/link-backfill-banner";
+import { backfillCandidates, resolvePoQuote, type BackfillCandidate } from "@/lib/doc-number-link";
+import { confirmLink } from "@/lib/doc-link-write";
 import { renderDocumentPdfBlob } from "@/lib/pdf-export";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
@@ -154,6 +157,26 @@ function Body() {
   const invoices = useInvoices();
   const purchaseOrders = usePurchaseOrders();
   const baseList = inScope(quotes, scope);
+  /** POs of a quotation: stored link first, then a document-number match. */
+  const linkedPOs = useCallback(
+    (q: Quote) => {
+      const direct = purchaseOrders.filter((p) => p.quoteId === q.id);
+      if (direct.length) return direct.map((po) => ({ po, source: "stored" as const }));
+      return purchaseOrders
+        .filter((p) => !p.quoteId && p.status !== "cancelled" && resolvePoQuote(p, quotes).doc?.id === q.id)
+        .map((po) => ({ po, source: "number" as const }));
+    },
+    [purchaseOrders, quotes],
+  );
+  const linkCandidates = useMemo(
+    () => backfillCandidates({ invoices, pos: purchaseOrders, quotes: baseList }),
+    [invoices, purchaseOrders, baseList],
+  );
+  const companyOfCandidate = useCallback(
+    (c: BackfillCandidate) =>
+      (c.kind === "po-quote" ? purchaseOrders.find((p) => p.id === c.targetId)?.companyId : invoices.find((i) => i.id === c.targetId)?.companyId) ?? "",
+    [invoices, purchaseOrders],
+  );
   const team = useTeamMembers();
   const navigate = useNavigate();
   const salesParam = Route.useSearch().sales;
@@ -375,15 +398,39 @@ function Body() {
             link={quoteInvoiceLink(selectedQuote, invoices)}
             currency={selectedQuote.currency}
             status={selectedQuote.status}
+            onConfirm={() => {
+              const inv = quoteInvoiceLink(selectedQuote, invoices).invoices[0];
+              if (inv)
+                confirmLink(
+                  { kind: "invoice-quote", targetId: inv.id, targetNumber: inv.number, linkId: selectedQuote.id, linkNumber: selectedQuote.number, label: "" },
+                  inv.companyId,
+                );
+            }}
           />
           {quoteInvoiceLink(selectedQuote, invoices).invoices.map((i) => (
             <DocChip key={i.id} icon={ReceiptText} label={`${i.number} · ${fmtCompact(i.totalAmount ?? i.amount, i.currency)}`} to="/invoices" focusId={i.id} />
           ))}
-          {purchaseOrders.filter((p) => p.quoteId === selectedQuote.id).map((p) => (
-            <DocChip key={p.id} icon={FileCheck2} label={p.number} to="/purchase-orders" focusId={p.id} />
+          {linkedPOs(selectedQuote).map(({ po, source }) => (
+            <DocChip
+              key={po.id}
+              icon={FileCheck2}
+              label={po.number}
+              to="/purchase-orders"
+              focusId={po.id}
+              source={source}
+              onConfirm={
+                source === "number"
+                  ? () =>
+                      confirmLink(
+                        { kind: "po-quote", targetId: po.id, targetNumber: po.number, linkId: selectedQuote.id, linkNumber: selectedQuote.number, label: "" },
+                        po.companyId,
+                      )
+                  : undefined
+              }
+            />
           ))}
           {quoteInvoiceLink(selectedQuote, invoices).invoices.length === 0
-            && purchaseOrders.filter((p) => p.quoteId === selectedQuote.id).length === 0
+            && linkedPOs(selectedQuote).length === 0
             && <span className="text-xs text-muted-foreground">No linked documents yet</span>}
         </div>
       </DetailSection>
@@ -490,8 +537,14 @@ function Body() {
           </>
         }
       >
+      {linkCandidates.length > 0 && (
+        <div className="mb-2">
+          <LinkBackfillBanner candidates={linkCandidates} companyIdOf={companyOfCandidate} />
+        </div>
+      )}
       {list.length === 0 ? (
         <EmptyState label="quotations" onCreate={openCreate} />
+
       ) : layout === "board" ? (
         <QuoteBoard
           list={list}
