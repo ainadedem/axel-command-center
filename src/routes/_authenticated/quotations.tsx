@@ -6,9 +6,9 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
   useQuotes, useCompanies, useClients, useProjects, quotesStore, purchaseOrdersStore,
-  fmt, fmtCompact, toMGA, FX, type Quote, type QuoteLine, type QuoteStatus, type QuoteMode, type Currency, type Client,
+  fmt, fmtCompact, toMGA, FX, type Quote, type QuoteLine, type QuoteStatus, type QuoteMode, type Currency, type Client, type Invoice,
   contactBelongsTo, MAX_QUOTE_ASSIGNEES, useOpportunities, useInvoices,
-  useQuoteFollowups, quoteFollowupsStore, useSalesPeople, useTeamMembers,
+  useQuoteFollowups, quoteFollowupsStore, useSalesPeople, useTeamMembers, usePurchaseOrders,
   opportunitiesStore,
 } from "@/lib/mock-data";
 import { KanbanTemplatePicker } from "@/components/kanban-template-picker";
@@ -16,7 +16,7 @@ import { useKanbanTemplates, type KanbanTemplate } from "@/lib/kanban-templates"
 import { BoardHistoryPanel } from "@/components/board-history-panel";
 import { logBoardMove } from "@/lib/board-moves";
 import { CardAction, CardCommentAction } from "@/components/kanban-card-actions";
-import { ExternalLink, UserPlus, CalendarClock, MessageSquare, Link2 } from "lucide-react";
+import { ExternalLink, UserPlus, CalendarClock, MessageSquare, Link2, ReceiptText } from "lucide-react";
 import { CardSignal, CardSignalRow, CardInitial } from "@/components/card-signals";
 
 import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
@@ -77,7 +77,7 @@ import { applyBulkStatus } from "@/lib/bulk-status";
 import { useQuoteStatusRequest } from "@/components/quote-status-request";
 import { useAcceptQuote } from "@/components/accept-quote-dialog";
 import { quoteInvoiceLink } from "@/lib/quote-accept";
-import { QuoteInvoiceChip } from "@/components/doc-link-chips";
+import { QuoteInvoiceChip, DocChip } from "@/components/doc-link-chips";
 import { renderDocumentPdfBlob } from "@/lib/pdf-export";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
@@ -150,6 +150,8 @@ function Body() {
   const clients = useClients();
   const projects = useProjects();
   const opportunities = useOpportunities();
+  const invoices = useInvoices();
+  const purchaseOrders = usePurchaseOrders();
   const baseList = inScope(quotes, scope);
   const team = useTeamMembers();
   const navigate = useNavigate();
@@ -365,6 +367,24 @@ function Body() {
         <DetailField label="Valid until" value={format(parseISO(selectedQuote.validUntil), "MMM d, yyyy")} mono />
         <DetailField label="Owner" value={ownerName(selectedQuote)} />
       </DetailSection>
+      <DetailSection title="Linked documents">
+        <div className="flex flex-wrap items-center gap-1.5 py-0.5">
+          <QuoteInvoiceChip
+            link={quoteInvoiceLink(selectedQuote, invoices)}
+            currency={selectedQuote.currency}
+            status={selectedQuote.status}
+          />
+          {quoteInvoiceLink(selectedQuote, invoices).invoices.map((i) => (
+            <DocChip key={i.id} icon={ReceiptText} label={`${i.number} · ${fmtCompact(i.totalAmount ?? i.amount, i.currency)}`} to="/invoices" focusId={i.id} />
+          ))}
+          {purchaseOrders.filter((p) => p.quoteId === selectedQuote.id).map((p) => (
+            <DocChip key={p.id} icon={FileCheck2} label={p.number} to="/purchase-orders" focusId={p.id} />
+          ))}
+          {quoteInvoiceLink(selectedQuote, invoices).invoices.length === 0
+            && purchaseOrders.filter((p) => p.quoteId === selectedQuote.id).length === 0
+            && <span className="text-xs text-muted-foreground">No linked documents yet</span>}
+        </div>
+      </DetailSection>
       <DetailSection title="Amounts">
         <DetailField label="Total" value={fmtCompact(selectedQuote.totalAmount ?? selectedQuote.amount, selectedQuote.currency)} mono />
         <DetailField
@@ -579,6 +599,7 @@ function Body() {
                               {format(parseISO(q.sentAt), "MMM d")}
                             </span>
                           )}
+                          <QuoteInvoiceChip link={quoteInvoiceLink(q, invoices)} currency={q.currency} status={q.status} />
                           <QuoteSalesRoles
                             acquisition={cl?.acquisition}
                             closer={opportunities.find((o) => o.id === q.opportunityId)?.closer}
@@ -1509,6 +1530,7 @@ function QuoteBoard({
                   {closer && <CardInitial name={closer} label={`Closer: ${closer}`} />}
                   {!!notes && <CardSignal icon={MessageSquare} label={`${notes} follow-up note${notes > 1 ? "s" : ""}`} value={notes} />}
                   {q.opportunityId && <CardSignal icon={Link2} label="Linked to a pipeline deal" />}
+                  <QuoteInvoiceChip link={quoteInvoiceLink(q, invoices)} currency={q.currency} status={q.status} />
                 </CardSignalRow>
               </div>
             </div>
