@@ -10,7 +10,10 @@ import { useAuth } from "@/lib/auth-context";
 import { applyQuoteStatus } from "@/lib/quote-status";
 import { withoutHistory } from "@/lib/history";
 import { nextNumber, primeNumbering } from "@/lib/numbering";
-import { acceptTermsDays, createFromAcceptedQuote, quoteInvoiceLink } from "@/lib/quote-accept";
+import {
+  acceptTermsDays, createFromAcceptedQuote, quoteInvoiceLink,
+  recordAcceptance, recordAcceptanceRedone, recordAcceptanceUndone,
+} from "@/lib/quote-accept";
 import {
   invoicesStore, purchaseOrdersStore, useClients, useInvoices, usePurchaseOrders,
   fmtCompact, type Quote,
@@ -60,12 +63,15 @@ export function useAcceptQuote() {
     if (!quote) return;
     setBusy(true);
     try {
-      const { poId, invoiceId, created } = createFromAcceptedQuote({
+      const result = createFromAcceptedQuote({
         quote, client, makePo, makeInvoice,
         poNumber, invoiceNumber: invNumber,
         existingPoId: existingPo?.id, userId: user?.id,
       });
+      const { poId, invoiceId, created } = result;
       const status = applyQuoteStatus(quote, "accepted", { userId: user?.id, silent: true });
+      // Audit trail + notifications for the whole automation, in one place.
+      recordAcceptance({ quote, client, result });
 
       toast.success(
         created.length ? `${quote.number} accepted \u00b7 ${created.join(" \u00b7 ")} created as drafts` : `${quote.number} accepted`,
@@ -79,6 +85,24 @@ export function useAcceptQuote() {
                 if (poId && !existingPo) purchaseOrdersStore.remove(poId);
               });
               status.revert();
+              recordAcceptanceUndone({ quote, result });
+              toast("Acceptance undone", {
+                description: created.length
+                  ? `${created.join(" \u00b7 ")} removed. The team was told.`
+                  : "The quotation is back to its previous status.",
+                action: {
+                  label: "Redo",
+                  onClick: () => {
+                    const redone = createFromAcceptedQuote({
+                      quote, client, makePo, makeInvoice,
+                      poNumber, invoiceNumber: invNumber,
+                      existingPoId: existingPo?.id, userId: user?.id,
+                    });
+                    applyQuoteStatus(quote, "accepted", { userId: user?.id, silent: true });
+                    recordAcceptanceRedone({ quote, result: redone });
+                  },
+                },
+              });
             },
           },
         },
