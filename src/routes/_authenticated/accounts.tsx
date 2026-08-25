@@ -190,7 +190,11 @@ function Body() {
                       const Icon = iconFor(a.type);
                       return (
                         <Fragment key={a.id}>
-                        <tr className="hover:bg-surface-elevated/50">
+                        <tr
+                          data-selected={selectedId === a.id ? "true" : undefined}
+                          onClick={() => setSelectedId(a.id)}
+                          className="hover:bg-surface-elevated/50 data-[selected=true]:bg-[var(--primary-container)]/40 cursor-pointer transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+                        >
 <ListRowActions colSpan={cp.count}>
                           <RowAction icon={<History className="h-3.5 w-3.5" />} label="History" title="Reconciliation history — past statement checks, with CSV/PDF export" onClick={() => setHistoryFor(a)} />
                           <RowAction icon={<Upload className="h-3.5 w-3.5" />} label="Reconcile" title="Reconcile bank statement — upload a CSV or Excel statement" onClick={() => setImporting(a)} />
