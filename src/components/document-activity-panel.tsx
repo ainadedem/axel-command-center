@@ -4,7 +4,7 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import {
-  CircleDollarSign, FilePlus2, FileUp, Pencil, Send, Tag, Trash2, History, Loader2, Stamp, PenLine, ShieldCheck, ShieldQuestion, ShieldAlert, MessageSquare,
+  CircleDollarSign, FilePlus2, FileUp, Pencil, Send, Tag, Trash2, History, Loader2, Stamp, PenLine, ShieldCheck, ShieldQuestion, ShieldAlert, MessageSquare, CheckCircle2, Undo2, Redo2,
 } from "lucide-react";
 import { useDocumentActivity, type ActivityAction, type DocType } from "@/lib/document-activity";
 import { useOwnerNames } from "@/hooks/use-owner-names";
