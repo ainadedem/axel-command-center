@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { InvoiceNextStepHint } from "@/components/next-step-hint";
 import { docDeepLink, focusSearch, useFocusRow, useJumpToRecord, type FocusSearch } from "@/hooks/use-focus-row";
 import { BankAccountSelect } from "@/components/bank-account-select";
 import { defaultBankAccount } from "@/lib/payment-details";
@@ -715,6 +716,7 @@ function Body() {
         </>
       }
     >
+      <InvoiceNextStepHint invoice={selected} />
       <div className="flex flex-wrap items-center gap-2">
         <StatusMenu
           status={selected.status}
