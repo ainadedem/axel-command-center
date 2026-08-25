@@ -6,10 +6,10 @@ import {
 import type { Invoice, PurchaseOrder, Quote } from "@/lib/mock-data";
 
 const quote = (o: Partial<Quote>) =>
-  ({ id: "q1", companyId: "log", number: "DEV/LOG/08-26/534", status: "accepted", currency: "MGA", amount: 100 } as Quote & typeof o);
+  ({ id: "q1", companyId: "log", number: "DEV/LOG/08-26/534", status: "accepted", currency: "MGA", amount: 100, ...o } as Quote);
 
 const invoice = (o: Partial<Invoice>) =>
-  ({ id: "i1", companyId: "log", number: "FAC/LOG/08-26/12", status: "sent", currency: "MGA", amount: 100 } as Invoice & typeof o);
+  ({ id: "i1", companyId: "log", number: "FAC/LOG/08-26/12", status: "sent", currency: "MGA", amount: 100, ...o } as Invoice);
 
 describe("normalizeDocNumber", () => {
   it("strips punctuation and case", () => {
@@ -36,7 +36,7 @@ describe("findByNumber", () => {
     expect(findByNumber("Devis DEV/LOG/08-26/534", quotes, "axm")).toHaveLength(0);
   });
   it("skips cancelled documents", () => {
-    const cancelled = [quote({ status: "cancelled" }) as Quote];
+    const cancelled = [quote({ status: "cancelled" })];
     expect(findByNumber("Devis DEV/LOG/08-26/534", cancelled, "log")).toHaveLength(0);
   });
   it("finds the referenced quote", () => {
@@ -45,20 +45,20 @@ describe("findByNumber", () => {
 });
 
 describe("resolveInvoiceQuote", () => {
-  const q = quote({}) as Quote;
+  const q = quote({});
   it("prefers the stored link", () => {
-    const r = resolveInvoiceQuote(invoice({ quoteId: "q1" }) as Invoice, [q]);
+    const r = resolveInvoiceQuote(invoice({ quoteId: "q1" }, [q]);
     expect(r.source).toBe("stored");
     expect(r.doc?.id).toBe("q1");
   });
   it("falls back to the number in the object line", () => {
-    const r = resolveInvoiceQuote(invoice({ subject: "Suite au devis DEV/LOG/08-26/534" }) as Invoice, [q]);
+    const r = resolveInvoiceQuote(invoice({ subject: "Suite au devis DEV/LOG/08-26/534" }, [q]);
     expect(r.source).toBe("number");
     expect(r.doc?.id).toBe("q1");
   });
   it("refuses ambiguous matches", () => {
     const dupe = quote({ id: "q9" }) as Quote;
-    const r = resolveInvoiceQuote(invoice({ subject: "Devis DEV/LOG/08-26/534" }) as Invoice, [q, dupe]);
+    const r = resolveInvoiceQuote(invoice({ subject: "Devis DEV/LOG/08-26/534" }, [q, dupe]);
     expect(r.doc).toBeUndefined();
     expect(r.ambiguous).toBe(2);
   });
@@ -66,15 +66,15 @@ describe("resolveInvoiceQuote", () => {
 
 describe("invoicesByNumberForQuote", () => {
   it("finds invoices that mention the quote", () => {
-    const q = quote({}) as Quote;
-    const rows = invoicesByNumberForQuote(q, [invoice({ subject: "Devis DEV/LOG/08-26/534" }) as Invoice]);
+    const q = quote({});
+    const rows = invoicesByNumberForQuote(q, [invoice({ subject: "Devis DEV/LOG/08-26/534" })]);
     expect(rows.map((i) => i.id)).toEqual(["i1"]);
   });
 });
 
 describe("backfillCandidates", () => {
   it("lists only unstored, unambiguous matches", () => {
-    const q = quote({}) as Quote;
+    const q = quote({});
     const inv = invoice({ subject: "Devis DEV/LOG/08-26/534" }) as Invoice;
     const po = { id: "p1", companyId: "log", number: "PO/LOG/1", status: "issued", subject: "DEV/LOG/08-26/534" } as PurchaseOrder;
     const out = backfillCandidates({ invoices: [inv], pos: [po], quotes: [q] });
