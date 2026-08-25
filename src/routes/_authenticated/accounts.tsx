@@ -29,6 +29,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
+import { MasterDetail, DetailPanel, DetailSection, DetailField } from "@/components/master-detail";
 
 const ACCOUNT_COLUMNS: ColumnDef[] = [
   { key: "account", label: "Account", priority: "always" },
@@ -96,9 +97,46 @@ function Body() {
   const list = groups.flatMap((g) => g.items);
   const cp = useColumnPrefs("accounts", ACCOUNT_COLUMNS);
 
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = selectedId ? list.find((a) => a.id === selectedId) ?? null : null;
+  const selectedCo = selected ? companies.find((c) => c.id === selected.companyId) : null;
+  const detail = selected ? (
+    <DetailPanel
+      eyebrow={selected.type === "bank" ? "Bank account" : selected.type === "mobile" ? "Mobile money" : "Cash account"}
+      title={selected.name}
+      subtitle={selectedCo?.name}
+      onClose={() => setSelectedId(null)}
+      actions={
+        <>
+          <Button size="sm" className="gap-1.5" onClick={() => openEdit(selected)}><Pencil className="h-4 w-4" /> Edit</Button>
+          <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setImporting(selected)}><Upload className="h-4 w-4" /> Reconcile</Button>
+          <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setHistoryFor(selected)}><History className="h-4 w-4" /> History</Button>
+        </>
+      }
+    >
+      <DetailSection>
+        <DetailField label="Balance" value={fmtCompact(balanceOf(selected), selected.currency)} mono />
+        <DetailField label="MGA equivalent" value={fmtCompact(toMGA(balanceOf(selected), selected.currency), "MGA")} mono />
+        <DetailField label="Movements" value={String(balances.get(selected.id)?.txCount ?? 0)} mono />
+        <DetailField label="Currency" value={selected.currency} />
+      </DetailSection>
+      <DetailSection title="Opening">
+        <DetailField label="Opening balance" value={fmtCompact(openingOf(selected), selected.currency)} mono />
+        <DetailField label="As of" value={selected.openingBalanceDate ? format(parseISO(selected.openingBalanceDate), "d MMM yyyy") : undefined} mono />
+      </DetailSection>
+      <DetailSection title="Reconciliation">
+        <DetailField label="Last statement" value={selected.statementUploadedAt ? format(parseISO(selected.statementUploadedAt), "d MMM yyyy") : "Never reconciled"} mono />
+        <DetailField label="File" value={selected.statementName} />
+      </DetailSection>
+    </DetailPanel>
+  ) : null;
+
   return (
-    <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
+    <div className="p-5 sm:p-10 lg:p-12">
+      <MasterDetail detail={detail}>
+      <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
+
         <CrudToolbar createLabel="New account" count={list.length} label="accounts" onCreate={openCreate} />
         <div className="flex items-center gap-2 flex-wrap">
           <ColumnPicker prefs={cp} />
@@ -153,7 +191,11 @@ function Body() {
                       const Icon = iconFor(a.type);
                       return (
                         <Fragment key={a.id}>
-                        <tr className="hover:bg-surface-elevated/50">
+                        <tr
+                          data-selected={selectedId === a.id ? "true" : undefined}
+                          onClick={() => setSelectedId(a.id)}
+                          className="hover:bg-surface-elevated/50 data-[selected=true]:bg-[var(--primary-container)]/40 cursor-pointer transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+                        >
 <ListRowActions colSpan={cp.count}>
                           <RowAction icon={<History className="h-3.5 w-3.5" />} label="History" title="Reconciliation history — past statement checks, with CSV/PDF export" onClick={() => setHistoryFor(a)} />
                           <RowAction icon={<Upload className="h-3.5 w-3.5" />} label="Reconcile" title="Reconcile bank statement — upload a CSV or Excel statement" onClick={() => setImporting(a)} />
@@ -215,6 +257,8 @@ function Body() {
       <AccountDialog open={open} onOpenChange={setOpen} editing={editing} />
       <StatementImportDialog open={!!importing} onOpenChange={(v) => { if (!v) setImporting(null); }} account={importing} />
       <ReconciliationHistoryDialog open={!!historyFor} onOpenChange={(v) => { if (!v) setHistoryFor(null); }} account={historyFor} />
+      </div>
+      </MasterDetail>
     </div>
   );
 }

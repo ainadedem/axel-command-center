@@ -32,6 +32,7 @@ import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightS
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
+import { MasterDetail, DetailPanel, DetailSection, DetailField } from "@/components/master-detail";
 import { useRowWindow, SpacerRow, useScrollRef } from "@/components/virtual-rows";
 import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } from "@/components/bulk-select";
 import { LiveAmount, RowSaveState } from "@/components/save-state";
@@ -83,6 +84,7 @@ function Body() {
   const [linking, setLinking] = useState<Transaction | null>(null);
   const [unlinking, setUnlinking] = useState<Transaction | null>(null);
   const [bulkUnlink, setBulkUnlink] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const unlinkPerm = useUnlinkPermission();
 
   /** Invoice + quotation a receipt points at, with the shared payment verdict. */
@@ -157,8 +159,44 @@ function Body() {
 
   const openCreate = () => { setEditing(null); setOpen(true); };
 
+  const selected = selectedId ? list.find((t) => t.id === selectedId) ?? null : null;
+  const selLink = selected ? linkOf(selected) : null;
+  const detail = selected ? (
+    <DetailPanel
+      eyebrow={selected.type}
+      title={selected.description}
+      subtitle={format(parseISO(selected.date), "d MMMM yyyy")}
+      onClose={() => setSelectedId(null)}
+      actions={
+        <Button size="sm" className="gap-1.5" onClick={() => { setEditing(selected); setOpen(true); }}>
+          <Pencil className="h-4 w-4" /> Edit
+        </Button>
+      }
+    >
+      <DetailSection>
+        <DetailField label="Amount" value={`${selected.type === "income" ? "+" : selected.type === "expense" ? "−" : ""}${fmtCompact(selected.amount, selected.currency)}`} mono />
+        <DetailField label="Type" value={selected.type} />
+        <DetailField label="Category" value={selected.category} />
+        <DetailField label="Company" value={companies.find((c) => c.id === selected.companyId)?.name} />
+      </DetailSection>
+      <DetailSection title="Allocation">
+        <DetailField label="Account" value={accounts.find((a) => a.id === selected.accountId)?.name} />
+        <DetailField label="Client" value={selected.clientId ? clients.find((c) => c.id === selected.clientId)?.name : undefined} />
+        <DetailField label="Supplier" value={selected.supplierId ? suppliers.find((s) => s.id === selected.supplierId)?.name : undefined} />
+        <DetailField label="Project" value={selected.projectId ? projects.find((p) => p.id === selected.projectId)?.name : undefined} />
+      </DetailSection>
+      <DetailSection title="Payment link">
+        <DetailField label="Invoice" value={selLink?.invoice.number ?? "Not linked"} mono />
+        <DetailField label="Quotation" value={selLink?.quote?.number} mono />
+      </DetailSection>
+    </DetailPanel>
+  ) : null;
+
   return (
-    <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
+    <div className="p-5 sm:p-10 lg:p-12">
+      <MasterDetail detail={detail}>
+      <div className="space-y-6">
+
       {q && (
         <div className="text-xs text-muted-foreground">
           Filtered by <span className="text-foreground font-medium">"{q}"</span> · {list.length} match{list.length === 1 ? "" : "es"}
@@ -350,7 +388,12 @@ function Body() {
                     const acc = accounts.find((a) => a.id === t.accountId);
                     return (
                       <Fragment key={t.id}>
-                      <tr className="hover:bg-surface-elevated/40" data-row-id={t.id}>
+                      <tr
+                        data-row-id={t.id}
+                        data-selected={selectedId === t.id ? "true" : undefined}
+                        onClick={() => setSelectedId(t.id)}
+                        className="hover:bg-surface-elevated/40 data-[selected=true]:bg-[var(--primary-container)]/40 cursor-pointer transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+                      >
 <ListRowActions colSpan={cp.count + 1}>
                         <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(t); setOpen(true); }} />
                         {t.type === "income" && !t.invoiceId && (
@@ -508,6 +551,8 @@ function Body() {
           transaction={unlinking as unknown as ProofTransaction}
         />
       )}
+      </div>
+      </MasterDetail>
     </div>
   );
 }
