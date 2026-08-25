@@ -10,6 +10,9 @@ import { newId } from "@/lib/data-store";
 import { effectiveTermsDays } from "@/lib/payment-proof";
 import { invoicePayable } from "@/lib/invoice-money";
 import { quotePayable } from "@/lib/pipeline-link";
+import { invoicesStore, purchaseOrdersStore } from "@/lib/mock-data";
+import { nextNumber } from "@/lib/numbering";
+import { logActivity } from "@/lib/document-activity";
 import type { Client, Invoice, PurchaseOrder, Quote, QuoteLine } from "@/lib/mock-data";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -121,3 +124,56 @@ export function quoteInvoiceLink(q: Quote, invoices: Invoice[]): QuoteInvoiceLin
 /** Accepted quotations with nothing invoiced against them yet. */
 export const acceptedNotInvoiced = (quotes: Quote[], invoices: Invoice[]) =>
   quotes.filter((q) => q.status === "accepted" && quoteInvoiceLink(q, invoices).state === "not-invoiced");
+
+// ---------------------------------------------------------------------------
+// Store writes
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates the requested documents from an accepted quotation and links them
+ * back to it. Returns the ids so callers can offer an Undo.
+ */
+export function createFromAcceptedQuote(o: {
+  quote: Quote;
+  client?: Client;
+  makePo: boolean;
+  makeInvoice: boolean;
+  poNumber?: string;
+  invoiceNumber?: string;
+  existingPoId?: string;
+  userId?: string;
+}): { poId?: string; invoiceId?: string; created: string[] } {
+  const created: string[] = [];
+  let poId = o.existingPoId;
+  let invoiceId: string | undefined;
+
+  if (o.makePo) {
+    const po = buildPoFromQuote({
+      quote: o.quote, client: o.client, userId: o.userId,
+      poNumber: o.poNumber || nextNumber("po", o.quote.companyId),
+    });
+    purchaseOrdersStore.add(po);
+    poId = po.id;
+    created.push(`PO ${po.number}`);
+    void logActivity({
+      docType: "po", docId: po.id, docNumber: po.number, companyId: po.companyId,
+      action: "created", summary: `Created from accepted quotation ${o.quote.number}`,
+    });
+  }
+
+  if (o.makeInvoice) {
+    const inv = buildInvoiceFromQuote({
+      quote: o.quote, client: o.client, poId, userId: o.userId,
+      invoiceNumber: o.invoiceNumber || nextNumber("invoice", o.quote.companyId),
+    });
+    invoicesStore.add(inv);
+    invoiceId = inv.id;
+    created.push(`Invoice ${inv.number}`);
+    void logActivity({
+      docType: "invoice", docId: inv.id, docNumber: inv.number, companyId: inv.companyId,
+      action: "created", summary: `Created from accepted quotation ${o.quote.number}`,
+    });
+  }
+
+  return { poId: o.makePo ? poId : undefined, invoiceId, created };
+}
