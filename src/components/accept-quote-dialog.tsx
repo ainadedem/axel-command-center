@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { FileCheck2, ReceiptText } from "lucide-react";
 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -138,7 +138,7 @@ export function useAcceptQuote() {
                 <span className="block text-xs text-muted-foreground">
                   {alreadyInvoiced
                     ? `Already invoiced (${link?.invoices.map((i) => i.number).join(", ")}).`
-                    : `Draft invoice due in ${terms} days${quote.issueDate ? ` · issued ${format(parseISO(new Date().toISOString().slice(0, 10)), "MMM d, yyyy")}` : ""}.`}
+                    : `Draft invoice issued ${format(new Date(), "MMM d, yyyy")}, due in ${terms} days.`}
                 </span>
               </span>
             </label>
