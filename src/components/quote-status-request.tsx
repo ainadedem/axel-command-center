@@ -11,16 +11,26 @@ import type { Quote, QuoteStatus } from "@/lib/mock-data";
  * Both the list and the board use this so a status move never opens the full
  * editor, while cancelling still collects (and stores) a reason.
  */
-export function useQuoteStatusRequest(canWrite: (q: Quote) => boolean) {
+export function useQuoteStatusRequest(
+  canWrite: (q: Quote) => boolean,
+  opts: { onAccept?: (q: Quote) => void } = {},
+) {
   const { user } = useAuth();
   const [cancelling, setCancelling] = useState<Quote | null>(null);
 
   const request = (quote: Quote, next: QuoteStatus, after?: (q: Quote, next: QuoteStatus) => void) => {
     if (!canWrite(quote)) { toast.error(`You do not have permission to change ${quote.number}.`); return; }
     if (quoteNeedsReason(next)) { setCancelling(quote); return; }
+    // Accepting a quotation also creates the PO and the invoice — confirm first.
+    if (next === "accepted" && opts.onAccept) {
+      opts.onAccept(quote);
+      after?.(quote, next);
+      return;
+    }
     applyQuoteStatus(quote, next, { userId: user?.id });
     after?.(quote, next);
   };
+
 
   const dialog = (
     <CancelReasonDialog
