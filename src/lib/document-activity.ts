@@ -22,7 +22,13 @@ export type ActivityAction =
   | "payment_verified"
   | "payment_unlinked"
   | "payment_reviewed"
-  | "comment";
+  | "comment"
+  /** Quotation accepted — records which documents the automation spawned. */
+  | "accepted"
+  /** The acceptance was rolled back within the undo window. */
+  | "acceptance_undone"
+  /** The acceptance was re-applied after an undo. */
+  | "acceptance_redone";
 
 
 export interface ActivityEntry {
