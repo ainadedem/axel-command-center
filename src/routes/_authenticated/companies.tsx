@@ -671,12 +671,3 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
     </Dialog>
   );
 }
-
-function Row({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-muted-foreground text-xs uppercase tracking-wider">{label}</span>
-      <span className={`font-tnum font-medium ${accent ? "text-primary font-display" : ""}`}>{value}</span>
-    </div>
-  );
-}
