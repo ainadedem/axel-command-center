@@ -157,8 +157,44 @@ function Body() {
 
   const openCreate = () => { setEditing(null); setOpen(true); };
 
+  const selected = selectedId ? list.find((t) => t.id === selectedId) ?? null : null;
+  const selLink = selected ? linkOf(selected) : null;
+  const detail = selected ? (
+    <DetailPanel
+      eyebrow={selected.type}
+      title={selected.description}
+      subtitle={format(parseISO(selected.date), "d MMMM yyyy")}
+      onClose={() => setSelectedId(null)}
+      actions={
+        <Button size="sm" className="gap-1.5" onClick={() => { setEditing(selected); setOpen(true); }}>
+          <Pencil className="h-4 w-4" /> Edit
+        </Button>
+      }
+    >
+      <DetailSection>
+        <DetailField label="Amount" value={`${selected.type === "income" ? "+" : selected.type === "expense" ? "−" : ""}${fmtCompact(selected.amount, selected.currency)}`} mono />
+        <DetailField label="Type" value={selected.type} />
+        <DetailField label="Category" value={selected.category} />
+        <DetailField label="Company" value={companies.find((c) => c.id === selected.companyId)?.name} />
+      </DetailSection>
+      <DetailSection title="Allocation">
+        <DetailField label="Account" value={accounts.find((a) => a.id === selected.accountId)?.name} />
+        <DetailField label="Client" value={selected.clientId ? clients.find((c) => c.id === selected.clientId)?.name : undefined} />
+        <DetailField label="Supplier" value={selected.supplierId ? suppliers.find((s) => s.id === selected.supplierId)?.name : undefined} />
+        <DetailField label="Project" value={selected.projectId ? projects.find((p) => p.id === selected.projectId)?.name : undefined} />
+      </DetailSection>
+      <DetailSection title="Payment link">
+        <DetailField label="Invoice" value={selLink?.invoice.number ?? "Not linked"} mono />
+        <DetailField label="Quotation" value={selLink?.quote?.number} mono />
+      </DetailSection>
+    </DetailPanel>
+  ) : null;
+
   return (
-    <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
+    <div className="p-5 sm:p-10 lg:p-12">
+      <MasterDetail detail={detail}>
+      <div className="space-y-6">
+
       {q && (
         <div className="text-xs text-muted-foreground">
           Filtered by <span className="text-foreground font-medium">"{q}"</span> · {list.length} match{list.length === 1 ? "" : "es"}
