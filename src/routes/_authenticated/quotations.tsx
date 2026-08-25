@@ -537,8 +537,14 @@ function Body() {
           </>
         }
       >
+      {linkCandidates.length > 0 && (
+        <div className="mb-2">
+          <LinkBackfillBanner candidates={linkCandidates} companyIdOf={companyOfCandidate} />
+        </div>
+      )}
       {list.length === 0 ? (
         <EmptyState label="quotations" onCreate={openCreate} />
+
       ) : layout === "board" ? (
         <QuoteBoard
           list={list}
