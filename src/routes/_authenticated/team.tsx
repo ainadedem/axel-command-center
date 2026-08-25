@@ -238,8 +238,10 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
   const [department, setDepartment] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [companyId, setCompanyId] = useState<string>("all");
+  const [userId, setUserId] = useState<string>("none");
   const [showErrors, setShowErrors] = useState(false);
   const { scope, accessibleCompanies } = useCompany();
+  const { users: appUsers } = useAppUsers();
 
   useEffect(() => {
     if (!open) return;
@@ -254,6 +256,7 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
       setDepartment(editing.department ?? "");
       setAvatarUrl(editing.avatarUrl);
       setCompanyId(editing.companyId === undefined ? "all" : editing.companyId === null ? "none" : editing.companyId);
+      setUserId(editing.userId ?? "none");
 
     } else {
       setFirstName("");
@@ -264,6 +267,7 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
       setDepartment("");
       setAvatarUrl(undefined);
       setCompanyId(scope.id === "company" ? scope.companyId : "all");
+      setUserId("none");
     }
   }, [open, editing, scope]);
 
@@ -284,6 +288,7 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
       department: department.trim() || undefined,
       avatarUrl,
       companyId: companyId === "all" ? undefined : companyId === "none" ? null : companyId,
+      userId: userId === "none" ? null : userId,
     };
 
     if (editing) teamMembersStore.update(editing.id, data);
