@@ -724,7 +724,8 @@ function Body() {
   ) : null;
 
   return (
-    <ProjectsStylePageShell
+    <>
+      <ProjectsStylePageShell
       rootRef={pageRef}
       toolbarRef={filterRef}
       detail={detail}
@@ -944,7 +945,7 @@ function Body() {
 
         </>
       )}
-    </ProjectsStylePageShell>
+      </ProjectsStylePageShell>
 
 
       <PaymentMatchDialog
