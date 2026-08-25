@@ -77,6 +77,10 @@ import { useTablePrefs } from "@/lib/table-prefs";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 import { StatusBadge, PoBadge, VerifiedBadge } from "@/components/status-badge";
 import { InvoiceSourceChips } from "@/components/doc-link-chips";
+import { DocNumberPicker } from "@/components/doc-number-picker";
+import { LinkBackfillBanner } from "@/components/link-backfill-banner";
+import { backfillCandidates, resolveInvoicePo, resolveInvoiceQuote, type BackfillCandidate } from "@/lib/doc-number-link";
+import { confirmLink } from "@/lib/doc-link-write";
 import { StatusMenu } from "@/components/status-menu";
 import { PaymentProofBlock } from "@/components/payment-proof-block";
 import { PaymentMatchDialog } from "@/components/payment-match-dialog";
@@ -603,12 +607,7 @@ function Body() {
               {inv.status !== "cancelled" && <PoBadge state={poStateOf(inv)} />}
               {inv.status !== "cancelled" && verifOf(inv) !== "n/a" && <VerifiedBadge state={badgeState(verifOf(inv))} />}
               <StatusDiffChip id={inv.id} />
-              <InvoiceSourceChips
-                quoteId={inv.quoteId}
-                quoteNumber={sourceOf(inv).quoteNumber}
-                poId={inv.poId}
-                poNumber={sourceOf(inv).poNumber}
-              />
+              <InvoiceSourceChips {...sourceOf(inv)} />
             </div>
           </ListTd>
         );
@@ -756,13 +755,26 @@ function Body() {
       <DetailSection title="Linked documents">
         <div className="flex flex-wrap items-center gap-1.5 py-0.5">
           <InvoiceSourceChips
-            quoteId={selected.quoteId}
-            quoteNumber={sourceOf(selected).quoteNumber}
-            poId={selected.poId}
-            poNumber={sourceOf(selected).poNumber}
+            {...sourceOf(selected)}
             poWaived={selected.poWaived}
+            onConfirmQuote={() => {
+              const s = sourceOf(selected);
+              if (s.quoteId && s.quoteNumber)
+                confirmLink(
+                  { kind: "invoice-quote", targetId: selected.id, targetNumber: selected.number, linkId: s.quoteId, linkNumber: s.quoteNumber, label: "" },
+                  selected.companyId,
+                );
+            }}
+            onConfirmPo={() => {
+              const s = sourceOf(selected);
+              if (s.poId && s.poNumber)
+                confirmLink(
+                  { kind: "invoice-po", targetId: selected.id, targetNumber: selected.number, linkId: s.poId, linkNumber: s.poNumber, label: "" },
+                  selected.companyId,
+                );
+            }}
           />
-          {!selected.quoteId && !selected.poId && !selected.poWaived && (
+          {!sourceOf(selected).quoteId && !sourceOf(selected).poId && !selected.poWaived && (
             <span className="text-xs text-muted-foreground">No source quotation or PO</span>
           )}
         </div>
@@ -869,6 +881,11 @@ function Body() {
       }
     >
 
+      {linkCandidates.length > 0 && (
+        <div className="mb-2">
+          <LinkBackfillBanner candidates={linkCandidates} companyIdOf={companyOfCandidate} />
+        </div>
+      )}
       {bootstrapError ? (
         <ListErrorState label="invoices" message={bootstrapError} onRetry={retryBootstrap} />
       ) : list.length === 0 && (filtersActive || baseList.length > 0) ? (
@@ -1221,6 +1238,17 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
     editing ? poId : undefined,
     pos,
   );
+  // Searchable list: this client's POs first, then every other PO of the
+  // company so a historical number can still be found by typing it.
+  const pickablePOs = useMemo(() => {
+    const rows = pos.filter((p) => p.companyId === companyId && p.status !== "cancelled");
+    const ordered = [...rows].sort((a, b) => Number(b.clientId === clientId) - Number(a.clientId === clientId));
+    return ordered.map((p) => ({
+      id: p.id, number: p.number, status: p.status, issueDate: p.issueDate,
+      amount: p.amount, currency: p.currency,
+      clientName: clients.find((c) => c.id === p.clientId)?.name,
+    }));
+  }, [pos, companyId, clientId, clients]);
 
   const selectedClient = clients.find((c) => c.id === clientId);
   const selectedPO = pos.find((p) => p.id === poId);
@@ -1249,7 +1277,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
   useReconciledSelection({
     open,
     currentValue: poId,
-    options: clientPOs,
+    options: pickablePOs,
     getId: (po) => po.id,
     allowEmpty: true,
     loading: pos.length === 0,
@@ -1426,15 +1454,17 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
 
           <div>
             <Label><RequiredLabel>Purchase order</RequiredLabel></Label>
-            <Select value={poId || "__none__"} onValueChange={(v) => { const next = v === "__none__" ? "" : v; setPoId(next); if (next) setPoWaived(false); }} disabled={!clientId}>
-              <SelectTrigger className={cn(!processOk && status !== "draft" && "border-destructive")}>
-                <SelectValue placeholder={clientId ? (clientPOs.length ? "Select PO" : "No PO for this client") : "Select client first"} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">— No PO —</SelectItem>
-                {clientPOs.map((p) => <SelectItem key={p.id} value={p.id}>{p.number} · {fmtAmount(p.amount, p.currency)} · {p.status}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <div className={cn(!processOk && status !== "draft" && "rounded-md ring-1 ring-destructive")}>
+              <DocNumberPicker
+                value={poId}
+                onChange={(v) => { setPoId(v); if (v) setPoWaived(false); }}
+                docs={pickablePOs}
+                disabled={!clientId}
+                emptyLabel="— No PO —"
+                placeholder={clientId ? "Search PO by number, client or amount" : "Select client first"}
+                companyLabel={companies.find((c) => c.id === companyId)?.name}
+              />
+            </div>
 
             {!poId && (
               <div className="mt-2 rounded-md border border-warning/40 bg-warning/5 px-3 py-2 space-y-2">
