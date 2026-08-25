@@ -6,9 +6,9 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
   useQuotes, useCompanies, useClients, useProjects, quotesStore, purchaseOrdersStore,
-  fmt, fmtCompact, toMGA, FX, type Quote, type QuoteLine, type QuoteStatus, type QuoteMode, type Currency, type Client,
+  fmt, fmtCompact, toMGA, FX, type Quote, type QuoteLine, type QuoteStatus, type QuoteMode, type Currency, type Client, type Invoice,
   contactBelongsTo, MAX_QUOTE_ASSIGNEES, useOpportunities, useInvoices,
-  useQuoteFollowups, quoteFollowupsStore, useSalesPeople, useTeamMembers,
+  useQuoteFollowups, quoteFollowupsStore, useSalesPeople, useTeamMembers, usePurchaseOrders,
   opportunitiesStore,
 } from "@/lib/mock-data";
 import { KanbanTemplatePicker } from "@/components/kanban-template-picker";
@@ -16,7 +16,7 @@ import { useKanbanTemplates, type KanbanTemplate } from "@/lib/kanban-templates"
 import { BoardHistoryPanel } from "@/components/board-history-panel";
 import { logBoardMove } from "@/lib/board-moves";
 import { CardAction, CardCommentAction } from "@/components/kanban-card-actions";
-import { ExternalLink, UserPlus, CalendarClock, MessageSquare, Link2 } from "lucide-react";
+import { ExternalLink, UserPlus, CalendarClock, MessageSquare, Link2, ReceiptText } from "lucide-react";
 import { CardSignal, CardSignalRow, CardInitial } from "@/components/card-signals";
 
 import { capabilities, levels, getRate, type Capability, type Level, type Unit } from "@/lib/rate-card";
@@ -75,6 +75,9 @@ import { bulkUpdateDocuments, bulkResultMessage, type BulkPatch } from "@/lib/bu
 import { BulkStatusDialog } from "@/components/bulk-status-dialog";
 import { applyBulkStatus } from "@/lib/bulk-status";
 import { useQuoteStatusRequest } from "@/components/quote-status-request";
+import { useAcceptQuote } from "@/components/accept-quote-dialog";
+import { quoteInvoiceLink } from "@/lib/quote-accept";
+import { QuoteInvoiceChip, DocChip } from "@/components/doc-link-chips";
 import { renderDocumentPdfBlob } from "@/lib/pdf-export";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
@@ -147,6 +150,8 @@ function Body() {
   const clients = useClients();
   const projects = useProjects();
   const opportunities = useOpportunities();
+  const invoices = useInvoices();
+  const purchaseOrders = usePurchaseOrders();
   const baseList = inScope(quotes, scope);
   const team = useTeamMembers();
   const navigate = useNavigate();
@@ -273,7 +278,8 @@ function Body() {
   const selection = useBulkSelection(list, isWritable);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
-  const statusRequest = useQuoteStatusRequest(isWritable);
+  const accept = useAcceptQuote();
+  const statusRequest = useQuoteStatusRequest(isWritable, { onAccept: accept.request });
 
   const applyBulkStatusChange = async (next: string, rows: Quote[], reason?: string) => {
     const result = await applyBulkStatus({
@@ -306,29 +312,6 @@ function Body() {
       description: result.skipped.length
         ? `Skipped: ${result.skipped.slice(0, 4).map((s) => `${s.number} (${s.reason})`).join(", ")}`
         : undefined,
-    });
-  };
-
-  const convertToPO = async (q: Quote) => {
-    await primeNumbering("po", q.companyId);
-    purchaseOrdersStore.add({
-      id: newId("po"),
-      number: nextNumber("po", q.companyId),
-      companyId: q.companyId,
-      clientId: q.clientId,
-      projectId: q.projectId,
-      quoteId: q.id,
-      issueDate: new Date().toISOString().slice(0, 10),
-      amount: q.amount,
-      currency: q.currency,
-      status: "issued",
-      lines: q.lines ? q.lines.map((l) => ({ ...l })) : undefined,
-    });
-    quotesStore.update(q.id, { status: "accepted", updatedBy: user?.id, updatedAt: new Date().toISOString() });
-    logActivity({
-      docType: "quote", docId: q.id, docNumber: q.number, companyId: q.companyId,
-      action: "status_changed", summary: `From ${q.status} to accepted (converted to PO)`,
-      details: { from: q.status, to: "accepted" },
     });
   };
 
@@ -383,6 +366,24 @@ function Body() {
         <DetailField label="Issued" value={format(parseISO(selectedQuote.issueDate), "MMM d, yyyy")} mono />
         <DetailField label="Valid until" value={format(parseISO(selectedQuote.validUntil), "MMM d, yyyy")} mono />
         <DetailField label="Owner" value={ownerName(selectedQuote)} />
+      </DetailSection>
+      <DetailSection title="Linked documents">
+        <div className="flex flex-wrap items-center gap-1.5 py-0.5">
+          <QuoteInvoiceChip
+            link={quoteInvoiceLink(selectedQuote, invoices)}
+            currency={selectedQuote.currency}
+            status={selectedQuote.status}
+          />
+          {quoteInvoiceLink(selectedQuote, invoices).invoices.map((i) => (
+            <DocChip key={i.id} icon={ReceiptText} label={`${i.number} · ${fmtCompact(i.totalAmount ?? i.amount, i.currency)}`} to="/invoices" focusId={i.id} />
+          ))}
+          {purchaseOrders.filter((p) => p.quoteId === selectedQuote.id).map((p) => (
+            <DocChip key={p.id} icon={FileCheck2} label={p.number} to="/purchase-orders" focusId={p.id} />
+          ))}
+          {quoteInvoiceLink(selectedQuote, invoices).invoices.length === 0
+            && purchaseOrders.filter((p) => p.quoteId === selectedQuote.id).length === 0
+            && <span className="text-xs text-muted-foreground">No linked documents yet</span>}
+        </div>
       </DetailSection>
       <DetailSection title="Amounts">
         <DetailField label="Total" value={fmtCompact(selectedQuote.totalAmount ?? selectedQuote.amount, selectedQuote.currency)} mono />
@@ -495,6 +496,8 @@ function Body() {
           clients={clients}
           companies={companies}
           canWrite={isWritable}
+          invoices={invoices}
+          onAccept={accept.request}
           onOpen={(q) => setSelectedId(q.id)}
         />
       ) : (
@@ -538,7 +541,7 @@ function Body() {
                       />
                     )}
                     {q.status !== "accepted" && q.status !== "rejected" && (
-                      <RowAction icon={<FileCheck2 className="h-3.5 w-3.5" />} label="To PO" tone="success" onClick={() => convertToPO(q)} title="Convert to PO" />
+                      <RowAction icon={<FileCheck2 className="h-3.5 w-3.5" />} label="Accept" tone="success" onClick={() => accept.request(q)} title="Accept — create PO & invoice" />
                     )}
                     <RowAction icon={<History className="h-3.5 w-3.5" />} label="History" onClick={() => setHistoryOf(q)} title="Activity history" />
                     <RowAction icon={<Copy className="h-3.5 w-3.5" />} label="Duplicate" onClick={() => duplicateQuote(q)} title="Duplicate quote" />
@@ -596,6 +599,7 @@ function Body() {
                               {format(parseISO(q.sentAt), "MMM d")}
                             </span>
                           )}
+                          <QuoteInvoiceChip link={quoteInvoiceLink(q, invoices)} currency={q.currency} status={q.status} />
                           <QuoteSalesRoles
                             acquisition={cl?.acquisition}
                             closer={opportunities.find((o) => o.id === q.opportunityId)?.closer}
@@ -647,6 +651,7 @@ function Body() {
         onApply={applyBulkStatusChange}
       />
       {statusRequest.dialog}
+      {accept.dialog}
       <BulkEditDocDialog
         open={bulkOpen}
         onOpenChange={setBulkOpen}
@@ -1360,12 +1365,16 @@ function QuoteBoard({
   clients,
   companies,
   canWrite,
+  invoices,
+  onAccept,
   onOpen,
 }: {
   list: Quote[];
   clients: Client[];
   companies: ReturnType<typeof useCompanies>;
   canWrite: (q: Quote) => boolean;
+  invoices: Invoice[];
+  onAccept: (q: Quote) => void;
   onOpen: (q: Quote) => void;
 }) {
   const { user } = useAuth();
@@ -1388,7 +1397,7 @@ function QuoteBoard({
   const visible = list.filter((q) => activeKeys.includes(q.status));
   const hidden = list.length - visible.length;
 
-  const statusRequest = useQuoteStatusRequest(canWrite);
+  const statusRequest = useQuoteStatusRequest(canWrite, { onAccept });
 
   const move = (q: Quote, status: string) => {
     const previous = q.status;
@@ -1521,6 +1530,7 @@ function QuoteBoard({
                   {closer && <CardInitial name={closer} label={`Closer: ${closer}`} />}
                   {!!notes && <CardSignal icon={MessageSquare} label={`${notes} follow-up note${notes > 1 ? "s" : ""}`} value={notes} />}
                   {q.opportunityId && <CardSignal icon={Link2} label="Linked to a pipeline deal" />}
+                  <QuoteInvoiceChip link={quoteInvoiceLink(q, invoices)} currency={q.currency} status={q.status} />
                 </CardSignalRow>
               </div>
             </div>

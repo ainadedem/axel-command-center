@@ -75,6 +75,7 @@ import { type ColumnDef } from "@/lib/column-prefs";
 import { useTablePrefs } from "@/lib/table-prefs";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 import { StatusBadge, PoBadge, VerifiedBadge } from "@/components/status-badge";
+import { InvoiceSourceChips } from "@/components/doc-link-chips";
 import { StatusMenu } from "@/components/status-menu";
 import { PaymentProofBlock } from "@/components/payment-proof-block";
 import { PaymentMatchDialog } from "@/components/payment-match-dialog";
@@ -174,6 +175,15 @@ function Body() {
   const clients = useClients();
   const projects = useProjects();
   const transactions = useTransactions();
+  const quotes = useQuotes();
+  const pos = usePurchaseOrders();
+  const sourceOf = useCallback(
+    (i: Invoice) => ({
+      quoteNumber: quotes.find((q) => q.id === i.quoteId)?.number,
+      poNumber: pos.find((p) => p.id === i.poId)?.number,
+    }),
+    [quotes, pos],
+  )
   const baseList = inScope(invoices, scope);
   const [matchOpen, setMatchOpen] = useState(false);
   const verifOf = useCallback(
@@ -572,6 +582,12 @@ function Body() {
               {inv.status !== "cancelled" && <PoBadge state={poStateOf(inv)} />}
               {inv.status !== "cancelled" && verifOf(inv) !== "n/a" && <VerifiedBadge state={badgeState(verifOf(inv))} />}
               <StatusDiffChip id={inv.id} />
+              <InvoiceSourceChips
+                quoteId={inv.quoteId}
+                quoteNumber={sourceOf(inv).quoteNumber}
+                poId={inv.poId}
+                poNumber={sourceOf(inv).poNumber}
+              />
             </div>
           </ListTd>
         );
@@ -714,6 +730,20 @@ function Body() {
         <DetailField label="Project" value={projects.find((p) => p.id === selected.projectId)?.name ?? "—"} />
         <DetailField label="Issued" value={selected.issueDate} mono />
         <DetailField label="Due" value={selected.dueDate} mono />
+      </DetailSection>
+      <DetailSection title="Linked documents">
+        <div className="flex flex-wrap items-center gap-1.5 py-0.5">
+          <InvoiceSourceChips
+            quoteId={selected.quoteId}
+            quoteNumber={sourceOf(selected).quoteNumber}
+            poId={selected.poId}
+            poNumber={sourceOf(selected).poNumber}
+            poWaived={selected.poWaived}
+          />
+          {!selected.quoteId && !selected.poId && !selected.poWaived && (
+            <span className="text-xs text-muted-foreground">No source quotation or PO</span>
+          )}
+        </div>
       </DetailSection>
       <DetailSection title="Amounts">
         <DetailField label="Total" value={fmtFull(invoicePayable(selected), selected.currency)} mono />
