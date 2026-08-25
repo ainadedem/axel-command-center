@@ -8,10 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth-context";
 import { applyQuoteStatus } from "@/lib/quote-status";
-import { logActivity } from "@/lib/document-activity";
 import { withoutHistory } from "@/lib/history";
 import { nextNumber, primeNumbering } from "@/lib/numbering";
-import { acceptTermsDays, buildInvoiceFromQuote, buildPoFromQuote, quoteInvoiceLink } from "@/lib/quote-accept";
+import { acceptTermsDays, createFromAcceptedQuote, quoteInvoiceLink } from "@/lib/quote-accept";
 import {
   invoicesStore, purchaseOrdersStore, useClients, useInvoices, usePurchaseOrders,
   fmtCompact, type Quote,
@@ -61,41 +60,15 @@ export function useAcceptQuote() {
     if (!quote) return;
     setBusy(true);
     try {
-      const created: string[] = [];
-      let poId: string | undefined = existingPo?.id;
-
-      if (makePo) {
-        const po = buildPoFromQuote({ quote, client, poNumber: poNumber || nextNumber("po", quote.companyId), userId: user?.id });
-        purchaseOrdersStore.add(po);
-        poId = po.id;
-        created.push(`PO ${po.number}`);
-        void logActivity({
-          docType: "po", docId: po.id, docNumber: po.number, companyId: po.companyId,
-          action: "created", summary: `Created from accepted quotation ${quote.number}`,
-        });
-      }
-
-      let invoiceId: string | undefined;
-      if (makeInvoice) {
-        const inv = buildInvoiceFromQuote({
-          quote, client, poId,
-          invoiceNumber: invNumber || nextNumber("invoice", quote.companyId),
-          userId: user?.id,
-        });
-        invoicesStore.add(inv);
-        invoiceId = inv.id;
-        created.push(`Invoice ${inv.number}`);
-        void logActivity({
-          docType: "invoice", docId: inv.id, docNumber: inv.number, companyId: inv.companyId,
-          action: "created", summary: `Created from accepted quotation ${quote.number}`,
-        });
-      }
-
+      const { poId, invoiceId, created } = createFromAcceptedQuote({
+        quote, client, makePo, makeInvoice,
+        poNumber, invoiceNumber: invNumber,
+        existingPoId: existingPo?.id, userId: user?.id,
+      });
       const status = applyQuoteStatus(quote, "accepted", { userId: user?.id, silent: true });
-      const poCreated = makePo ? poId : undefined;
 
       toast.success(
-        created.length ? `${quote.number} accepted · ${created.join(" · ")} created as drafts` : `${quote.number} accepted`,
+        created.length ? `${quote.number} accepted \u00b7 ${created.join(" \u00b7 ")} created as drafts` : `${quote.number} accepted`,
         {
           duration: 10000,
           action: {
@@ -103,7 +76,7 @@ export function useAcceptQuote() {
             onClick: () => {
               void withoutHistory(() => {
                 if (invoiceId) invoicesStore.remove(invoiceId);
-                if (poCreated) purchaseOrdersStore.remove(poCreated);
+                if (poId && !existingPo) purchaseOrdersStore.remove(poId);
               });
               status.revert();
             },
