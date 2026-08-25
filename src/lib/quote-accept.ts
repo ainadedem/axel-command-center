@@ -101,31 +101,46 @@ export interface QuoteInvoiceLink {
   invoiced: number;
   /** Quote payable total, quote currency. */
   quoted: number;
+  /** How the invoices were found: a stored link or a document-number match. */
+  source: LinkSource;
 }
 
-/** Invoices that descend from a quote: direct link first, opportunity as fallback. */
+/**
+ * Invoices that descend from a quote: direct link first, then the opportunity,
+ * then a document-number match found in the documents' own text.
+ */
 export function invoicesForQuote(q: Quote, invoices: Invoice[]): Invoice[] {
+  return invoicesForQuoteWithSource(q, invoices).invoices;
+}
+
+/** Same as {@link invoicesForQuote} but says which tier resolved the link. */
+export function invoicesForQuoteWithSource(q: Quote, invoices: Invoice[]): { invoices: Invoice[]; source: LinkSource } {
   const direct = invoices.filter((i) => i.quoteId === q.id && i.status !== "cancelled");
-  if (direct.length) return direct;
-  if (!q.opportunityId) return [];
-  return invoices.filter((i) => i.opportunityId === q.opportunityId && i.status !== "cancelled");
+  if (direct.length) return { invoices: direct, source: "stored" };
+  if (q.opportunityId) {
+    const byOpp = invoices.filter((i) => i.opportunityId === q.opportunityId && i.status !== "cancelled");
+    if (byOpp.length) return { invoices: byOpp, source: "stored" };
+  }
+  const byNumber = invoicesByNumberForQuote(q, invoices);
+  return { invoices: byNumber, source: byNumber.length ? "number" : "stored" };
 }
 
 /** Whether an accepted quote has actually been invoiced, and by how much. */
 export function quoteInvoiceLink(q: Quote, invoices: Invoice[]): QuoteInvoiceLink {
-  const rows = invoicesForQuote(q, invoices);
+  const { invoices: rows, source } = invoicesForQuoteWithSource(q, invoices);
   const invoiced = rows.reduce((s, i) => s + invoicePayable(i), 0);
   const quoted = quotePayable(q);
   const state: QuoteInvoiceState =
     rows.length === 0 ? "not-invoiced"
     : invoiced + 1 >= quoted ? "invoiced"
     : "partial";
-  return { state, invoices: rows, invoiced, quoted };
+  return { state, invoices: rows, invoiced, quoted, source };
 }
 
 /** Accepted quotations with nothing invoiced against them yet. */
 export const acceptedNotInvoiced = (quotes: Quote[], invoices: Invoice[]) =>
   quotes.filter((q) => q.status === "accepted" && quoteInvoiceLink(q, invoices).state === "not-invoiced");
+
 
 // ---------------------------------------------------------------------------
 // Store writes
