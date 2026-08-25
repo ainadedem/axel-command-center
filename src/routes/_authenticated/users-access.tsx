@@ -24,7 +24,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { createAppUser, logRoleChange } from "@/lib/users-admin.functions";
 import { useSalesRoleSync } from "@/lib/use-sales-role-sync";
 import { AccessDiagnosticsPanel } from "@/components/access-diagnostics-panel";
-import { Loader2, ShieldAlert, Search, UserPlus } from "lucide-react";
+import { Loader2, ShieldAlert, Search, UserPlus, ShieldCheck } from "lucide-react";
+import { useTeamMembers, teamMembersStore } from "@/lib/mock-data";
+import { newId } from "@/lib/data-store";
 import { toast } from "sonner";
 
 
