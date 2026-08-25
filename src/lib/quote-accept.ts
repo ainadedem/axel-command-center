@@ -10,9 +10,11 @@ import { newId } from "@/lib/data-store";
 import { effectiveTermsDays } from "@/lib/payment-proof";
 import { invoicePayable } from "@/lib/invoice-money";
 import { quotePayable } from "@/lib/pipeline-link";
-import { invoicesStore, purchaseOrdersStore } from "@/lib/mock-data";
+import { invoicesStore, purchaseOrdersStore, teamMembersStore } from "@/lib/mock-data";
 import { nextNumber } from "@/lib/numbering";
 import { logActivity } from "@/lib/document-activity";
+import { notify } from "@/lib/notifications";
+import { docDeepLink } from "@/hooks/use-focus-row";
 import type { Client, Invoice, PurchaseOrder, Quote, QuoteLine } from "@/lib/mock-data";
 
 const today = () => new Date().toISOString().slice(0, 10);
