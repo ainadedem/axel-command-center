@@ -196,7 +196,7 @@ function Body() {
     [quotes, pos],
   );
   const linkCandidates = useMemo(
-    () => backfillCandidates({ invoices: baseListForLinks(invoices, scope), pos, quotes }),
+    () => backfillCandidates({ invoices: inScope(invoices, scope), pos, quotes }),
     [invoices, pos, quotes, scope],
   );
   const companyOfCandidate = useCallback(
