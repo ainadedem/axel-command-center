@@ -295,7 +295,7 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
       department: department.trim() || undefined,
       avatarUrl,
       companyId: companyId === "all" ? undefined : companyId === "none" ? null : companyId,
-      userId: userId === "none" ? null : userId,
+      userId: userId === "none" ? undefined : userId,
     };
 
     if (editing) teamMembersStore.update(editing.id, data);
