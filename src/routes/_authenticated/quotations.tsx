@@ -75,6 +75,9 @@ import { bulkUpdateDocuments, bulkResultMessage, type BulkPatch } from "@/lib/bu
 import { BulkStatusDialog } from "@/components/bulk-status-dialog";
 import { applyBulkStatus } from "@/lib/bulk-status";
 import { useQuoteStatusRequest } from "@/components/quote-status-request";
+import { useAcceptQuote } from "@/components/accept-quote-dialog";
+import { quoteInvoiceLink } from "@/lib/quote-accept";
+import { QuoteInvoiceChip } from "@/components/doc-link-chips";
 import { renderDocumentPdfBlob } from "@/lib/pdf-export";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
@@ -273,7 +276,8 @@ function Body() {
   const selection = useBulkSelection(list, isWritable);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
-  const statusRequest = useQuoteStatusRequest(isWritable);
+  const accept = useAcceptQuote();
+  const statusRequest = useQuoteStatusRequest(isWritable, { onAccept: accept.request });
 
   const applyBulkStatusChange = async (next: string, rows: Quote[], reason?: string) => {
     const result = await applyBulkStatus({
@@ -306,29 +310,6 @@ function Body() {
       description: result.skipped.length
         ? `Skipped: ${result.skipped.slice(0, 4).map((s) => `${s.number} (${s.reason})`).join(", ")}`
         : undefined,
-    });
-  };
-
-  const convertToPO = async (q: Quote) => {
-    await primeNumbering("po", q.companyId);
-    purchaseOrdersStore.add({
-      id: newId("po"),
-      number: nextNumber("po", q.companyId),
-      companyId: q.companyId,
-      clientId: q.clientId,
-      projectId: q.projectId,
-      quoteId: q.id,
-      issueDate: new Date().toISOString().slice(0, 10),
-      amount: q.amount,
-      currency: q.currency,
-      status: "issued",
-      lines: q.lines ? q.lines.map((l) => ({ ...l })) : undefined,
-    });
-    quotesStore.update(q.id, { status: "accepted", updatedBy: user?.id, updatedAt: new Date().toISOString() });
-    logActivity({
-      docType: "quote", docId: q.id, docNumber: q.number, companyId: q.companyId,
-      action: "status_changed", summary: `From ${q.status} to accepted (converted to PO)`,
-      details: { from: q.status, to: "accepted" },
     });
   };
 
@@ -495,6 +476,8 @@ function Body() {
           clients={clients}
           companies={companies}
           canWrite={isWritable}
+          invoices={invoices}
+          onAccept={accept.request}
           onOpen={(q) => setSelectedId(q.id)}
         />
       ) : (
@@ -538,7 +521,7 @@ function Body() {
                       />
                     )}
                     {q.status !== "accepted" && q.status !== "rejected" && (
-                      <RowAction icon={<FileCheck2 className="h-3.5 w-3.5" />} label="To PO" tone="success" onClick={() => convertToPO(q)} title="Convert to PO" />
+                      <RowAction icon={<FileCheck2 className="h-3.5 w-3.5" />} label="Accept" tone="success" onClick={() => accept.request(q)} title="Accept — create PO & invoice" />
                     )}
                     <RowAction icon={<History className="h-3.5 w-3.5" />} label="History" onClick={() => setHistoryOf(q)} title="Activity history" />
                     <RowAction icon={<Copy className="h-3.5 w-3.5" />} label="Duplicate" onClick={() => duplicateQuote(q)} title="Duplicate quote" />
@@ -647,6 +630,7 @@ function Body() {
         onApply={applyBulkStatusChange}
       />
       {statusRequest.dialog}
+      {accept.dialog}
       <BulkEditDocDialog
         open={bulkOpen}
         onOpenChange={setBulkOpen}
@@ -1360,12 +1344,16 @@ function QuoteBoard({
   clients,
   companies,
   canWrite,
+  invoices,
+  onAccept,
   onOpen,
 }: {
   list: Quote[];
   clients: Client[];
   companies: ReturnType<typeof useCompanies>;
   canWrite: (q: Quote) => boolean;
+  invoices: Invoice[];
+  onAccept: (q: Quote) => void;
   onOpen: (q: Quote) => void;
 }) {
   const { user } = useAuth();
@@ -1388,7 +1376,7 @@ function QuoteBoard({
   const visible = list.filter((q) => activeKeys.includes(q.status));
   const hidden = list.length - visible.length;
 
-  const statusRequest = useQuoteStatusRequest(canWrite);
+  const statusRequest = useQuoteStatusRequest(canWrite, { onAccept });
 
   const move = (q: Quote, status: string) => {
     const previous = q.status;
