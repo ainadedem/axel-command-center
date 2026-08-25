@@ -1,7 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { focusSearch, useFocusRow } from "@/hooks/use-focus-row";
-import { AppShell } from "@/components/app-shell";
-import { PageHeader } from "@/components/page-header";
 import {
   usePurchaseOrders, useQuotes, useCompanies, useClients, useProjects, useInvoices, purchaseOrdersStore,
   fmtCompact, type PurchaseOrder, type POStatus, type Currency,
