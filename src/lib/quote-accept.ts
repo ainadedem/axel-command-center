@@ -15,6 +15,7 @@ import { nextNumber } from "@/lib/numbering";
 import { logActivity } from "@/lib/document-activity";
 import { notify } from "@/lib/notifications";
 import { docDeepLink } from "@/hooks/use-focus-row";
+import { invoicesByNumberForQuote, type LinkSource } from "@/lib/doc-number-link";
 import type { Client, Invoice, PurchaseOrder, Quote, QuoteLine } from "@/lib/mock-data";
 
 const today = () => new Date().toISOString().slice(0, 10);
