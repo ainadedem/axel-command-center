@@ -2,18 +2,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useCompanies, useAccounts, useTransactions,
+  useCompanies, useAccounts, useTransactions, useProjects, useClients, useInvoices,
   companiesStore, toMGA, fmtCompact, type Company, type Currency,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, ChevronRight } from "lucide-react";
 import { markCompanyDocumentsDirty } from "@/lib/stamp-refresh";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,9 +25,30 @@ import type { CompanyBankAccount, CompanyLogoCrop, StampPosition } from "@/lib/m
 import { Slider } from "@/components/ui/slider";
 import { LogoCropDialog } from "@/components/logo-crop-dialog";
 import { useFileUrl } from "@/hooks/use-file-url";
+import { useAuth } from "@/lib/auth-context";
+import { useEffectiveRole } from "@/lib/use-effective-role";
+import { useDataView, type FieldDef } from "@/hooks/use-data-view";
+import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
+import { KpiCard } from "@/components/kpi-card";
+import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
+import { MasterDetail, DetailPanel, DetailSection, DetailField } from "@/components/master-detail";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 
 
 export const Route = createFileRoute("/_authenticated/companies")({ component: CompaniesPage });
+
+const COMPANY_COLUMNS: ColumnDef[] = [
+  { key: "code", label: "Code" },
+  { key: "currency", label: "Base currency" },
+  { key: "cash", label: "Cash" },
+  { key: "income", label: "Income" },
+  { key: "spend", label: "Spend" },
+  { key: "net", label: "Net" },
+  { key: "accounts", label: "Accounts", priority: "optional" },
+  { key: "projects", label: "Projects", priority: "optional" },
+  { key: "clients", label: "Clients", priority: "optional" },
+];
+
 
 const PALETTE = [
   // Row 1
