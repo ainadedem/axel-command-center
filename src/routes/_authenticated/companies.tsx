@@ -2,18 +2,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useCompanies, useAccounts, useTransactions,
+  useCompanies, useAccounts, useTransactions, useProjects, useClients, useInvoices,
   companiesStore, toMGA, fmtCompact, type Company, type Currency,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, ChevronRight } from "lucide-react";
 import { markCompanyDocumentsDirty } from "@/lib/stamp-refresh";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,9 +25,30 @@ import type { CompanyBankAccount, CompanyLogoCrop, StampPosition } from "@/lib/m
 import { Slider } from "@/components/ui/slider";
 import { LogoCropDialog } from "@/components/logo-crop-dialog";
 import { useFileUrl } from "@/hooks/use-file-url";
+import { useAuth } from "@/lib/auth-context";
+import { useEffectiveRole } from "@/lib/use-effective-role";
+import { useDataView, type FieldDef } from "@/hooks/use-data-view";
+import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
+import { KpiCard } from "@/components/kpi-card";
+import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
+import { MasterDetail, DetailPanel, DetailSection, DetailField } from "@/components/master-detail";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 
 
 export const Route = createFileRoute("/_authenticated/companies")({ component: CompaniesPage });
+
+const COMPANY_COLUMNS: ColumnDef[] = [
+  { key: "code", label: "Code" },
+  { key: "currency", label: "Base currency" },
+  { key: "cash", label: "Cash" },
+  { key: "income", label: "Income" },
+  { key: "spend", label: "Spend" },
+  { key: "net", label: "Net" },
+  { key: "accounts", label: "Accounts", priority: "optional" },
+  { key: "projects", label: "Projects", priority: "optional" },
+  { key: "clients", label: "Clients", priority: "optional" },
+];
+
 
 const PALETTE = [
   // Row 1
@@ -63,59 +84,241 @@ function CompaniesPage() {
   const companies = useCompanies();
   const accounts = useAccounts();
   const transactions = useTransactions();
+  const projects = useProjects();
+  const clients = useClients();
+  const invoices = useInvoices();
+  const { user, profile } = useAuth();
+  const { isSalesOnly: salesOnly } = useEffectiveRole();
   const [editing, setEditing] = useState<Company | null>(null);
   const [open, setOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const openCreate = () => { setEditing(null); setOpen(true); };
   const openEdit = (c: Company) => { setEditing(c); setOpen(true); };
+  const remove = async (c: Company) => {
+    if (!confirm(`Delete ${c.name}?`)) return;
+    companiesStore.remove(c.id);
+    await supabase.from("companies").delete().eq("code", (c.code || c.shortName || "").toUpperCase());
+    setSelectedId((id) => (id === c.id ? null : id));
+  };
+
+  /**
+   * Records that belong to the signed-in sales rep. Sales users see personal
+   * figures on this page, never the entity totals: their clients (they brought
+   * them in), the invoices they created or are assigned to, and the projects of
+   * their clients.
+   */
+  const owned = useMemo(() => {
+    const myId = user?.id ?? "";
+    const myName = (profile?.display_name ?? "").trim().toLowerCase();
+    const mine = (name?: string) => !!myName && (name ?? "").trim().toLowerCase() === myName;
+    const clientIds = new Set(clients.filter((c) => mine(c.acquisition)).map((c) => c.id));
+    const inv = invoices.filter(
+      (i) => (myId && i.createdBy === myId) || (i.assignedTo ?? []).includes(myId) || (i.clientId ? clientIds.has(i.clientId) : false),
+    );
+    inv.forEach((i) => { if (i.clientId) clientIds.add(i.clientId); });
+    const proj = projects.filter((p) => clientIds.has(p.clientId));
+    return { clientIds, invoices: inv, projects: proj, projectIds: new Set(proj.map((p) => p.id)) };
+  }, [user?.id, profile?.display_name, clients, invoices, projects]);
+
+  /** Per-company figures, sales-scoped when the viewer is a sales rep. */
+  const statsOf = (c: Company) => {
+    const cAcc = accounts.filter((a) => a.companyId === c.id);
+    if (salesOnly) {
+      const inv = owned.invoices.filter((i) => i.companyId === c.id);
+      const proj = owned.projects.filter((p) => p.companyId === c.id);
+      const projectIds = new Set(proj.map((p) => p.id));
+      const income = inv.reduce((s, i) => s + toMGA(i.paid, i.currency), 0);
+      const spend = transactions
+        .filter((t) => t.companyId === c.id && t.type === "expense" && t.projectId && projectIds.has(t.projectId))
+        .reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+      const clientCount = new Set(
+        clients.filter((cl) => cl.companyId === c.id && owned.clientIds.has(cl.id)).map((cl) => cl.id),
+      ).size;
+      return { cash: 0, income, spend, net: income - spend, accounts: cAcc.length, projects: proj.length, clients: clientCount };
+    }
+    const cTx = transactions.filter((t) => t.companyId === c.id);
+    const cash = cAcc.reduce((s, a) => s + toMGA(a.balance, a.currency), 0);
+    const income = cTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+    const spend = cTx.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
+    return {
+      cash, income, spend, net: income - spend,
+      accounts: cAcc.length,
+      projects: projects.filter((p) => p.companyId === c.id).length,
+      clients: clients.filter((cl) => cl.companyId === c.id).length,
+    };
+  };
+
+  const fields: FieldDef<Company>[] = [
+    { key: "name", label: "Company", type: "string", accessor: (c) => c.name, noGroup: true },
+    { key: "code", label: "Code", type: "enum", accessor: (c) => c.code ?? c.shortName },
+    { key: "currency", label: "Base currency", type: "enum", accessor: (c) => c.baseCurrency },
+    { key: "income", label: "Income", type: "number", accessor: (c) => statsOf(c).income, noGroup: true },
+    { key: "net", label: "Net", type: "number", accessor: (c) => statsOf(c).net, noGroup: true },
+  ];
+  const view = useDataView<Company>("companies", fields);
+  const groups = view.apply(companies);
+  const list = groups.flatMap((g) => g.items);
+  const cp = useColumnPrefs("companies", COMPANY_COLUMNS);
+  const hiddenForSales = salesOnly ? ["cash", "accounts"] : [];
+  const shown = (key: string) => !hiddenForSales.includes(key) && cp.on(key);
+  const colCount = 2 + COMPANY_COLUMNS.filter((c) => shown(c.key)).length;
+  const yours = salesOnly ? " (yours)" : "";
+
+  const kpi = useMemo(() => {
+    let cash = 0, income = 0, spend = 0;
+    for (const c of list) {
+      const s = statsOf(c);
+      cash += s.cash; income += s.income; spend += s.spend;
+    }
+    return { cash, income, spend, net: income - spend, count: list.length };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [list, accounts, transactions, projects, clients, invoices, salesOnly, owned]);
+
+  const selected = selectedId ? list.find((c) => c.id === selectedId) ?? null : null;
+  const detail = selected ? (() => {
+    const s = statsOf(selected);
+    return (
+      <DetailPanel
+        eyebrow={selected.code ?? selected.shortName}
+        title={selected.name}
+        subtitle={selected.legalName}
+        onClose={() => setSelectedId(null)}
+        actions={
+          <Button size="sm" onClick={() => openEdit(selected)} className="gap-1.5">
+            <Pencil className="h-4 w-4" /> Edit
+          </Button>
+        }
+      >
+        <DetailSection title="Identity">
+          <DetailField label="Short name" value={selected.shortName} />
+          <DetailField label="Code" value={selected.code ?? selected.shortName} />
+          <DetailField label="Base currency" value={selected.baseCurrency} mono />
+        </DetailSection>
+        <DetailSection title="Contact">
+          <DetailField label="Email" value={selected.email} />
+          <DetailField label="Phone" value={selected.phone} />
+          <DetailField label="Website" value={selected.website} />
+          <DetailField label="Address" value={selected.address} />
+        </DetailSection>
+        <DetailSection title="Legal IDs">
+          <DetailField label="NIF" value={selected.nif} mono />
+          <DetailField label="STAT" value={selected.stat} mono />
+          <DetailField label="RCS" value={selected.rcs} mono />
+          <DetailField label="Tax ID" value={selected.taxId} mono />
+        </DetailSection>
+        <DetailSection title={salesOnly ? "Your figures" : "Financials"}>
+          {!salesOnly && <DetailField label="Cash" value={fmtCompact(s.cash, "MGA")} mono />}
+          <DetailField label="Income" value={fmtCompact(s.income, "MGA")} mono />
+          <DetailField label="Spend" value={fmtCompact(s.spend, "MGA")} mono />
+          <DetailField label="Net" value={fmtCompact(s.net, "MGA")} mono />
+          {!salesOnly && <DetailField label="Accounts" value={String(s.accounts)} mono />}
+          <DetailField label="Projects" value={String(s.projects)} mono />
+          <DetailField label="Clients" value={String(s.clients)} mono />
+        </DetailSection>
+      </DetailPanel>
+    );
+  })() : null;
 
   return (
     <AppShell>
       <PageHeader title="Companies" description="Group entities under your control." />
-      <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
-        <CrudToolbar createLabel="New company" count={companies.length} label="companies" onCreate={openCreate} />
-        {companies.length === 0 ? (
-          <EmptyState label="companies" onCreate={openCreate} />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            {companies.map((c) => {
-              const cAcc = accounts.filter((a) => a.companyId === c.id);
-              const cTx = transactions.filter((t) => t.companyId === c.id);
-              const cash = cAcc.reduce((s, a) => s + toMGA(a.balance, a.currency), 0);
-              const income = cTx.filter((t) => t.type === "income").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
-              const expense = cTx.filter((t) => t.type === "expense").reduce((s, t) => s + toMGA(t.amount, t.currency), 0);
-              return (
-                <div key={c.id} className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 hover:border-primary/40 transition group">
-                  <div className="flex items-center gap-3 mb-5">
-                    <div className="h-10 w-10 rounded-lg grid place-items-center text-sm font-display font-bold text-primary-foreground" style={{ background: c.color }}>
-                      {c.shortName}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{c.name}</div>
-                      <div className="text-xs text-muted-foreground">Base · {c.baseCurrency}</div>
-                    </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition flex gap-1">
-                      <button onClick={() => openEdit(c)} className="h-7 w-7 grid place-items-center rounded hover:bg-surface-elevated text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                      <button onClick={async () => { if (confirm(`Delete ${c.name}?`)) { companiesStore.remove(c.id); await supabase.from("companies").delete().eq("code", (c.code || c.shortName || "").toUpperCase()); } }} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                    </div>
-                  </div>
-                  <div className="space-y-3 text-sm">
-                    <Row label="Cash" value={fmtCompact(cash, "MGA")} accent />
-                    <Row label="Income · 30d" value={fmtCompact(income, "MGA")} />
-                    <Row label="Spend · 30d" value={fmtCompact(expense, "MGA")} />
-                    <Row label="Net" value={fmtCompact(income - expense, "MGA")} accent={income - expense >= 0} />
-                    <Row label="Accounts" value={cAcc.length.toString()} />
-                  </div>
+      <div className="p-5 sm:p-10 lg:p-12">
+        <MasterDetail detail={detail}>
+          <div className="space-y-5">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <CrudToolbar createLabel="New company" count={list.length} label="companies" onCreate={openCreate} />
+              <div className="flex items-center gap-2 flex-wrap">
+                <ColumnPicker prefs={cp} />
+                <DataToolbar view={view} items={companies} />
+              </div>
+            </div>
+
+            {list.length === 0 ? (
+              <EmptyState label="companies" onCreate={openCreate} />
+            ) : (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  {!salesOnly && <KpiCard label="Cash" value={fmtCompact(kpi.cash, "MGA")} />}
+                  <KpiCard label={`Income${yours}`} value={fmtCompact(kpi.income, "MGA")} tone="success" />
+                  <KpiCard label={`Spend${yours}`} value={fmtCompact(kpi.spend, "MGA")} tone="danger" />
+                  <KpiCard label={`Net${yours}`} value={fmtCompact(kpi.net, "MGA")} tone={kpi.net >= 0 ? "success" : "danger"} />
+                  <KpiCard label="Entities" value={String(kpi.count)} />
                 </div>
-              );
-            })}
+
+                <ListTableShell>
+                  <ListTable>
+                    <thead>
+                      <ListHeadRow>
+                        <ListActionsTh />
+                        <ListTh width="26%">Company</ListTh>
+                        {shown("code") && <ListTh width="9%">Code</ListTh>}
+                        {shown("currency") && <ListTh width="9%">Base</ListTh>}
+                        {shown("cash") && <ListTh width="12%" align="right">Cash</ListTh>}
+                        {shown("income") && <ListTh width="12%" align="right">{`Income${yours}`}</ListTh>}
+                        {shown("spend") && <ListTh width="12%" align="right">{`Spend${yours}`}</ListTh>}
+                        {shown("net") && <ListTh width="12%" align="right">{`Net${yours}`}</ListTh>}
+                        {shown("accounts") && <ListTh width="8%" align="right">Accounts</ListTh>}
+                        {shown("projects") && <ListTh width="8%" align="right">Projects</ListTh>}
+                        {shown("clients") && <ListTh width="8%" align="right">Clients</ListTh>}
+                      </ListHeadRow>
+                    </thead>
+                    <tbody>
+                      {groups.map((g) => (
+                        <Fragment key={g.key}>
+                          {groups.length > 1 && <GroupHeaderRow label={g.label} count={g.items.length} colSpan={colCount} />}
+                          {g.items.map((c) => {
+                            const s = statsOf(c);
+                            return (
+                              <tr
+                                key={c.id}
+                                data-selected={selectedId === c.id ? "true" : undefined}
+                                className="hover:bg-surface-elevated/40 data-[selected=true]:bg-[var(--primary-container)]/40 cursor-pointer transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+                                onClick={() => setSelectedId(c.id)}
+                              >
+                                <ListRowActions colSpan={colCount}>
+                                  <RowAction icon={<ChevronRight className="h-3.5 w-3.5" />} label="Details" onClick={() => setSelectedId(c.id)} />
+                                  <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => openEdit(c)} />
+                                  <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => void remove(c)} />
+                                </ListRowActions>
+                                <ListTd className="font-medium" title={c.name}>
+                                  <span className="flex items-center gap-2 min-w-0">
+                                    <span
+                                      className="h-6 w-6 shrink-0 rounded-md grid place-items-center text-[10px] font-display font-bold text-primary-foreground"
+                                      style={{ background: c.color }}
+                                    >
+                                      {c.shortName}
+                                    </span>
+                                    <span className="truncate">{c.name}</span>
+                                  </span>
+                                </ListTd>
+                                {shown("code") && <ListTd className="text-muted-foreground">{c.code ?? c.shortName}</ListTd>}
+                                {shown("currency") && <ListTd className="text-muted-foreground">{c.baseCurrency}</ListTd>}
+                                {shown("cash") && <ListTd align="right" className="font-tnum">{fmtCompact(s.cash, "MGA")}</ListTd>}
+                                {shown("income") && <ListTd align="right" className="font-tnum">{fmtCompact(s.income, "MGA")}</ListTd>}
+                                {shown("spend") && <ListTd align="right" className="font-tnum">{fmtCompact(s.spend, "MGA")}</ListTd>}
+                                {shown("net") && <ListTd align="right" className="font-tnum">{fmtCompact(s.net, "MGA")}</ListTd>}
+                                {shown("accounts") && <ListTd align="right" className="font-tnum">{s.accounts}</ListTd>}
+                                {shown("projects") && <ListTd align="right" className="font-tnum">{s.projects}</ListTd>}
+                                {shown("clients") && <ListTd align="right" className="font-tnum">{s.clients}</ListTd>}
+                              </tr>
+                            );
+                          })}
+                        </Fragment>
+                      ))}
+                    </tbody>
+                  </ListTable>
+                </ListTableShell>
+              </>
+            )}
           </div>
-        )}
+        </MasterDetail>
       </div>
       <CompanyDialog open={open} onOpenChange={setOpen} editing={editing} />
     </AppShell>
   );
 }
+
 
 function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: Company | null }) {
   const [name, setName] = useState("");
@@ -466,14 +669,5 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function Row({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-muted-foreground text-xs uppercase tracking-wider">{label}</span>
-      <span className={`font-tnum font-medium ${accent ? "text-primary font-display" : ""}`}>{value}</span>
-    </div>
   );
 }
