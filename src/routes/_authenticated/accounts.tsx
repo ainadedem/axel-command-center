@@ -96,9 +96,46 @@ function Body() {
   const list = groups.flatMap((g) => g.items);
   const cp = useColumnPrefs("accounts", ACCOUNT_COLUMNS);
 
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = selectedId ? list.find((a) => a.id === selectedId) ?? null : null;
+  const selectedCo = selected ? companies.find((c) => c.id === selected.companyId) : null;
+  const detail = selected ? (
+    <DetailPanel
+      eyebrow={selected.type === "bank" ? "Bank account" : selected.type === "mobile" ? "Mobile money" : "Cash account"}
+      title={selected.name}
+      subtitle={selectedCo?.name}
+      onClose={() => setSelectedId(null)}
+      actions={
+        <>
+          <Button size="sm" className="gap-1.5" onClick={() => openEdit(selected)}><Pencil className="h-4 w-4" /> Edit</Button>
+          <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setImporting(selected)}><Upload className="h-4 w-4" /> Reconcile</Button>
+          <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setHistoryFor(selected)}><History className="h-4 w-4" /> History</Button>
+        </>
+      }
+    >
+      <DetailSection>
+        <DetailField label="Balance" value={fmtCompact(balanceOf(selected), selected.currency)} mono />
+        <DetailField label="MGA equivalent" value={fmtCompact(toMGA(balanceOf(selected), selected.currency), "MGA")} mono />
+        <DetailField label="Movements" value={String(balances.get(selected.id)?.txCount ?? 0)} mono />
+        <DetailField label="Currency" value={selected.currency} />
+      </DetailSection>
+      <DetailSection title="Opening">
+        <DetailField label="Opening balance" value={fmtCompact(openingOf(selected), selected.currency)} mono />
+        <DetailField label="As of" value={selected.openingBalanceDate ? format(parseISO(selected.openingBalanceDate), "d MMM yyyy") : undefined} mono />
+      </DetailSection>
+      <DetailSection title="Reconciliation">
+        <DetailField label="Last statement" value={selected.statementUploadedAt ? format(parseISO(selected.statementUploadedAt), "d MMM yyyy") : "Never reconciled"} mono />
+        <DetailField label="File" value={selected.statementName} />
+      </DetailSection>
+    </DetailPanel>
+  ) : null;
+
   return (
-    <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
+    <div className="p-5 sm:p-10 lg:p-12">
+      <MasterDetail detail={detail}>
+      <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
+
         <CrudToolbar createLabel="New account" count={list.length} label="accounts" onCreate={openCreate} />
         <div className="flex items-center gap-2 flex-wrap">
           <ColumnPicker prefs={cp} />
