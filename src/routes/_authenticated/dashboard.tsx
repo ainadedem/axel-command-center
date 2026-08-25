@@ -22,6 +22,7 @@ import { AlertTriangle, AlertOctagon, ShieldCheck, Rocket } from "lucide-react";
 import { FX, type Currency } from "@/lib/mock-data";
 import { invoiceBalance } from "@/lib/invoice-money";
 import { ConversionGapPanel } from "@/components/conversion-gap-panel";
+import { NextActionsPanel } from "@/components/next-actions-panel";
 
 const pct = (cur: number, prev: number) => {
   if (prev === 0) return cur === 0 ? 0 : cur > 0 ? 100 : -100;
@@ -360,6 +361,9 @@ function DashboardBody() {
           }
         />
       </div>
+
+      {/* Plain-language guidance: the money journey and what to do next */}
+      <NextActionsPanel />
 
       {/* Quotation → invoice conversion gap */}
       <ConversionGapPanel />

@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { QuoteNextStepHint } from "@/components/next-step-hint";
 import { docDeepLink, focusSearch, useFocusRow } from "@/hooks/use-focus-row";
 import { BankAccountSelect } from "@/components/bank-account-select";
 import { defaultBankAccount } from "@/lib/payment-details";
@@ -351,6 +352,7 @@ function Body() {
         </>
       }
     >
+      <QuoteNextStepHint quote={selectedQuote} invoices={invoices} />
       <div className="flex flex-wrap items-center gap-2">
         <StatusMenu
           status={selectedQuote.status}
