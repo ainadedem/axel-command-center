@@ -199,5 +199,155 @@ export function createFromAcceptedQuote(o: {
     });
   }
 
-  return { poId: o.makePo ? poId : undefined, invoiceId, created };
+  return {
+    poId: o.makePo ? poId : undefined,
+    invoiceId, created, poNumber, invoiceNumber,
+    reusedPo: !o.makePo && !!o.existingPoId,
+    termsDays,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Audit trail + notifications for the acceptance automation
+// ---------------------------------------------------------------------------
+
+/** Auth users who should hear about an acceptance: assignees + the author. */
+export function acceptanceRecipients(quote: Quote): string[] {
+  const ids = new Set<string>();
+  for (const a of quote.assignedTo ?? []) if (a) ids.add(a);
+  if (quote.createdBy) ids.add(quote.createdBy);
+  // Team members linked to an app user and assigned to the quotation.
+  for (const m of teamMembersStore.items) {
+    if (!m.userId) continue;
+    if ((quote.assignedTo ?? []).includes(m.id) || (quote.assignedTo ?? []).includes(m.userId)) ids.add(m.userId);
+  }
+  return [...ids];
+}
+
+const docList = (r: AcceptanceResult) => r.created.join(" and ");
+
+/**
+ * Records the acceptance itself on the quotation and tells the people involved
+ * which documents the automation produced, with links straight to each one.
+ */
+export function recordAcceptance(o: {
+  quote: Quote;
+  client?: Client;
+  result: AcceptanceResult;
+}) {
+  const { quote: q, result } = o;
+  const clientName = o.client?.displayName || o.client?.name;
+  const total = q.totalAmount ?? q.amount + (q.taxAmount ?? 0);
+
+  void logActivity({
+    docType: "quote", docId: q.id, docNumber: q.number, companyId: q.companyId,
+    action: "accepted",
+    summary: result.created.length
+      ? `Accepted — ${docList(result)} created as drafts`
+      : "Accepted — no documents created",
+    details: {
+      source: "quote_acceptance",
+      poId: result.poId, poNumber: result.poNumber,
+      invoiceId: result.invoiceId, invoiceNumber: result.invoiceNumber,
+      reusedExistingPo: result.reusedPo,
+      termsDays: result.termsDays,
+      amount: q.amount, total, currency: q.currency,
+      client: clientName,
+    },
+  });
+
+  if (result.created.length === 0) return;
+
+  const links: string[] = [
+    `Quotation: ${docDeepLink("/quotations", q.id)}`,
+    result.poId ? `Purchase order: ${docDeepLink("/purchase-orders", result.poId)}` : "",
+    result.invoiceId ? `Invoice: ${docDeepLink("/invoices", result.invoiceId)}` : "",
+  ].filter(Boolean);
+
+  notify({
+    kind: "quote_auto_documents",
+    companyId: q.companyId,
+    docType: "invoice",
+    docId: result.invoiceId ?? result.poId ?? q.id,
+    docNumber: result.invoiceNumber ?? result.poNumber ?? q.number,
+    title: `${q.number} accepted — ${docList(result)} created as drafts`,
+    body: [
+      clientName ? `Client ${clientName}` : null,
+      `Payable total ${total.toLocaleString()} ${q.currency}`,
+      result.invoiceNumber ? `Invoice due in ${result.termsDays} days — review and send it.` : null,
+      links.join(" · "),
+    ].filter(Boolean).join(" · "),
+    href: docDeepLink("/invoices", result.invoiceId) ,
+    recipients: acceptanceRecipients(q),
+    amount: total,
+  });
+}
+
+/** Audit + notification for rolling the acceptance back inside the undo window. */
+export function recordAcceptanceUndone(o: { quote: Quote; result: AcceptanceResult }) {
+  const { quote: q, result } = o;
+  const removed = result.created.length ? docList(result) : "no documents";
+  void logActivity({
+    docType: "quote", docId: q.id, docNumber: q.number, companyId: q.companyId,
+    action: "acceptance_undone",
+    summary: `Acceptance undone — ${removed} removed, quotation back to ${q.status}`,
+    details: {
+      source: "quote_acceptance",
+      removedPoId: result.poId, removedPoNumber: result.poNumber,
+      removedInvoiceId: result.invoiceId, removedInvoiceNumber: result.invoiceNumber,
+    },
+  });
+  if (result.poId) {
+    void logActivity({
+      docType: "po", docId: result.poId, docNumber: result.poNumber, companyId: q.companyId,
+      action: "acceptance_undone", summary: `Removed — acceptance of ${q.number} was undone`,
+      details: { source: "quote_acceptance", quoteId: q.id, quoteNumber: q.number },
+    });
+  }
+  if (result.invoiceId) {
+    void logActivity({
+      docType: "invoice", docId: result.invoiceId, docNumber: result.invoiceNumber, companyId: q.companyId,
+      action: "acceptance_undone", summary: `Removed — acceptance of ${q.number} was undone`,
+      details: { source: "quote_acceptance", quoteId: q.id, quoteNumber: q.number },
+    });
+  }
+  if (result.created.length === 0) return;
+  notify({
+    kind: "quote_auto_documents",
+    companyId: q.companyId,
+    docType: "quote",
+    docId: q.id,
+    docNumber: q.number,
+    title: `Acceptance of ${q.number} was undone — ${removed} removed`,
+    body: `Those drafts no longer exist. Quotation: ${docDeepLink("/quotations", q.id)}`,
+    href: docDeepLink("/quotations", q.id),
+    recipients: acceptanceRecipients(q),
+  });
+}
+
+/** Audit + notification when an undone acceptance is applied again. */
+export function recordAcceptanceRedone(o: { quote: Quote; result: AcceptanceResult }) {
+  const { quote: q, result } = o;
+  void logActivity({
+    docType: "quote", docId: q.id, docNumber: q.number, companyId: q.companyId,
+    action: "acceptance_redone",
+    summary: result.created.length ? `Acceptance re-applied — ${docList(result)} re-created` : "Acceptance re-applied",
+    details: {
+      source: "quote_acceptance",
+      poId: result.poId, poNumber: result.poNumber,
+      invoiceId: result.invoiceId, invoiceNumber: result.invoiceNumber,
+    },
+  });
+  if (result.created.length === 0) return;
+  notify({
+    kind: "quote_auto_documents",
+    companyId: q.companyId,
+    docType: "invoice",
+    docId: result.invoiceId ?? q.id,
+    docNumber: result.invoiceNumber ?? q.number,
+    title: `${q.number} accepted again — ${docList(result)} re-created`,
+    body: `Invoice: ${docDeepLink("/invoices", result.invoiceId)} · Quotation: ${docDeepLink("/quotations", q.id)}`,
+    href: docDeepLink("/invoices", result.invoiceId),
+    recipients: acceptanceRecipients(q),
+  });
 }
