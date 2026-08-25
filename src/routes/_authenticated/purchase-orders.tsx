@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { PoNextStepHint } from "@/components/next-step-hint";
 import { focusSearch, useFocusRow } from "@/hooks/use-focus-row";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
@@ -207,6 +208,7 @@ function Body() {
       }
 
     >
+      <PoNextStepHint po={selected} />
       <DetailSection>
         <DetailField
           label="Status"
