@@ -7,14 +7,14 @@ import {
   type TeamMember,
 } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
-import { useEffect, useMemo, useState } from "react";
-import { DataToolbar } from "@/components/data-toolbar";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
+import { EmptyState } from "@/components/crud-toolbar";
 import { Avatar, AvatarUpload } from "@/components/avatar-upload";
 import { Pencil, Trash2, Users, ShieldCheck } from "lucide-react";
 import { useSalesRoleSync } from "@/lib/use-sales-role-sync";
@@ -22,8 +22,22 @@ import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightS
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCompany } from "@/lib/company-context";
 import { useEffectiveRole } from "@/lib/use-effective-role";
+import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
+import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
+import { DetailField, DetailPanel, DetailSection } from "@/components/master-detail";
+import { ProjectsStylePageShell, ProjectsStyleToolbarGroup, RecordCountChip } from "@/components/projects-style-page-shell";
 
 export const Route = createFileRoute("/_authenticated/team")({ component: TeamPage });
+
+const TEAM_COLUMNS: ColumnDef[] = [
+  { key: "lastName", label: "Last name" },
+  { key: "email", label: "Email" },
+  { key: "phone", label: "Phone", priority: "optional" },
+  { key: "jobTitle", label: "Job" },
+  { key: "department", label: "Department", priority: "optional" },
+  { key: "company", label: "Company" },
+  { key: "salesRole", label: "Sales", priority: "optional" },
+];
 
 function TeamPage() {
   const allTeam = useTeamMembers();
@@ -39,6 +53,7 @@ function TeamPage() {
   useSalesRoleSync();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<TeamMember | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const openCreate = () => { setEditing(null); setOpen(true); };
 
   const salesByTm = new Map(sales.map((s) => [s.teamMemberId, s]));
@@ -73,84 +88,102 @@ function TeamPage() {
   const groups = view.apply(team);
   const total = groups.reduce((n, g) => n + g.items.length, 0);
   const grouped = !!view.state.group;
+  const cp = useColumnPrefs("team", TEAM_COLUMNS);
+  const colCount = 2 + TEAM_COLUMNS.filter((c) => cp.on(c.key)).length;
+  const selected = selectedId ? groups.flatMap((g) => g.items).find((m) => m.id === selectedId) ?? null : null;
+  const selectedSales = selected ? salesByTm.get(selected.id) : undefined;
+  const detail = selected ? (
+    <DetailPanel
+      eyebrow={companyLabel(selected.companyId)}
+      title={selected.name}
+      subtitle={selected.jobTitle ?? selected.department}
+      onClose={() => setSelectedId(null)}
+      actions={isAdmin ? (
+        <>
+          <Button size="sm" onClick={() => { setEditing(selected); setOpen(true); }} className="gap-1.5"><Pencil className="h-4 w-4" /> Edit</Button>
+          <Button size="sm" variant="outline" onClick={() => remove(selected)} className="gap-1.5"><Trash2 className="h-4 w-4" /> Remove</Button>
+        </>
+      ) : undefined}
+    >
+      <DetailSection title="Contact">
+        <DetailField label="Email" value={selected.email} />
+        <DetailField label="Phone" value={selected.phone} mono />
+        <DetailField label="App user" value={selected.userId ? "Linked" : "Not linked"} />
+      </DetailSection>
+      <DetailSection title="Organization">
+        <DetailField label="Company" value={companyLabel(selected.companyId)} />
+        <DetailField label="Department" value={selected.department} />
+        <DetailField label="Sales role" value={selectedSales?.role ?? "—"} />
+      </DetailSection>
+    </DetailPanel>
+  ) : null;
 
   const renderRow = (m: TeamMember) => {
     const s = salesByTm.get(m.id);
     return (
-      <div key={m.id} className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated/60 transition group">
-        <div className="col-span-2 flex items-center gap-2.5 min-w-0">
-          <Avatar src={m.avatarUrl} name={m.name} size={28} />
-          <div className="text-sm font-medium truncate">{m.firstName || m.name}</div>
-        </div>
-        <div className="col-span-2 text-sm truncate">{m.lastName || "-"}</div>
-        <div className="col-span-2 text-xs text-muted-foreground truncate flex items-center gap-1.5">
-          <span className="truncate">{m.email || "-"}</span>
-          {m.userId && (
-            <span title="Linked app user account" className="shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-              <ShieldCheck className="h-2.5 w-2.5" /> App user
-            </span>
-          )}
-        </div>
-        <div className="col-span-2 text-xs text-muted-foreground truncate font-tnum">{m.phone || "-"}</div>
-        <div className="col-span-1 text-xs text-muted-foreground truncate">{m.jobTitle || "-"}</div>
-        <div className="col-span-1 text-xs truncate">
-          {m.companyId === undefined ? (
-            <span className="text-[10px] text-muted-foreground">All</span>
-          ) : m.companyId === null ? (
-            <span className="text-[10px] text-muted-foreground">None</span>
-          ) : (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/10 text-accent-foreground border border-border">
-              {companyLabel(m.companyId)}
-            </span>
-          )}
-        </div>
-
-        <div className="col-span-1">
-          {s ? (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 inline-flex items-center gap-1">
-              <Users className="h-2.5 w-2.5" /> {s.role}
-            </span>
-          ) : (
-            <span className="text-[10px] text-muted-foreground">-</span>
-          )}
-        </div>
-        <div className="col-span-1 flex justify-end gap-0.5 opacity-0 group-hover:opacity-100">
+      <tr key={m.id} onClick={() => setSelectedId(m.id)} className="group hover-row border-b border-border/40 last:border-0">
+        <ListRowActions>
           {isAdmin && (
             <>
-              <button onClick={() => { setEditing(m); setOpen(true); }} aria-label={`Edit ${m.name}`} className="h-7 w-7 grid place-items-center rounded hover:bg-surface text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-              <button onClick={() => remove(m)} aria-label={`Remove ${m.name}`} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+              <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label={`Edit ${m.name}`} onClick={() => { setEditing(m); setOpen(true); }} />
+              <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label={`Remove ${m.name}`} tone="danger" onClick={() => remove(m)} />
             </>
           )}
-        </div>
-      </div>
+        </ListRowActions>
+        <ListTd title={m.name}>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Avatar src={m.avatarUrl} name={m.name} size={24} />
+            <div className="min-w-0">
+              <div className="truncate text-sm font-medium">{m.firstName || m.name}</div>
+              {m.userId && <div className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-primary"><ShieldCheck className="h-2.5 w-2.5" /> App user</div>}
+            </div>
+          </div>
+        </ListTd>
+        {cp.on("lastName") && <ListTd title={m.lastName}>{m.lastName || "—"}</ListTd>}
+        {cp.on("email") && <ListTd className="text-xs text-muted-foreground" title={m.email}>{m.email || "—"}</ListTd>}
+        {cp.on("phone") && <ListTd className="text-xs text-muted-foreground font-tnum" title={m.phone}>{m.phone || "—"}</ListTd>}
+        {cp.on("jobTitle") && <ListTd className="text-xs" title={m.jobTitle}>{m.jobTitle || "—"}</ListTd>}
+        {cp.on("department") && <ListTd className="text-xs text-muted-foreground" title={m.department}>{m.department || "—"}</ListTd>}
+        {cp.on("company") && <ListTd title={companyLabel(m.companyId)}><CompanyChip value={companyLabel(m.companyId)} /></ListTd>}
+        {cp.on("salesRole") && (
+          <ListTd>
+            {s ? <span className="inline-flex items-center gap-1 rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary"><Users className="h-2.5 w-2.5" /> {s.role}</span> : <span className="text-muted-foreground">—</span>}
+          </ListTd>
+        )}
+      </tr>
     );
   };
 
-  const header = (
-    <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
-      <div className="col-span-2">First name</div>
-      <div className="col-span-2">Last name</div>
-      <div className="col-span-2">Email</div>
-      <div className="col-span-2">Phone</div>
-      <div className="col-span-1">Job</div>
-      <div className="col-span-1">Company</div>
-      <div className="col-span-1">Sales</div>
-      <div className="col-span-1 text-right">.</div>
-    </div>
-  );
+  const header = <>
+    <ListActionsTh width="3.25rem" />
+    <ListTh width="16%">First name</ListTh>
+    {cp.on("lastName") && <ListTh width="13%">Last name</ListTh>}
+    {cp.on("email") && <ListTh width="20%">Email</ListTh>}
+    {cp.on("phone") && <ListTh width="12%">Phone</ListTh>}
+    {cp.on("jobTitle") && <ListTh width="13%">Job</ListTh>}
+    {cp.on("department") && <ListTh width="11%">Department</ListTh>}
+    {cp.on("company") && <ListTh width="10%">Company</ListTh>}
+    {cp.on("salesRole") && <ListTh width="9%">Sales</ListTh>}
+  </>;
 
   return (
     <AppShell>
       <PageHeader title="Team" description="Everyone in the organization - the source of truth for people." />
-      <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          {isAdmin ? (
-            <CrudToolbar createLabel="New team member" count={total} label="people" onCreate={openCreate} />
-          ) : (
-            <div className="text-xs text-muted-foreground font-tnum">{total} people</div>
-          )}
-          <DataToolbar view={view} items={team} />
-        </div>
+      <ProjectsStylePageShell
+        detail={detail}
+        toolbar={(
+          <>
+            <ProjectsStyleToolbarGroup>
+              {isAdmin && <Button size="sm" onClick={openCreate} className="btn-new gap-1.5"><Users className="h-4 w-4" /> New team member</Button>}
+              <RecordCountChip count={total} total={team.length} label="people" filtered={total !== team.length} />
+            </ProjectsStyleToolbarGroup>
+            <ProjectsStyleToolbarGroup>
+              <DataToolbar view={view} items={team} iconOnly />
+              <ColumnPicker prefs={cp} iconOnly />
+            </ProjectsStyleToolbarGroup>
+          </>
+        )}
+      >
         {team.length === 0 ? (
           isAdmin ? (
             <EmptyState label="team members" onCreate={openCreate} />
@@ -164,29 +197,36 @@ function TeamPage() {
             No people match the current filters.
           </div>
         ) : grouped ? (
-          <div className="space-y-4">
+          <ListTableShell>
+            <ListTable>
+              <thead><ListHeadRow>{header}</ListHeadRow></thead>
+              <tbody>
             {groups.map((g) => (
-              <div key={g.key} className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-2 bg-primary/5 border-b border-border">
-                  <div className="text-xs font-medium">{g.label}</div>
-                  <div className="text-[11px] text-muted-foreground font-tnum">{g.items.length}</div>
-                </div>
-                {header}
+              <Fragment key={g.key}>
+                <GroupHeaderRow label={g.label} count={g.items.length} colSpan={colCount} />
                 {g.items.map(renderRow)}
-              </div>
+              </Fragment>
             ))}
-          </div>
+              </tbody>
+            </ListTable>
+          </ListTableShell>
         ) : (
-          <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-            {header}
-            {groups[0].items.map(renderRow)}
-          </div>
+          <ListTableShell>
+            <ListTable>
+              <thead><ListHeadRow>{header}</ListHeadRow></thead>
+              <tbody>{groups[0].items.map(renderRow)}</tbody>
+            </ListTable>
+          </ListTableShell>
         )}
-      </div>
+      </ProjectsStylePageShell>
 
       {isAdmin && <TeamDialog open={open} onOpenChange={setOpen} editing={editing} />}
     </AppShell>
   );
+}
+
+function CompanyChip({ value }: { value: string }) {
+  return <span className="inline-flex max-w-full items-center rounded border border-border bg-surface px-1.5 py-0.5 text-[10px] text-muted-foreground"><span className="truncate">{value}</span></span>;
 }
 
 function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: TeamMember | null }) {

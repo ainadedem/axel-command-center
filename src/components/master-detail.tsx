@@ -30,7 +30,7 @@ export function MasterDetail({
           {/* Desktop: sticky side panel */}
           <aside
             aria-label="Selected record"
-            className="hidden lg:block w-[22rem] xl:w-[25rem] shrink-0 sticky top-4 max-h-[calc(100dvh-7rem)] overflow-y-auto rise-in"
+            className="hidden lg:block w-[20rem] xl:w-[22rem] shrink-0 sticky top-3 max-h-[calc(100dvh-5rem)] overflow-y-auto rise-in"
           >
             {detail}
           </aside>
@@ -63,7 +63,7 @@ export function DetailPanel({
   children?: ReactNode;
 }) {
   return (
-    <div className="panel p-5 sm:p-6 space-y-5">
+    <div className="panel p-4 space-y-3">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
         <div className="min-w-0">
           {eyebrow && (
@@ -101,7 +101,7 @@ export function DetailField({
   mono?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-[8rem_minmax(0,1fr)] gap-3 py-1.5 text-sm">
+    <div className="grid grid-cols-[6.75rem_minmax(0,1fr)] gap-2 py-1 text-xs">
       <div className="text-muted-foreground truncate">{label}</div>
       <div className={cn("min-w-0 break-words", mono && "font-tnum")}>{value ?? "—"}</div>
     </div>
@@ -111,7 +111,7 @@ export function DetailField({
 /** Groups fields with a soft divider between blocks. */
 export function DetailSection({ title, children }: { title?: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl bg-[var(--surface-container)]/60 px-4 py-3">
+    <section className="rounded-lg bg-[var(--surface-container)]/60 px-3 py-2">
       {title && (
         <h3 className="text-[11px] tracking-[0.06em] text-muted-foreground mb-1">{title}</h3>
       )}

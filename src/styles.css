@@ -77,7 +77,7 @@
 
 :root {
   /* Calm canvas: 16px default corner so panels land on ~24px (radius-2xl) */
-  --radius: 1rem;
+  --radius: 0.625rem;
 
   /* Near-white canvas — content floats above it */
   --background: #F7F9FC;
@@ -242,8 +242,8 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    font-size: 0.9375rem;
-    line-height: 1.6;
+    font-size: 0.875rem;
+    line-height: 1.45;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -1211,6 +1211,107 @@ td:has(> span > .status-chip) {
   overflow: visible;
 }
 
+
+
+/* ---------------------------------------------------------------------------
+   Projects-style dense workspace shell. Notion-like: table first, calm lines,
+   one toolbar grammar across entity modules.
+   --------------------------------------------------------------------------- */
+.projects-style-page {
+  padding: 0.5rem 1rem 2rem;
+}
+.projects-style-page-unpadded {
+  padding: 0;
+}
+.projects-style-stack {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.projects-style-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: center;
+  border-block: 1px solid var(--border);
+  background: color-mix(in oklab, var(--background) 90%, var(--surface));
+  padding-block: 0.5rem;
+}
+.projects-style-toolbar-group {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+.projects-style-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+@media (min-width: 640px) {
+  .projects-style-page {
+    padding-inline: 1.25rem;
+  }
+  .projects-style-toolbar {
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  }
+  .projects-style-toolbar-group:last-child {
+    justify-content: flex-end;
+  }
+}
+@media (min-width: 1024px) {
+  .projects-style-page {
+    padding-inline: 1.5rem;
+  }
+  .projects-style-kpis {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+.projects-style-toolbar .btn-new,
+:root[data-density="compact"] .btn-new {
+  height: 2rem;
+  border-radius: 0.5rem;
+  padding-inline: 0.75rem;
+}
+.projects-style-toolbar :is(button, [role="button"]) {
+  border-radius: 0.5rem;
+}
+.projects-style-toolbar .pill-field {
+  height: 2rem;
+  border-radius: 0.5rem;
+}
+.projects-style-toolbar [class*="rounded-full"] {
+  border-radius: 0.5rem;
+}
+.projects-style-page .panel {
+  border-radius: 8px;
+  box-shadow: none;
+  border: 1px solid var(--border);
+}
+.projects-style-page .panel > .stacked-table {
+  padding: 0;
+}
+.projects-style-page .panel table thead tr {
+  background: var(--surface-container);
+}
+.projects-style-page .panel table tbody > tr > td {
+  height: 2rem;
+}
+.projects-style-page .kpi-value,
+.projects-style-kpis .text-metric {
+  font-size: 1.125rem;
+  line-height: 1.2;
+}
+.filter-sticky.projects-style-toolbar,
+.projects-style-toolbar.filter-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  backdrop-filter: saturate(180%) blur(8px);
+}
+
 /* ---------------------------------------------------------------
    Numeric stability, app-wide. Every figure — table cells, KPI
    values, chart axes and inputs — uses tabular digits so amounts
@@ -1249,7 +1350,7 @@ input[type="number"] {
 /* The floating panel surface: large radius, no hard border, soft lift. */
 @utility panel {
   background: var(--surface);
-  border-radius: 24px;
+  border-radius: 10px;
   border: 0;
   box-shadow: 0 1px 2px color-mix(in oklab, var(--foreground) 5%, transparent),
               0 8px 24px -18px color-mix(in oklab, var(--foreground) 32%, transparent);
@@ -1400,7 +1501,7 @@ input[type="number"] {
     }
   }
   & .panel {
-    border-radius: 18px;
+    border-radius: 8px;
   }
 
   /* Tables: shorter rows, quieter separators */
