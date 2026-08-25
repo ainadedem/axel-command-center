@@ -29,6 +29,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
+import { MasterDetail, DetailPanel, DetailSection, DetailField } from "@/components/master-detail";
 
 const ACCOUNT_COLUMNS: ColumnDef[] = [
   { key: "account", label: "Account", priority: "always" },
