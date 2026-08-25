@@ -29,8 +29,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, Upload, FileText, X, History, RefreshCw, Eye, AlertTriangle, ListFilter, FileCheck2, FileX2 } from "lucide-react";
+import { EmptyState } from "@/components/crud-toolbar";
+import { Pencil, Trash2, Upload, FileText, X, History, RefreshCw, Eye, AlertTriangle, FileCheck2, FileX2, Plus } from "lucide-react";
 import { StatusFilterBar } from "@/components/status-filter-bar";
 import { FilterPresetBar } from "@/components/filter-presets";
 import { useFilterPresets } from "@/lib/filter-presets";
@@ -40,7 +40,8 @@ import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightS
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
 import { withSelected } from "@/lib/select-options";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
-import { MasterDetail, DetailPanel, DetailSection, DetailField } from "@/components/master-detail";
+import { DetailPanel, DetailSection, DetailField } from "@/components/master-detail";
+import { ProjectsStylePageShell, ProjectsStyleToolbarGroup, RecordCountChip } from "@/components/projects-style-page-shell";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 
 const PO_COLUMNS: ColumnDef[] = [
@@ -223,18 +224,19 @@ function Body() {
   ) : null;
 
   return (
-    <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <CrudToolbar createLabel="New PO" count={list.length} label="purchase orders" onCreate={openCreate} />
-        <div className="flex min-w-0 flex-1 items-center gap-1.5 justify-end">
-          <span
-            title={`${list.length} of ${baseList.length} purchase order${baseList.length !== 1 ? "s" : ""}${filtersActive ? " · filtered" : ""}`}
-            aria-label={`${list.length} of ${baseList.length} purchase orders`}
-            className="inline-flex shrink-0 items-center gap-1.5 h-8 px-2 rounded-full border border-border bg-surface text-xs text-muted-foreground font-tnum whitespace-nowrap"
-          >
-            <ListFilter className="h-4 w-4" />
-            <span>{list.length}/{baseList.length}</span>
-          </span>
+    <>
+      <ProjectsStylePageShell
+        detail={detail}
+        toolbar={
+          <>
+            <ProjectsStyleToolbarGroup>
+              <Button size="sm" onClick={openCreate} className="btn-new gap-1.5 shrink-0" aria-label="New PO" title="New PO">
+                <Plus className="h-4 w-4" />
+                {!isMobile && "New PO"}
+              </Button>
+              <RecordCountChip count={list.length} total={baseList.length} label="purchase orders" filtered={filtersActive} />
+            </ProjectsStyleToolbarGroup>
+            <ProjectsStyleToolbarGroup className="overflow-x-auto no-scrollbar sm:justify-end">
           <DataToolbar view={view} items={baseList} iconOnly className="shrink-0 flex-nowrap" />
           <FilterPresetBar
             api={presets}
@@ -262,24 +264,26 @@ function Body() {
             forceOverflowAll={isMobile}
           />
           {filtersActive && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               onClick={clearAllFilters}
               title="Clear all"
               aria-label="Clear all filters"
-              className="inline-flex shrink-0 items-center justify-center h-8 w-8 rounded-full bg-surface text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+              className="h-8 w-8 shrink-0"
             >
               <X className="h-4 w-4" />
-            </button>
+            </Button>
           )}
           <ColumnPicker prefs={cp} />
-        </div>
-
-      </div>
+            </ProjectsStyleToolbarGroup>
+          </>
+        }
+      >
       {list.length === 0 ? (
         <EmptyState label="purchase orders" onCreate={openCreate} />
       ) : (
-        <MasterDetail detail={detail}>
         <ListTableShell>
           <ListTable>
             <thead>
@@ -363,9 +367,9 @@ function Body() {
             </tbody>
           </ListTable>
         </ListTableShell>
-        </MasterDetail>
 
       )}
+      </ProjectsStylePageShell>
       <PODialog open={open} onOpenChange={setOpen} editing={editing} />
       <DocumentActivityPanel
         open={!!historyOf}
@@ -374,7 +378,7 @@ function Body() {
         docId={historyOf?.id}
         docNumber={historyOf?.number}
       />
-    </div>
+    </>
   );
 }
 

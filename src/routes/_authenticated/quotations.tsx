@@ -697,6 +697,7 @@ function Body() {
         audit={previewing ? { docType: "quote", docId: previewing.id, companyId: previewing.companyId } : undefined}
       />
       </ProjectsStylePageShell>
+    </>
   );
 }
 

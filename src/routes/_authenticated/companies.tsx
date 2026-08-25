@@ -12,8 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, ChevronRight } from "lucide-react";
+import { EmptyState } from "@/components/crud-toolbar";
+import { Pencil, Trash2, ChevronRight, Plus } from "lucide-react";
 import { markCompanyDocumentsDirty } from "@/lib/stamp-refresh";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +31,8 @@ import { useDataView, type FieldDef } from "@/hooks/use-data-view";
 import { DataToolbar, GroupHeaderRow } from "@/components/data-toolbar";
 import { KpiCard } from "@/components/kpi-card";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
-import { MasterDetail, DetailPanel, DetailSection, DetailField } from "@/components/master-detail";
+import { DetailPanel, DetailSection, DetailField } from "@/components/master-detail";
+import { ProjectsStylePageShell, ProjectsStyleToolbarGroup, RecordCountChip } from "@/components/projects-style-page-shell";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 
 
@@ -223,29 +224,38 @@ function CompaniesPage() {
   return (
     <AppShell>
       <PageHeader title="Companies" description="Group entities under your control." />
-      <div className="p-5 sm:p-10 lg:p-12">
-        <MasterDetail detail={detail}>
-          <div className="space-y-5">
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <CrudToolbar createLabel="New company" count={list.length} label="companies" onCreate={openCreate} />
-              <div className="flex items-center gap-2 flex-wrap">
-                <ColumnPicker prefs={cp} />
-                <DataToolbar view={view} items={companies} />
-              </div>
-            </div>
+      <ProjectsStylePageShell
+        detail={detail}
+        kpis={
+          <>
+            {!salesOnly && <KpiCard label="Cash" value={fmtCompact(kpi.cash, "MGA")} />}
+            <KpiCard label={`Income${yours}`} value={fmtCompact(kpi.income, "MGA")} tone="success" />
+            <KpiCard label={`Spend${yours}`} value={fmtCompact(kpi.spend, "MGA")} tone="danger" />
+            <KpiCard label={`Net${yours}`} value={fmtCompact(kpi.net, "MGA")} tone={kpi.net >= 0 ? "success" : "danger"} />
+            <KpiCard label="Entities" value={String(kpi.count)} />
+          </>
+        }
+        toolbar={
+          <>
+            <ProjectsStyleToolbarGroup>
+              <Button size="sm" onClick={openCreate} className="btn-new gap-1.5 shrink-0" aria-label="New company" title="New company">
+                <Plus className="h-4 w-4" />
+                New company
+              </Button>
+              <RecordCountChip count={list.length} label="companies" />
+            </ProjectsStyleToolbarGroup>
+            <ProjectsStyleToolbarGroup>
+              <ColumnPicker prefs={cp} />
+              <DataToolbar view={view} items={companies} />
+            </ProjectsStyleToolbarGroup>
+          </>
+        }
+      >
 
             {list.length === 0 ? (
               <EmptyState label="companies" onCreate={openCreate} />
             ) : (
               <>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                  {!salesOnly && <KpiCard label="Cash" value={fmtCompact(kpi.cash, "MGA")} />}
-                  <KpiCard label={`Income${yours}`} value={fmtCompact(kpi.income, "MGA")} tone="success" />
-                  <KpiCard label={`Spend${yours}`} value={fmtCompact(kpi.spend, "MGA")} tone="danger" />
-                  <KpiCard label={`Net${yours}`} value={fmtCompact(kpi.net, "MGA")} tone={kpi.net >= 0 ? "success" : "danger"} />
-                  <KpiCard label="Entities" value={String(kpi.count)} />
-                </div>
-
                 <ListTableShell>
                   <ListTable>
                     <thead>
@@ -311,9 +321,7 @@ function CompaniesPage() {
                 </ListTableShell>
               </>
             )}
-          </div>
-        </MasterDetail>
-      </div>
+      </ProjectsStylePageShell>
       <CompanyDialog open={open} onOpenChange={setOpen} editing={editing} />
     </AppShell>
   );
