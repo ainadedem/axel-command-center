@@ -690,3 +690,50 @@ function AddUserDialog({
     </Dialog>
   );
 }
+
+/**
+ * Shows whether an app user is linked to a team member record, and offers a
+ * one-click link (same email) or "add to team" when it is not.
+ */
+function TeamLink({ userId, email, displayName }: { userId: string; email: string | null; displayName: string | null }) {
+  const team = useTeamMembers();
+  const linked = team.find((m) => m.userId === userId);
+  const byEmail = !linked && email
+    ? team.find((m) => (m.email ?? "").toLowerCase() === email.toLowerCase())
+    : undefined;
+
+  if (linked) {
+    return (
+      <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-primary">
+        <ShieldCheck className="h-2.5 w-2.5" /> Team: {linked.name}
+      </span>
+    );
+  }
+  const link = () => {
+    if (byEmail) {
+      teamMembersStore.update(byEmail.id, { userId });
+      toast.success(`Linked to ${byEmail.name}`);
+      return;
+    }
+    const name = displayName || email || "New member";
+    const [first, ...rest] = name.trim().split(/\s+/);
+    teamMembersStore.add({
+      id: newId("tm"),
+      name,
+      firstName: first,
+      lastName: rest.join(" ") || undefined,
+      email: email ?? undefined,
+      userId,
+    });
+    toast.success(`${name} added to the team`);
+  };
+  return (
+    <button
+      type="button"
+      onClick={link}
+      className="mt-0.5 text-[10px] text-muted-foreground underline-offset-2 hover:text-primary hover:underline"
+    >
+      {byEmail ? `Link to team member ${byEmail.name}` : "Add to team"}
+    </button>
+  );
+}
