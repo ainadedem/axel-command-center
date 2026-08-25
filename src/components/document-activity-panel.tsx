@@ -42,6 +42,9 @@ const TITLES: Record<ActivityAction, string> = {
   payment_unlinked: "Payment link removed",
   payment_reviewed: "Payment reviewed",
   comment: "Comment",
+  accepted: "Accepted by client",
+  acceptance_undone: "Acceptance undone",
+  acceptance_redone: "Acceptance re-applied",
 };
 
 
