@@ -129,6 +129,20 @@ export const acceptedNotInvoiced = (quotes: Quote[], invoices: Invoice[]) =>
 // Store writes
 // ---------------------------------------------------------------------------
 
+/** What one acceptance produced — everything the audit trail and Undo need. */
+export interface AcceptanceResult {
+  poId?: string;
+  invoiceId?: string;
+  /** Human labels, e.g. ["PO PO-2026-004", "Invoice INV-2026-011"]. */
+  created: string[];
+  poNumber?: string;
+  invoiceNumber?: string;
+  /** True when an existing PO was reused instead of creating a new one. */
+  reusedPo: boolean;
+  /** Payment terms (days) used for the generated invoice. */
+  termsDays: number;
+}
+
 /**
  * Creates the requested documents from an accepted quotation and links them
  * back to it. Returns the ids so callers can offer an Undo.
@@ -142,10 +156,13 @@ export function createFromAcceptedQuote(o: {
   invoiceNumber?: string;
   existingPoId?: string;
   userId?: string;
-}): { poId?: string; invoiceId?: string; created: string[] } {
+}): AcceptanceResult {
   const created: string[] = [];
   let poId = o.existingPoId;
   let invoiceId: string | undefined;
+  let poNumber: string | undefined;
+  let invoiceNumber: string | undefined;
+  const termsDays = acceptTermsDays(o.client, o.quote.currency);
 
   if (o.makePo) {
     const po = buildPoFromQuote({
@@ -154,10 +171,12 @@ export function createFromAcceptedQuote(o: {
     });
     purchaseOrdersStore.add(po);
     poId = po.id;
+    poNumber = po.number;
     created.push(`PO ${po.number}`);
     void logActivity({
       docType: "po", docId: po.id, docNumber: po.number, companyId: po.companyId,
-      action: "created", summary: `Created from accepted quotation ${o.quote.number}`,
+      action: "created", summary: `Created automatically from accepted quotation ${o.quote.number}`,
+      details: { source: "quote_acceptance", quoteId: o.quote.id, quoteNumber: o.quote.number, amount: po.amount, currency: po.currency },
     });
   }
 
@@ -168,10 +187,15 @@ export function createFromAcceptedQuote(o: {
     });
     invoicesStore.add(inv);
     invoiceId = inv.id;
+    invoiceNumber = inv.number;
     created.push(`Invoice ${inv.number}`);
     void logActivity({
       docType: "invoice", docId: inv.id, docNumber: inv.number, companyId: inv.companyId,
-      action: "created", summary: `Created from accepted quotation ${o.quote.number}`,
+      action: "created", summary: `Created automatically from accepted quotation ${o.quote.number}`,
+      details: {
+        source: "quote_acceptance", quoteId: o.quote.id, quoteNumber: o.quote.number,
+        poId, poNumber, termsDays, dueDate: inv.dueDate, amount: inv.amount, currency: inv.currency,
+      },
     });
   }
 
