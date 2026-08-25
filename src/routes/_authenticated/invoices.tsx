@@ -35,7 +35,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ListEmptyState, ListNoMatchState, ListErrorState } from "@/components/list-state";
 import { useCreateAction } from "@/lib/create-action";
-import { Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, Ban, BadgeCheck, ToggleLeft, ToggleRight, Plus, X, ListFilter } from "lucide-react";
+import { Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, Ban, BadgeCheck, ToggleLeft, ToggleRight, Plus, X } from "lucide-react";
 import { InvoicePreview } from "@/components/invoice-preview";
 import { MarkPaidDialog } from "@/components/mark-paid-dialog";
 import { useStatusDiff, planStatusChange, commitStatusChange, type InvoiceStatus } from "@/lib/invoice-status";
@@ -81,7 +81,8 @@ import { PaymentMatchDialog } from "@/components/payment-match-dialog";
 import { verificationOf, badgeState, type ProofInvoice } from "@/lib/payment-proof";
 import { OpportunitySelect } from "@/components/opportunity-select";
 import { proposeStageChange } from "@/lib/pipeline-automation";
-import { MasterDetail, DetailPanel, DetailField, DetailSection } from "@/components/master-detail";
+import { DetailPanel, DetailField, DetailSection } from "@/components/master-detail";
+import { ProjectsStylePageShell, ProjectsStyleToolbarGroup, RecordCountChip } from "@/components/projects-style-page-shell";
 import { useLineReorder, DragHandle, moveItem, ReorderLiveRegion } from "@/components/sortable-row";
 import { useFilterPresets } from "@/lib/filter-presets";
 import { FilterPresetBar } from "@/components/filter-presets";
@@ -723,9 +724,97 @@ function Body() {
   ) : null;
 
   return (
-    <div ref={pageRef} className="p-5 sm:p-10 lg:p-12">
-      <MasterDetail detail={detail}>
-      <div className="space-y-4">
+    <ProjectsStylePageShell
+      rootRef={pageRef}
+      toolbarRef={filterRef}
+      detail={detail}
+      kpis={
+        <>
+          <StatItem label="Open receivables" value={fmtAmount(totalOpen, "MGA")} />
+          <StatItem label="Overdue" value={fmtAmount(totalOverdue, "MGA")} tone={totalOverdue > 0 ? "danger" : "default"} />
+          <StatItem label="Collected (period)" value={fmtAmount(totalPaid, "MGA")} tone="success" />
+        </>
+      }
+      toolbar={
+        <>
+          <ProjectsStyleToolbarGroup>
+            <Button
+              size="sm"
+              onClick={openCreate}
+              className="btn-new gap-1.5 shrink-0"
+              aria-label="New invoice"
+              title="New invoice"
+            >
+              <Plus className="h-4 w-4" />
+              {!isMobile && "New invoice"}
+            </Button>
+            <RecordCountChip count={list.length} total={baseList.length} label="invoices" filtered={filtersActive} />
+          </ProjectsStyleToolbarGroup>
+          <ProjectsStyleToolbarGroup className="overflow-x-auto no-scrollbar sm:justify-end">
+            <DataToolbar view={view} items={baseList} iconOnly className="shrink-0 flex-nowrap" />
+            <FilterPresetBar
+              api={presets}
+              statuses={chipStatuses}
+              po={chipPo}
+              onApply={(p) => { setChipStatuses(p.statuses); setChipPo(p.po as PoState[]); }}
+              iconOnly
+            />
+            <StatusFilterBar
+              statuses={INVOICE_STATUSES}
+              selected={chipStatuses}
+              statusCount={(s) => baseList.filter((i) => i.status === s).length}
+              onToggleStatus={(s) =>
+                setChipStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))
+              }
+              poSelected={chipPo}
+              poCount={(s) => baseList.filter((i) => poStateOf(i) === s).length}
+              onTogglePo={(s) => setChipPo((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))}
+              onClear={() => { setChipStatuses([]); setChipPo([]); }}
+              iconOnly
+              overflow
+              forceOverflowAll={isMobile}
+            />
+            {filtersActive && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={clearAllFilters}
+                title="Clear all"
+                aria-label="Clear all filters"
+                className="h-8 w-8 shrink-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+            <TableExportMenu
+              filename="invoices"
+              title="Invoices"
+              subtitle={`${list.length} row${list.length !== 1 ? "s" : ""}`}
+              build={() => ({
+                columns: tp.visible.map((c) => ({ key: c.key, label: c.label, width: tp.width(c.key), align: ALIGN[c.key] ?? "left" })),
+                rows: list.map((inv) => Object.fromEntries(tp.visible.map((c) => [c.key, exportValue(c.key, inv)]))),
+              })}
+              iconOnly
+            />
+            <LayoutToggle value={layout} onChange={setLayout} />
+            {layout === "list" && <ColumnPicker prefs={tp} onResetWidths={tp.resetWidths} onResetOrder={tp.resetOrder} iconOnly />}
+            <ReconcileButton checks={checks} iconOnly />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={toggleMode}
+              title={numMode === "compact" ? "Switch to full numbers" : "Switch to compact numbers"}
+              aria-label={numMode === "compact" ? "Switch to full numbers" : "Switch to compact numbers"}
+              className="h-8 w-8 shrink-0"
+            >
+              {numMode === "compact" ? <ToggleLeft className="h-4 w-4" /> : <ToggleRight className="h-4 w-4" />}
+            </Button>
+          </ProjectsStyleToolbarGroup>
+        </>
+      }
+    >
 
       {bootstrapError ? (
         <ListErrorState label="invoices" message={bootstrapError} onRetry={retryBootstrap} />
@@ -742,12 +831,6 @@ function Body() {
       ) : (
 
         <>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5 px-1">
-            <StatItem label="Open receivables" value={fmtAmount(totalOpen, "MGA")} />
-            <StatItem label="Overdue" value={fmtAmount(totalOverdue, "MGA")} tone={totalOverdue > 0 ? "danger" : "default"} />
-            <StatItem label="Collected (period)" value={fmtAmount(totalPaid, "MGA")} tone="success" />
-          </div>
-
           <AgingPanel
             aging={aging}
             selected={bucket}
@@ -779,92 +862,6 @@ function Body() {
             onDrawerBucketChange={setDrawerBucket}
             onJump={(item) => jumpTo(item.id, bucket)}
           />
-
-          {/* Unified table toolbar — sticky, never wraps: chips overflow into a menu */}
-          <div
-            ref={filterRef}
-            className="sticky top-0 z-30 rounded-2xl border border-border bg-card/95 backdrop-blur-sm shadow-[var(--shadow-card)] p-2.5"
-          >
-            <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto no-scrollbar">
-              <span
-                title={`${list.length} of ${baseList.length} invoice${baseList.length !== 1 ? "s" : ""}${filtersActive ? " · filtered" : ""}`}
-                aria-label={`${list.length} of ${baseList.length} invoices`}
-                className="inline-flex shrink-0 items-center gap-1.5 h-8 px-2 rounded-full border border-border bg-surface text-xs text-muted-foreground font-tnum whitespace-nowrap"
-              >
-                <ListFilter className="h-4 w-4" />
-                <span>{list.length}/{baseList.length}</span>
-              </span>
-              <DataToolbar view={view} items={baseList} iconOnly className="shrink-0 flex-nowrap" />
-              <FilterPresetBar
-                api={presets}
-                statuses={chipStatuses}
-                po={chipPo}
-                onApply={(p) => { setChipStatuses(p.statuses); setChipPo(p.po as PoState[]); }}
-                iconOnly
-              />
-              <StatusFilterBar
-                statuses={INVOICE_STATUSES}
-                selected={chipStatuses}
-                statusCount={(s) => baseList.filter((i) => i.status === s).length}
-                onToggleStatus={(s) =>
-                  setChipStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))
-                }
-                poSelected={chipPo}
-                poCount={(s) => baseList.filter((i) => poStateOf(i) === s).length}
-                onTogglePo={(s) => setChipPo((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))}
-                onClear={() => { setChipStatuses([]); setChipPo([]); }}
-                iconOnly
-                overflow
-                forceOverflowAll={isMobile}
-              />
-              {filtersActive && (
-                <button
-                  type="button"
-                  onClick={clearAllFilters}
-                  title="Clear all"
-                  aria-label="Clear all filters"
-                  className="inline-flex shrink-0 items-center justify-center h-8 w-8 rounded-full bg-surface text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-              <div className="ml-auto shrink-0 flex items-center gap-1 rounded-full bg-[var(--surface-container)]/70 p-1">
-                <TableExportMenu
-                  filename="invoices"
-                  title="Invoices"
-                  subtitle={`${list.length} row${list.length !== 1 ? "s" : ""}`}
-                  build={() => ({
-                    columns: tp.visible.map((c) => ({ key: c.key, label: c.label, width: tp.width(c.key), align: ALIGN[c.key] ?? "left" })),
-                    rows: list.map((inv) => Object.fromEntries(tp.visible.map((c) => [c.key, exportValue(c.key, inv)]))),
-                  })}
-                  iconOnly
-                />
-                <LayoutToggle value={layout} onChange={setLayout} />
-                {layout === "list" && <ColumnPicker prefs={tp} onResetWidths={tp.resetWidths} onResetOrder={tp.resetOrder} iconOnly />}
-                <ReconcileButton checks={checks} iconOnly />
-                <button
-                  onClick={toggleMode}
-                  title={numMode === "compact" ? "Switch to full numbers" : "Switch to compact numbers"}
-                  aria-label={numMode === "compact" ? "Switch to full numbers" : "Switch to compact numbers"}
-                  className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-surface text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
-                >
-                  {numMode === "compact" ? <ToggleLeft className="h-4 w-4" /> : <ToggleRight className="h-4 w-4" />}
-                </button>
-              </div>
-              <span className="h-5 w-px bg-border shrink-0" aria-hidden />
-              <Button
-                size="sm"
-                onClick={openCreate}
-                className="btn-new gap-1.5 shrink-0"
-                aria-label="New invoice"
-                title="New invoice"
-              >
-                <Plus className="h-4 w-4" />
-                {!isMobile && "New invoice"}
-              </Button>
-            </div>
-          </div>
-
 
           {layout === "board" ? (
             <InvoiceBoard list={list} clients={clients} companies={companies} canWrite={isWritable} onOpen={(inv) => setSelectedId(inv.id)} onMarkPaid={(inv) => setMarking(inv)} />
@@ -947,8 +944,7 @@ function Body() {
 
         </>
       )}
-      </div>
-      </MasterDetail>
+    </ProjectsStylePageShell>
 
 
       <PaymentMatchDialog
@@ -1029,7 +1025,7 @@ function Body() {
         docNumber={historyOf?.number}
       />
       <MarkPaidDialog open={!!marking} onOpenChange={(v) => { if (!v) setMarking(null); }} invoice={marking} />
-    </div>
+    </>
   );
 }
 
