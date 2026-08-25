@@ -179,12 +179,32 @@ function Body() {
   const quotes = useQuotes();
   const pos = usePurchaseOrders();
   const sourceOf = useCallback(
-    (i: Invoice) => ({
-      quoteNumber: quotes.find((q) => q.id === i.quoteId)?.number,
-      poNumber: pos.find((p) => p.id === i.poId)?.number,
-    }),
+    (i: Invoice) => {
+      const q = resolveInvoiceQuote(i, quotes);
+      const p = resolveInvoicePo(i, pos);
+      return {
+        quoteId: q.doc?.id,
+        quoteNumber: q.doc?.number,
+        quoteSource: q.source ?? "stored",
+        quoteAmbiguous: q.ambiguous,
+        poId: p.doc?.id,
+        poNumber: p.doc?.number,
+        poSource: p.source ?? "stored",
+        poAmbiguous: p.ambiguous,
+      };
+    },
     [quotes, pos],
-  )
+  );
+  const linkCandidates = useMemo(
+    () => backfillCandidates({ invoices: baseListForLinks(invoices, scope), pos, quotes }),
+    [invoices, pos, quotes, scope],
+  );
+  const companyOfCandidate = useCallback(
+    (c: BackfillCandidate) =>
+      (c.kind === "po-quote" ? pos.find((p) => p.id === c.targetId)?.companyId : invoices.find((i) => i.id === c.targetId)?.companyId) ?? "",
+    [invoices, pos],
+  );
+
   const baseList = inScope(invoices, scope);
   const [matchOpen, setMatchOpen] = useState(false);
   const verifOf = useCallback(
