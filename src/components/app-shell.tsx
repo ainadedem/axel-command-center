@@ -387,11 +387,11 @@ function RailNav({ onExpand }: { onExpand?: () => void }) {
   );
 }
 
-const NAV_MODE_KEY = "axel.navMode";
+const NAV_MODE_KEY = "axel.navMode.v2";
 
 /** Desktop navigation: labelled sidebar by default, slim icon rail on demand. */
 function DesktopNav() {
-  const [mode, setMode] = useState<"expanded" | "rail">("rail");
+  const [mode, setMode] = useState<"expanded" | "rail">("expanded");
 
   useEffect(() => {
     try {
@@ -408,7 +408,7 @@ function DesktopNav() {
   if (mode === "rail") return <RailNav onExpand={() => change("expanded")} />;
 
   return (
-    <aside className="hidden lg:flex w-[16.5rem] shrink-0 flex-col py-1 bg-transparent">
+    <aside className="hidden lg:flex w-[15rem] shrink-0 flex-col py-1 bg-transparent">
       <SidebarInner onCollapse={() => change("rail")} />
     </aside>
   );
@@ -676,7 +676,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
 
 
   return (
-    <header className="h-20 shrink-0 border-0 bg-transparent px-3 sm:px-8 flex items-center gap-2 sm:gap-4 sticky top-0 z-30">
+    <header className="h-14 shrink-0 border-0 bg-transparent px-3 sm:px-5 flex items-center gap-2 sm:gap-3 sticky top-0 z-30">
       <button
         onClick={onOpenNav}
         aria-label="Open navigation"
@@ -736,7 +736,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
           placeholder="Search..."
           aria-label="Search transactions, invoices and clients"
           type="search"
-          className="w-full h-12 pl-12 pr-3 md:pr-14 rounded-full bg-surface border-0 text-sm text-foreground placeholder:text-muted-foreground shadow-[0_1px_2px_color-mix(in_oklab,var(--foreground)_6%,transparent),0_10px_26px_-20px_color-mix(in_oklab,var(--foreground)_40%,transparent)] transition-[background-color,box-shadow] duration-150 ease-[cubic-bezier(0.2,0,0,1)] focus:outline-none focus:shadow-[0_1px_3px_color-mix(in_oklab,var(--foreground)_10%,transparent),0_16px_36px_-20px_color-mix(in_oklab,var(--foreground)_46%,transparent)]"
+          className="w-full h-10 pl-11 pr-3 md:pr-12 rounded-lg bg-surface border border-border text-sm text-foreground placeholder:text-muted-foreground shadow-none transition-[background-color,border-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)] focus:outline-none focus:border-primary"
         />
         <kbd className="hidden md:block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
       </form>
@@ -770,7 +770,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             onClick={handleNew}
             aria-label={newLabel}
             title={newLabel}
-            className="h-12 w-12 sm:w-auto sm:px-6 focus-ring tap-target rounded-full text-sm font-medium bg-surface text-primary shadow-[0_1px_2px_color-mix(in_oklab,var(--foreground)_6%,transparent),0_10px_26px_-20px_color-mix(in_oklab,var(--foreground)_40%,transparent)] hover:shadow-[0_1px_3px_color-mix(in_oklab,var(--foreground)_10%,transparent),0_16px_36px_-20px_color-mix(in_oklab,var(--foreground)_46%,transparent)] active:scale-[0.98] transition-all duration-150 ease-[cubic-bezier(0.2,0,0,1)] flex items-center justify-center gap-2 group"
+            className="h-10 w-10 sm:w-auto sm:px-4 focus-ring tap-target rounded-lg text-sm font-medium bg-surface text-primary border border-border shadow-none hover:bg-[var(--surface-container)] active:scale-[0.98] transition-all duration-150 ease-[cubic-bezier(0.2,0,0,1)] flex items-center justify-center gap-2 group"
           >
             <Plus className="h-5 w-5 shrink-0 transition-transform duration-200 group-hover:rotate-90" />
             <span className="hidden sm:inline">{newLabel}</span>
@@ -964,7 +964,7 @@ function AppShellFrame({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar onOpenNav={() => setNavOpen(true)} />
         <main id="main-content" tabIndex={-1} className="relative flex-1 overflow-y-auto focus:outline-none">
-          <div key={pathname} className="relative rise-in mx-auto w-full max-w-[1600px]">{children}</div>
+          <div key={pathname} className="relative rise-in mx-auto w-full max-w-[1680px]">{children}</div>
         </main>
 
 
