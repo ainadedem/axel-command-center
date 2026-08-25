@@ -23,6 +23,9 @@ const ICONS: Record<ActivityAction, typeof Pencil> = {
   payment_unlinked: ShieldQuestion,
   payment_reviewed: ShieldAlert,
   comment: MessageSquare,
+  accepted: CheckCircle2,
+  acceptance_undone: Undo2,
+  acceptance_redone: Redo2,
 };
 
 const TITLES: Record<ActivityAction, string> = {
