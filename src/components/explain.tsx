@@ -4,7 +4,7 @@
  * The glossary lives here so the same wording is used everywhere in the app.
  */
 import { HelpCircle } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -40,6 +40,7 @@ export function Explain({ term, text, children, className }: ExplainProps) {
   return (
     <span className={cn("inline-flex items-center gap-1", className)}>
       {children}
+      <TooltipProvider delayDuration={150}>
       <Tooltip>
         <TooltipTrigger asChild>
           <button
@@ -54,6 +55,7 @@ export function Explain({ term, text, children, className }: ExplainProps) {
           {body}
         </TooltipContent>
       </Tooltip>
+      </TooltipProvider>
     </span>
   );
 }
