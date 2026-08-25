@@ -21,6 +21,7 @@ import { useSalesRoleSync } from "@/lib/use-sales-role-sync";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCompany } from "@/lib/company-context";
+import { useAppUsers } from "@/hooks/use-app-users";
 import { useEffectiveRole } from "@/lib/use-effective-role";
 import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
@@ -272,6 +273,12 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
   }, [open, editing, scope]);
 
   const displayName = `${firstName.trim()} ${lastName.trim()}`.trim();
+  // Same-email app account: offered as a one-click link suggestion.
+  const emailMatch = useMemo(() => {
+    const e = email.trim().toLowerCase();
+    if (!e) return undefined;
+    return appUsers.find((u) => (u.email ?? "").toLowerCase() === e);
+  }, [email, appUsers]);
 
   const submit = () => {
     if (!displayName) {
@@ -328,6 +335,31 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
             </Select>
             <p className="text-[11px] text-muted-foreground mt-1">
               "All companies" shows the person in every company view. "No company" keeps them unassigned and only visible in the group view. A specific company limits them to that company.
+            </p>
+          </div>
+
+          <div>
+            <Label>App user</Label>
+            <Select value={userId} onValueChange={setUserId}>
+              <SelectTrigger><SelectValue placeholder="Not linked" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Not linked</SelectItem>
+                {appUsers.map((u) => (
+                  <SelectItem key={u.userId} value={u.userId}>{u.name}{u.email ? ` · ${u.email}` : ""}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {userId === "none" && emailMatch && (
+              <button
+                type="button"
+                className="mt-1 text-[11px] text-primary underline-offset-2 hover:underline"
+                onClick={() => setUserId(emailMatch.userId)}
+              >
+                Link to {emailMatch.name} (same email)
+              </button>
+            )}
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Linking lets this person's login be recognised as this team member on documents and assignments.
             </p>
           </div>
 
