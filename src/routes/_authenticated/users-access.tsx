@@ -27,6 +27,7 @@ import { AccessDiagnosticsPanel } from "@/components/access-diagnostics-panel";
 import { Loader2, ShieldAlert, Search, UserPlus, ShieldCheck } from "lucide-react";
 import { useTeamMembers, teamMembersStore } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
+import { dbCompanyId } from "@/lib/db-sync";
 import { toast } from "sonner";
 
 
@@ -478,14 +479,32 @@ function AddUserDialog({
   onCreated: () => Promise<void> | void;
 }) {
   const createUser = useServerFn(createAppUser);
+  const team = useTeamMembers();
+  const { accessibleCompanies } = useCompany();
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [mode, setMode] = useState<"invite" | "password">("invite");
   const [password, setPassword] = useState("");
   const [platformRole, setPlatformRole] = useState<"none" | "group_admin" | "super_admin">("none");
   const [roles, setRoles] = useState<Record<string, CompanyRole | "none">>({});
+  const [teamMode, setTeamMode] = useState<"auto" | "existing" | "none">("auto");
+  const [teamMemberId, setTeamMemberId] = useState("");
+  const [teamSearch, setTeamSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  /** People not already tied to an account can be linked to the new user. */
+  const candidates = useMemo(() => team.filter((m) => !m.userId), [team]);
+  const filteredCandidates = useMemo(() => {
+    const q = teamSearch.trim().toLowerCase();
+    if (!q) return candidates.slice(0, 50);
+    return candidates
+      .filter((m) =>
+        [m.name, m.email, m.jobTitle].some((v) => (v ?? "").toLowerCase().includes(q)),
+      )
+      .slice(0, 50);
+  }, [candidates, teamSearch]);
+  const pickedMember = candidates.find((m) => m.id === teamMemberId);
 
   const reset = () => {
     setEmail("");
@@ -494,7 +513,42 @@ function AddUserDialog({
     setPassword("");
     setPlatformRole("none");
     setRoles({});
+    setTeamMode("auto");
+    setTeamMemberId("");
+    setTeamSearch("");
     setError(null);
+  };
+
+  /** Links (or creates) the Team profile for the freshly created account. */
+  const linkTeamProfile = (newUserId: string, grantedDbCompanyIds: string[]) => {
+    if (teamMode === "none") return;
+    if (teamMode === "existing") {
+      if (!teamMemberId) return;
+      teamMembersStore.update(teamMemberId, { userId: newUserId });
+      return;
+    }
+    const mail = email.trim().toLowerCase();
+    const match = team.find((m) => !m.userId && (m.email ?? "").toLowerCase() === mail && mail);
+    if (match) {
+      teamMembersStore.update(match.id, { userId: newUserId });
+      return;
+    }
+    const name = displayName.trim() || email.trim();
+    const [first, ...rest] = name.split(/\s+/);
+    // A single granted company scopes the profile to it; several (or none) stay global.
+    const localCompanyId =
+      grantedDbCompanyIds.length === 1
+        ? accessibleCompanies.find((c) => dbCompanyId(c.id) === grantedDbCompanyIds[0])?.id
+        : undefined;
+    teamMembersStore.add({
+      id: newId("tm"),
+      name,
+      firstName: first,
+      lastName: rest.join(" ") || undefined,
+      email: email.trim() || undefined,
+      userId: newUserId,
+      companyId: localCompanyId,
+    });
   };
 
   const submit = async () => {
@@ -516,6 +570,11 @@ function AddUserDialog({
         },
       });
       toast.success(res.invited ? `Invitation sent to ${res.email}` : `Account created for ${res.email}`);
+      try {
+        linkTeamProfile(res.userId, companyRoles.map((r) => r.companyId));
+      } catch {
+        toast.error("Account created, but the team profile could not be linked. Link it from the user row.");
+      }
       reset();
       onOpenChange(false);
       await onCreated();
@@ -564,6 +623,64 @@ function AddUserDialog({
               />
             </div>
           </div>
+
+          <div className="space-y-1.5">
+            <Label>Team profile</Label>
+            <Select value={teamMode} onValueChange={(v) => setTeamMode(v as typeof teamMode)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Match by email, otherwise create a profile</SelectItem>
+                <SelectItem value="existing">Link to an existing team member</SelectItem>
+                <SelectItem value="none">Don't link now</SelectItem>
+              </SelectContent>
+            </Select>
+            {teamMode === "existing" && (
+              <div className="space-y-2 rounded-md border border-border p-2">
+                <Input
+                  value={teamSearch}
+                  onChange={(e) => setTeamSearch(e.target.value)}
+                  placeholder="Search by name, email or job title"
+                  className="h-8 text-xs"
+                />
+                <div className="max-h-44 overflow-y-auto space-y-1">
+                  {filteredCandidates.length === 0 && (
+                    <p className="text-xs text-muted-foreground px-1 py-2">
+                      No unlinked team member matches.
+                    </p>
+                  )}
+                  {filteredCandidates.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setTeamMemberId(m.id)}
+                      className={`w-full text-left rounded px-2 py-1.5 text-xs hover:bg-muted/60 ${
+                        teamMemberId === m.id ? "bg-primary/10 text-primary" : ""
+                      }`}
+                    >
+                      <span className="font-medium">{m.name}</span>
+                      <span className="text-muted-foreground">
+                        {m.email ? ` · ${m.email}` : ""}
+                        {m.jobTitle ? ` · ${m.jobTitle}` : ""}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                {pickedMember &&
+                  email.trim() &&
+                  (pickedMember.email ?? "").toLowerCase() !== email.trim().toLowerCase() && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Heads up: {pickedMember.name} is recorded with
+                      {pickedMember.email ? ` ${pickedMember.email}` : " no email"}, which differs from the
+                      account email.
+                    </p>
+                  )}
+              </div>
+            )}
+          </div>
+
+
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
