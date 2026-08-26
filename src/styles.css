@@ -1182,10 +1182,28 @@ tr:hover .status-chip .status-chip-label {
     padding-top: 0.3125rem;
     padding-bottom: 0.3125rem;
   }
+  /* One type scale for every list table, whatever a cell asks for locally. */
+  .list-aligned table th {
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    letter-spacing: 0.04em;
+  }
+  .list-aligned table td {
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+  /* Chips and badges inside a cell share a single smaller size. */
+  .list-aligned table td .text-\[10px\],
+  .list-aligned table td .text-\[11px\] {
+    font-size: 0.6875rem;
+    line-height: 1rem;
+  }
+
   .list-aligned table :is(th, td)[align="right"],
   .list-aligned table :is(th, td).text-right {
     font-variant-numeric: tabular-nums;
   }
+
   /* Reserve the bottom-left gutter the action pill floats into. */
   .list-aligned tbody > tr:last-child > td {
     padding-bottom: 0.875rem;
