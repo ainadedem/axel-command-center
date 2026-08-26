@@ -569,6 +569,11 @@ function AddUserDialog({
         },
       });
       toast.success(res.invited ? `Invitation sent to ${res.email}` : `Account created for ${res.email}`);
+      try {
+        linkTeamProfile(res.userId, companyRoles.map((r) => r.companyId));
+      } catch {
+        toast.error("Account created, but the team profile could not be linked. Link it from the user row.");
+      }
       reset();
       onOpenChange(false);
       await onCreated();
