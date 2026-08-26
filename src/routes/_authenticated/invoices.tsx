@@ -1403,7 +1403,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[min(96vw,1040px)] p-0 gap-0 max-h-[92dvh] overflow-hidden flex flex-col form-compact">
+      <DialogContent className="max-w-[min(96vw,1180px)] p-0 gap-0 max-h-[92dvh] overflow-hidden flex flex-col form-compact">
         <DialogHeader className="shrink-0 border-b border-border px-5 py-3">
           <DialogTitle className="text-base">{editing ? "Edit invoice" : "New invoice"}</DialogTitle>
         </DialogHeader>
