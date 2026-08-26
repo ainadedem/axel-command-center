@@ -623,6 +623,64 @@ function AddUserDialog({
             </div>
           </div>
 
+          <div className="space-y-1.5">
+            <Label>Team profile</Label>
+            <Select value={teamMode} onValueChange={(v) => setTeamMode(v as typeof teamMode)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Match by email, otherwise create a profile</SelectItem>
+                <SelectItem value="existing">Link to an existing team member</SelectItem>
+                <SelectItem value="none">Don't link now</SelectItem>
+              </SelectContent>
+            </Select>
+            {teamMode === "existing" && (
+              <div className="space-y-2 rounded-md border border-border p-2">
+                <Input
+                  value={teamSearch}
+                  onChange={(e) => setTeamSearch(e.target.value)}
+                  placeholder="Search by name, email or job title"
+                  className="h-8 text-xs"
+                />
+                <div className="max-h-44 overflow-y-auto space-y-1">
+                  {filteredCandidates.length === 0 && (
+                    <p className="text-xs text-muted-foreground px-1 py-2">
+                      No unlinked team member matches.
+                    </p>
+                  )}
+                  {filteredCandidates.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setTeamMemberId(m.id)}
+                      className={`w-full text-left rounded px-2 py-1.5 text-xs hover:bg-muted/60 ${
+                        teamMemberId === m.id ? "bg-primary/10 text-primary" : ""
+                      }`}
+                    >
+                      <span className="font-medium">{m.name}</span>
+                      <span className="text-muted-foreground">
+                        {m.email ? ` · ${m.email}` : ""}
+                        {m.jobTitle ? ` · ${m.jobTitle}` : ""}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                {pickedMember &&
+                  email.trim() &&
+                  (pickedMember.email ?? "").toLowerCase() !== email.trim().toLowerCase() && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Heads up: {pickedMember.name} is recorded with
+                      {pickedMember.email ? ` ${pickedMember.email}` : " no email"}, which differs from the
+                      account email.
+                    </p>
+                  )}
+              </div>
+            )}
+          </div>
+
+
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>How to activate</Label>
