@@ -172,22 +172,151 @@ function useActiveModule() {
   return mod;
 }
 
-/** Sidebar shows the active module's sections only, with Administration pinned. */
-function useVisibleSections() {
-  const { isSalesOnly, isGroupAdmin } = useEffectiveRole();
-  const mod = useActiveModule();
-  const base: NavSection[] = [...(mod?.sections ?? []), ADMIN_SECTION];
-  return base
-    .map((section) => ({
-      ...section,
-      items: section.items.filter(
-        (item: NavItem) =>
-          (!item.requireGroupAdmin || isGroupAdmin) &&
-          (!isSalesOnly || SALES_ROUTES.includes(item.to)),
-      ),
-    }))
-    .filter((section) => section.items.length > 0);
+interface VisibleModule {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  sections: NavSection[];
 }
+
+/**
+ * Every module in the suite, role-filtered, with Administration pinned last.
+ * The sidebar lists all of them so no page is more than one click away.
+ */
+function useVisibleModules(): VisibleModule[] {
+  const { isSalesOnly, isGroupAdmin } = useEffectiveRole();
+  const keep = (items: NavItem[]) =>
+    items.filter(
+      (item) =>
+        (!item.requireGroupAdmin || isGroupAdmin) &&
+        (!isSalesOnly || SALES_ROUTES.includes(item.to)),
+    );
+
+  const mods: VisibleModule[] = MODULES.map((m) => ({
+    id: m.id,
+    label: m.label,
+    icon: m.icon,
+    sections: m.sections
+      .map((s) => ({ ...s, items: keep(s.items) }))
+      .filter((s) => s.items.length > 0),
+  })).filter((m) => m.sections.length > 0);
+
+  const adminItems = keep(ADMIN_SECTION.items);
+  if (adminItems.length > 0) {
+    mods.push({
+      id: "admin",
+      label: ADMIN_SECTION.label,
+      icon: ADMIN_SECTION.icon,
+      sections: [{ ...ADMIN_SECTION, items: adminItems }],
+    });
+  }
+  return mods;
+}
+
+const moduleHasActive = (mod: VisibleModule, pathname: string) =>
+  mod.sections.some((s) =>
+    s.items.some((item) => pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to))),
+  );
+
+const MODULE_OPEN_KEY = "axel.navModuleOpen.v1";
+
+/** One collapsible group per Axel module, remembering its open state. */
+function SidebarModuleGroup({
+  mod,
+  pathname,
+  onNavigate,
+}: {
+  mod: VisibleModule;
+  pathname: string;
+  onNavigate?: () => void;
+}) {
+  const active = moduleHasActive(mod, pathname);
+  const [open, setOpen] = useState(active);
+
+  useEffect(() => {
+    if (active) { setOpen(true); return; }
+    try {
+      const raw = window.localStorage.getItem(MODULE_OPEN_KEY);
+      const map = raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+      if (typeof map[mod.id] === "boolean") setOpen(map[mod.id]);
+    } catch { /* storage unavailable */ }
+  }, [active, mod.id]);
+
+  const change = (next: boolean) => {
+    setOpen(next);
+    try {
+      const raw = window.localStorage.getItem(MODULE_OPEN_KEY);
+      const map = raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+      map[mod.id] = next;
+      window.localStorage.setItem(MODULE_OPEN_KEY, JSON.stringify(map));
+    } catch { /* ignore */ }
+  };
+
+  const Icon = mod.icon;
+  const single = mod.sections.length === 1;
+
+  return (
+    <Collapsible open={open} onOpenChange={change}>
+      <CollapsibleTrigger
+        aria-label={`${mod.label} module`}
+        className={cn(
+          "w-full focus-ring rounded-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.1em] transition cursor-pointer select-none group/mod",
+          active ? "text-foreground" : "text-foreground/55 hover:text-foreground",
+        )}
+      >
+        <Icon className={cn("h-4 w-4 shrink-0", active ? "text-primary" : "text-foreground/45")} aria-hidden="true" />
+        <span className="min-w-0 flex-1 truncate text-left">{mod.label}</span>
+        <ChevronDown
+          aria-hidden="true"
+          className={cn("h-3 w-3 shrink-0 transition-transform duration-300 ease-in-out", open ? "rotate-0" : "-rotate-90")}
+        />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="overflow-hidden data-[state=open]:animate-[accordion-down_240ms_cubic-bezier(0.22,1,0.36,1)] data-[state=closed]:animate-[accordion-up_200ms_cubic-bezier(0.22,1,0.36,1)]">
+        <div className="pb-1.5">
+          {mod.sections.map((section) => (
+            <div key={section.label}>
+              {!single && (
+                <div className="px-4 pt-1.5 pb-0.5 text-[10px] uppercase tracking-[0.14em] text-foreground/45">
+                  {section.label}
+                </div>
+              )}
+              <div className="space-y-0.5">
+                {section.items.map((item) => {
+                  const itemActive = pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to));
+                  const Ico = item.icon;
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      onClick={onNavigate}
+                      aria-current={itemActive ? "page" : undefined}
+                      className={cn(
+                        "group focus-ring flex items-center gap-3 pl-4 pr-3 py-2 rounded-full text-sm relative transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
+                        itemActive
+                          ? "bg-[var(--primary-container)] text-[var(--on-primary-container)] font-medium"
+                          : "text-foreground/80 hover:text-foreground hover:bg-[var(--surface-container)]",
+                      )}
+                    >
+                      <Ico
+                        className={cn(
+                          "h-[18px] w-[18px] shrink-0 transition-colors duration-150",
+                          itemActive ? "text-[var(--on-primary-container)]" : "text-foreground/55",
+                        )}
+                        aria-hidden="true"
+                      />
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 
 /** Shows which Axel you are in, with a way back to the launcher. */
 function ModuleHeader({ onNavigate }: { onNavigate?: () => void }) {
