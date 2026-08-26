@@ -1194,12 +1194,11 @@ tr:hover .status-chip .status-chip-label {
   }
   /* Chips and badges inside a cell share a single smaller size. */
   .list-aligned table td .text-\[10px\],
-  .list-aligned table td .text-\[11px\],
-  .list-aligned table td .text-xs,
-  .list-aligned table td .text-sm {
+  .list-aligned table td .text-\[11px\] {
     font-size: 0.6875rem;
     line-height: 1rem;
   }
+
   .list-aligned table :is(th, td)[align="right"],
   .list-aligned table :is(th, td).text-right {
     font-variant-numeric: tabular-nums;
