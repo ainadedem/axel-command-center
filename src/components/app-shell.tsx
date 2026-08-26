@@ -393,7 +393,7 @@ function SidebarInner({ onNavigate, onCollapse }: { onNavigate?: () => void; onC
 /** Thin icon rail with a floating flyout of labelled links per section. */
 function RailNav({ onExpand }: { onExpand?: () => void }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const visibleSections = useVisibleSections();
+  const visibleModules = useVisibleModules();
   const { profile, user } = useAuth();
   const avatarUrl = useFileUrl(profile?.avatar_url);
   const name = profile?.display_name || user?.email || "";
