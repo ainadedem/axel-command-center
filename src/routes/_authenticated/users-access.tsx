@@ -27,6 +27,7 @@ import { AccessDiagnosticsPanel } from "@/components/access-diagnostics-panel";
 import { Loader2, ShieldAlert, Search, UserPlus, ShieldCheck } from "lucide-react";
 import { useTeamMembers, teamMembersStore } from "@/lib/mock-data";
 import { newId } from "@/lib/data-store";
+import { dbCompanyId } from "@/lib/db-sync";
 import { toast } from "sonner";
 
 
