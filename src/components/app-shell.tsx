@@ -371,12 +371,12 @@ function SidebarInner({ onNavigate, onCollapse }: { onNavigate?: () => void; onC
         <CompanySwitcher />
       </div>
       <ModuleHeader onNavigate={onNavigate} />
-      <nav aria-label="Main" className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
-
-        {visibleSections.map((section) => (
-          <SidebarSection key={section.label} section={section} pathname={pathname} onNavigate={onNavigate} />
+      <nav aria-label="Main" className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
+        {visibleModules.map((mod) => (
+          <SidebarModuleGroup key={mod.id} mod={mod} pathname={pathname} onNavigate={onNavigate} />
         ))}
       </nav>
+
       <div className="p-3 border-t border-sidebar-border">
         <Link
           to="/settings"
