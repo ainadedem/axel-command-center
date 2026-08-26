@@ -345,7 +345,8 @@ function ModuleHeader({ onNavigate }: { onNavigate?: () => void }) {
 
 function SidebarInner({ onNavigate, onCollapse }: { onNavigate?: () => void; onCollapse?: () => void }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const visibleSections = useVisibleSections();
+  const visibleModules = useVisibleModules();
+
 
   return (
     <>
