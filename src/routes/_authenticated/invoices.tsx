@@ -1530,19 +1530,20 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
             ) : (
               <div className="rounded-md border border-border overflow-hidden">
                 <div className="overflow-x-auto stacked-table">
-                <table className="w-full min-w-[720px] md:min-w-0 md:table-fixed text-xs">
+                <table className="w-full min-w-[820px] text-xs">
                   <thead className="bg-surface-elevated/40 text-[10px] uppercase tracking-wider text-muted-foreground">
-                    <tr>
+                    <tr className="[&>th]:whitespace-nowrap">
                       <th className="w-10" />
-                      <th className="text-left font-medium px-2 py-2">Description</th>
-                      <th className="text-left font-medium px-2 py-2 w-20">Unit</th>
-                      <th className="text-right font-medium px-2 py-2 w-16">Qty</th>
-                      <th className="text-right font-medium px-2 py-2 w-24">Price</th>
-                      <th className="text-right font-medium px-2 py-2 w-20">Disc %</th>
-                      <th className="text-right font-medium px-2 py-2 w-24">Amount</th>
+                      <th className="text-left font-medium px-2 py-2 min-w-[260px]">Description</th>
+                      <th className="text-left font-medium px-2 py-2 w-24">Unit</th>
+                      <th className="text-right font-medium px-2 py-2 w-24">Qty</th>
+                      <th className="text-right font-medium px-2 py-2 w-32">Price</th>
+                      <th className="text-right font-medium px-2 py-2 w-24">Disc %</th>
+                      <th className="text-right font-medium px-2 py-2 w-36">Amount</th>
                       <th className="w-8" />
                     </tr>
                   </thead>
+
                   <tbody>
                     {lines.map((l, li) => {
                       const rp = lineDnd.rowProps(li);
