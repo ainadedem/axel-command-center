@@ -427,29 +427,26 @@ function RailNav({ onExpand }: { onExpand?: () => void }) {
         </button>
       )}
       <WorkspaceRailButton />
-      {/* No overflow clipping here: horizontal clipping would hide the section flyouts. */}
+      {/* No overflow clipping here: horizontal clipping would hide the module flyouts. */}
       <nav aria-label="Main" className="flex-1 mt-2 flex flex-col items-center gap-1">
-
-        {visibleSections.map((section) => {
-          const SectionIcon = section.icon;
-          const active = section.items.some(
-            (item) => pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to)),
-          );
+        {visibleModules.map((mod) => {
+          const ModIcon = mod.icon;
+          const active = moduleHasActive(mod, pathname);
           return (
             <div
-              key={section.label}
+              key={mod.id}
               className="relative"
-              onMouseEnter={() => show(section.label)}
+              onMouseEnter={() => show(mod.id)}
               onMouseLeave={scheduleClose}
             >
               <button
                 type="button"
-                aria-label={section.label}
-                title={section.label}
-                aria-expanded={open === section.label}
+                aria-label={mod.label}
+                title={mod.label}
+                aria-expanded={open === mod.id}
                 aria-haspopup="menu"
-                onClick={() => setOpen((v) => (v === section.label ? null : section.label))}
-                onFocus={() => show(section.label)}
+                onClick={() => setOpen((v) => (v === mod.id ? null : mod.id))}
+                onFocus={() => show(mod.id)}
                 className={cn(
                   "h-11 w-11 grid place-items-center rounded-full focus-ring transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
                   active
@@ -457,47 +454,57 @@ function RailNav({ onExpand }: { onExpand?: () => void }) {
                     : "text-foreground/60 hover:bg-[var(--surface-container)] hover:text-foreground",
                 )}
               >
-                <SectionIcon className="h-[18px] w-[18px]" aria-hidden="true" />
+                <ModIcon className="h-[18px] w-[18px]" aria-hidden="true" />
               </button>
-              {open === section.label && (
+              {open === mod.id && (
                 <div
                   role="menu"
-                  aria-label={section.label}
-                  className="absolute left-full top-0 ml-2 z-50 w-60 panel p-2 animate-in fade-in-0 zoom-in-95 slide-in-from-left-1 duration-150"
-                  onMouseEnter={() => show(section.label)}
+                  aria-label={mod.label}
+                  className="absolute left-full top-0 ml-2 z-50 w-60 max-h-[70vh] overflow-y-auto panel p-2 animate-in fade-in-0 zoom-in-95 slide-in-from-left-1 duration-150"
+                  onMouseEnter={() => show(mod.id)}
                   onMouseLeave={scheduleClose}
                 >
                   <div className="px-3 pt-1.5 pb-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                    {section.label}
+                    {mod.label}
                   </div>
-                  {section.items.map((item) => {
-                    const Icon = item.icon;
-                    const itemActive = pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to));
-                    return (
-                      <Link
-                        key={item.to}
-                        to={item.to}
-                        role="menuitem"
-                        onClick={() => setOpen(null)}
-                        aria-current={itemActive ? "page" : undefined}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm focus-ring transition-colors duration-150",
-                          itemActive
-                            ? "bg-[var(--primary-container)] text-[var(--on-primary-container)] font-medium"
-                            : "text-foreground/80 hover:bg-[var(--surface-container)] hover:text-foreground",
-                        )}
-                      >
-                        <Icon className="h-[18px] w-[18px] shrink-0 opacity-70" aria-hidden="true" />
-                        <span className="truncate">{item.label}</span>
-                      </Link>
-                    );
-                  })}
+                  {mod.sections.map((section) => (
+                    <div key={section.label}>
+                      {mod.sections.length > 1 && (
+                        <div className="px-3 pt-1.5 pb-0.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
+                          {section.label}
+                        </div>
+                      )}
+                      {section.items.map((item) => {
+                        const Icon = item.icon;
+                        const itemActive = pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to));
+                        return (
+                          <Link
+                            key={item.to}
+                            to={item.to}
+                            role="menuitem"
+                            onClick={() => setOpen(null)}
+                            aria-current={itemActive ? "page" : undefined}
+                            className={cn(
+                              "flex items-center gap-3 px-3 py-2 rounded-2xl text-sm focus-ring transition-colors duration-150",
+                              itemActive
+                                ? "bg-[var(--primary-container)] text-[var(--on-primary-container)] font-medium"
+                                : "text-foreground/80 hover:bg-[var(--surface-container)] hover:text-foreground",
+                            )}
+                          >
+                            <Icon className="h-[18px] w-[18px] shrink-0 opacity-70" aria-hidden="true" />
+                            <span className="truncate">{item.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
           );
         })}
       </nav>
+
       <Link
         to="/settings"
         aria-label="Settings"
