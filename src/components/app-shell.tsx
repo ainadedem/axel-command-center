@@ -106,62 +106,6 @@ function CompanySwitcher() {
   );
 }
 
-function SidebarSection({ section, pathname, onNavigate }: { section: NavSection; pathname: string; onNavigate?: () => void }) {
-  const hasActive = section.items.some((item) => pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to)));
-  const [open, setOpen] = useState(hasActive);
-
-  useEffect(() => {
-    if (hasActive) setOpen(true);
-  }, [hasActive]);
-
-  return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger aria-label={`${section.label} section`} className="w-full focus-ring rounded-full flex items-center justify-between px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-foreground/55 hover:text-foreground transition cursor-pointer select-none group/section">
-        <span className="transition-transform duration-200 group-hover/section:translate-x-0.5">{section.label}</span>
-        <ChevronDown
-          aria-hidden="true"
-          className={cn(
-            "h-3 w-3 transition-transform duration-300 ease-in-out",
-            open ? "rotate-0" : "-rotate-90",
-          )}
-        />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="overflow-hidden data-[state=open]:animate-[accordion-down_240ms_cubic-bezier(0.22,1,0.36,1)] data-[state=closed]:animate-[accordion-up_200ms_cubic-bezier(0.22,1,0.36,1)]">
-        <div className="space-y-0.5 pb-2">
-          {section.items.map((item) => {
-            const active = pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to));
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={onNavigate}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "group focus-ring flex items-center gap-3 pl-4 pr-4 py-2.5 rounded-full text-sm relative transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
-                    active
-                      ? "bg-[var(--primary-container)] text-[var(--on-primary-container)] font-medium"
-                      : "text-foreground/80 hover:text-foreground hover:bg-[var(--surface-container)]",
-                )}
-              >
-                <Icon
-                  className={cn(
-                    "h-[18px] w-[18px] transition-colors duration-150",
-                    active ? "text-[var(--on-primary-container)]" : "text-foreground/55",
-                  )}
-                  aria-hidden="true"
-                />
-
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </CollapsibleContent>
-
-    </Collapsible>
-  );
-}
 
 function useActiveModule() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
