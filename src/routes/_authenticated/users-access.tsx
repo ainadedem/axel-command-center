@@ -478,14 +478,32 @@ function AddUserDialog({
   onCreated: () => Promise<void> | void;
 }) {
   const createUser = useServerFn(createAppUser);
+  const team = useTeamMembers();
+  const { accessibleCompanies } = useCompany();
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [mode, setMode] = useState<"invite" | "password">("invite");
   const [password, setPassword] = useState("");
   const [platformRole, setPlatformRole] = useState<"none" | "group_admin" | "super_admin">("none");
   const [roles, setRoles] = useState<Record<string, CompanyRole | "none">>({});
+  const [teamMode, setTeamMode] = useState<"auto" | "existing" | "none">("auto");
+  const [teamMemberId, setTeamMemberId] = useState("");
+  const [teamSearch, setTeamSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  /** People not already tied to an account can be linked to the new user. */
+  const candidates = useMemo(() => team.filter((m) => !m.userId), [team]);
+  const filteredCandidates = useMemo(() => {
+    const q = teamSearch.trim().toLowerCase();
+    if (!q) return candidates.slice(0, 50);
+    return candidates
+      .filter((m) =>
+        [m.name, m.email, m.jobTitle].some((v) => (v ?? "").toLowerCase().includes(q)),
+      )
+      .slice(0, 50);
+  }, [candidates, teamSearch]);
+  const pickedMember = candidates.find((m) => m.id === teamMemberId);
 
   const reset = () => {
     setEmail("");
@@ -494,7 +512,42 @@ function AddUserDialog({
     setPassword("");
     setPlatformRole("none");
     setRoles({});
+    setTeamMode("auto");
+    setTeamMemberId("");
+    setTeamSearch("");
     setError(null);
+  };
+
+  /** Links (or creates) the Team profile for the freshly created account. */
+  const linkTeamProfile = (newUserId: string, grantedDbCompanyIds: string[]) => {
+    if (teamMode === "none") return;
+    if (teamMode === "existing") {
+      if (!teamMemberId) return;
+      teamMembersStore.update(teamMemberId, { userId: newUserId });
+      return;
+    }
+    const mail = email.trim().toLowerCase();
+    const match = team.find((m) => !m.userId && (m.email ?? "").toLowerCase() === mail && mail);
+    if (match) {
+      teamMembersStore.update(match.id, { userId: newUserId });
+      return;
+    }
+    const name = displayName.trim() || email.trim();
+    const [first, ...rest] = name.split(/\s+/);
+    // A single granted company scopes the profile to it; several (or none) stay global.
+    const localCompanyId =
+      grantedDbCompanyIds.length === 1
+        ? accessibleCompanies.find((c) => dbCompanyId(c.id) === grantedDbCompanyIds[0])?.id
+        : undefined;
+    teamMembersStore.add({
+      id: newId("tm"),
+      name,
+      firstName: first,
+      lastName: rest.join(" ") || undefined,
+      email: email.trim() || undefined,
+      userId: newUserId,
+      companyId: localCompanyId,
+    });
   };
 
   const submit = async () => {
