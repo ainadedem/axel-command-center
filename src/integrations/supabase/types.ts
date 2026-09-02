@@ -1536,6 +1536,7 @@ export type Database = {
           planned_start: string | null
           position: number
           project_id: string
+          started_at: string | null
           status: string
           updated_at: string
         }
@@ -1554,6 +1555,7 @@ export type Database = {
           planned_start?: string | null
           position?: number
           project_id: string
+          started_at?: string | null
           status?: string
           updated_at?: string
         }
@@ -1572,6 +1574,7 @@ export type Database = {
           planned_start?: string | null
           position?: number
           project_id?: string
+          started_at?: string | null
           status?: string
           updated_at?: string
         }

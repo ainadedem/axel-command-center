@@ -115,13 +115,42 @@ export function autoDoneKeys(ev: StageEvidence): Set<string> {
  * here — the derived view is what the UI renders, so the workflow is always
  * truthful even if a document changed elsewhere.
  */
-export function resolveStages(stored: ProjectStage[], ev: StageEvidence): ProjectStage[] {
+export function resolveStages(
+  stored: ProjectStage[],
+  ev: StageEvidence,
+  autoDates: Record<string, string | undefined> = {},
+): ProjectStage[] {
   const auto = autoDoneKeys(ev);
   return [...stored]
     .sort((a, b) => a.position - b.position)
-    .map((s) => (s.auto && s.status !== "skipped" && auto.has(s.key) && s.status !== "done"
-      ? { ...s, status: "done" as ProjectStageStatus }
-      : s));
+    .map((s) => {
+      if (!s.auto || s.status === "skipped" || !auto.has(s.key)) return s;
+      const completedAt = s.completedAt ?? autoDates[s.key];
+      if (s.status === "done" && s.completedAt === completedAt) return s;
+      return { ...s, status: "done" as ProjectStageStatus, completedAt };
+    });
+}
+
+/** Whole days between two dates, minimum 0. */
+export function stageDurationDays(stage: ProjectStage, today = new Date()): number | undefined {
+  if (!stage.startedAt) return undefined;
+  const start = new Date(stage.startedAt).getTime();
+  const end = stage.completedAt ? new Date(stage.completedAt).getTime() : today.getTime();
+  if (Number.isNaN(start) || Number.isNaN(end)) return undefined;
+  return Math.max(0, Math.round((end - start) / 86_400_000));
+}
+
+/** Elapsed days from the first started step to the last finished one (or today). */
+export function workflowElapsedDays(stages: ProjectStage[], today = new Date()): number | undefined {
+  const starts = stages.map((s) => s.startedAt).filter(Boolean) as string[];
+  if (starts.length === 0) return undefined;
+  const first = Math.min(...starts.map((d) => new Date(d).getTime()));
+  const allDone = stages.filter((s) => s.status !== "skipped").every((s) => s.status === "done");
+  const ends = stages.map((s) => s.completedAt).filter(Boolean) as string[];
+  const last = allDone && ends.length > 0
+    ? Math.max(...ends.map((d) => new Date(d).getTime()))
+    : today.getTime();
+  return Math.max(0, Math.round((last - first) / 86_400_000));
 }
 
 /* ------------------------------------------------------------------ */
@@ -168,9 +197,13 @@ export function setStageStatus(
   status: ProjectStageStatus,
   opts?: { blockedReason?: string; projectName?: string },
 ) {
+  const now = new Date().toISOString();
   const patch: Partial<ProjectStage> = {
     status,
-    completedAt: status === "done" ? new Date().toISOString() : undefined,
+    startedAt:
+      status === "pending" ? undefined
+      : stage.startedAt ?? ((status === "active" || status === "done") ? now : undefined),
+    completedAt: status === "done" ? stage.completedAt ?? now : undefined,
     blockedReason: status === "blocked" ? opts?.blockedReason ?? stage.blockedReason : undefined,
   };
   projectStagesStore.update(stage.id, patch);
@@ -181,7 +214,7 @@ export function setStageStatus(
       .sort((a, b) => a.position - b.position);
     const next = siblings.find((s) => s.position > stage.position && s.status === "pending");
     if (next && !siblings.some((s) => s.status === "active")) {
-      projectStagesStore.update(next.id, { status: "active" }, { silent: true });
+      projectStagesStore.update(next.id, { status: "active", startedAt: next.startedAt ?? now }, { silent: true });
     }
   }
 
@@ -194,6 +227,20 @@ export function setStageStatus(
     summary: `${stage.name}: ${STAGE_STATUS_LABEL[stage.status]} → ${STAGE_STATUS_LABEL[status]}`,
     details: { stageKey: stage.key, from: stage.status, to: status, reason: opts?.blockedReason },
   });
+}
+
+/**
+ * One-click "move forward": finishes the given step (stamping its end date)
+ * and starts the following one. Steps that have not started yet are started
+ * instead of completed, so a single button drives the whole chain.
+ */
+export function advanceStage(stage: ProjectStage, opts?: { projectName?: string }) {
+  if (stage.status === "pending" || stage.status === "blocked") {
+    setStageStatus(stage, "active", { projectName: opts?.projectName });
+    return;
+  }
+  if (stage.status === "done" || stage.status === "skipped") return;
+  setStageStatus(stage, "done", { projectName: opts?.projectName });
 }
 
 export function updateStage(stage: ProjectStage, patch: Partial<ProjectStage>) {
@@ -238,7 +285,23 @@ export function useProjectWorkflows(projects: Project[]): Map<string, ProjectWor
         invoiced: projInv.length > 0,
         fullyPaid: projInv.length > 0 && projInv.every((i) => i.paid >= i.amount - 0.5),
       };
-      const resolved = resolveStages(byProject.get(p.id) ?? [], evidence);
+      const acceptedQuote = projQuotes.find((q) => q.status === "accepted");
+      const firstPo = projPos[0];
+      const pvr = pvrs.find((r) => r.projectId === p.id);
+      const firstInv = [...projInv].sort((a, b) => a.issueDate.localeCompare(b.issueDate))[0];
+      const lastPayment = projInv
+        .map((i) => i.paidDate)
+        .filter(Boolean)
+        .sort()
+        .pop();
+      const autoDates: Record<string, string | undefined> = {
+        quote: acceptedQuote?.updatedAt ?? acceptedQuote?.issueDate,
+        po: firstPo?.issueDate ?? firstInv?.issueDate,
+        pvr: pvr?.signedDate,
+        invoice: firstInv?.issueDate,
+        paid: lastPayment,
+      };
+      const resolved = resolveStages(byProject.get(p.id) ?? [], evidence, autoDates);
       map.set(p.id, { stages: resolved, evidence, progress: stageProgress(resolved) });
     }
     return map;

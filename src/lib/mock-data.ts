@@ -910,6 +910,8 @@ export interface ProjectStage {
   owner?: string;
   plannedStart?: string;
   dueDate?: string;
+  /** ISO timestamp of when work on this step actually started. */
+  startedAt?: string;
   completedAt?: string;
   blockedReason?: string;
   notes?: string;

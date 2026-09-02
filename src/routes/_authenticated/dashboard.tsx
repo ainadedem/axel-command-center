@@ -23,6 +23,7 @@ import { FX, type Currency } from "@/lib/mock-data";
 import { invoiceBalance } from "@/lib/invoice-money";
 import { ConversionGapPanel } from "@/components/conversion-gap-panel";
 import { NextActionsPanel } from "@/components/next-actions-panel";
+import { QuoteExpiryCard } from "@/components/quote-expiry-card";
 
 const pct = (cur: number, prev: number) => {
   if (prev === 0) return cur === 0 ? 0 : cur > 0 ? 100 : -100;
@@ -364,6 +365,8 @@ function DashboardBody() {
 
       {/* Plain-language guidance: the money journey and what to do next */}
       <NextActionsPanel />
+
+      <QuoteExpiryCard />
 
       {/* Quotation → invoice conversion gap */}
       <ConversionGapPanel />

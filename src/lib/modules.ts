@@ -76,6 +76,7 @@ export const MODULES: AxelModule[] = [
           { to: "/purchase-orders", label: "Purchase orders", icon: ClipboardList },
           { to: "/invoices", label: "Invoices", icon: FileText },
           { to: "/billing", label: "Recurring billing", icon: Repeat },
+          { to: "/cash-flow", label: "Cash flow", icon: Wallet2 },
         ],
       },
       {
