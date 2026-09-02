@@ -13,6 +13,8 @@ interface Props {
   className?: string;
   /** Smaller variant used for the secondary "details" field. */
   compact?: boolean;
+  /** One-line until focused — used inside dense spreadsheet grids. */
+  collapsible?: boolean;
 }
 
 type Action = "bold" | "italic" | "ul" | "ol";
@@ -40,7 +42,7 @@ function applyAction(text: string, start: number, end: number, action: Action) {
   return { next, cursor: lineStart + replacement.length };
 }
 
-export function RichTextField({ value, onChange, placeholder, rows = 3, className, compact }: Props) {
+export function RichTextField({ value, onChange, placeholder, rows = 3, className, compact, collapsible }: Props) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const [preview, setPreview] = useState(false);
 
