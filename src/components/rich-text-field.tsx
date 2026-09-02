@@ -61,7 +61,7 @@ export function RichTextField({ value, onChange, placeholder, rows = 3, classNam
   const html = renderRichText(value);
 
   return (
-    <div className={cn("group rounded-md border border-input bg-background", className)}>
+    <div className={cn("group rounded-md border bg-background", collapsible ? "border-transparent focus-within:border-input" : "border-input", className)}>
       <div
         className={cn(
           "items-center gap-0.5 border-b border-border px-1 py-0.5",
