@@ -624,7 +624,7 @@ export function StatementImportDialog({
           {step === 2 && (
             <div className="max-h-[380px] overflow-y-auto rounded-lg border border-border">
               <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-xs">
+              <table className="sheet w-full min-w-[720px] text-xs">
                 <thead className="sticky top-0 bg-surface">
                   <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
                     <th className="text-left font-medium px-3 py-2 w-8" />

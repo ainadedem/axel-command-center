@@ -140,7 +140,7 @@ export function TimesheetsPanel({
       )}
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="sheet w-full text-sm">
           <thead>
             <tr className="text-[11px] uppercase tracking-wider text-muted-foreground text-left">
               <th className="py-2 font-normal">Day</th>

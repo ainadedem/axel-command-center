@@ -1624,3 +1624,85 @@ input[type="number"] {
   border-top: 2px solid var(--border);
   background: color-mix(in srgb, var(--muted) 80%, transparent);
 }
+
+/* ---------------------------------------------------------------
+   Spreadsheet skin for every data table.
+   Continuous gridlines, zebra rows, sticky tinted header, tabular
+   numerals. Applies to all list tables (`.list-aligned table`) and to
+   any raw table opted in with `class="sheet"`. Mobile keeps the
+   stacked-card layout, so the grid only kicks in from `md`.
+   --------------------------------------------------------------- */
+@media (min-width: 768px) {
+  .list-aligned table,
+  table.sheet {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  /* Gridlines */
+  .list-aligned table > :is(thead, tbody, tfoot) > tr > :is(th, td):not(.row-actions-cell),
+  table.sheet > :is(thead, tbody, tfoot) > tr > :is(th, td) {
+    border-right: 1px solid color-mix(in oklab, var(--foreground) 8%, transparent);
+    border-bottom: 1px solid color-mix(in oklab, var(--foreground) 7%, transparent);
+  }
+  .list-aligned table > :is(thead, tbody, tfoot) > tr > :is(th, td):last-child,
+  table.sheet > :is(thead, tbody, tfoot) > tr > :is(th, td):last-child {
+    border-right: 0;
+  }
+
+  /* Square cells read as a grid — drop the pill rounding on list rows */
+  .panel table tbody > tr > td:first-child,
+  .panel table tbody > tr > td:last-child {
+    border-radius: 0;
+  }
+
+  /* Header band */
+  .list-aligned table > thead > tr > th,
+  table.sheet > thead > tr > th {
+    background: color-mix(in oklab, var(--muted) 65%, var(--card));
+    font-weight: 600;
+    text-transform: none;
+  }
+
+  /* Zebra rows — yields to hover and selection */
+  .list-aligned table > tbody > tr:nth-child(even):not(:hover):not([data-selected="true"]):not([aria-selected="true"]):not([data-stack-full]),
+  table.sheet > tbody > tr:nth-child(even):not(:hover):not([data-selected="true"]):not([aria-selected="true"]) {
+    background: color-mix(in oklab, var(--foreground) 2.5%, transparent);
+  }
+  table.sheet > tbody > tr:hover {
+    background: color-mix(in oklab, var(--primary) 5%, transparent);
+  }
+
+  /* Numbers line up */
+  .list-aligned table :is(th, td).text-right,
+  .list-aligned table :is(th, td)[align="right"],
+  table.sheet :is(th, td).text-right,
+  table.sheet :is(th, td)[align="right"],
+  table.sheet :is(th, td).tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Totals band */
+  table.sheet > tfoot > tr > :is(th, td) {
+    background: color-mix(in oklab, var(--muted) 55%, var(--card));
+    font-weight: 600;
+  }
+  table.sheet > tfoot > tr:first-child > :is(th, td) {
+    border-top: 2px solid color-mix(in oklab, var(--foreground) 14%, transparent);
+  }
+
+  /* The grid should meet the panel edges instead of floating inside it */
+  .panel > .stacked-table.list-aligned {
+    padding: 0;
+  }
+  :root[data-density="compact"] .panel > .stacked-table.list-aligned {
+    padding: 0;
+  }
+}
+
+@media (min-width: 768px) {
+  /* Keep the pinned header on the same tinted band as the static one. */
+  .stacked-table.sticky-head.list-aligned thead th {
+    background: color-mix(in oklab, var(--muted) 65%, var(--card));
+  }
+}
