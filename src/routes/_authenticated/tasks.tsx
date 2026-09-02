@@ -269,12 +269,10 @@ function TasksBody() {
                       ) : "—"}
                     </ListTd>
                     <ListTd title={clientName(t.clientId)}>{clientName(t.clientId) ?? "—"}</ListTd>
-                    <td className="px-2">
-                      <ListRowActions>
-                        <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(t); setOpen(true); }} />
-                        <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => remove(t)} />
-                      </ListRowActions>
-                    </td>
+                    <ListRowActions>
+                      <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(t); setOpen(true); }} />
+                      <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => remove(t)} />
+                    </ListRowActions>
                   </tr>
                 ))}
               </tbody>
