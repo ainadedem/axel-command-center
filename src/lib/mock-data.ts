@@ -1058,6 +1058,8 @@ export const usePayrollRuns = () => useCollection(payrollRunsStore);
 export const usePvrRecords = () => useCollection(pvrRecordsStore);
 export const useInvoiceEscalations = () => useCollection(invoiceEscalationsStore);
 export const useProjectStages = () => useCollection(projectStagesStore);
+export const useTasks = () => useCollection(tasksStore);
+
 export const usePaymentRequests = () => useCollection(paymentRequestsStore);
 export const usePaymentRuns = () => useCollection(paymentRunsStore);
 
