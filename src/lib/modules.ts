@@ -1,6 +1,7 @@
 import {
   BadgeCheck,
-  LayoutDashboard, Building2, Wallet, ArrowLeftRight, FileText,
+  LayoutDashboard,
+  ListTodo, Building2, Wallet, ArrowLeftRight, FileText,
   Users, Briefcase, TrendingUp, BarChart3, Settings, Truck,
   Target, UserCog, Handshake,
   BookOpen, BookText, Scale, Library, Receipt, FileSignature, ClipboardList,
@@ -67,6 +68,7 @@ export const MODULES: AxelModule[] = [
         icon: LayoutDashboard,
         items: [
           { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { to: "/my-tasks", label: "My tasks", icon: ListTodo },
           ...(AXEL_AI_ENABLED ? [{ to: "/axel", label: "Axel AI", icon: Sparkles }] : []),
         ],
       },
