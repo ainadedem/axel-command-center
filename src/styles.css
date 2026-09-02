@@ -1563,8 +1563,8 @@ input[type="number"] {
 }
 .sheet-grid th,
 .sheet-grid td {
-  border-right: 1px solid hsl(var(--border) / 0.6);
-  border-bottom: 1px solid hsl(var(--border) / 0.6);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   padding: 0;
   vertical-align: middle;
 }
@@ -1576,16 +1576,16 @@ input[type="number"] {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: hsl(var(--muted) / 0.65);
+  background: color-mix(in srgb, var(--muted) 70%, var(--background));
   backdrop-filter: blur(4px);
   padding: 0.3rem 0.4rem;
   font-weight: 600;
 }
 .sheet-grid tbody tr:nth-child(even) > td {
-  background: hsl(var(--muted) / 0.22);
+  background: color-mix(in srgb, var(--muted) 35%, transparent);
 }
 .sheet-grid tbody tr:hover > td {
-  background: hsl(var(--primary) / 0.06);
+  background: color-mix(in srgb, var(--primary) 7%, transparent);
 }
 /* Borderless in-cell controls */
 .sheet-grid td input,
@@ -1604,9 +1604,9 @@ input[type="number"] {
   height: auto;
 }
 .sheet-grid td:focus-within {
-  outline: 2px solid hsl(var(--primary) / 0.55);
+  outline: 2px solid var(--primary);
   outline-offset: -2px;
-  background: hsl(var(--background));
+  background: var(--background);
 }
 .sheet-grid td input:focus-visible,
 .sheet-grid td button[role="combobox"]:focus-visible {
@@ -1618,9 +1618,9 @@ input[type="number"] {
 .sheet-grid tfoot td {
   border-bottom: 0;
   padding: 0.3rem 0.4rem;
-  background: hsl(var(--muted) / 0.4);
+  background: color-mix(in srgb, var(--muted) 50%, transparent);
 }
 .sheet-grid tfoot tr:last-child td {
-  border-top: 2px solid hsl(var(--border));
-  background: hsl(var(--muted) / 0.7);
+  border-top: 2px solid var(--border);
+  background: color-mix(in srgb, var(--muted) 80%, transparent);
 }
