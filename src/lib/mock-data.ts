@@ -921,6 +921,64 @@ export interface ProjectStage {
 
 export const projectStagesStore = createCollection<ProjectStage>("project-stages", []);
 
+/* ─── Payment approvals (weekly Thursday run) ───────────────────────── */
+
+export type PaymentRequestStatus =
+  | "draft" | "submitted" | "reviewed" | "approved" | "rejected" | "paid" | "cancelled";
+
+export type PaymentRequestKind = "bill" | "reimbursement" | "advance" | "other";
+
+/** One outgoing payment waiting for finance review and final approval. */
+export interface PaymentRequest {
+  id: string;
+  companyId: string;
+  /** The weekly run (Thursday) this request is scheduled in. */
+  runId?: string;
+  kind: PaymentRequestKind;
+  /** Source expense when the request was raised from the Expenses page. */
+  expenseId?: string;
+  supplierId?: string;
+  payee?: string;
+  title: string;
+  description?: string;
+  amount: number;
+  currency: Currency;
+  accountId?: string;
+  projectId?: string;
+  attachmentUrl?: string;
+  attachmentName?: string;
+  status: PaymentRequestStatus;
+  /** Urgent payment outside the Thursday run — requires a written reason. */
+  offCycle: boolean;
+  offCycleReason?: string;
+  neededBy?: string;
+  requestedBy?: string;
+  submittedAt?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  rejectedBy?: string;
+  rejectedAt?: string;
+  rejectionReason?: string;
+  paidAt?: string;
+}
+
+/** A weekly batch of payments for one company. */
+export interface PaymentRun {
+  id: string;
+  companyId: string;
+  /** ISO date of the Thursday this run pays out on. */
+  runDate: string;
+  status: "open" | "locked" | "released";
+  releasedBy?: string;
+  releasedAt?: string;
+  note?: string;
+}
+
+export const paymentRequestsStore = createCollection<PaymentRequest>("payment-requests", [], { critical: true });
+export const paymentRunsStore = createCollection<PaymentRun>("payment-runs", []);
+
 /* ─── Live array exports (backward compatibility) ───────────────────── */
 
 export const companies = companiesStore.items;
@@ -967,6 +1025,8 @@ export const usePayrollRuns = () => useCollection(payrollRunsStore);
 export const usePvrRecords = () => useCollection(pvrRecordsStore);
 export const useInvoiceEscalations = () => useCollection(invoiceEscalationsStore);
 export const useProjectStages = () => useCollection(projectStagesStore);
+export const usePaymentRequests = () => useCollection(paymentRequestsStore);
+export const usePaymentRuns = () => useCollection(paymentRunsStore);
 
 /** Convenience: list of sales-team people (with team name) filtered by role. */
 export function useSalesPeople(role: "acquisition" | "closer"): { id: string; teamMemberId: string; name: string }[] {

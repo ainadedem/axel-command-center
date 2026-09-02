@@ -16,9 +16,11 @@ import {
   teamMembersStore, salesMembersStore,
   salaryRegisterStore, payrollRunsStore,
   pvrRecordsStore, invoiceEscalationsStore, quoteFollowupsStore,
-  projectStagesStore,
+  projectStagesStore, paymentRequestsStore, paymentRunsStore,
   type PvrRecord, type InvoiceEscalation, type QuoteFollowup,
   type ProjectStage, type ProjectStageStatus,
+  type PaymentRequest, type PaymentRequestKind, type PaymentRequestStatus, type PaymentRun,
+  type Currency,
 
   type Client, type Supplier, type Project,
   type Account, type Category, type Budget,
@@ -1664,6 +1666,137 @@ export async function deleteProjectStageDb(id: string) {
   if (error) reportWriteError("deleteProjectStage", error.message);
 }
 
+/* ───────── PAYMENT APPROVALS (weekly Thursday run) ───────── */
+const payRunToDb = (r: PaymentRun) => {
+  const dbCompany = toDbCompanyId(r.companyId);
+  if (!dbCompany) return null;
+  return {
+    id: isUuid(r.id) ? r.id : undefined,
+    company_id: dbCompany,
+    run_date: r.runDate,
+    status: r.status,
+    released_by: r.releasedBy ?? null,
+    released_at: r.releasedAt ?? null,
+    note: r.note ?? null,
+  };
+};
+
+const payRunFromDb = (r: Record<string, unknown>): PaymentRun => ({
+  id: r.id as string,
+  companyId: toLocalCompanyId(r.company_id as string),
+  runDate: (r.run_date as string) ?? "",
+  status: ((r.status as string) ?? "open") as PaymentRun["status"],
+  releasedBy: (r.released_by as string) ?? undefined,
+  releasedAt: (r.released_at as string) ?? undefined,
+  note: (r.note as string) ?? undefined,
+});
+
+export async function upsertPaymentRun(r: PaymentRun): Promise<string | null> {
+  const row = payRunToDb(r);
+  if (!row) return null;
+  if (!canWriteCompany(row.company_id)) return null;
+  const { data, error } = await supabase
+    .from("payment_runs")
+    .upsert(row, { onConflict: "company_id,run_date" })
+    .select("id")
+    .single();
+  if (error) { reportWriteError("upsertPaymentRun", error.message); return null; }
+  return data.id;
+}
+
+export async function deletePaymentRunDb(id: string) {
+  if (!isUuid(id)) return;
+  const { error } = await supabase.from("payment_runs").delete().eq("id", id);
+  if (error) reportWriteError("deletePaymentRun", error.message);
+}
+
+const payReqToDb = (p: PaymentRequest) => {
+  const dbCompany = toDbCompanyId(p.companyId);
+  if (!dbCompany) return null;
+  return {
+    id: isUuid(p.id) ? p.id : undefined,
+    company_id: dbCompany,
+    run_id: isUuid(p.runId ?? "") ? p.runId : null,
+    kind: p.kind,
+    expense_id: isUuid(p.expenseId ?? "") ? p.expenseId : null,
+    supplier_id: isUuid(p.supplierId ?? "") ? p.supplierId : null,
+    payee: p.payee ?? null,
+    title: p.title,
+    description: p.description ?? null,
+    amount: p.amount,
+    currency: p.currency,
+    account_id: isUuid(p.accountId ?? "") ? p.accountId : null,
+    project_id: isUuid(p.projectId ?? "") ? p.projectId : null,
+    attachment_url: p.attachmentUrl ?? null,
+    attachment_name: p.attachmentName ?? null,
+    status: p.status,
+    off_cycle: p.offCycle,
+    off_cycle_reason: p.offCycleReason ?? null,
+    needed_by: p.neededBy ?? null,
+    requested_by: p.requestedBy ?? null,
+    submitted_at: p.submittedAt ?? null,
+    reviewed_by: p.reviewedBy ?? null,
+    reviewed_at: p.reviewedAt ?? null,
+    approved_by: p.approvedBy ?? null,
+    approved_at: p.approvedAt ?? null,
+    rejected_by: p.rejectedBy ?? null,
+    rejected_at: p.rejectedAt ?? null,
+    rejection_reason: p.rejectionReason ?? null,
+    paid_at: p.paidAt ?? null,
+  };
+};
+
+export const paymentRequestFromDb = (r: Record<string, unknown>): PaymentRequest => ({
+  id: r.id as string,
+  companyId: toLocalCompanyId(r.company_id as string),
+  runId: (r.run_id as string) ?? undefined,
+  kind: ((r.kind as string) ?? "bill") as PaymentRequestKind,
+  expenseId: (r.expense_id as string) ?? undefined,
+  supplierId: (r.supplier_id as string) ?? undefined,
+  payee: (r.payee as string) ?? undefined,
+  title: (r.title as string) ?? "",
+  description: (r.description as string) ?? undefined,
+  amount: Number(r.amount) || 0,
+  currency: ((r.currency as string) ?? "MGA") as Currency,
+  accountId: (r.account_id as string) ?? undefined,
+  projectId: (r.project_id as string) ?? undefined,
+  attachmentUrl: (r.attachment_url as string) ?? undefined,
+  attachmentName: (r.attachment_name as string) ?? undefined,
+  status: ((r.status as string) ?? "draft") as PaymentRequestStatus,
+  offCycle: Boolean(r.off_cycle),
+  offCycleReason: (r.off_cycle_reason as string) ?? undefined,
+  neededBy: (r.needed_by as string) ?? undefined,
+  requestedBy: (r.requested_by as string) ?? undefined,
+  submittedAt: (r.submitted_at as string) ?? undefined,
+  reviewedBy: (r.reviewed_by as string) ?? undefined,
+  reviewedAt: (r.reviewed_at as string) ?? undefined,
+  approvedBy: (r.approved_by as string) ?? undefined,
+  approvedAt: (r.approved_at as string) ?? undefined,
+  rejectedBy: (r.rejected_by as string) ?? undefined,
+  rejectedAt: (r.rejected_at as string) ?? undefined,
+  rejectionReason: (r.rejection_reason as string) ?? undefined,
+  paidAt: (r.paid_at as string) ?? undefined,
+});
+
+export async function upsertPaymentRequest(p: PaymentRequest): Promise<string | null> {
+  const row = payReqToDb(p);
+  if (!row) return null;
+  if (!canWriteCompany(row.company_id)) return null;
+  const { data, error } = await supabase
+    .from("payment_requests")
+    .upsert(row)
+    .select("id")
+    .single();
+  if (error) { reportWriteError("upsertPaymentRequest", error.message); return null; }
+  return data.id;
+}
+
+export async function deletePaymentRequestDb(id: string) {
+  if (!isUuid(id)) return;
+  const { error } = await supabase.from("payment_requests").delete().eq("id", id);
+  if (error) reportWriteError("deletePaymentRequest", error.message);
+}
+
 /* ───────── REGISTER + HYDRATE + SEED for extras ───────── */
 export function registerExtraSync() {
   opportunitiesStore.setSync({ upsert: upsertOpportunity, remove: deleteOpportunityDb });
@@ -1679,10 +1812,12 @@ export function registerExtraSync() {
   invoiceEscalationsStore.setSync({ upsert: upsertInvoiceEscalation, remove: deleteInvoiceEscalationDb });
   quoteFollowupsStore.setSync({ upsert: upsertQuoteFollowup, remove: deleteQuoteFollowupDb });
   projectStagesStore.setSync({ upsert: upsertProjectStage, remove: deleteProjectStageDb });
+  paymentRunsStore.setSync({ upsert: upsertPaymentRun, remove: deletePaymentRunDb });
+  paymentRequestsStore.setSync({ upsert: upsertPaymentRequest, remove: deletePaymentRequestDb });
 }
 
 export async function hydrateExtras(scope: HydrationScope = { mode: "all" }) {
-  const [ops, qts, pos, exps, rbs, srs, prs, pvrs, escs, qfs, stages] = await Promise.all([
+  const [ops, qts, pos, exps, rbs, srs, prs, pvrs, escs, qfs, stages, payReqs, payRuns] = await Promise.all([
     fetchScopedRows("opportunities", scope),
     fetchScopedRows("quotes", scope),
     fetchScopedRows("purchase_orders", scope),
@@ -1694,8 +1829,12 @@ export async function hydrateExtras(scope: HydrationScope = { mode: "all" }) {
     fetchScopedRows("invoice_escalations", scope),
     fetchScopedRows("quote_followups", scope),
     fetchScopedRows("project_stages", scope),
+    fetchScopedRows("payment_requests", scope),
+    fetchScopedRows("payment_runs", scope),
   ]);
   projectStagesStore.replaceAll(stages.map((r) => stageFromDb(r)));
+  paymentRequestsStore.replaceAll(payReqs.map((r) => paymentRequestFromDb(r)));
+  paymentRunsStore.replaceAll(payRuns.map((r) => payRunFromDb(r)));
   pvrRecordsStore.replaceAll(pvrs.map((r) => pvrFromDb(r)));
   invoiceEscalationsStore.replaceAll(escs.map((r) => escFromDb(r)));
   quoteFollowupsStore.replaceAll(qfs.map((r) => followupFromDb(r)));

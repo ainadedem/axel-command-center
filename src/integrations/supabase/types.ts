@@ -1410,6 +1410,221 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_request_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_name: string | null
+          company_id: string
+          created_at: string
+          from_status: string | null
+          id: string
+          note: string | null
+          request_id: string
+          to_status: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_name?: string | null
+          company_id: string
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          request_id: string
+          to_status?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_name?: string | null
+          company_id?: string
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          request_id?: string
+          to_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_request_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_request_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "payment_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_requests: {
+        Row: {
+          account_id: string | null
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          attachment_name: string | null
+          attachment_url: string | null
+          company_id: string
+          created_at: string
+          currency: string
+          description: string | null
+          expense_id: string | null
+          id: string
+          kind: string
+          needed_by: string | null
+          off_cycle: boolean
+          off_cycle_reason: string | null
+          paid_at: string | null
+          payee: string | null
+          project_id: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
+          requested_by: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          run_id: string | null
+          status: string
+          submitted_at: string | null
+          supplier_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          attachment_name?: string | null
+          attachment_url?: string | null
+          company_id: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          expense_id?: string | null
+          id?: string
+          kind?: string
+          needed_by?: string | null
+          off_cycle?: boolean
+          off_cycle_reason?: string | null
+          paid_at?: string | null
+          payee?: string | null
+          project_id?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          requested_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          run_id?: string | null
+          status?: string
+          submitted_at?: string | null
+          supplier_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          attachment_name?: string | null
+          attachment_url?: string | null
+          company_id?: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          expense_id?: string | null
+          id?: string
+          kind?: string
+          needed_by?: string | null
+          off_cycle?: boolean
+          off_cycle_reason?: string | null
+          paid_at?: string | null
+          payee?: string | null
+          project_id?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          requested_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          run_id?: string | null
+          status?: string
+          submitted_at?: string | null
+          supplier_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_requests_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "payment_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_runs: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          note: string | null
+          released_at: string | null
+          released_by: string | null
+          run_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          run_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          run_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_runs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payroll_runs: {
         Row: {
           company_id: string
@@ -2755,6 +2970,48 @@ export type Database = {
     }
     Functions: {
       can_touch_quote: { Args: { _quote_id: string }; Returns: boolean }
+      decide_payment_request: {
+        Args: { _decision: string; _note?: string; _request_id: string }
+        Returns: {
+          account_id: string | null
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          attachment_name: string | null
+          attachment_url: string | null
+          company_id: string
+          created_at: string
+          currency: string
+          description: string | null
+          expense_id: string | null
+          id: string
+          kind: string
+          needed_by: string | null
+          off_cycle: boolean
+          off_cycle_reason: string | null
+          paid_at: string | null
+          payee: string | null
+          project_id: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
+          requested_by: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          run_id: string | null
+          status: string
+          submitted_at: string | null
+          supplier_id: string | null
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payment_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       document_numbers: {
         Args: { _company_id: string; _kind: string }
         Returns: string[]

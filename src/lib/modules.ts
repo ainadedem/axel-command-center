@@ -1,4 +1,5 @@
 import {
+  BadgeCheck,
   LayoutDashboard, Building2, Wallet, ArrowLeftRight, FileText,
   Users, Briefcase, TrendingUp, BarChart3, Settings, Truck,
   Target, UserCog, Handshake,
@@ -86,6 +87,7 @@ export const MODULES: AxelModule[] = [
           { to: "/accounts", label: "Accounts", icon: Wallet },
           { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
           { to: "/expenses", label: "Expenses", icon: CreditCard },
+          { to: "/payment-approvals", label: "Payment approvals", icon: BadgeCheck },
           { to: "/suppliers", label: "Suppliers", icon: Truck },
         ],
       },

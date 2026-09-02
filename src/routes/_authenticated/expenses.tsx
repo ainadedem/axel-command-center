@@ -22,7 +22,10 @@ import { buildAging, inBucket, type AgingKey } from "@/lib/aging";
 import { AgingPanel } from "@/components/aging-panel";
 import { KpiCard } from "@/components/kpi-card";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
-import { Pencil, Trash2, Receipt, FileText, BanknoteIcon, AlertTriangle } from "lucide-react";
+import { Pencil, Trash2, Receipt, FileText, BanknoteIcon, AlertTriangle, SendHorizonal } from "lucide-react";
+import { toast } from "sonner";
+import { paymentRequestsStore } from "@/lib/mock-data";
+import { runDateFor, runLabel } from "@/lib/payment-approvals";
 import { cn } from "@/lib/utils";
 import { FormErrorBanner, invalidFieldClassName, RequiredLabel, useSingleFlightSubmit } from "@/components/form-ux";
 import { useReconciledSelection } from "@/hooks/use-reconciled-selection";
@@ -75,6 +78,7 @@ const EXPENSE_COLUMNS: ColumnDef[] = [
 
 function Body() {
   const { scope } = useCompany();
+  const { user } = useAuth();
   const allExpenses = useExpenses();
   const companies = useCompanies();
   const suppliers = useSuppliers();
@@ -169,6 +173,31 @@ function Body() {
     if (!confirm(`Delete this ${e.kind === "bill" ? "bill" : "expense"}?`)) return;
     expensesStore.remove(e.id);
     if (selectedId === e.id) setSelectedId(null);
+  };
+
+  const requestPayment = (e: Expense) => {
+    const runDate = runDateFor();
+    const outstanding = Math.max(0, e.amount - (e.paid ?? 0));
+    paymentRequestsStore.add({
+      id: newId("pay-req"),
+      companyId: e.companyId,
+      runId: runDate,
+      kind: e.kind === "bill" ? "bill" : "other",
+      expenseId: e.id,
+      supplierId: e.supplierId,
+      payee: e.payee,
+      title: e.description || e.number || "Payment request",
+      description: e.description,
+      amount: outstanding || e.amount,
+      currency: e.currency,
+      projectId: e.projectId,
+      neededBy: e.dueDate,
+      status: "submitted",
+      offCycle: false,
+      requestedBy: user?.id,
+      submittedAt: new Date().toISOString(),
+    });
+    toast.success(`Sent for review — ${runLabel(runDate)} run.`);
   };
 
   const markPaid = (e: Expense) => {
