@@ -114,3 +114,94 @@ export function cashFlowTotals(rows: CashFlowRow[]) {
     { invoicedMGA: 0, collectedMGA: 0, outstandingMGA: 0, overdueMGA: 0 },
   );
 }
+
+// ---------------------------------------------------------------------------
+// Money going out: approved payment requests.
+//
+// Approving a payment commits the money; it only leaves the bank when the
+// request is marked paid. Cash flow shows both so a run can be planned
+// without pretending the cash has already moved.
+// ---------------------------------------------------------------------------
+
+import type { PaymentRequest } from "./mock-data";
+
+export interface OutflowRow {
+  request: PaymentRequest;
+  amountMGA: number;
+  /** Approved but not yet released. */
+  committed: boolean;
+  /** Released — the money left the account. */
+  released: boolean;
+  /** Run day (paid date when known, otherwise the scheduled Thursday). */
+  date: string;
+}
+
+export function outflowRows(requests: PaymentRequest[]): OutflowRow[] {
+  return requests
+    .filter((r) => r.status === "approved" || r.status === "paid")
+    .map((r) => ({
+      request: r,
+      amountMGA: toMGA(r.amount, r.currency),
+      committed: r.status === "approved",
+      released: r.status === "paid",
+      date: (r.paidAt ?? r.runId ?? r.approvedAt ?? new Date().toISOString()).slice(0, 10),
+    }))
+    .sort((a, b) => b.date.localeCompare(a.date));
+}
+
+export interface CashFlowMonthNet extends CashFlowMonth {
+  /** Money actually released this month. */
+  paidOutMGA: number;
+  /** Approved, scheduled for this month, not yet released. */
+  committedMGA: number;
+  /** collected − paid out */
+  netMGA: number;
+  /** Running net across months, oldest first. */
+  runningMGA: number;
+}
+
+export function cashFlowByMonthWithOutflow(
+  rows: CashFlowRow[],
+  outflows: OutflowRow[],
+): CashFlowMonthNet[] {
+  const base = new Map<string, CashFlowMonthNet>();
+  for (const m of cashFlowByMonth(rows)) {
+    base.set(m.month, { ...m, paidOutMGA: 0, committedMGA: 0, netMGA: 0, runningMGA: 0 });
+  }
+  const bucket = (month: string) => {
+    if (!base.has(month)) {
+      base.set(month, {
+        month, invoicedMGA: 0, collectedMGA: 0, outstandingMGA: 0,
+        paidOutMGA: 0, committedMGA: 0, netMGA: 0, runningMGA: 0,
+      });
+    }
+    return base.get(month)!;
+  };
+
+  for (const o of outflows) {
+    const m = bucket(o.date.slice(0, 7));
+    if (o.released) m.paidOutMGA += o.amountMGA;
+    else m.committedMGA += o.amountMGA;
+  }
+
+  let running = 0;
+  return [...base.values()]
+    .sort((a, b) => a.month.localeCompare(b.month))
+    .map((m) => {
+      m.netMGA = m.collectedMGA - m.paidOutMGA;
+      running += m.netMGA;
+      m.runningMGA = running;
+      return m;
+    });
+}
+
+export function outflowTotals(outflows: OutflowRow[]) {
+  return outflows.reduce(
+    (acc, o) => {
+      if (o.released) acc.paidOutMGA += o.amountMGA;
+      else acc.committedMGA += o.amountMGA;
+      return acc;
+    },
+    { paidOutMGA: 0, committedMGA: 0 },
+  );
+}

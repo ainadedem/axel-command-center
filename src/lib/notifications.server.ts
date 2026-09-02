@@ -101,7 +101,9 @@ export async function fanOut(actorId: string, input: FanOutInput) {
   const emailPlan = targets.map((userId) => {
     const stored = prefs.get(userId);
     const channels = resolveEventPrefs(stored?.events);
-    const mode = resolveEmailModes(stored?.modes, channels)[input.kind];
+    let mode = resolveEmailModes(stored?.modes, channels)[input.kind];
+    // Forced events email by default; only an explicit "off" preference wins.
+    if (input.forceEmail && mode === "off" && !stored) mode = "immediate";
     const quiet = resolveQuietHours(stored?.quiet, stored?.tz);
     if (mode === "off") return { userId, action: "none" as const, at: null as Date | null };
     if (mode === "digest") return { userId, action: "queue" as const, at: nextDigestAt(quiet) };

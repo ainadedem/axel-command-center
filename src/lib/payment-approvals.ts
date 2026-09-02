@@ -9,6 +9,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import {
+  accountsStore, expensesStore, transactionsStore,
   paymentRequestsStore, paymentRunsStore,
   type PaymentRequest, type PaymentRequestStatus, type PaymentRun,
 } from "./mock-data";
@@ -159,6 +160,7 @@ export async function decidePaymentRequest(
   const known = paymentRequestsStore.items.some((r) => r.id === request.id);
   if (known) paymentRequestsStore.update(request.id, request, { silent: true });
   else paymentRequestsStore.add(request, { silent: true });
+  if (decision === "pay") settlePaidRequest(request);
   return { ok: true, request };
 }
 
@@ -169,4 +171,53 @@ export function ensureRun(companyId: string, runDate: string): PaymentRun {
   const run: PaymentRun = { id: crypto.randomUUID(), companyId, runDate, status: "open" };
   paymentRunsStore.add(run);
   return run;
+}
+
+// ---------------------------------------------------------------------------
+// Releasing the money
+// ---------------------------------------------------------------------------
+
+/**
+ * Records the actual money movement for a paid request: settles the source
+ * expense and writes a bank transaction on the run day, so the Cash flow page
+ * and the account balance reflect it. Safe to call twice — an existing
+ * matching transaction short-circuits it.
+ */
+export function settlePaidRequest(request: PaymentRequest): void {
+  if (request.status !== "paid") return;
+
+  const date = (request.paidAt ?? request.runId ?? new Date().toISOString()).slice(0, 10);
+  const expense = request.expenseId
+    ? expensesStore.items.find((e) => e.id === request.expenseId)
+    : undefined;
+
+  if (expense && expense.status !== "paid") {
+    expensesStore.update(expense.id, {
+      paid: expense.amount,
+      status: "paid",
+    });
+  }
+
+  const accountId = request.accountId ?? expense?.accountId
+    ?? accountsStore.items.find((a) => a.companyId === request.companyId)?.id;
+  if (!accountId) return;
+
+  const marker = `pay-req:${request.id}`;
+  const already = transactionsStore.items.some((t) => t.description?.includes(marker));
+  if (already) return;
+
+  transactionsStore.add({
+    id: crypto.randomUUID(),
+    companyId: request.companyId,
+    accountId,
+    date,
+    type: "expense",
+    category: expense?.category ?? "Payments",
+    description: `${request.title} [${marker}]`,
+    amount: -Math.abs(request.amount),
+    currency: request.currency,
+    supplierId: request.supplierId,
+    projectId: request.projectId,
+    source: "manual",
+  });
 }

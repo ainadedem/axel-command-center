@@ -12,4 +12,9 @@ export interface FanOutInput {
   href?: string | null;
   recipients?: string[];
   amount?: number | null;
+  /**
+   * Money decisions must reach people even if they never opened the
+   * preferences screen: email them unless they explicitly turned it off.
+   */
+  forceEmail?: boolean;
 }

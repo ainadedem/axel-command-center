@@ -18,9 +18,12 @@ import {
 } from "@/components/charts";
 import { inScope, useCompany } from "@/lib/company-context";
 import { useEffectiveRole } from "@/lib/use-effective-role";
-import { useInvoices, useTransactions, useClients, fmtCompact, fmt } from "@/lib/mock-data";
+import { useInvoices, useTransactions, useClients, usePaymentRequests, fmtCompact, fmt } from "@/lib/mock-data";
 import { clientLabel } from "@/lib/client-name";
-import { cashFlowRows, cashFlowByMonth, cashFlowTotals, type CashFlowRow } from "@/lib/cash-flow";
+import {
+  cashFlowRows, cashFlowTotals, cashFlowByMonthWithOutflow, outflowRows, outflowTotals,
+  type CashFlowRow,
+} from "@/lib/cash-flow";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/cash-flow")({
@@ -66,6 +69,7 @@ function CashFlowBody() {
   const invoices = useInvoices();
   const transactions = useTransactions();
   const clients = useClients();
+  const paymentRequests = usePaymentRequests();
   const [query, setQuery] = useState("");
   const [state, setState] = useState<"all" | CashFlowRow["state"]>("all");
   const [open, setOpen] = useState<Set<string>>(new Set());
@@ -74,8 +78,13 @@ function CashFlowBody() {
     () => cashFlowRows(inScope(invoices, scope), inScope(transactions, scope)),
     [invoices, transactions, scope],
   );
-  const months = useMemo(() => cashFlowByMonth(rows), [rows]);
+  const outflows = useMemo(
+    () => outflowRows(inScope(paymentRequests, scope)),
+    [paymentRequests, scope],
+  );
+  const months = useMemo(() => cashFlowByMonthWithOutflow(rows, outflows), [rows, outflows]);
   const totals = useMemo(() => cashFlowTotals(rows), [rows]);
+  const out = useMemo(() => outflowTotals(outflows), [outflows]);
 
   const clientName = (id: string) => clientLabel(clients.find((c) => c.id === id));
 
@@ -113,6 +122,13 @@ function CashFlowBody() {
           <KpiCard label="Invoiced" value={fmtCompact(totals.invoicedMGA, "MGA")} sub="All open periods" />
           <KpiCard label="Collected" value={fmtCompact(totals.collectedMGA, "MGA")} tone="success" sub="Money received" />
           <KpiCard label="Outstanding" value={fmtCompact(totals.outstandingMGA, "MGA")} sub="Still owed" />
+          <KpiCard label="Paid out" value={fmtCompact(out.paidOutMGA, "MGA")} sub="Approved payments released" />
+          <KpiCard
+            label="Net cash"
+            value={fmtCompact(totals.collectedMGA - out.paidOutMGA, "MGA")}
+            tone={totals.collectedMGA - out.paidOutMGA >= 0 ? "success" : "danger"}
+            sub={out.committedMGA > 0 ? `${fmtCompact(out.committedMGA, "MGA")} approved, not yet paid` : "Collected minus paid out"}
+          />
           <KpiCard label="Overdue" value={fmtCompact(totals.overdueMGA, "MGA")} tone="danger" sub="Past the due date" />
         </>
       }
@@ -153,6 +169,7 @@ function CashFlowBody() {
             series={[
               { key: "invoicedMGA", label: "Invoiced", color: "var(--primary)" },
               { key: "collectedMGA", label: "Collected", color: "var(--success)" },
+              { key: "paidOutMGA", label: "Paid out", color: "var(--destructive)" },
             ]}
             data={months as unknown as Array<Record<string, unknown>>}
             labelKey="month"
@@ -170,6 +187,7 @@ function CashFlowBody() {
                 />
                 <Bar dataKey="invoicedMGA" name="Invoiced" fill="var(--primary)" {...chartBarProps} />
                 <Bar dataKey="collectedMGA" name="Collected" fill="var(--success)" {...chartBarProps} />
+                <Bar dataKey="paidOutMGA" name="Paid out" fill="var(--destructive)" {...chartBarProps} />
               </BarChart>
             </ResponsiveContainer>
           </ChartFrame>
@@ -185,6 +203,9 @@ function CashFlowBody() {
                   <ListTh align="right">Invoiced</ListTh>
                   <ListTh align="right">Collected</ListTh>
                   <ListTh align="right">Outstanding</ListTh>
+                  <ListTh align="right">Paid out</ListTh>
+                  <ListTh align="right">Net</ListTh>
+                  <ListTh align="right">Running</ListTh>
                 </ListHeadRow>
               </thead>
               <tbody>
@@ -194,6 +215,15 @@ function CashFlowBody() {
                     <ListTd align="right">{fmtCompact(m.invoicedMGA, "MGA")}</ListTd>
                     <ListTd align="right" className="text-success">{fmtCompact(m.collectedMGA, "MGA")}</ListTd>
                     <ListTd align="right">{fmtCompact(m.outstandingMGA, "MGA")}</ListTd>
+                    <ListTd align="right" className={m.paidOutMGA > 0 ? "text-destructive" : undefined}>
+                      {m.paidOutMGA > 0 ? fmtCompact(m.paidOutMGA, "MGA") : "—"}
+                    </ListTd>
+                    <ListTd align="right" className={m.netMGA < 0 ? "text-destructive" : "text-success"}>
+                      {fmtCompact(m.netMGA, "MGA")}
+                    </ListTd>
+                    <ListTd align="right" className={m.runningMGA < 0 ? "text-destructive" : undefined}>
+                      {fmtCompact(m.runningMGA, "MGA")}
+                    </ListTd>
                   </tr>
                 ))}
               </tbody>

@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AlertTriangle, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
+import { announcePaymentRequest, type PaymentStage } from "@/lib/payment-notify";
 
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
@@ -117,6 +118,10 @@ function ApprovalsBody() {
     setBusy(false);
     if (!res.ok) { toast.error(res.error); return; }
     toast.success(`Payment ${STATUS_LABEL[res.request.status].toLowerCase()}.`);
+    announcePaymentRequest(res.request, res.request.status as PaymentStage, {
+      payee: payeeOf(res.request),
+      projectName: projects.find((p) => p.id === res.request.projectId)?.name,
+    });
   };
 
   const submit = (r: PaymentRequest) => {
@@ -127,6 +132,11 @@ function ApprovalsBody() {
       runId: r.runId ?? runDate,
     });
     toast.success(`Sent for review — scheduled for ${runLabel(runDate)}.`);
+    announcePaymentRequest(
+      { ...r, status: "submitted", runId: r.runId ?? runDate },
+      "submitted",
+      { payee: payeeOf(r), projectName: projects.find((p) => p.id === r.projectId)?.name },
+    );
   };
 
   if (roleResolved && !canSeeFinance && scoped.every((r) => r.requestedBy !== user?.id)) {
@@ -341,7 +351,7 @@ function NewRequestDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
 
   const save = (submitNow: boolean) => {
     const status: PaymentRequestStatus = submitNow ? "submitted" : "draft";
-    paymentRequestsStore.add({
+    const created: PaymentRequest = {
       id: newId("pay-req"),
       companyId: companyId || defaultCompany,
       runId: runDate,
@@ -358,7 +368,13 @@ function NewRequestDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
       offCycleReason: offCycle ? offCycleReason.trim() : undefined,
       requestedBy: user?.id,
       submittedAt: submitNow ? new Date().toISOString() : undefined,
-    });
+    };
+    paymentRequestsStore.add(created);
+    if (submitNow) {
+      announcePaymentRequest(created, "submitted", {
+        payee: suppliers.find((sp) => sp.id === created.supplierId)?.name ?? created.payee,
+      });
+    }
     toast.success(submitNow ? `Sent for review — ${runLabel(runDate)} run.` : "Saved as a draft.");
     reset();
     onOpenChange(false);
