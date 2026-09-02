@@ -16,9 +16,11 @@ import {
   teamMembersStore, salesMembersStore,
   salaryRegisterStore, payrollRunsStore,
   pvrRecordsStore, invoiceEscalationsStore, quoteFollowupsStore,
-  projectStagesStore, paymentRequestsStore, paymentRunsStore,
+  projectStagesStore, paymentRequestsStore, paymentRunsStore, tasksStore,
   type PvrRecord, type InvoiceEscalation, type QuoteFollowup,
   type ProjectStage, type ProjectStageStatus,
+  type Task, type TaskStatus, type TaskPriority,
+
   type PaymentRequest, type PaymentRequestKind, type PaymentRequestStatus, type PaymentRun,
   type Currency,
 
