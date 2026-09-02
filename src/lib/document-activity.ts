@@ -7,7 +7,7 @@ import { dbCompanyId } from "@/lib/db-sync";
  * and document uploads, each attributed to a user with a timestamp.
  */
 
-export type DocType = "quote" | "invoice" | "po";
+export type DocType = "quote" | "invoice" | "po" | "project";
 
 export type ActivityAction =
   | "created"
@@ -28,7 +28,9 @@ export type ActivityAction =
   /** The acceptance was rolled back within the undo window. */
   | "acceptance_undone"
   /** The acceptance was re-applied after an undo. */
-  | "acceptance_redone";
+  | "acceptance_redone"
+  /** A project workflow step moved (pending → active → done …). */
+  | "stage_changed";
 
 
 export interface ActivityEntry {

@@ -894,6 +894,31 @@ export interface InvoiceEscalation {
 export const pvrRecordsStore = createCollection<PvrRecord>("pvr-records", []);
 export const invoiceEscalationsStore = createCollection<InvoiceEscalation>("invoice-escalations", []);
 
+/** Status of one step in a project's delivery-to-cash sequence. */
+export type ProjectStageStatus = "pending" | "active" | "blocked" | "done" | "skipped";
+
+/** One ordered step of a project's workflow (Quote → … → Paid). */
+export interface ProjectStage {
+  id: string;
+  companyId: string;
+  projectId: string;
+  position: number;
+  /** Stable key used by the auto-completion rules (quote, po, pvr, invoice, paid…). */
+  key: string;
+  name: string;
+  status: ProjectStageStatus;
+  owner?: string;
+  plannedStart?: string;
+  dueDate?: string;
+  completedAt?: string;
+  blockedReason?: string;
+  notes?: string;
+  /** Driven by evidence elsewhere in the app rather than manual ticking. */
+  auto?: boolean;
+}
+
+export const projectStagesStore = createCollection<ProjectStage>("project-stages", []);
+
 /* ─── Live array exports (backward compatibility) ───────────────────── */
 
 export const companies = companiesStore.items;
@@ -939,6 +964,7 @@ export const useSalaryRegister = () => useCollection(salaryRegisterStore);
 export const usePayrollRuns = () => useCollection(payrollRunsStore);
 export const usePvrRecords = () => useCollection(pvrRecordsStore);
 export const useInvoiceEscalations = () => useCollection(invoiceEscalationsStore);
+export const useProjectStages = () => useCollection(projectStagesStore);
 
 /** Convenience: list of sales-team people (with team name) filtered by role. */
 export function useSalesPeople(role: "acquisition" | "closer"): { id: string; teamMemberId: string; name: string }[] {

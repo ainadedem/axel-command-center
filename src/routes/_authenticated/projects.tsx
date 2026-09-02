@@ -32,8 +32,12 @@ import { useColumnPrefs, type ColumnDef } from "@/lib/column-prefs";
 import { MasterDetail, DetailPanel, DetailSection, DetailField } from "@/components/master-detail";
 import { ListTableShell, ListTable, ListHeadRow, ListTh, ListTd, ListRowActions, ListActionsTh, RowAction, ColumnPicker } from "@/components/list-table";
 import { ProjectTimePanel } from "@/components/time/project-time-panel";
+import { useProjectWorkflows, seedStagesForProject, backfillStages } from "@/lib/project-stages";
+import { portfolioKpis } from "@/lib/project-kpis";
+import { StageProgressBar, ProjectWorkflowPanel } from "@/components/project-workflow";
 
 const PROJECT_COLUMNS: ColumnDef[] = [
+  { key: "progress", label: "Progress" },
   { key: "salesRep", label: "Sales rep" },
   { key: "company", label: "Company" },
   { key: "revenue", label: "Revenue" },
@@ -69,6 +73,7 @@ function Body() {
   const invoices = useInvoices();
   const transactions = useTransactions();
   const baseList = inScope(projects, scope);
+  const workflows = useProjectWorkflows(baseList);
   const [open, setOpen] = useState(false);
   const { isSalesOnly: salesOnly } = useEffectiveRole();
   const [editing, setEditing] = useState<Project | null>(null);
@@ -115,7 +120,15 @@ function Body() {
     alert(`Linked ${orphanInvoices.length} invoice(s) to ${created} new project(s).`);
   };
 
+  const projectsWithoutWorkflow = baseList.filter((p) => (workflows.get(p.id)?.stages.length ?? 0) === 0);
   const reconcileChecks: ReconcileCheck[] = [
+    {
+      id: "missing-workflow",
+      label: "Projects without a workflow",
+      description: "Creates the standard Quote → PO → Kickoff → … → Paid sequence for projects created before sequencing existed.",
+      count: projectsWithoutWorkflow.length,
+      fix: () => backfillStages(projectsWithoutWorkflow),
+    },
     {
       id: "orphan-invoices",
       label: "Invoices without a valid project",
@@ -161,6 +174,8 @@ function Body() {
     return { rev, invoiced, collected, spend, margin };
   }, [list, invoices, transactions]);
 
+  const delivery = useMemo(() => portfolioKpis(list, workflows, invoices), [list, workflows, invoices]);
+
   // Client P&L rollup
   const clientRollup = useMemo(() => {
     const map = new Map<string, { projects: Project[]; revMGA: number; invoicedMGA: number; collectedMGA: number; spendMGA: number }>();
@@ -203,6 +218,14 @@ function Body() {
       <DetailSection>
         <DetailField label="Currency" value={selectedProject.currency} mono />
       </DetailSection>
+      <DetailSection title="Workflow">
+        <div className="col-span-full">
+          <ProjectWorkflowPanel
+            workflow={workflows.get(selectedProject.id) ?? { stages: [], progress: { pct: 0, done: 0, total: 0, blocked: 0, overdue: 0 }, evidence: { quoteAccepted: false, poOnFile: false, poWaived: false, pvrSigned: false, invoiced: false, fullyPaid: false } }}
+            projectName={selectedProject.name}
+          />
+        </div>
+      </DetailSection>
       {!salesOnly && (
         <DetailSection title="Amounts">
           <DetailField label="Revenue" value={fmtCompact(selectedProject.revenue, selectedProject.currency)} mono />
@@ -232,6 +255,12 @@ function Body() {
       ) : (
         <>
           {/* Portfolio KPI strip */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <KpiCard label="Avg. completion" value={`${delivery.avgProgress}%`} sub={`${delivery.completed} finished · ${delivery.inFlight} in flight`} />
+            <KpiCard label="At risk" value={String(delivery.atRisk)} sub={`${delivery.blocked} blocked step(s)`} tone={delivery.atRisk > 0 ? "danger" : "default"} />
+            <KpiCard label="Delivered, not invoiced" value={String(delivery.deliveredNotInvoiced)} sub={salesOnly ? undefined : fmtCompact(delivery.deliveredNotInvoicedMGA, "MGA")} tone={delivery.deliveredNotInvoiced > 0 ? "warning" : "default"} />
+            <KpiCard label="Awaiting payment" value={String(delivery.invoicedNotPaid)} sub={salesOnly ? undefined : fmtCompact(delivery.outstandingMGA, "MGA")} />
+          </div>
           <div className={salesOnly ? "hidden" : "grid grid-cols-2 md:grid-cols-5 gap-3"}>
             <KpiCard label="Portfolio revenue" value={fmtCompact(kpi.rev, "MGA")} />
             <KpiCard label="Invoiced" value={fmtCompact(kpi.invoiced, "MGA")} />
@@ -260,6 +289,7 @@ function Body() {
 <ListTh width="2.25rem" />
                     <ListTh width={salesOnly ? "28%" : "18%"}>Project</ListTh>
                     <ListTh width={salesOnly ? "24%" : "15%"}>Client</ListTh>
+                    {cp.on("progress") && <ListTh width="11%">Progress</ListTh>}
                     {cp.on("salesRep") && <ListTh width={salesOnly ? "20%" : "11%"}>Sales rep</ListTh>}
                     {cp.on("company") && <ListTh width={salesOnly ? "18%" : "10%"}>Company</ListTh>}
                     {!salesOnly && cp.on("revenue") && <ListTh width="10%" align="right">Revenue</ListTh>}
@@ -313,6 +343,11 @@ function Body() {
 
                               <ListTd className="font-medium" title={p.name}>{p.name}</ListTd>
                               <ListTd className="text-muted-foreground" title={cl?.name}>{cl?.name ?? "—"}</ListTd>
+                              {cp.on("progress") && (
+                                <ListTd>
+                                  {(() => { const wf = workflows.get(p.id); return wf ? <StageProgressBar pct={wf.progress.pct} done={wf.progress.done} total={wf.progress.total} /> : <span className="text-muted-foreground/50">—</span>; })()}
+                                </ListTd>
+                              )}
                               {cp.on("salesRep") && <ListTd className="text-xs text-muted-foreground" title={cl?.acquisition}>{cl?.acquisition ?? <span className="text-muted-foreground/50">—</span>}</ListTd>}
                               {cp.on("company") && (
                                 <ListTd title={co?.name}>
@@ -569,6 +604,7 @@ function ProjectDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
         if (dbId && dbId !== localId) {
           projectsStore.replaceAll(projectsStore.items.map((p) => p.id === localId ? { ...p, id: dbId } : p));
         }
+        seedStagesForProject({ id: dbId ?? localId, companyId });
       });
     }
     onOpenChange(false);
