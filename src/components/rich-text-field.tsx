@@ -13,6 +13,8 @@ interface Props {
   className?: string;
   /** Smaller variant used for the secondary "details" field. */
   compact?: boolean;
+  /** One-line until focused — used inside dense spreadsheet grids. */
+  collapsible?: boolean;
 }
 
 type Action = "bold" | "italic" | "ul" | "ol";
@@ -40,7 +42,7 @@ function applyAction(text: string, start: number, end: number, action: Action) {
   return { next, cursor: lineStart + replacement.length };
 }
 
-export function RichTextField({ value, onChange, placeholder, rows = 3, className, compact }: Props) {
+export function RichTextField({ value, onChange, placeholder, rows = 3, className, compact, collapsible }: Props) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const [preview, setPreview] = useState(false);
 
@@ -59,8 +61,13 @@ export function RichTextField({ value, onChange, placeholder, rows = 3, classNam
   const html = renderRichText(value);
 
   return (
-    <div className={cn("rounded-md border border-input bg-background", className)}>
-      <div className="flex items-center gap-0.5 border-b border-border px-1 py-0.5">
+    <div className={cn("group rounded-md border bg-background", collapsible ? "border-transparent focus-within:border-input" : "border-input", className)}>
+      <div
+        className={cn(
+          "items-center gap-0.5 border-b border-border px-1 py-0.5",
+          collapsible ? "hidden group-focus-within:flex" : "flex",
+        )}
+      >
         <ToolbarButton label="Bold" onClick={() => run("bold")}><Bold className="h-3 w-3" /></ToolbarButton>
         <ToolbarButton label="Italic" onClick={() => run("italic")}><Italic className="h-3 w-3" /></ToolbarButton>
         <ToolbarButton label="Bullet list" onClick={() => run("ul")}><List className="h-3 w-3" /></ToolbarButton>
@@ -79,9 +86,14 @@ export function RichTextField({ value, onChange, placeholder, rows = 3, classNam
         onChange={(e) => onChange(e.target.value)}
         className={cn(
           "resize-y border-0 shadow-none focus-visible:ring-0 rounded-none",
-          compact ? "text-[11px] min-h-[44px]" : "text-xs min-h-[56px]",
+          collapsible
+            ? "text-[11px] min-h-[24px] h-6 py-0.5 leading-5 group-focus-within:min-h-[56px] group-focus-within:h-auto group-focus-within:py-1.5"
+            : compact
+              ? "text-[11px] min-h-[44px]"
+              : "text-xs min-h-[56px]",
         )}
       />
+
       {preview && (
         <div className="border-t border-border px-3 py-2">
           <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Preview</div>

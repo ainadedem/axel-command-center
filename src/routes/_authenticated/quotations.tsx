@@ -1214,19 +1214,19 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
               <p className="text-xs text-muted-foreground border border-dashed border-border rounded-md py-6 text-center">{mode === "rate-card" ? "No lines yet — add roles from the rate card." : "No lines yet — add a free-form item."}</p>
             ) : (
               <div className="rounded-md border border-border overflow-hidden">
-                <div className="overflow-x-auto stacked-table">
-                <table className={cn("w-full text-xs", mode === "rate-card" ? "min-w-[1040px]" : "min-w-[820px]")}>
-                  <thead className="bg-surface-elevated/40 text-[10px] uppercase tracking-wider text-muted-foreground">
+                <div className="overflow-auto max-h-[52vh] stacked-table">
+                <table className={cn("sheet-grid w-full text-xs", mode === "rate-card" ? "min-w-[1040px]" : "min-w-[820px]")}>
+                  <thead className="text-[10px] uppercase tracking-wider text-muted-foreground">
                     <tr className="[&>th]:whitespace-nowrap">
                       <th className="w-10" />
-                      <th className="text-left font-medium px-2 py-2 min-w-[260px]">Description</th>
-                      {mode === "rate-card" && <th className="text-left font-medium px-2 py-2 w-32">Capability</th>}
-                      {mode === "rate-card" && <th className="text-left font-medium px-2 py-2 w-24">Level</th>}
-                      <th className="text-left font-medium px-2 py-2 w-24">Unit</th>
-                      <th className="text-right font-medium px-2 py-2 w-24">Qty</th>
-                      <th className="text-right font-medium px-2 py-2 w-32">Rate ({currency})</th>
-                      <th className="text-right font-medium px-2 py-2 w-24">Disc %</th>
-                      <th className="text-right font-medium px-2 py-2 w-36">Amount ({currency})</th>
+                      <th className="text-left px-2 py-1.5 min-w-[260px]">Description</th>
+                      {mode === "rate-card" && <th className="text-left px-2 py-1.5 w-32">Capability</th>}
+                      {mode === "rate-card" && <th className="text-left px-2 py-1.5 w-24">Level</th>}
+                      <th className="text-left px-2 py-1.5 w-24">Unit</th>
+                      <th className="text-right px-2 py-1.5 w-24">Qty</th>
+                      <th className="text-right px-2 py-1.5 w-32">Rate ({currency})</th>
+                      <th className="text-right px-2 py-1.5 w-24">Disc %</th>
+                      <th className="text-right px-2 py-1.5 w-36">Amount ({currency})</th>
                       <th className="w-8" />
                     </tr>
                   </thead>
@@ -1235,38 +1235,38 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                     {lines.map((l, li) => {
                       const rp = lineDnd.rowProps(li);
                       return (
-                      <tr key={l.id} {...rp} className={cn("border-t border-border/40 align-top", rp.className)}>
-                        <td className="px-1 py-1.5">
+                      <tr key={l.id} {...rp} className={cn("align-top", rp.className)}>
+                        <td className="cell-pad">
                           <DragHandle index={li} total={lines.length} handleProps={lineDnd.handleProps(li)} onMove={(f, t) => lineDnd.move(f, t, lines.length)} />
                         </td>
-                        <td className="px-2 py-1.5">
-                          <Input className="h-8 text-xs" value={l.description} onChange={(e) => updateLine(l.id, { description: e.target.value })} placeholder="Description" />
-                          <RichTextField compact className="mt-1" value={l.details ?? ""} onChange={(v) => updateLine(l.id, { details: v })} placeholder="Details (optional)" rows={2} />
+                        <td className="cell-pad">
+                          <Input className="h-7 text-xs" value={l.description} onChange={(e) => updateLine(l.id, { description: e.target.value })} placeholder="Description" />
+                          <RichTextField compact collapsible className="mt-0.5" value={l.details ?? ""} onChange={(v) => updateLine(l.id, { details: v })} placeholder="Details (optional)" rows={2} />
 
                         </td>
                         {mode === "rate-card" && (
-                          <td className="px-2 py-1.5">
+                          <td className="cell-pad">
                             <Select value={l.capability ?? "CREATIVE"} onValueChange={(v) => updateLine(l.id, { capability: v })}>
-                              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
                               <SelectContent>{capabilities.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                             </Select>
                           </td>
                         )}
                         {mode === "rate-card" && (
-                          <td className="px-2 py-1.5">
+                          <td className="cell-pad">
                             {l.capability === "PROJECT" ? (
                               <span className="text-xs text-muted-foreground px-2 py-1.5 block">—</span>
                             ) : (
                               <Select value={l.level ?? "P7"} onValueChange={(v) => updateLine(l.id, { level: v })}>
-                                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                                <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
                                 <SelectContent>{levels.map((lv) => <SelectItem key={lv.code} value={lv.code}>{lv.code} · {lv.title}</SelectItem>)}</SelectContent>
                               </Select>
                             )}
                           </td>
                         )}
-                        <td className="px-2 py-1.5">
+                        <td className="cell-pad">
                           <Select value={l.unit} onValueChange={(v) => updateLine(l.id, { unit: v as Unit })}>
-                            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="hour">Hour</SelectItem>
                               <SelectItem value="day">Day</SelectItem>
@@ -1274,41 +1274,41 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                             </SelectContent>
                           </Select>
                         </td>
-                        <td className="px-2 py-1.5"><Input type="number" className="h-8 text-xs text-right" value={l.quantity} onChange={(e) => updateLine(l.id, { quantity: Number(e.target.value) })} /></td>
-                        <td className="px-2 py-1.5">
+                        <td className="cell-pad"><Input type="number" className="h-7 text-xs text-right" value={l.quantity} onChange={(e) => updateLine(l.id, { quantity: Number(e.target.value) })} /></td>
+                        <td className="cell-pad">
                           <div className="relative">
-                            <Input type="number" className="h-8 text-xs text-right pr-8" value={l.rate} onChange={(e) => updateLine(l.id, { rate: Number(e.target.value), level: undefined })} />
+                            <Input type="number" className="h-7 text-xs text-right pr-7" value={l.rate} onChange={(e) => updateLine(l.id, { rate: Number(e.target.value), level: undefined })} />
                             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">
                               {currency === "EUR" ? "€" : currency === "USD" ? "$" : "Ar"}
                             </span>
                           </div>
                         </td>
-                        <td className="px-2 py-1.5">
+                        <td className="cell-pad">
                           <div className="relative">
                             <Input
                               type="number" min={0} max={100} step={0.5}
-                              className="h-8 text-xs text-right pr-6"
+                              className="h-7 text-xs text-right pr-6"
                               value={l.discountPct ?? 0}
                               onChange={(e) => updateLine(l.id, { discountPct: Number(e.target.value) })}
                             />
                             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">%</span>
                           </div>
                         </td>
-                        <td className="px-2 py-1.5 text-right font-tnum">{fmt(lineNet(l), currency)}</td>
-                        <td className="px-2 py-1.5"><button type="button" onClick={() => removeLine(l.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><X className="h-3.5 w-3.5" /></button></td>
+                        <td className="cell-pad text-right font-tnum font-medium">{fmt(lineNet(l), currency)}</td>
+                        <td className="cell-pad"><button type="button" onClick={() => removeLine(l.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><X className="h-3.5 w-3.5" /></button></td>
                       </tr>
                       );
                     })}
                   </tbody>
                   <tfoot>
                     {totals.lineDiscount > 0 && (
-                      <tr className="border-t border-border bg-surface-elevated/30">
+                      <tr>
                         <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Line discounts</td>
                         <td className="px-2 py-2 text-right font-tnum text-muted-foreground">−{fmt(totals.lineDiscount, currency)}</td>
                         <td />
                       </tr>
                     )}
-                    <tr className="border-t border-border bg-surface-elevated/30">
+                    <tr>
                       <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
                         <div className="inline-flex items-center gap-2 justify-end">
                           <span>Global discount</span>
@@ -1326,12 +1326,12 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                       <td className="px-2 py-2 text-right font-tnum text-muted-foreground">{totals.globalDiscount > 0 ? `−${fmt(totals.globalDiscount, currency)}` : fmt(0, currency)}</td>
                       <td />
                     </tr>
-                    <tr className="border-t border-border bg-surface-elevated/30">
+                    <tr>
                       <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Subtotal</td>
                       <td className="px-2 py-2 text-right font-tnum">{fmt(subtotal, currency)}</td>
                       <td />
                     </tr>
-                    <tr className="bg-surface-elevated/30">
+                    <tr>
                       <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
                         <div className="inline-flex items-center gap-2 justify-end">
                           <span>Tax</span>
@@ -1351,7 +1351,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                       <td className="px-2 py-2 text-right font-tnum">{fmt(taxAmount, currency)}</td>
                       <td />
                     </tr>
-                    <tr className="border-t border-border bg-surface-elevated/40">
+                    <tr>
                       <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-foreground font-semibold">Total</td>
                       <td className="px-2 py-2 text-right font-tnum font-semibold">{fmt(totalAmount, currency)}</td>
                       <td />

@@ -1476,7 +1476,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
                   </span>
                 </label>
                 {poWaived && (
-                  <Input value={poWaiverReason} onChange={(e) => setPoWaiverReason(e.target.value)} placeholder="Reason (e.g. client confirmed by email)" className="h-8 text-xs" />
+                  <Input value={poWaiverReason} onChange={(e) => setPoWaiverReason(e.target.value)} placeholder="Reason (e.g. client confirmed by email)" className="h-7 text-xs" />
                 )}
               </div>
             )}
@@ -1529,17 +1529,17 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
               </p>
             ) : (
               <div className="rounded-md border border-border overflow-hidden">
-                <div className="overflow-x-auto stacked-table">
-                <table className="w-full min-w-[820px] text-xs">
-                  <thead className="bg-surface-elevated/40 text-[10px] uppercase tracking-wider text-muted-foreground">
+                <div className="overflow-auto max-h-[52vh] stacked-table">
+                <table className="sheet-grid w-full min-w-[820px] text-xs">
+                  <thead className="text-[10px] uppercase tracking-wider text-muted-foreground">
                     <tr className="[&>th]:whitespace-nowrap">
                       <th className="w-10" />
-                      <th className="text-left font-medium px-2 py-2 min-w-[260px]">Description</th>
-                      <th className="text-left font-medium px-2 py-2 w-24">Unit</th>
-                      <th className="text-right font-medium px-2 py-2 w-24">Qty</th>
-                      <th className="text-right font-medium px-2 py-2 w-32">Price</th>
-                      <th className="text-right font-medium px-2 py-2 w-24">Disc %</th>
-                      <th className="text-right font-medium px-2 py-2 w-36">Amount</th>
+                      <th className="text-left px-2 py-1.5 min-w-[260px]">Description</th>
+                      <th className="text-left px-2 py-1.5 w-24">Unit</th>
+                      <th className="text-right px-2 py-1.5 w-24">Qty</th>
+                      <th className="text-right px-2 py-1.5 w-32">Price</th>
+                      <th className="text-right px-2 py-1.5 w-24">Disc %</th>
+                      <th className="text-right px-2 py-1.5 w-36">Amount</th>
                       <th className="w-8" />
                     </tr>
                   </thead>
@@ -1548,18 +1548,18 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
                     {lines.map((l, li) => {
                       const rp = lineDnd.rowProps(li);
                       return (
-                      <tr key={l.id} {...rp} className={cn("border-t border-border/40 align-top", rp.className)}>
-                        <td className="px-1 py-1.5">
+                      <tr key={l.id} {...rp} className={cn("align-top", rp.className)}>
+                        <td className="cell-pad">
                           <DragHandle index={li} total={lines.length} handleProps={lineDnd.handleProps(li)} onMove={(f, t) => lineDnd.move(f, t, lines.length)} />
                         </td>
 
-                        <td className="px-2 py-1.5">
-                          <Input className="h-8 text-xs" value={l.description} onChange={(e) => updateLine(l.id, { description: e.target.value })} placeholder="Description" />
-                          <RichTextField compact className="mt-1" value={l.details ?? ""} onChange={(v) => updateLine(l.id, { details: v })} placeholder="Details (optional)" rows={2} />
+                        <td className="cell-pad">
+                          <Input className="h-7 text-xs" value={l.description} onChange={(e) => updateLine(l.id, { description: e.target.value })} placeholder="Description" />
+                          <RichTextField compact collapsible className="mt-0.5" value={l.details ?? ""} onChange={(v) => updateLine(l.id, { details: v })} placeholder="Details (optional)" rows={2} />
                         </td>
-                        <td className="px-2 py-1.5">
+                        <td className="cell-pad">
                           <Select value={l.unit} onValueChange={(v) => updateLine(l.id, { unit: v as QuoteLine["unit"] })}>
-                            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="hour">Hour</SelectItem>
                               <SelectItem value="day">Day</SelectItem>
@@ -1567,21 +1567,21 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
                             </SelectContent>
                           </Select>
                         </td>
-                        <td className="px-2 py-1.5"><Input type="number" className="h-8 text-xs text-right" value={l.quantity} onChange={(e) => updateLine(l.id, { quantity: Number(e.target.value) })} /></td>
-                        <td className="px-2 py-1.5"><Input type="number" className="h-8 text-xs text-right" value={l.rate} onChange={(e) => updateLine(l.id, { rate: Number(e.target.value) })} /></td>
-                        <td className="px-2 py-1.5">
+                        <td className="cell-pad"><Input type="number" className="h-7 text-xs text-right" value={l.quantity} onChange={(e) => updateLine(l.id, { quantity: Number(e.target.value) })} /></td>
+                        <td className="cell-pad"><Input type="number" className="h-7 text-xs text-right" value={l.rate} onChange={(e) => updateLine(l.id, { rate: Number(e.target.value) })} /></td>
+                        <td className="cell-pad">
                           <div className="relative">
                             <Input
                               type="number" min={0} max={100} step={0.5}
-                              className="h-8 text-xs text-right pr-6"
+                              className="h-7 text-xs text-right pr-6"
                               value={l.discountPct ?? 0}
                               onChange={(e) => updateLine(l.id, { discountPct: Number(e.target.value) })}
                             />
                             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">%</span>
                           </div>
                         </td>
-                        <td className="px-2 py-1.5 text-right font-tnum">{fmtAmount(lineNet(l), currency)}</td>
-                        <td className="px-2 py-1.5">
+                        <td className="cell-pad text-right font-tnum font-medium">{fmtAmount(lineNet(l), currency)}</td>
+                        <td className="cell-pad">
                           <button type="button" onClick={() => removeLine(l.id)} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><X className="h-3.5 w-3.5" /></button>
                         </td>
                       </tr>
@@ -1590,14 +1590,14 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
                   </tbody>
                   <tfoot>
                     {totals.lineDiscount > 0 && (
-                      <tr className="border-t border-border bg-surface-elevated/30">
+                      <tr>
                         <td colSpan={6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Line discounts</td>
 
                         <td className="px-2 py-2 text-right font-tnum text-muted-foreground">−{fmtAmount(totals.lineDiscount, currency)}</td>
                         <td />
                       </tr>
                     )}
-                    <tr className="border-t border-border bg-surface-elevated/30">
+                    <tr>
                       <td colSpan={6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
                         <div className="inline-flex items-center gap-2 justify-end">
                           <span>Global discount</span>
@@ -1615,12 +1615,12 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
                       <td className="px-2 py-2 text-right font-tnum text-muted-foreground">{totals.globalDiscount > 0 ? `−${fmtAmount(totals.globalDiscount, currency)}` : fmtAmount(0, currency)}</td>
                       <td />
                     </tr>
-                    <tr className="border-t border-border bg-surface-elevated/30">
+                    <tr>
                       <td colSpan={6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Subtotal</td>
                       <td className="px-2 py-2 text-right font-tnum">{fmtAmount(linesTotal, currency)}</td>
                       <td />
                     </tr>
-                    <tr className="bg-surface-elevated/30">
+                    <tr>
                       <td colSpan={6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
                         <div className="inline-flex items-center gap-2 justify-end">
                           <span>Tax</span>
@@ -1638,7 +1638,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
                       <td className="px-2 py-2 text-right font-tnum">{fmtAmount(totals.taxAmount, currency)}</td>
                       <td />
                     </tr>
-                    <tr className="border-t border-border bg-surface-elevated/40">
+                    <tr>
                       <td colSpan={6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-foreground font-semibold">Total</td>
                       <td className="px-2 py-2 text-right font-tnum font-semibold">{fmtAmount(totals.total, currency)}</td>
                       <td />
