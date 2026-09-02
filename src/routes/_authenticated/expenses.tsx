@@ -78,6 +78,7 @@ const EXPENSE_COLUMNS: ColumnDef[] = [
 
 function Body() {
   const { scope } = useCompany();
+  const { user } = useAuth();
   const allExpenses = useExpenses();
   const companies = useCompanies();
   const suppliers = useSuppliers();
