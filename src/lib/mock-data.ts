@@ -921,6 +921,39 @@ export interface ProjectStage {
 
 export const projectStagesStore = createCollection<ProjectStage>("project-stages", []);
 
+/* ─── Tasks (team to-do list) ───────────────────────────────────────── */
+
+export type TaskStatus = "todo" | "doing" | "blocked" | "done";
+export type TaskPriority = "low" | "normal" | "high" | "urgent";
+
+/** Maximum people a single task can be assigned to. */
+export const MAX_TASK_ASSIGNEES = 3;
+
+/** A piece of work somebody owns, optionally tied to a document or project. */
+export interface Task {
+  id: string;
+  companyId: string;
+  title: string;
+  notes?: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  dueDate?: string;
+  /** Auth user ids (max 3). */
+  assignedTo: string[];
+  projectId?: string;
+  clientId?: string;
+  quoteId?: string;
+  invoiceId?: string;
+  paymentRequestId?: string;
+  createdBy?: string;
+  completedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export const tasksStore = createCollection<Task>("tasks", []);
+
+
 /* ─── Payment approvals (weekly Thursday run) ───────────────────────── */
 
 export type PaymentRequestStatus =
