@@ -1552,3 +1552,75 @@ input[type="number"] {
     border-radius: 12px;
   }
 }
+
+/* ---------------------------------------------------------------
+   Spreadsheet-style editor grid (quotation / invoice line items).
+   Dense cells, continuous rules, borderless in-cell controls.
+   --------------------------------------------------------------- */
+.sheet-grid {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.sheet-grid th,
+.sheet-grid td {
+  border-right: 1px solid hsl(var(--border) / 0.6);
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+  padding: 0;
+  vertical-align: middle;
+}
+.sheet-grid th:last-child,
+.sheet-grid td:last-child {
+  border-right: 0;
+}
+.sheet-grid thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: hsl(var(--muted) / 0.65);
+  backdrop-filter: blur(4px);
+  padding: 0.3rem 0.4rem;
+  font-weight: 600;
+}
+.sheet-grid tbody tr:nth-child(even) > td {
+  background: hsl(var(--muted) / 0.22);
+}
+.sheet-grid tbody tr:hover > td {
+  background: hsl(var(--primary) / 0.06);
+}
+/* Borderless in-cell controls */
+.sheet-grid td input,
+.sheet-grid td button[role="combobox"],
+.sheet-grid td textarea {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  height: 1.75rem;
+  min-height: 1.75rem;
+  padding-inline: 0.4rem;
+  font-size: 0.75rem;
+}
+.sheet-grid td textarea {
+  height: auto;
+}
+.sheet-grid td:focus-within {
+  outline: 2px solid hsl(var(--primary) / 0.55);
+  outline-offset: -2px;
+  background: hsl(var(--background));
+}
+.sheet-grid td input:focus-visible,
+.sheet-grid td button[role="combobox"]:focus-visible {
+  outline: none !important;
+}
+.sheet-grid .cell-pad {
+  padding: 0.15rem 0.4rem;
+}
+.sheet-grid tfoot td {
+  border-bottom: 0;
+  padding: 0.3rem 0.4rem;
+  background: hsl(var(--muted) / 0.4);
+}
+.sheet-grid tfoot tr:last-child td {
+  border-top: 2px solid hsl(var(--border));
+  background: hsl(var(--muted) / 0.7);
+}
