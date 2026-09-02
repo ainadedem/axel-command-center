@@ -259,7 +259,7 @@ function RevenueView({ list, rollups, variances, onDrill }: {
 
       <div className="rounded-lg border border-border bg-surface overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-xs">
+          <table className="sheet w-full text-xs">
             <thead>
               <tr className="border-b border-border text-[10px] uppercase tracking-wider text-muted-foreground">
                 <th className="text-left font-medium px-3 py-2">Deal</th>

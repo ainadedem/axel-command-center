@@ -311,7 +311,7 @@ function UsersAccessPage() {
 
         <div className="rounded-lg border border-border bg-card overflow-hidden">
           <div className="stacked-table">
-            <table className="w-full table-fixed text-sm">
+            <table className="sheet w-full table-fixed text-sm">
               <thead className="bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="text-left font-medium px-4 py-3 w-[42%]">User</th>

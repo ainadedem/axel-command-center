@@ -137,7 +137,7 @@ export function ReportsPanel({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="sheet w-full text-sm">
             <thead>
               <tr className="text-[11px] uppercase tracking-wider text-muted-foreground text-left">
                 {headers.map((h) => <th key={h} className="py-2 font-normal whitespace-nowrap">{h}</th>)}

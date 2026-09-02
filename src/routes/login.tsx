@@ -8,7 +8,7 @@ import { AxelWordmark } from "@/components/axel-wordmark";
  * Anything else (absolute URLs, protocol-relative `//evil.com`, backslash
  * tricks) falls back to the home page to prevent open-redirect phishing.
  */
-function safeRedirect(value: unknown): string {
+export function safeRedirect(value: unknown): string {
   if (typeof value !== "string" || !value) return "/";
   const path = value.trim();
   if (!path.startsWith("/")) return "/";
