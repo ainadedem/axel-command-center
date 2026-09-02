@@ -463,7 +463,7 @@ function ReconciliationHistoryDialog({ open, onOpenChange, account }: { open: bo
               <div className="text-[11px] text-muted-foreground mb-2">{filtered.length} of {rows.length} reconciliations</div>
               <div className="rounded-lg border border-border overflow-hidden">
                 <div className="overflow-x-auto stacked-table">
-                <table className="w-full min-w-[720px] text-xs">
+                <table className="sheet sheet-pin1 w-full min-w-[720px] text-xs">
                   <thead>
                     <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
                       <th className="text-left font-medium px-3 py-2">Period</th>

@@ -194,7 +194,7 @@ function Section({ title, rows, prevRows, co }: any) {
         </div>
       </div>
       <div className="overflow-x-auto sticky-first-col">
-      <table className="sheet w-full min-w-[900px] text-sm">
+      <table className="sheet sheet-pin1 w-full min-w-[900px] text-sm">
         <tbody>
           {filtered.length === 0 && (
             <tr><td className="px-5 py-3 text-muted-foreground text-xs" colSpan={5}>—</td></tr>

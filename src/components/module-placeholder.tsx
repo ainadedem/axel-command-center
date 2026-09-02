@@ -37,7 +37,7 @@ export function PlaceholderTable({
         </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] text-sm">
+        <table className="sheet w-full min-w-[720px] text-sm">
           <thead>
             <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
               {columns.map((c) => (
