@@ -1875,10 +1875,11 @@ export function registerExtraSync() {
   projectStagesStore.setSync({ upsert: upsertProjectStage, remove: deleteProjectStageDb });
   paymentRunsStore.setSync({ upsert: upsertPaymentRun, remove: deletePaymentRunDb });
   paymentRequestsStore.setSync({ upsert: upsertPaymentRequest, remove: deletePaymentRequestDb });
+  tasksStore.setSync({ upsert: upsertTask, remove: deleteTaskDb });
 }
 
 export async function hydrateExtras(scope: HydrationScope = { mode: "all" }) {
-  const [ops, qts, pos, exps, rbs, srs, prs, pvrs, escs, qfs, stages, payReqs, payRuns] = await Promise.all([
+  const [ops, qts, pos, exps, rbs, srs, prs, pvrs, escs, qfs, stages, payReqs, payRuns, tsks] = await Promise.all([
     fetchScopedRows("opportunities", scope),
     fetchScopedRows("quotes", scope),
     fetchScopedRows("purchase_orders", scope),
@@ -1892,10 +1893,13 @@ export async function hydrateExtras(scope: HydrationScope = { mode: "all" }) {
     fetchScopedRows("project_stages", scope),
     fetchScopedRows("payment_requests", scope),
     fetchScopedRows("payment_runs", scope),
+    fetchScopedRows("tasks", scope),
   ]);
   projectStagesStore.replaceAll(stages.map((r) => stageFromDb(r)));
   paymentRequestsStore.replaceAll(payReqs.map((r) => paymentRequestFromDb(r)));
   paymentRunsStore.replaceAll(payRuns.map((r) => payRunFromDb(r)));
+  tasksStore.replaceAll(tsks.map((r) => taskFromDb(r)));
+
   pvrRecordsStore.replaceAll(pvrs.map((r) => pvrFromDb(r)));
   invoiceEscalationsStore.replaceAll(escs.map((r) => escFromDb(r)));
   quoteFollowupsStore.replaceAll(qfs.map((r) => followupFromDb(r)));
