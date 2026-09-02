@@ -32,6 +32,7 @@ import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedPlanComptableRouteImport } from './routes/_authenticated/plan-comptable'
 import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated/pipeline'
 import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
+import { Route as AuthenticatedPaymentApprovalsRouteImport } from './routes/_authenticated/payment-approvals'
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
 import { Route as AuthenticatedKioskRouteImport } from './routes/_authenticated/kiosk'
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
@@ -176,6 +177,12 @@ const AuthenticatedPayrollRoute = AuthenticatedPayrollRouteImport.update({
   path: '/payroll',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedPaymentApprovalsRoute =
+  AuthenticatedPaymentApprovalsRouteImport.update({
+    id: '/payment-approvals',
+    path: '/payment-approvals',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedLeaveRoute = AuthenticatedLeaveRouteImport.update({
   id: '/leave',
   path: '/leave',
@@ -326,6 +333,7 @@ export interface FileRoutesByFullPath {
   '/journal': typeof AuthenticatedJournalRoute
   '/kiosk': typeof AuthenticatedKioskRoute
   '/leave': typeof AuthenticatedLeaveRoute
+  '/payment-approvals': typeof AuthenticatedPaymentApprovalsRoute
   '/payroll': typeof AuthenticatedPayrollRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/plan-comptable': typeof AuthenticatedPlanComptableRoute
@@ -372,6 +380,7 @@ export interface FileRoutesByTo {
   '/journal': typeof AuthenticatedJournalRoute
   '/kiosk': typeof AuthenticatedKioskRoute
   '/leave': typeof AuthenticatedLeaveRoute
+  '/payment-approvals': typeof AuthenticatedPaymentApprovalsRoute
   '/payroll': typeof AuthenticatedPayrollRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
   '/plan-comptable': typeof AuthenticatedPlanComptableRoute
@@ -422,6 +431,7 @@ export interface FileRoutesById {
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
   '/_authenticated/kiosk': typeof AuthenticatedKioskRoute
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
+  '/_authenticated/payment-approvals': typeof AuthenticatedPaymentApprovalsRoute
   '/_authenticated/payroll': typeof AuthenticatedPayrollRoute
   '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
   '/_authenticated/plan-comptable': typeof AuthenticatedPlanComptableRoute
@@ -473,6 +483,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/kiosk'
     | '/leave'
+    | '/payment-approvals'
     | '/payroll'
     | '/pipeline'
     | '/plan-comptable'
@@ -519,6 +530,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/kiosk'
     | '/leave'
+    | '/payment-approvals'
     | '/payroll'
     | '/pipeline'
     | '/plan-comptable'
@@ -568,6 +580,7 @@ export interface FileRouteTypes {
     | '/_authenticated/journal'
     | '/_authenticated/kiosk'
     | '/_authenticated/leave'
+    | '/_authenticated/payment-approvals'
     | '/_authenticated/payroll'
     | '/_authenticated/pipeline'
     | '/_authenticated/plan-comptable'
@@ -764,6 +777,13 @@ declare module '@tanstack/react-router' {
       path: '/payroll'
       fullPath: '/payroll'
       preLoaderRoute: typeof AuthenticatedPayrollRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/payment-approvals': {
+      id: '/_authenticated/payment-approvals'
+      path: '/payment-approvals'
+      fullPath: '/payment-approvals'
+      preLoaderRoute: typeof AuthenticatedPaymentApprovalsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/leave': {
@@ -971,6 +991,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
   AuthenticatedKioskRoute: typeof AuthenticatedKioskRoute
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
+  AuthenticatedPaymentApprovalsRoute: typeof AuthenticatedPaymentApprovalsRoute
   AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRoute
   AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
   AuthenticatedPlanComptableRoute: typeof AuthenticatedPlanComptableRoute
@@ -1013,6 +1034,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
   AuthenticatedKioskRoute: AuthenticatedKioskRoute,
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
+  AuthenticatedPaymentApprovalsRoute: AuthenticatedPaymentApprovalsRoute,
   AuthenticatedPayrollRoute: AuthenticatedPayrollRoute,
   AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
   AuthenticatedPlanComptableRoute: AuthenticatedPlanComptableRoute,

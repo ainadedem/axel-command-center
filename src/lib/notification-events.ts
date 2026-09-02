@@ -13,7 +13,9 @@ export type NotificationEventKey =
   | "invoice_cancelled"
   | "quote_accepted"
   | "quote_auto_documents"
-  | "ar_escalation";
+  | "ar_escalation"
+  | "payment_request_decision"
+  | "payment_run_reminder";
 
 export interface EventChannels {
   inApp: boolean;
@@ -39,6 +41,8 @@ export const NOTIFICATION_EVENTS: NotificationEventMeta[] = [
   { key: "invoice_cancelled", label: "Invoice cancelled", description: "An invoice is cancelled or credited.", defaultInApp: true, watchable: true },
   { key: "quote_accepted", label: "Quotation accepted or rejected", description: "A client decision lands on a quotation.", defaultInApp: true, watchable: true },
   { key: "quote_auto_documents", label: "Documents created from an accepted quotation", description: "Accepting a quotation automatically creates its purchase order and invoice.", defaultInApp: true, watchable: true },
+  { key: "payment_request_decision", label: "Payment approval decisions", description: "A payment request is reviewed, approved, rejected or paid.", defaultInApp: true, watchable: true },
+  { key: "payment_run_reminder", label: "Weekly payment run reminders", description: "Wednesday cut-off reminder and the Thursday approval summary.", defaultInApp: true, watchable: true },
   { key: "ar_escalation", label: "Receivables escalation", description: "An invoice crosses a step of the collection ladder.", defaultInApp: true, watchable: true },
 ];
 
