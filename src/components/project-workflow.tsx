@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, CircleDashed, Loader2, MinusCircle, OctagonAlert } from "lucide-react";
+import { ArrowRight, Check, CircleDashed, Loader2, MinusCircle, OctagonAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  STAGE_STATUS_LABEL, setStageStatus, stageHint, updateStage,
+  STAGE_STATUS_LABEL, advanceStage, setStageStatus, stageDurationDays, stageHint,
+  updateStage, workflowElapsedDays,
   type ProjectWorkflow,
 } from "@/lib/project-stages";
 import type { ProjectStage, ProjectStageStatus } from "@/lib/mock-data";
@@ -59,6 +60,7 @@ export function ProjectWorkflowPanel({
   workflow, projectName,
 }: { workflow: ProjectWorkflow; projectName: string }) {
   const { stages, progress } = workflow;
+  const elapsed = workflowElapsedDays(stages);
   if (stages.length === 0) {
     return <p className="text-xs text-muted-foreground">No workflow yet for this project.</p>;
   }
@@ -73,6 +75,11 @@ export function ProjectWorkflowPanel({
           Next up: <span className="font-medium text-foreground">{progress.current.name}</span> — {stageHint(progress.current.key)}
         </p>
       )}
+      {elapsed !== undefined && (
+        <p className="text-[0.6875rem] text-muted-foreground">
+          {elapsed} day{elapsed === 1 ? "" : "s"} since the first step started.
+        </p>
+      )}
       <ol className="space-y-1">
         {stages.map((s) => (
           <StageRow key={s.id} stage={s} projectName={projectName} />
@@ -82,10 +89,41 @@ export function ProjectWorkflowPanel({
   );
 }
 
+function DateCell({
+  label, value, onChange,
+}: { label: string; value?: string; onChange: (v?: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const iso = value ? value.slice(0, 10) : "";
+  if (editing) {
+    return (
+      <Input
+        type="date"
+        autoFocus
+        defaultValue={iso}
+        className="h-6 w-[8.5rem] text-[0.75rem]"
+        onBlur={(e) => {
+          onChange(e.target.value ? new Date(`${e.target.value}T12:00:00`).toISOString() : undefined);
+          setEditing(false);
+        }}
+      />
+    );
+  }
+  return (
+    <button
+      type="button"
+      title={`${label} date`}
+      className="shrink-0 rounded px-1 text-[0.6875rem] text-muted-foreground hover:bg-surface-elevated hover:text-foreground"
+      onClick={() => setEditing(true)}
+    >
+      {iso || label}
+    </button>
+  );
+}
+
 function StageRow({ stage, projectName }: { stage: ProjectStage; projectName: string }) {
-  const [editingDue, setEditingDue] = useState(false);
   const Icon = STATUS_ICON[stage.status];
   const locked = !!stage.auto && stage.status === "done";
+  const days = stageDurationDays(stage);
 
   return (
     <li className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-surface-elevated/40 transition-colors">
@@ -97,22 +135,24 @@ function StageRow({ stage, projectName }: { stage: ProjectStage; projectName: st
         <span className="text-[0.625rem] uppercase tracking-wide text-muted-foreground/70 shrink-0">auto</span>
       )}
       <span className="flex-1" />
-      {editingDue ? (
-        <Input
-          type="date"
-          autoFocus
-          defaultValue={stage.dueDate ?? ""}
-          className="h-6 w-[8.5rem] text-[0.75rem]"
-          onBlur={(e) => { updateStage(stage, { dueDate: e.target.value || undefined }); setEditingDue(false); }}
-        />
-      ) : (
-        <button
-          type="button"
-          className="text-[0.6875rem] text-muted-foreground hover:text-foreground shrink-0"
-          onClick={() => setEditingDue(true)}
+      {days !== undefined && (
+        <span className="shrink-0 text-[0.625rem] tabular-nums text-muted-foreground/70">{days}d</span>
+      )}
+      <DateCell label="start" value={stage.startedAt} onChange={(v) => updateStage(stage, { startedAt: v })} />
+      <span className="text-muted-foreground/40 text-[0.625rem]">→</span>
+      <DateCell label="end" value={stage.completedAt} onChange={(v) => updateStage(stage, { completedAt: v })} />
+      <DateCell label="due" value={stage.dueDate} onChange={(v) => updateStage(stage, { dueDate: v ? v.slice(0, 10) : undefined })} />
+      {stage.status !== "done" && stage.status !== "skipped" && (
+        <Button
+          size="sm"
+          variant="secondary"
+          className="h-6 gap-1 px-2 text-[0.6875rem] shrink-0"
+          disabled={locked}
+          onClick={() => advanceStage(stage, { projectName })}
         >
-          {stage.dueDate ?? "set due date"}
-        </button>
+          {stage.status === "pending" || stage.status === "blocked" ? "Start" : "Advance"}
+          <ArrowRight className="h-3 w-3" />
+        </Button>
       )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
