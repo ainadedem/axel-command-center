@@ -378,8 +378,18 @@ function Body() {
                       >
                         <ListRowActions colSpan={colCount}>
                           {st !== "paid" && st !== "cancelled" && (
-                            <RowAction icon={<BanknoteIcon className="h-3.5 w-3.5" />} label="Mark paid" tone="success" onClick={() => markPaid(e)} />
+                            <>
+                              <RowAction
+                                icon={<SendHorizonal className="h-3.5 w-3.5" />}
+                                label="Request payment"
+                                disabled={pendingRequest(e)}
+                                title={pendingRequest(e) ? "Already waiting for approval" : "Send to the approval run"}
+                                onClick={() => requestPayment(e)}
+                              />
+                              <RowAction icon={<BanknoteIcon className="h-3.5 w-3.5" />} label="Mark paid" tone="success" onClick={() => markPaid(e)} />
+                            </>
                           )}
+
                           <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(e); setDefaultKind(e.kind); setOpen(true); }} />
                           <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => remove(e)} />
                         </ListRowActions>
