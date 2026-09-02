@@ -16,7 +16,9 @@ import {
   teamMembersStore, salesMembersStore,
   salaryRegisterStore, payrollRunsStore,
   pvrRecordsStore, invoiceEscalationsStore, quoteFollowupsStore,
+  projectStagesStore,
   type PvrRecord, type InvoiceEscalation, type QuoteFollowup,
+  type ProjectStage, type ProjectStageStatus,
 
   type Client, type Supplier, type Project,
   type Account, type Category, type Budget,
