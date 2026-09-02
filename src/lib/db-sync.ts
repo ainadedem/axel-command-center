@@ -1604,6 +1604,64 @@ export async function deleteInvoiceEscalationDb(id: string) {
 }
 
 
+/* ───────── PROJECT STAGES (workflow sequencing) ───────── */
+const stageToDb = (s: ProjectStage) => {
+  const dbCompany = toDbCompanyId(s.companyId);
+  if (!dbCompany || !isUuid(s.projectId)) return null;
+  return {
+    id: isUuid(s.id) ? s.id : undefined,
+    company_id: dbCompany,
+    project_id: s.projectId,
+    position: s.position,
+    key: s.key,
+    name: s.name,
+    status: s.status,
+    owner: s.owner ?? null,
+    planned_start: s.plannedStart ?? null,
+    due_date: s.dueDate ?? null,
+    completed_at: s.completedAt ?? null,
+    blocked_reason: s.blockedReason ?? null,
+    notes: s.notes ?? null,
+    auto: s.auto ?? false,
+  };
+};
+
+const stageFromDb = (r: Record<string, unknown>): ProjectStage => ({
+  id: r.id as string,
+  companyId: toLocalCompanyId(r.company_id as string),
+  projectId: (r.project_id as string) ?? "",
+  position: Number(r.position) || 0,
+  key: r.key as string,
+  name: r.name as string,
+  status: ((r.status as string) ?? "pending") as ProjectStageStatus,
+  owner: (r.owner as string) ?? undefined,
+  plannedStart: (r.planned_start as string) ?? undefined,
+  dueDate: (r.due_date as string) ?? undefined,
+  completedAt: (r.completed_at as string) ?? undefined,
+  blockedReason: (r.blocked_reason as string) ?? undefined,
+  notes: (r.notes as string) ?? undefined,
+  auto: Boolean(r.auto),
+});
+
+export async function upsertProjectStage(s: ProjectStage): Promise<string | null> {
+  const row = stageToDb(s);
+  if (!row) return null;
+  if (!canWriteCompany(row.company_id)) return null;
+  const { data, error } = await supabase
+    .from("project_stages")
+    .upsert(row, { onConflict: "project_id,key" })
+    .select("id")
+    .single();
+  if (error) { reportWriteError("upsertProjectStage", error.message); return null; }
+  return data.id;
+}
+
+export async function deleteProjectStageDb(id: string) {
+  if (!isUuid(id)) return;
+  const { error } = await supabase.from("project_stages").delete().eq("id", id);
+  if (error) reportWriteError("deleteProjectStage", error.message);
+}
+
 /* ───────── REGISTER + HYDRATE + SEED for extras ───────── */
 export function registerExtraSync() {
   opportunitiesStore.setSync({ upsert: upsertOpportunity, remove: deleteOpportunityDb });
