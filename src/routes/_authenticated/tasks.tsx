@@ -344,7 +344,7 @@ function TaskDialog({
   const NONE = "__none__";
   const forCompany = <T extends { companyId: string }>(list: T[]) => list.filter((x) => x.companyId === companyId);
 
-  const { isSubmitting, handleSubmit } = useSingleFlightSubmit(async () => {
+  const { isSubmitting, run: handleSubmit } = useSingleFlightSubmit(async () => {
     if (!companyId) { setError("Pick a company for this task."); return; }
     if (!title.trim()) { setError("Give the task a title."); return; }
     const patch = {
