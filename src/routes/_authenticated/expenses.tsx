@@ -233,10 +233,23 @@ function Body() {
             <Pencil className="h-4 w-4" /> Edit
           </Button>
           {computeStatus(selected) !== "paid" && computeStatus(selected) !== "cancelled" && (
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => markPaid(selected)}>
-              <BanknoteIcon className="h-4 w-4" /> Mark paid
-            </Button>
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                disabled={pendingRequest(selected)}
+                title={pendingRequest(selected) ? "Already waiting for approval" : `Send to the ${runLabel(runDateFor())} approval run`}
+                onClick={() => requestPayment(selected)}
+              >
+                <SendHorizonal className="h-4 w-4" /> Request payment
+              </Button>
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => markPaid(selected)}>
+                <BanknoteIcon className="h-4 w-4" /> Mark paid
+              </Button>
+            </>
           )}
+
         </>
       }
     >
