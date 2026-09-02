@@ -1799,7 +1799,66 @@ export async function deletePaymentRequestDb(id: string) {
   if (error) reportWriteError("deletePaymentRequest", error.message);
 }
 
+/* ───────── TASKS ───────── */
+const refId = (id?: string) => (id && isUuid(id) ? id : null);
+
+const taskToDb = (t: Task) => {
+  const dbCompany = toDbCompanyId(t.companyId);
+  if (!dbCompany) return null;
+  return {
+    id: isUuid(t.id) ? t.id : undefined,
+    company_id: dbCompany,
+    title: t.title,
+    notes: t.notes ?? null,
+    status: t.status,
+    priority: t.priority,
+    due_date: t.dueDate ?? null,
+    assigned_to: (t.assignedTo ?? []).filter((u) => isUuid(u)),
+    project_id: refId(t.projectId),
+    client_id: refId(t.clientId),
+    quote_id: refId(t.quoteId),
+    invoice_id: refId(t.invoiceId),
+    payment_request_id: refId(t.paymentRequestId),
+  };
+};
+
+export const taskFromDb = (r: Record<string, unknown>): Task => ({
+  id: r.id as string,
+  companyId: toLocalCompanyId(r.company_id as string),
+  title: (r.title as string) ?? "",
+  notes: (r.notes as string) ?? undefined,
+  status: ((r.status as string) ?? "todo") as TaskStatus,
+  priority: ((r.priority as string) ?? "normal") as TaskPriority,
+  dueDate: (r.due_date as string) ?? undefined,
+  assignedTo: ((r.assigned_to as string[]) ?? []) as string[],
+  projectId: (r.project_id as string) ?? undefined,
+  clientId: (r.client_id as string) ?? undefined,
+  quoteId: (r.quote_id as string) ?? undefined,
+  invoiceId: (r.invoice_id as string) ?? undefined,
+  paymentRequestId: (r.payment_request_id as string) ?? undefined,
+  createdBy: (r.created_by as string) ?? undefined,
+  completedAt: (r.completed_at as string) ?? undefined,
+  createdAt: (r.created_at as string) ?? undefined,
+  updatedAt: (r.updated_at as string) ?? undefined,
+});
+
+export async function upsertTask(t: Task): Promise<string | null> {
+  const row = taskToDb(t);
+  if (!row) return null;
+  if (!canWriteCompany(row.company_id)) return null;
+  const { data, error } = await supabase.from("tasks").upsert(row).select("id").single();
+  if (error) { reportWriteError("upsertTask", error.message); return null; }
+  return data.id;
+}
+
+export async function deleteTaskDb(id: string) {
+  if (!isUuid(id)) return;
+  const { error } = await supabase.from("tasks").delete().eq("id", id);
+  if (error) reportWriteError("deleteTask", error.message);
+}
+
 /* ───────── REGISTER + HYDRATE + SEED for extras ───────── */
+
 export function registerExtraSync() {
   opportunitiesStore.setSync({ upsert: upsertOpportunity, remove: deleteOpportunityDb });
   quotesStore.setSync({ upsert: upsertQuote, remove: deleteQuoteDb });
