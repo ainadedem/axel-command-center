@@ -7,7 +7,7 @@ import { dbCompanyId } from "@/lib/db-sync";
  * and document uploads, each attributed to a user with a timestamp.
  */
 
-export type DocType = "quote" | "invoice" | "po";
+export type DocType = "quote" | "invoice" | "po" | "project";
 
 export type ActivityAction =
   | "created"
