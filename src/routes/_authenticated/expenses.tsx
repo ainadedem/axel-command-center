@@ -175,7 +175,17 @@ function Body() {
     if (selectedId === e.id) setSelectedId(null);
   };
 
+  /** True once this expense already sits in an approval run awaiting a decision. */
+  const pendingRequest = (e: Expense) =>
+    paymentRequestsStore.getSnapshot().some(
+      (r) => r.expenseId === e.id && r.status !== "rejected" && r.status !== "paid",
+    );
+
   const requestPayment = (e: Expense) => {
+    if (pendingRequest(e)) {
+      toast.info("This expense is already waiting for approval.");
+      return;
+    }
     const runDate = runDateFor();
     const outstanding = Math.max(0, e.amount - (e.paid ?? 0));
     paymentRequestsStore.add({
@@ -200,6 +210,7 @@ function Body() {
     toast.success(`Sent for review — ${runLabel(runDate)} run.`);
   };
 
+
   const markPaid = (e: Expense) => {
     expensesStore.update(e.id, { paid: e.amount, status: "paid" });
   };
@@ -222,10 +233,23 @@ function Body() {
             <Pencil className="h-4 w-4" /> Edit
           </Button>
           {computeStatus(selected) !== "paid" && computeStatus(selected) !== "cancelled" && (
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => markPaid(selected)}>
-              <BanknoteIcon className="h-4 w-4" /> Mark paid
-            </Button>
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                disabled={pendingRequest(selected)}
+                title={pendingRequest(selected) ? "Already waiting for approval" : `Send to the ${runLabel(runDateFor())} approval run`}
+                onClick={() => requestPayment(selected)}
+              >
+                <SendHorizonal className="h-4 w-4" /> Request payment
+              </Button>
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => markPaid(selected)}>
+                <BanknoteIcon className="h-4 w-4" /> Mark paid
+              </Button>
+            </>
           )}
+
         </>
       }
     >
@@ -354,8 +378,18 @@ function Body() {
                       >
                         <ListRowActions colSpan={colCount}>
                           {st !== "paid" && st !== "cancelled" && (
-                            <RowAction icon={<BanknoteIcon className="h-3.5 w-3.5" />} label="Mark paid" tone="success" onClick={() => markPaid(e)} />
+                            <>
+                              <RowAction
+                                icon={<SendHorizonal className="h-3.5 w-3.5" />}
+                                label="Request payment"
+                                disabled={pendingRequest(e)}
+                                title={pendingRequest(e) ? "Already waiting for approval" : "Send to the approval run"}
+                                onClick={() => requestPayment(e)}
+                              />
+                              <RowAction icon={<BanknoteIcon className="h-3.5 w-3.5" />} label="Mark paid" tone="success" onClick={() => markPaid(e)} />
+                            </>
                           )}
+
                           <RowAction icon={<Pencil className="h-3.5 w-3.5" />} label="Edit" onClick={() => { setEditing(e); setDefaultKind(e.kind); setOpen(true); }} />
                           <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => remove(e)} />
                         </ListRowActions>
