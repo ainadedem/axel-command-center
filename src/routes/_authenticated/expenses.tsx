@@ -175,7 +175,17 @@ function Body() {
     if (selectedId === e.id) setSelectedId(null);
   };
 
+  /** True once this expense already sits in an approval run awaiting a decision. */
+  const pendingRequest = (e: Expense) =>
+    paymentRequestsStore.getSnapshot().some(
+      (r) => r.expenseId === e.id && r.status !== "rejected" && r.status !== "paid",
+    );
+
   const requestPayment = (e: Expense) => {
+    if (pendingRequest(e)) {
+      toast.info("This expense is already waiting for approval.");
+      return;
+    }
     const runDate = runDateFor();
     const outstanding = Math.max(0, e.amount - (e.paid ?? 0));
     paymentRequestsStore.add({
@@ -199,6 +209,7 @@ function Body() {
     });
     toast.success(`Sent for review — ${runLabel(runDate)} run.`);
   };
+
 
   const markPaid = (e: Expense) => {
     expensesStore.update(e.id, { paid: e.amount, status: "paid" });
