@@ -1482,6 +1482,116 @@ export type Database = {
         }
         Relationships: []
       }
+      project_stage_templates: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          stages: Json
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          stages?: Json
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          stages?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_stage_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_stages: {
+        Row: {
+          auto: boolean
+          blocked_reason: string | null
+          company_id: string
+          completed_at: string | null
+          created_at: string
+          due_date: string | null
+          id: string
+          key: string
+          name: string
+          notes: string | null
+          owner: string | null
+          planned_start: string | null
+          position: number
+          project_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          auto?: boolean
+          blocked_reason?: string | null
+          company_id: string
+          completed_at?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          key: string
+          name: string
+          notes?: string | null
+          owner?: string | null
+          planned_start?: string | null
+          position?: number
+          project_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          auto?: boolean
+          blocked_reason?: string | null
+          company_id?: string
+          completed_at?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          key?: string
+          name?: string
+          notes?: string | null
+          owner?: string | null
+          planned_start?: string | null
+          position?: number
+          project_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_stages_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_stages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           client_id: string | null
