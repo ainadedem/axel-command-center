@@ -1,6 +1,6 @@
-# Show first names in the quotations table sales chips
+# Show first names in the quotations Status column chips
 
-The Owner column already shows first names. The full names still visible in the quotations rows come from the green/blue sales chips (Acquisition and Closer) rendered per row.
+The Owner column already shows first names. The full names still visible in the quotations rows come from the blue/green sales chips (Acquisition and Closer) rendered inside the Status column.
 
 ## What changes
 
