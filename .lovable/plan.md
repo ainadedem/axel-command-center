@@ -21,7 +21,7 @@ Existing 10px and 11px text keeps its size — it just gets a role name instead 
 ## Forms
 
 - All labels: Label role, same weight and colour everywhere.
-- All inputs, selects, textareas and comboboxes: Body size, one shared height per density (currently inputs are 40px with `text-base` on mobile and `text-sm` on desktop, while many pages force `h-8`; this becomes one rule).
+- All inputs, selects, textareas and comboboxes: Body size, one shared compact height per density (36px comfortable / 32px compact), replacing the current mix of 40px defaults and per-page `h-8` overrides.
 - Helper text, hints and validation messages: Label size.
 - Dialog titles: Title; dialog descriptions: Label.
 
