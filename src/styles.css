@@ -1831,7 +1831,12 @@ input[type="number"] {
     padding-top: 0.125rem;
     padding-bottom: 0.125rem;
     white-space: nowrap;
+    /* One header voice for every table in the app. */
+    font-size: var(--text-label);
+    font-weight: 600;
+    letter-spacing: 0.02em;
   }
+
 
   /* Numbers, amounts and dates line up like a sheet. */
   .list-aligned table :is(th, td),
