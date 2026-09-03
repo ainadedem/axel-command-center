@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PcgAccountSelect } from "@/components/pcg-account-select";
 import { CrudToolbar, EmptyState } from "@/components/crud-toolbar";
 import { Pencil, Trash2, Plus, X } from "lucide-react";
 import { useSingleFlightSubmit } from "@/components/form-ux";
@@ -215,12 +216,7 @@ function JournalEntryDialog({ open, onOpenChange, editing }: { open: boolean; on
             {lines.map((l, i) => (
               <div key={i} className="grid grid-cols-12 gap-2 px-3 py-2 border-t border-border/40 items-center">
                 <div className="col-span-3">
-                  <Select value={l.account} onValueChange={(v) => updateLine(i, { account: v })}>
-                    <SelectTrigger className="h-8"><SelectValue placeholder="Compte" /></SelectTrigger>
-                    <SelectContent className="max-h-[260px]">
-                      {pcgAccounts.map((a) => <SelectItem key={a.code} value={a.code}>{a.code} — {a.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <PcgAccountSelect value={l.account} onChange={(v) => updateLine(i, { account: v })} />
                 </div>
                 <div className="col-span-4"><Input className="h-8" value={l.label ?? ""} onChange={(e) => updateLine(i, { label: e.target.value })} placeholder="auxiliaire" /></div>
                 <div className="col-span-2"><Input className="h-8 text-right font-tnum" type="number" value={l.debit || ""} onChange={(e) => updateLine(i, { debit: Number(e.target.value) || 0, credit: 0 })} /></div>
