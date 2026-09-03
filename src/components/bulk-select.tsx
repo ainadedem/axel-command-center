@@ -132,13 +132,13 @@ export function BulkActionBar({
   return (
     <div className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4 pointer-events-none">
       <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-border bg-surface-elevated/95 backdrop-blur px-4 py-2 shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-150">
-        <span className="text-xs font-medium">
+        <span className="t-label font-medium">
           {count} {noun}
           {count !== 1 ? "s" : ""} selected
         </span>
         <span className="h-4 w-px bg-border" />
         {children}
-        <Button variant="ghost" size="sm" onClick={onClear} className="h-7 px-2 text-xs">
+        <Button variant="ghost" size="sm" onClick={onClear} className="h-7 px-2 t-label">
           <X className="h-3.5 w-3.5 mr-1" /> Clear
         </Button>
       </div>

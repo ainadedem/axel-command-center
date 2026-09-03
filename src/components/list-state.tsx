@@ -38,9 +38,9 @@ function Frame({
       >
         {icon}
       </div>
-      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+      <h2 className="t-body font-semibold text-foreground">{title}</h2>
       {description && (
-        <p className="mx-auto mt-1.5 max-w-md text-xs leading-relaxed text-muted-foreground">{description}</p>
+        <p className="mx-auto mt-1.5 max-w-md t-label leading-relaxed text-muted-foreground">{description}</p>
       )}
       {children && <div className="mt-5 flex flex-wrap items-center justify-center gap-2">{children}</div>}
     </div>
@@ -102,7 +102,7 @@ export function ListNoMatchState({
               key={c.key}
               type="button"
               onClick={c.onRemove}
-              className="inline-flex items-center gap-1 h-7 pl-2.5 pr-2 rounded-full border border-border bg-surface text-[11px] text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+              className="inline-flex items-center gap-1 h-7 pl-2.5 pr-2 rounded-full border border-border bg-surface t-label text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
             >
               {c.label}
               <X className="h-3 w-3" />
@@ -142,7 +142,7 @@ export function ListErrorState({
       description={
         <>
           Something went wrong while reaching your workspace data. Your filters are kept — try again in a moment.
-          {message && <span className="mt-1 block text-[11px] text-muted-foreground/70">{message}</span>}
+          {message && <span className="mt-1 block t-label text-muted-foreground/70">{message}</span>}
         </>
       }
     >

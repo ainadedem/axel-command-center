@@ -175,18 +175,18 @@ function RegisterTab() {
           <div className="flex min-w-0 items-center gap-2.5">
             <Avatar src={member?.avatarUrl} name={member?.name ?? "?"} size={24} />
             <div className="min-w-0">
-              <div className="truncate text-sm font-medium">{member?.name ?? "—"}</div>
-              <div className="truncate text-[11px] text-muted-foreground">{member?.jobTitle ?? ""}</div>
+              <div className="truncate t-body font-medium">{member?.name ?? "—"}</div>
+              <div className="truncate t-label text-muted-foreground">{member?.jobTitle ?? ""}</div>
             </div>
           </div>
         </ListTd>
-        {cp.on("company") && <ListTd className="text-[11px] font-tnum text-muted-foreground" title={company?.name}>{companyCode(company)}</ListTd>}
+        {cp.on("company") && <ListTd className="t-label font-tnum text-muted-foreground" title={company?.name}>{companyCode(company)}</ListTd>}
         {cp.on("gross") && <ListTd align="right" className="font-tnum font-medium" title={fmtAmount(e.gross, e.currency)}>{fmtAmount(e.gross, e.currency)}</ListTd>}
-        {cp.on("cnaps") && <ListTd align="right" className="text-xs font-tnum text-muted-foreground">{fmtAmount(cnaps, e.currency)}</ListTd>}
-        {cp.on("ostie") && <ListTd align="right" className="text-xs font-tnum text-muted-foreground">{fmtAmount(ostie, e.currency)}</ListTd>}
-        {cp.on("irsa") && <ListTd align="right" className="text-xs font-tnum text-muted-foreground">{fmtAmount(irsa, e.currency)}</ListTd>}
+        {cp.on("cnaps") && <ListTd align="right" className="t-label font-tnum text-muted-foreground">{fmtAmount(cnaps, e.currency)}</ListTd>}
+        {cp.on("ostie") && <ListTd align="right" className="t-label font-tnum text-muted-foreground">{fmtAmount(ostie, e.currency)}</ListTd>}
+        {cp.on("irsa") && <ListTd align="right" className="t-label font-tnum text-muted-foreground">{fmtAmount(irsa, e.currency)}</ListTd>}
         {cp.on("net") && <ListTd align="right" className="font-tnum text-success">{fmtAmount(net, e.currency)}</ListTd>}
-        {cp.on("startDate") && <ListTd className="text-[11px] text-muted-foreground font-tnum">{format(parseISO(e.startDate), "MMM yyyy")}</ListTd>}
+        {cp.on("startDate") && <ListTd className="t-label text-muted-foreground font-tnum">{format(parseISO(e.startDate), "MMM yyyy")}</ListTd>}
         {cp.on("active") && <ListTd><StatusPill tone={e.active ? "success" : "muted"}>{e.active ? "Active" : "Inactive"}</StatusPill></ListTd>}
       </tr>
     );
@@ -232,7 +232,7 @@ function RegisterTab() {
       {baseList.length === 0 ? (
         <EmptyState label="salary register entries" onCreate={openCreate} />
       ) : list.length === 0 ? (
-        <div className="panel p-8 text-center text-sm text-muted-foreground">No salary entries match the current filters.</div>
+        <div className="panel p-8 text-center t-body text-muted-foreground">No salary entries match the current filters.</div>
       ) : (
         <ListTableShell>
           <ListTable>
@@ -391,7 +391,7 @@ function RegisterDialog({
               <Label>Effective since</Label>
               <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <label className="flex items-center gap-2 t-body cursor-pointer">
               <Switch checked={active} onCheckedChange={setActive} />
               <span>Active</span>
             </label>
@@ -536,8 +536,8 @@ function RunsTab() {
               const member = team.find((t) => t.id === entry.teamMemberId);
               return (
                 <button key={entry.teamMemberId} type="button" onClick={() => togglePaid(selected, entry.teamMemberId)} className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md px-2 py-1 text-left hover:bg-surface">
-                  <span className="min-w-0 truncate text-xs">{member?.name ?? "—"}</span>
-                  <span className={cn("rounded border px-1.5 py-0.5 text-[10px]", entry.paid ? "border-success/40 bg-success/10 text-success" : "border-border text-muted-foreground")}>{entry.paid ? "Paid" : "Pending"}</span>
+                  <span className="min-w-0 truncate t-label">{member?.name ?? "—"}</span>
+                  <span className={cn("rounded border px-1.5 py-0.5 t-micro", entry.paid ? "border-success/40 bg-success/10 text-success" : "border-border text-muted-foreground")}>{entry.paid ? "Paid" : "Pending"}</span>
                 </button>
               );
             })}
@@ -568,7 +568,7 @@ function RunsTab() {
             <span className="truncate font-medium">{format(new Date(`${r.month}-01T00:00:00`), "MMMM yyyy")}</span>
           </div>
         </ListTd>
-        {cp.on("company") && <ListTd className="text-[11px] font-tnum text-muted-foreground" title={company?.name}>{companyCode(company)}</ListTd>}
+        {cp.on("company") && <ListTd className="t-label font-tnum text-muted-foreground" title={company?.name}>{companyCode(company)}</ListTd>}
         {cp.on("people") && <ListTd className="font-tnum">{r.entries.length}</ListTd>}
         {cp.on("paid") && <ListTd className="font-tnum">{paidCount}/{r.entries.length}</ListTd>}
         {cp.on("gross") && <ListTd align="right" className="font-tnum" title={fmtAmount(grossSum, r.currency)}>{fmtAmount(grossSum, r.currency)}</ListTd>}
@@ -615,11 +615,11 @@ function RunsTab() {
     >
       {baseList.length === 0 ? (
         <div className="panel p-8 text-center">
-          <p className="mb-4 text-sm text-muted-foreground">No payroll runs yet.</p>
+          <p className="mb-4 t-body text-muted-foreground">No payroll runs yet.</p>
           <Button size="sm" onClick={() => setCreating(true)} className="btn-new gap-1.5"><Plus className="h-4 w-4" /> Create first run</Button>
         </div>
       ) : list.length === 0 ? (
-        <div className="panel p-8 text-center text-sm text-muted-foreground">No payroll runs match the current filters.</div>
+        <div className="panel p-8 text-center t-body text-muted-foreground">No payroll runs match the current filters.</div>
       ) : (
         <ListTableShell>
           <ListTable>
@@ -741,7 +741,7 @@ function NewRunDialog({ onClose, register }: { onClose: () => void; register: Sa
               <Input type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
             </div>
           </div>
-          <div className="rounded-md border border-border bg-surface/50 p-3 text-xs">
+          <div className="rounded-md border border-border bg-surface/50 p-3 t-label">
             <div className="text-muted-foreground mb-1.5">
               {timesheetPeople > 0
                 ? `Approved timesheets found for ${timesheetPeople} of ${eligible.length} people — overtime is added and unpaid leave deducted.`
@@ -797,7 +797,7 @@ function netOfRun(run: PayrollRun) {
 function StatusPill({ tone, children }: { tone: "success" | "muted"; children: ReactNode }) {
   return (
     <span className={cn(
-      "inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] uppercase tracking-[0.04em]",
+      "inline-flex items-center rounded border px-1.5 py-0.5 t-micro uppercase tracking-[0.04em]",
       tone === "success" ? "border-success/40 bg-success/10 text-success" : "border-border bg-muted/30 text-muted-foreground",
     )}>
       {children}

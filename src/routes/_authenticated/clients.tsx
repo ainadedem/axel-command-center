@@ -259,9 +259,9 @@ function ClientsPage() {
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
           <TabsList className="h-8">
-            <TabsTrigger value="clients" className="text-xs px-2.5"><UserCheck className="h-3 w-3 mr-1" />Clients <span className="ml-1 text-[10px] opacity-60 font-tnum">{wonClients.length}</span></TabsTrigger>
-            <TabsTrigger value="leads" className="text-xs px-2.5"><Sparkles className="h-3 w-3 mr-1" />Leads <span className="ml-1 text-[10px] opacity-60 font-tnum">{leadClients.length}</span></TabsTrigger>
-            <TabsTrigger value="all" className="text-xs px-2.5">All <span className="ml-1 text-[10px] opacity-60 font-tnum">{scopedClients.length}</span></TabsTrigger>
+            <TabsTrigger value="clients" className="t-label px-2.5"><UserCheck className="h-3 w-3 mr-1" />Clients <span className="ml-1 t-micro opacity-60 font-tnum">{wonClients.length}</span></TabsTrigger>
+            <TabsTrigger value="leads" className="t-label px-2.5"><Sparkles className="h-3 w-3 mr-1" />Leads <span className="ml-1 t-micro opacity-60 font-tnum">{leadClients.length}</span></TabsTrigger>
+            <TabsTrigger value="all" className="t-label px-2.5">All <span className="ml-1 t-micro opacity-60 font-tnum">{scopedClients.length}</span></TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -339,19 +339,19 @@ function ClientsPage() {
                                 {co && <span className="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full border border-background" style={{ background: co.color }} />}
                               </span>
                               <span className="truncate">{cl.displayName || cl.name}</span>
-                              {isLead && <span className="shrink-0 text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/30 font-semibold">Lead</span>}
-                              {cm.overdue && <span className="shrink-0 text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30 font-semibold">Overdue</span>}
+                              {isLead && <span className="shrink-0 t-micro uppercase tracking-wider px-1 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/30 font-semibold">Lead</span>}
+                              {cm.overdue && <span className="shrink-0 t-micro uppercase tracking-wider px-1 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30 font-semibold">Overdue</span>}
                             </span>
                           </ListTd>
                           {cp.on("company") && (
                             <ListTd title={co?.name}>
-                              {co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}
+                              {co && <span className="inline-flex items-center gap-2 t-label max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}
                             </ListTd>
                           )}
-                          {cp.on("status") && <ListTd className="text-xs text-muted-foreground">{isLead ? "Lead" : "Client"}</ListTd>}
-                          {cp.on("acquisition") && <ListTd className="text-xs text-muted-foreground" title={cl.acquisition}>{cl.acquisition || <span className="text-muted-foreground/50">—</span>}</ListTd>}
-                          {cp.on("industry") && <ListTd className="text-xs text-muted-foreground" title={cl.industry}>{cl.industry || <span className="text-muted-foreground/50">—</span>}</ListTd>}
-                          {cp.on("country") && <ListTd className="text-xs text-muted-foreground" title={cl.country}>{cl.country || <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                          {cp.on("status") && <ListTd className="t-label text-muted-foreground">{isLead ? "Lead" : "Client"}</ListTd>}
+                          {cp.on("acquisition") && <ListTd className="t-label text-muted-foreground" title={cl.acquisition}>{cl.acquisition || <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                          {cp.on("industry") && <ListTd className="t-label text-muted-foreground" title={cl.industry}>{cl.industry || <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                          {cp.on("country") && <ListTd className="t-label text-muted-foreground" title={cl.country}>{cl.country || <span className="text-muted-foreground/50">—</span>}</ListTd>}
                           {!salesOnly && cp.on("revenue") && <ListTd align="right" className="font-tnum">{isLead ? <span className="text-muted-foreground/50">—</span> : fmtCompact(cm.revenue, "MGA")}</ListTd>}
                           {!salesOnly && cp.on("outstanding") && <ListTd align="right" className={cn("font-tnum", cm.outstanding > 0 && "text-warning font-medium")}>{isLead ? <span className="text-muted-foreground/50">—</span> : fmtCompact(cm.outstanding, "MGA")}</ListTd>}
                           {!salesOnly && cp.on("margin") && (
@@ -401,8 +401,8 @@ function ClientGridView({
         {grouped.map((g) => (
           <div key={g.key}>
             <div className="flex items-center gap-2 mb-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{g.label}</h3>
-              <span className="text-[10px] text-muted-foreground/60 font-tnum">{g.items.length}</span>
+              <h3 className="t-label font-semibold uppercase tracking-wider text-muted-foreground">{g.label}</h3>
+              <span className="t-micro text-muted-foreground/60 font-tnum">{g.items.length}</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
               {g.items.map((cl) => (
@@ -459,16 +459,16 @@ function ClientCard({
         <div className="min-w-0 flex-1">
           <div className="font-display font-semibold text-[13px] truncate flex items-center gap-1">
             {cl.name}
-            {isLead && <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-amber-500/15 text-amber-700 border border-amber-500/30 font-semibold">Lead</span>}
+            {isLead && <span className="inline-flex items-center gap-1 t-micro uppercase tracking-wider px-1 py-0.5 rounded-full bg-amber-500/15 text-amber-700 border border-amber-500/30 font-semibold">Lead</span>}
             {!isLead && cliInvoices.length > 0 && (
               overdue
-                ? <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30 font-semibold">Overdue</span>
+                ? <span className="inline-flex items-center gap-1 t-micro uppercase tracking-wider px-1 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30 font-semibold">Overdue</span>
                 : outstanding > 0
-                  ? <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/30 font-semibold">Outstanding</span>
-                  : <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider px-1 py-0.5 rounded-full bg-success/15 text-success border border-success/30 font-semibold">Healthy</span>
+                  ? <span className="inline-flex items-center gap-1 t-micro uppercase tracking-wider px-1 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/30 font-semibold">Outstanding</span>
+                  : <span className="inline-flex items-center gap-1 t-micro uppercase tracking-wider px-1 py-0.5 rounded-full bg-success/15 text-success border border-success/30 font-semibold">Healthy</span>
             )}
           </div>
-          <div className="text-[11px] text-muted-foreground truncate">
+          <div className="t-label text-muted-foreground truncate">
             {co ? co.name : cl.industry || cl.country || ""}
           </div>
         </div>
@@ -492,8 +492,8 @@ function StatMini({ label, value, tone = "default" }: { label: string; value: st
     tone === "bad" ? "text-destructive" : "text-foreground";
   return (
     <div>
-      <div className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground font-semibold">{label}</div>
-      <div className={`font-tnum font-semibold mt-0.5 text-xs ${color}`}>{value}</div>
+      <div className="t-micro uppercase tracking-[0.14em] text-muted-foreground font-semibold">{label}</div>
+      <div className={`font-tnum font-semibold mt-0.5 t-label ${color}`}>{value}</div>
     </div>
   );
 }
@@ -711,7 +711,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
               <div>
                 <Label>Display name</Label>
                 <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={name ? `Short label, e.g. ${name.split(" ")[0]}` : "Short label used in lists"} />
-                <p className="text-[11px] text-muted-foreground mt-1">Shown in lists and boards. Invoices and quotations always use the legal name.</p>
+                <p className="t-label text-muted-foreground mt-1">Shown in lists and boards. Invoices and quotations always use the legal name.</p>
               </div>
               <div>
                 <Label>Colour code</Label>
@@ -733,12 +733,12 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
                   <button
                     type="button"
                     onClick={() => setColor(undefined)}
-                    className="text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-2 ml-1"
+                    className="t-label text-muted-foreground hover:text-foreground underline underline-offset-2 ml-1"
                   >
                     Automatic
                   </button>
                   <span
-                    className="ml-auto inline-flex items-center gap-1.5 text-[11px] text-muted-foreground"
+                    className="ml-auto inline-flex items-center gap-1.5 t-label text-muted-foreground"
                     title="Preview"
                   >
                     <span className="h-2.5 w-2.5 rounded-full" style={{ background: clientColor({ id: editing?.id, name, color }) }} />
@@ -768,23 +768,23 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
                         }}
                         onDoubleClick={() => active && setCompanyId(c.id)}
                         title={isPrimary ? "Primary company (double-click another to switch)" : active ? "Double-click to make primary" : "Click to link"}
-                        className={`inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider px-2 py-1 rounded-full border transition ${active ? "border-primary bg-primary/10 text-foreground" : "border-border bg-surface text-muted-foreground hover:bg-surface-elevated"}`}
+                        className={`inline-flex items-center gap-1.5 t-label font-mono uppercase tracking-wider px-2 py-1 rounded-full border transition ${active ? "border-primary bg-primary/10 text-foreground" : "border-border bg-surface text-muted-foreground hover:bg-surface-elevated"}`}
                       >
                         <span className="h-1.5 w-1.5 rounded-full" style={{ background: c.color }} />
                         {c.code || c.shortName}
-                        {isPrimary && <span className="text-[9px] text-primary not-italic">★</span>}
+                        {isPrimary && <span className="t-micro text-primary not-italic">★</span>}
                       </button>
                     );
                   })}
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-1">Click to link, double-click to set primary (★).</p>
+                <p className="t-micro text-muted-foreground mt-1">Click to link, double-click to set primary (★).</p>
               </div>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Status</Label>
-              <div className="inline-flex rounded-md border border-border overflow-hidden text-xs mt-1">
+              <div className="inline-flex rounded-md border border-border overflow-hidden t-label mt-1">
                 {(["lead", "client"] as const).map((s) => (
                   <button
                     key={s}
@@ -802,7 +802,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
           <div>
             <Label>Categories</Label>
             <div className="mt-1.5"><CategoryMultiSelect value={categories} onChange={setCategories} /></div>
-            <p className="text-[11px] text-muted-foreground mt-1.5">Tag this contact with one or more roles. Defaults to <span className="font-medium text-foreground">Client</span>.</p>
+            <p className="t-label text-muted-foreground mt-1.5">Tag this contact with one or more roles. Defaults to <span className="font-medium text-foreground">Client</span>.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Acquired on</Label><Input type="date" value={acquiredAt} onChange={(e) => setAcquiredAt(e.target.value)} /></div>
@@ -826,7 +826,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
             <div>
               <Label>Billing email</Label>
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="billing@client.com" className={invalidFieldClassName(showErrors && missing.email)} aria-invalid={showErrors && missing.email} />
-              {showErrors && missing.email && <p className="text-[11px] text-destructive mt-1">Enter a valid email address.</p>}
+              {showErrors && missing.email && <p className="t-label text-destructive mt-1">Enter a valid email address.</p>}
             </div>
             <div><Label>Phone</Label><Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
           </div>
@@ -835,7 +835,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
             <Textarea rows={3} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, city, postal code, country" className={invalidFieldClassName(showErrors && missing.address)} aria-invalid={showErrors && missing.address} />
           </div>
           <div className="rounded-lg border border-border bg-surface p-3 space-y-3">
-            <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">Tax & legal identifiers</div>
+            <div className="t-label font-mono uppercase tracking-wider text-muted-foreground">Tax & legal identifiers</div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <Label>NIF</Label>
@@ -856,7 +856,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
           <div>
             <Label>Acquisition</Label>
             {acqOptions.length === 0 ? (
-              <div className="text-xs text-muted-foreground rounded-md border border-dashed border-border px-3 py-2">
+              <div className="t-label text-muted-foreground rounded-md border border-dashed border-border px-3 py-2">
                 No acquisition people in the sales team yet — <Link to="/sales-team" className="text-primary underline">add one</Link>.
               </div>
             ) : (
@@ -870,14 +870,14 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
                 </SelectContent>
               </Select>
             )}
-            <p className="text-[11px] text-muted-foreground mt-1">
+            <p className="t-label text-muted-foreground mt-1">
               Sourced from the <Link to="/sales-team" className="text-primary underline">Sales team</Link>. Same person across all opportunities, invoices and projects for this client.
             </p>
           </div>
           <div>
             <Label>Referral</Label>
             {refOptions.length === 0 ? (
-              <div className="text-xs text-muted-foreground rounded-md border border-dashed border-border px-3 py-2">
+              <div className="t-label text-muted-foreground rounded-md border border-dashed border-border px-3 py-2">
                 No team members yet — <Link to="/team" className="text-primary underline">add one</Link>.
               </div>
             ) : (
@@ -891,7 +891,7 @@ function ClientDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
                 </SelectContent>
               </Select>
             )}
-            <p className="text-[11px] text-muted-foreground mt-1">
+            <p className="t-label text-muted-foreground mt-1">
               Another team member credited for bringing this client. Sourced from the <Link to="/team" className="text-primary underline">Team</Link>.
             </p>
           </div>

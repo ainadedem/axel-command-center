@@ -431,7 +431,7 @@ function Body() {
           ))}
           {quoteInvoiceLink(selectedQuote, invoices).invoices.length === 0
             && linkedPOs(selectedQuote).length === 0
-            && <span className="text-xs text-muted-foreground">No linked documents yet</span>}
+            && <span className="t-label text-muted-foreground">No linked documents yet</span>}
         </div>
       </DetailSection>
       <DetailSection title="Amounts">
@@ -444,11 +444,11 @@ function Body() {
       </DetailSection>
       <DetailSection title="Sales">
         <div className="flex flex-col gap-2 py-0.5">
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-2 t-label">
             <span className="text-muted-foreground w-20 shrink-0">Acquisition</span>
             <span className="text-foreground">{clients.find((c) => c.id === selectedQuote.clientId)?.acquisition || "—"}</span>
           </div>
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-2 t-label">
             <span className="text-muted-foreground w-20 shrink-0">Closer</span>
             <span className="text-foreground">{opportunities.find((o) => o.id === selectedQuote.opportunityId)?.closer || "—"}</span>
           </div>
@@ -461,7 +461,7 @@ function Body() {
             <Link
               to="/pipeline"
               search={(prev: Record<string, unknown>) => ({ ...prev, opp: selectedQuote.opportunityId })}
-              className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+              className="inline-flex items-center gap-1 t-label text-primary hover:underline"
             >
               <ExternalLink className="h-3 w-3" /> Open pipeline deal
             </Link>
@@ -511,7 +511,7 @@ function Body() {
               variant="secondary"
               onClick={clearSalesFilter}
               title="Clear sales filter"
-              className="h-8 shrink-0 gap-1 px-2.5 text-xs"
+              className="h-8 shrink-0 gap-1 px-2.5 t-label"
             >
               <UserPlus className="h-3 w-3" />
               <span className="truncate max-w-[10rem]">{salesFilterName}</span>
@@ -611,15 +611,15 @@ function Body() {
                       disabled={!isWritable(q)}
                       label={`Select quote ${q.number}`}
                     />
-                    <ListTd lines={2} className="font-tnum text-xs text-muted-foreground" title={q.number}>{q.number}</ListTd>
+                    <ListTd lines={2} className="font-tnum t-label text-muted-foreground" title={q.number}>{q.number}</ListTd>
                     <ListTd lines={2} className="font-medium" title={clientTitle(cl)}>{clientLabel(cl)}</ListTd>
                     {cp.on("project") && (
-                      <ListTd className="text-xs" title={proj?.name}>{proj ? <span className="inline-block max-w-full truncate px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 align-middle">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}</ListTd>
+                      <ListTd className="t-label" title={proj?.name}>{proj ? <span className="inline-block max-w-full truncate px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 align-middle">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}</ListTd>
                     )}
                     {cp.on("company") && (
-                      <ListTd title={co?.name}>{co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}</ListTd>
+                      <ListTd title={co?.name}>{co && <span className="inline-flex items-center gap-2 t-label max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}</ListTd>
                     )}
-                    {cp.on("owner") && <ListTd className="text-xs text-muted-foreground" title={ownerName(q)}>{firstNameOf(q.createdBy)}</ListTd>}
+                    {cp.on("owner") && <ListTd className="t-label text-muted-foreground" title={ownerName(q)}>{firstNameOf(q.createdBy)}</ListTd>}
                     {cp.on("followup") && (
                       <ListTd wrap>
                         <button
@@ -629,15 +629,15 @@ function Body() {
                         >
                           <AssigneeStack companyId={q.companyId} ids={q.assignedTo ?? []} />
                           {q.nextFollowUpAt && (
-                            <span className={cn("text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full border font-tnum", followUpToneClass[followUpTone(q.nextFollowUpAt)])}>
+                            <span className={cn("t-micro uppercase tracking-wider px-1.5 py-0.5 rounded-full border font-tnum", followUpToneClass[followUpTone(q.nextFollowUpAt)])}>
                               {format(parseISO(q.nextFollowUpAt), "MMM d")}
                             </span>
                           )}
                         </button>
                       </ListTd>
                     )}
-                    {cp.on("issued") && <ListTd className="text-muted-foreground text-xs font-tnum">{format(parseISO(q.issueDate), "MMM d, yyyy")}</ListTd>}
-                    {cp.on("validUntil") && <ListTd className="text-muted-foreground text-xs font-tnum">{format(parseISO(q.validUntil), "MMM d, yyyy")}</ListTd>}
+                    {cp.on("issued") && <ListTd className="text-muted-foreground t-label font-tnum">{format(parseISO(q.issueDate), "MMM d, yyyy")}</ListTd>}
+                    {cp.on("validUntil") && <ListTd className="text-muted-foreground t-label font-tnum">{format(parseISO(q.validUntil), "MMM d, yyyy")}</ListTd>}
                     {cp.on("status") && (
                       <ListTd wrap>
                         <div className="flex flex-wrap items-center gap-1.5">
@@ -649,7 +649,7 @@ function Body() {
                             onSelect={(next) => statusRequest.request(q, next as QuoteStatus)}
                           />
                           {q.sentAt && (
-                            <span className={cn("inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles.sent)} title={`Sent ${format(parseISO(q.sentAt), "MMM d, yyyy HH:mm")}${q.sentTo ? ` to ${q.sentTo}` : ""}`}>
+                            <span className={cn("inline-flex items-center gap-1 t-micro uppercase tracking-wider px-2 py-0.5 rounded-full border", statusStyles.sent)} title={`Sent ${format(parseISO(q.sentAt), "MMM d, yyyy HH:mm")}${q.sentTo ? ` to ${q.sentTo}` : ""}`}>
                               <CheckCircle2 className="h-3 w-3" />
                               {format(parseISO(q.sentAt), "MMM d")}
                             </span>
@@ -678,14 +678,14 @@ function Body() {
 
       )}
       <BulkActionBar count={selection.count} noun="quote" onClear={selection.clear}>
-        <Button size="sm" className="h-7 px-3 text-xs" onClick={() => setBulkOpen(true)}>
+        <Button size="sm" className="h-7 px-3 t-label" onClick={() => setBulkOpen(true)}>
           Bulk edit
         </Button>
-        <Button size="sm" variant="outline" className="h-7 px-3 text-xs" onClick={() => setBulkStatusOpen(true)}>
+        <Button size="sm" variant="outline" className="h-7 px-3 t-label" onClick={() => setBulkStatusOpen(true)}>
           Change status
         </Button>
         <Button
-          size="sm" variant="outline" className="h-7 px-3 text-xs"
+          size="sm" variant="outline" className="h-7 px-3 t-label"
           onClick={async () => {
             const n = await refreshStampsAndSignatures({
               collection: quotesStore, docType: "quote", rows: selection.selectedRows,
@@ -724,7 +724,7 @@ function Body() {
           {followingUp && (
             <div className="space-y-4">
               <div>
-                <Label className="text-[11px]">Assigned sales (max 3)</Label>
+                <Label className="t-label">Assigned sales (max 3)</Label>
                 <QuoteAssigneePicker
                   companyId={followingUp.companyId}
                   value={followingUp.assignedTo ?? []}
@@ -1087,7 +1087,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[min(96vw,1240px)] p-0 gap-0 max-h-[92dvh] overflow-hidden flex flex-col form-compact">
         <DialogHeader className="shrink-0 border-b border-border px-5 py-3">
-          <DialogTitle className="text-base">{editing ? "Edit quote" : "New quote"}</DialogTitle>
+          <DialogTitle className="t-subtitle">{editing ? "Edit quote" : "New quote"}</DialogTitle>
         </DialogHeader>
         <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
         <div className="space-y-4 py-2">
@@ -1096,7 +1096,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
             <div>
               <Label>Number</Label>
               <Input value={number} onChange={(e) => { numberTouched.current = true; setNumber(e.target.value); }} aria-invalid={duplicateNumber} />
-              {duplicateNumber && <p className="text-[11px] text-destructive mt-1">This number is already used by another quote.</p>}
+              {duplicateNumber && <p className="t-label text-destructive mt-1">This number is already used by another quote.</p>}
             </div>
             <div>
               <Label>Status</Label>
@@ -1165,7 +1165,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Currency</Label>
-              <div className="mt-1 inline-flex rounded-md border border-border overflow-hidden text-xs">
+              <div className="mt-1 inline-flex rounded-md border border-border overflow-hidden t-label">
                 {(["EUR", "USD", "MGA"] as Currency[]).map((c) => (
                   <button
                     key={c}
@@ -1191,7 +1191,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
           {/* Pricing mode */}
           <div className="pt-2">
             <Label>Quotation type</Label>
-            <div className="mt-1 inline-flex rounded-md border border-border overflow-hidden text-xs">
+            <div className="mt-1 inline-flex rounded-md border border-border overflow-hidden t-label">
               <button
                 type="button"
                 onClick={() => setMode("rate-card")}
@@ -1212,12 +1212,12 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
               <Button type="button" size="sm" variant="outline" onClick={addLine}><Plus className="h-3.5 w-3.5" /> Add line</Button>
             </div>
             {lines.length === 0 ? (
-              <p className="text-xs text-muted-foreground border border-dashed border-border rounded-md py-6 text-center">{mode === "rate-card" ? "No lines yet — add roles from the rate card." : "No lines yet — add a free-form item."}</p>
+              <p className="t-label text-muted-foreground border border-dashed border-border rounded-md py-6 text-center">{mode === "rate-card" ? "No lines yet — add roles from the rate card." : "No lines yet — add a free-form item."}</p>
             ) : (
               <div className="rounded-md border border-border overflow-hidden">
                 <div className="overflow-auto max-h-[52vh] stacked-table">
-                <table className={cn("sheet-grid w-full text-xs", mode === "rate-card" ? "min-w-[1040px]" : "min-w-[820px]")}>
-                  <thead className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                <table className={cn("sheet-grid w-full t-label", mode === "rate-card" ? "min-w-[1040px]" : "min-w-[820px]")}>
+                  <thead className="t-micro uppercase tracking-wider text-muted-foreground">
                     <tr className="[&>th]:whitespace-nowrap">
                       <th className="w-10" />
                       <th className="text-left px-2 py-1.5 min-w-[260px]">Description</th>
@@ -1241,14 +1241,14 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                           <DragHandle index={li} total={lines.length} handleProps={lineDnd.handleProps(li)} onMove={(f, t) => lineDnd.move(f, t, lines.length)} />
                         </td>
                         <td className="cell-pad">
-                          <Input className="h-7 text-xs" value={l.description} onChange={(e) => updateLine(l.id, { description: e.target.value })} placeholder="Description" />
+                          <Input className="h-7 t-label" value={l.description} onChange={(e) => updateLine(l.id, { description: e.target.value })} placeholder="Description" />
                           <RichTextField compact collapsible className="mt-0.5" value={l.details ?? ""} onChange={(v) => updateLine(l.id, { details: v })} placeholder="Details (optional)" rows={2} />
 
                         </td>
                         {mode === "rate-card" && (
                           <td className="cell-pad">
                             <Select value={l.capability ?? "CREATIVE"} onValueChange={(v) => updateLine(l.id, { capability: v })}>
-                              <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectTrigger className="h-7 t-label"><SelectValue /></SelectTrigger>
                               <SelectContent>{capabilities.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                             </Select>
                           </td>
@@ -1256,10 +1256,10 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                         {mode === "rate-card" && (
                           <td className="cell-pad">
                             {l.capability === "PROJECT" ? (
-                              <span className="text-xs text-muted-foreground px-2 py-1.5 block">—</span>
+                              <span className="t-label text-muted-foreground px-2 py-1.5 block">—</span>
                             ) : (
                               <Select value={l.level ?? "P7"} onValueChange={(v) => updateLine(l.id, { level: v })}>
-                                <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                                <SelectTrigger className="h-7 t-label"><SelectValue /></SelectTrigger>
                                 <SelectContent>{levels.map((lv) => <SelectItem key={lv.code} value={lv.code}>{lv.code} · {lv.title}</SelectItem>)}</SelectContent>
                               </Select>
                             )}
@@ -1267,7 +1267,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                         )}
                         <td className="cell-pad">
                           <Select value={l.unit} onValueChange={(v) => updateLine(l.id, { unit: v as Unit })}>
-                            <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="h-7 t-label"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="hour">Hour</SelectItem>
                               <SelectItem value="day">Day</SelectItem>
@@ -1275,11 +1275,11 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                             </SelectContent>
                           </Select>
                         </td>
-                        <td className="cell-pad"><Input type="number" className="h-7 text-xs text-right" value={l.quantity} onChange={(e) => updateLine(l.id, { quantity: Number(e.target.value) })} /></td>
+                        <td className="cell-pad"><Input type="number" className="h-7 t-label text-right" value={l.quantity} onChange={(e) => updateLine(l.id, { quantity: Number(e.target.value) })} /></td>
                         <td className="cell-pad">
                           <div className="relative">
-                            <Input type="number" className="h-7 text-xs text-right pr-7" value={l.rate} onChange={(e) => updateLine(l.id, { rate: Number(e.target.value), level: undefined })} />
-                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">
+                            <Input type="number" className="h-7 t-label text-right pr-7" value={l.rate} onChange={(e) => updateLine(l.id, { rate: Number(e.target.value), level: undefined })} />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 t-micro text-muted-foreground pointer-events-none">
                               {currency === "EUR" ? "€" : currency === "USD" ? "$" : "Ar"}
                             </span>
                           </div>
@@ -1288,11 +1288,11 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                           <div className="relative">
                             <Input
                               type="number" min={0} max={100} step={0.5}
-                              className="h-7 text-xs text-right pr-6"
+                              className="h-7 t-label text-right pr-6"
                               value={l.discountPct ?? 0}
                               onChange={(e) => updateLine(l.id, { discountPct: Number(e.target.value) })}
                             />
-                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">%</span>
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 t-micro text-muted-foreground pointer-events-none">%</span>
                           </div>
                         </td>
                         <td className="cell-pad text-right font-tnum font-medium">{fmt(lineNet(l), currency)}</td>
@@ -1304,23 +1304,23 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                   <tfoot>
                     {totals.lineDiscount > 0 && (
                       <tr>
-                        <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Line discounts</td>
+                        <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right t-label uppercase tracking-wider text-muted-foreground">Line discounts</td>
                         <td className="px-2 py-2 text-right font-tnum text-muted-foreground">−{fmt(totals.lineDiscount, currency)}</td>
                         <td />
                       </tr>
                     )}
                     <tr>
-                      <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
+                      <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right t-label uppercase tracking-wider text-muted-foreground">
                         <div className="inline-flex items-center gap-2 justify-end">
                           <span>Global discount</span>
                           <div className="relative">
                             <Input
                               type="number" min={0} max={100} step={0.5}
-                              className="h-7 w-20 text-xs text-right pr-6"
+                              className="h-7 w-20 t-label text-right pr-6"
                               value={discountPct}
                               onChange={(e) => setDiscountPct(Number(e.target.value))}
                             />
-                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">%</span>
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 t-micro text-muted-foreground pointer-events-none">%</span>
                           </div>
                         </div>
                       </td>
@@ -1328,12 +1328,12 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                       <td />
                     </tr>
                     <tr>
-                      <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Subtotal</td>
+                      <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right t-label uppercase tracking-wider text-muted-foreground">Subtotal</td>
                       <td className="px-2 py-2 text-right font-tnum">{fmt(subtotal, currency)}</td>
                       <td />
                     </tr>
                     <tr>
-                      <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
+                      <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right t-label uppercase tracking-wider text-muted-foreground">
                         <div className="inline-flex items-center gap-2 justify-end">
                           <span>Tax</span>
                           <div className="relative">
@@ -1341,11 +1341,11 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                               type="number"
                               min={0}
                               step={0.01}
-                              className="h-7 w-20 text-xs text-right pr-6"
+                              className="h-7 w-20 t-label text-right pr-6"
                               value={taxRate}
                               onChange={(e) => setTaxRate(Number(e.target.value))}
                             />
-                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">%</span>
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 t-micro text-muted-foreground pointer-events-none">%</span>
                           </div>
                         </div>
                       </td>
@@ -1353,7 +1353,7 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                       <td />
                     </tr>
                     <tr>
-                      <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-foreground font-semibold">Total</td>
+                      <td colSpan={mode === "rate-card" ? 8 : 6} className="px-2 py-2 text-right t-label uppercase tracking-wider text-foreground font-semibold">Total</td>
                       <td className="px-2 py-2 text-right font-tnum font-semibold">{fmt(totalAmount, currency)}</td>
                       <td />
                     </tr>
@@ -1364,12 +1364,12 @@ function QuoteDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
               </div>
             )}
             {mode === "rate-card" ? (
-              <p className="text-[11px] text-muted-foreground">Rates auto-fill from the rate card (benefits 35%, OH 70%, margin 15%, 1760h / 218d per year). Override by editing the Rate cell — that detaches the line from the card.</p>
+              <p className="t-label text-muted-foreground">Rates auto-fill from the rate card (benefits 35%, OH 70%, margin 15%, 1760h / 218d per year). Override by editing the Rate cell — that detaches the line from the card.</p>
             ) : (
-              <p className="text-[11px] text-muted-foreground">Standard quotation — enter description, quantity and unit price freely. Nothing is auto-priced.</p>
+              <p className="t-label text-muted-foreground">Standard quotation — enter description, quantity and unit price freely. Nothing is auto-priced.</p>
             )}
             {lines.length > 0 && (
-              <p className="text-[11px] text-muted-foreground">{RICH_TEXT_HINT}</p>
+              <p className="t-label text-muted-foreground">{RICH_TEXT_HINT}</p>
             )}
           </div>
 
@@ -1502,7 +1502,7 @@ function QuoteBoard({
           <button
             type="button"
             onClick={() => tpl.setActive("sales-flow")}
-            className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+            className="t-label text-muted-foreground hover:text-foreground transition-colors"
           >
             {hidden} hidden by this template
           </button>
@@ -1576,7 +1576,7 @@ function QuoteBoard({
                 <span className="text-[13px] font-medium leading-tight truncate" title={clientTitle(cl)}>{clientLabel(cl)}</span>
               </div>
               <div className="flex items-center justify-between gap-2 mt-0.5 min-w-0">
-                <span className="font-tnum text-xs font-semibold truncate">{fmtCompact(q.totalAmount ?? q.amount, q.currency)}</span>
+                <span className="font-tnum t-label font-semibold truncate">{fmtCompact(q.totalAmount ?? q.amount, q.currency)}</span>
                 <CardSignalRow>
                   <CardSignal
                     icon={CalendarClock}

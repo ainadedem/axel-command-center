@@ -42,7 +42,7 @@ export function ThemeControls({ compact = false }: { compact?: boolean }) {
                 aria-label={`${label} theme`}
                 onClick={() => setTheme(value)}
                 className={cn(
-                  "flex-1 min-h-8 px-3 rounded-full text-xs font-medium inline-flex items-center justify-center gap-1.5 focus-ring press-scale",
+                  "flex-1 min-h-8 px-3 rounded-full t-label font-medium inline-flex items-center justify-center gap-1.5 focus-ring press-scale",
                   active
                     ? "bg-card text-foreground shadow-[var(--shadow-soft)]"
                     : "text-muted-foreground hover:text-foreground",
@@ -74,7 +74,7 @@ export function ThemeControls({ compact = false }: { compact?: boolean }) {
                 onClick={() => setTextSize(value)}
                 className={cn(
                   "flex-1 min-h-8 px-3 rounded-full font-medium inline-flex items-center justify-center focus-ring press-scale",
-                  i === 0 ? "text-[11px]" : i === 1 ? "text-[13px]" : "text-[15px]",
+                  i === 0 ? "t-label" : i === 1 ? "text-[13px]" : "text-[15px]",
                   active
                     ? "bg-card text-foreground shadow-[var(--shadow-soft)]"
                     : "text-muted-foreground hover:text-foreground",
@@ -104,7 +104,7 @@ export function ThemeControls({ compact = false }: { compact?: boolean }) {
                 aria-label={`${label} density`}
                 onClick={() => setDensity(value)}
                 className={cn(
-                  "flex-1 min-h-8 px-3 rounded-full text-xs font-medium inline-flex items-center justify-center gap-1.5 focus-ring press-scale",
+                  "flex-1 min-h-8 px-3 rounded-full t-label font-medium inline-flex items-center justify-center gap-1.5 focus-ring press-scale",
                   active
                     ? "bg-card text-foreground shadow-[var(--shadow-soft)]"
                     : "text-muted-foreground hover:text-foreground",

@@ -38,7 +38,7 @@ function AxelIndex() {
           <Sparkles className="h-7 w-7 text-primary-foreground" />
         </div>
         <h1 className="font-display text-2xl font-semibold mb-2">Axel AI</h1>
-        <p className="text-sm text-muted-foreground max-w-md">
+        <p className="t-body text-muted-foreground max-w-md">
           Your CFO analyst. Ask about cash flow, margins, overdue invoices, client concentration,
           budgets, or any financial decision.
         </p>

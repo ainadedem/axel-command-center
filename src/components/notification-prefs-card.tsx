@@ -61,25 +61,25 @@ export function NotificationPrefsCard() {
   return (
     <section className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 space-y-4">
       <header className="space-y-1">
-        <h2 className="font-display text-base font-semibold flex items-center gap-2">
+        <h2 className="font-display t-subtitle font-semibold flex items-center gap-2">
           <Bell className="h-4 w-4 text-primary" /> Receivables alerts
         </h2>
-        <p className="text-xs text-muted-foreground">
+        <p className="t-label text-muted-foreground">
           Get an email the day an invoice crosses a step of the collection ladder. One message per invoice and step — never a repeat.
         </p>
       </header>
 
       {loading ? (
-        <div className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading…</div>
+        <div className="t-body text-muted-foreground flex items-center gap-2"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading…</div>
       ) : (
         <>
           <div className="flex items-center justify-between gap-4">
-            <Label htmlFor="ar-alerts" className="text-sm font-normal">Email me when an invoice reaches a new step</Label>
+            <Label htmlFor="ar-alerts" className="t-body font-normal">Email me when an invoice reaches a new step</Label>
             <Switch id="ar-alerts" checked={enabled} onCheckedChange={setEnabled} aria-label="Enable receivables alerts" />
           </div>
 
           <div className={cn("space-y-2", !enabled && "opacity-50 pointer-events-none")}>
-            <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Steps to be alerted on</div>
+            <div className="t-label uppercase tracking-wider text-muted-foreground">Steps to be alerted on</div>
             <div className="flex flex-wrap gap-2">
               {STAGES.map((s) => (
                 <button
@@ -87,14 +87,14 @@ export function NotificationPrefsCard() {
                   onClick={() => toggleStage(s)}
                   aria-pressed={stages.includes(s)}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg border text-xs transition-all press-scale text-left",
+                    "px-3 py-1.5 rounded-lg border t-label transition-all press-scale text-left",
                     stages.includes(s)
                       ? "border-primary/40 bg-primary/10 text-primary"
                       : "border-border text-muted-foreground hover:text-foreground",
                   )}
                 >
                   <span className="font-medium">Day {s}</span>
-                  <span className="block text-[10px] opacity-80">{STAGE_HINT[s]}</span>
+                  <span className="block t-micro opacity-80">{STAGE_HINT[s]}</span>
                 </button>
               ))}
             </div>

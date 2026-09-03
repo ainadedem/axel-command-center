@@ -65,7 +65,7 @@ export function FollowUpDraftDialog({ target, onClose, clients, companies, purch
                   key={l}
                   onClick={() => setLang(l)}
                   className={cn(
-                    "px-3 py-1 rounded-md text-xs uppercase tracking-wider transition-all",
+                    "px-3 py-1 rounded-md t-label uppercase tracking-wider transition-all",
                     lang === l ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -76,10 +76,10 @@ export function FollowUpDraftDialog({ target, onClose, clients, companies, purch
 
             {draft.gaps.length > 0 && (
               <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 space-y-1">
-                <div className="text-xs font-medium text-warning flex items-center gap-1.5">
+                <div className="t-label font-medium text-warning flex items-center gap-1.5">
                   <AlertTriangle className="h-3.5 w-3.5" /> Fix on our side before sending
                 </div>
-                <ul className="text-xs text-muted-foreground space-y-0.5">
+                <ul className="t-label text-muted-foreground space-y-0.5">
                   {draft.gaps.map((g) => <li key={g}>· {g}</li>)}
                 </ul>
               </div>
@@ -97,7 +97,7 @@ export function FollowUpDraftDialog({ target, onClose, clients, companies, purch
 
             <div className="space-y-1.5">
               <Label htmlFor="fu-body">Message</Label>
-              <Textarea id="fu-body" readOnly value={draft.body} rows={16} className="font-mono text-xs leading-relaxed" />
+              <Textarea id="fu-body" readOnly value={draft.body} rows={16} className="font-mono t-label leading-relaxed" />
             </div>
           </div>
         )}

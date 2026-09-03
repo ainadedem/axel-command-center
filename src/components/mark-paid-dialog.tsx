@@ -139,7 +139,7 @@ export function MarkPaidDialog({
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>Mark as paid · {invoice.number}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
-          <div className="rounded-md border border-border bg-surface/40 p-3 text-xs space-y-1">
+          <div className="rounded-md border border-border bg-surface/40 p-3 t-label space-y-1">
             <div className="flex justify-between"><span className="text-muted-foreground">Invoice total</span><span className="font-tnum">{invoicePayable(invoice).toLocaleString()} {invoice.currency}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Remaining</span><span className="font-tnum">{remaining.toLocaleString()} {invoice.currency}</span></div>
             {isForeign && (
@@ -151,7 +151,7 @@ export function MarkPaidDialog({
             <div>
               <Label>Payment date</Label>
               <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-                className="w-full h-9 rounded-md border border-input bg-transparent px-3 text-sm" />
+                className="w-full h-9 rounded-md border border-input bg-transparent px-3 t-body" />
             </div>
             <div>
               <Label>Account</Label>
@@ -170,9 +170,9 @@ export function MarkPaidDialog({
             <div>
               <Label>Actual MGA received</Label>
               <input type="number" value={receivedMga} onChange={(e) => setReceivedMga(e.target.value)}
-                className="w-full h-9 rounded-md border border-input bg-transparent px-3 text-sm font-tnum" />
+                className="w-full h-9 rounded-md border border-input bg-transparent px-3 t-body font-tnum" />
               {Math.abs(fxDelta) >= 1 && (
-                <div className={cn("mt-1.5 text-[11px] font-tnum", fxDelta > 0 ? "text-success" : "text-destructive")}>
+                <div className={cn("mt-1.5 t-label font-tnum", fxDelta > 0 ? "text-success" : "text-destructive")}>
                   {fxDelta > 0 ? "Gain" : "Perte"} de change: {fxDelta > 0 ? "+" : "−"}{Math.abs(fxDelta).toLocaleString()} MGA
                 </div>
               )}

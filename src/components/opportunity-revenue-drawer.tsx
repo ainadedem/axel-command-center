@@ -37,7 +37,7 @@ export function OpportunityRevenueDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-lg p-0 flex flex-col gap-0">
         <SheetHeader className="p-5 border-b border-border space-y-1 text-left">
-          <SheetTitle className="text-base">{opportunity?.name ?? "Deal"}</SheetTitle>
+          <SheetTitle className="t-subtitle">{opportunity?.name ?? "Deal"}</SheetTitle>
           <SheetDescription>
             {opportunity ? `${opportunity.client || "—"} · ${opportunity.stage}` : ""}
           </SheetDescription>
@@ -99,8 +99,8 @@ export function OpportunityRevenueDrawer({
 function Metric({ label, value, tone }: { label: string; value: string; tone?: "success" | "warning" }) {
   return (
     <div className="rounded-lg border border-border bg-surface px-3 py-2">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className={`text-sm font-tnum ${tone === "success" ? "text-success" : tone === "warning" ? "text-warning" : "text-foreground"}`}>{value}</div>
+      <div className="t-micro uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={`t-body font-tnum ${tone === "success" ? "text-success" : tone === "warning" ? "text-warning" : "text-foreground"}`}>{value}</div>
     </div>
   );
 }
@@ -108,14 +108,14 @@ function Metric({ label, value, tone }: { label: string; value: string; tone?: "
 function Section({ icon, title, children, anchorRef }: { icon: React.ReactNode; title: string; children: React.ReactNode; anchorRef?: React.Ref<HTMLDivElement> }) {
   return (
     <div ref={anchorRef} className="space-y-2 scroll-mt-4">
-      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">{icon}{title}</div>
+      <div className="flex items-center gap-1.5 t-label uppercase tracking-wider text-muted-foreground">{icon}{title}</div>
       <div className="space-y-1.5">{children}</div>
     </div>
   );
 }
 
 const Empty = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-xs text-muted-foreground border border-dashed border-border rounded-lg py-4 text-center">{children}</p>
+  <p className="t-label text-muted-foreground border border-dashed border-border rounded-lg py-4 text-center">{children}</p>
 );
 
 function Row({ to, focus, title, meta, amount, badge }: {
@@ -128,15 +128,15 @@ function Row({ to, focus, title, meta, amount, badge }: {
       className="flex items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2 hover:bg-surface-elevated transition-colors group"
     >
       <div className="min-w-0 flex-1">
-        <div className="text-xs font-medium truncate flex items-center gap-1.5">
+        <div className="t-label font-medium truncate flex items-center gap-1.5">
           {title}
           <ArrowUpRight className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity" />
         </div>
-        <div className="text-[11px] text-muted-foreground truncate">{meta}</div>
+        <div className="t-label text-muted-foreground truncate">{meta}</div>
       </div>
       {badge}
-      <div className="text-xs font-tnum shrink-0">{amount}</div>
-      <span className="text-[10px] text-primary shrink-0 opacity-70 group-hover:opacity-100">Open</span>
+      <div className="t-label font-tnum shrink-0">{amount}</div>
+      <span className="t-micro text-primary shrink-0 opacity-70 group-hover:opacity-100">Open</span>
     </Link>
   );
 }
@@ -151,10 +151,10 @@ function VarianceSection({ v }: { v: QuoteInvoiceVariance }) {
     <Section icon={<Scale className="h-3.5 w-3.5" />} title="Quoted vs invoiced">
       <div className="rounded-lg border border-border bg-surface p-3 space-y-3">
         <div className="flex items-baseline justify-between gap-3">
-          <div className="text-xs text-muted-foreground">
+          <div className="t-label text-muted-foreground">
             {fmtCompact(v.quoted, "MGA")} quoted → {fmtCompact(v.invoiced, "MGA")} invoiced
           </div>
-          <div className="text-sm font-tnum">{signed(v.total)}</div>
+          <div className="t-body font-tnum">{signed(v.total)}</div>
         </div>
 
         <div className="h-1.5 w-full rounded-full bg-surface-elevated overflow-hidden">
@@ -163,7 +163,7 @@ function VarianceSection({ v }: { v: QuoteInvoiceVariance }) {
             style={{ width: `${Math.min(100, Math.round(v.invoicedPct * 100))}%` }}
           />
         </div>
-        <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+        <div className="flex items-center justify-between t-label text-muted-foreground">
           <span>{Math.round(v.invoicedPct * 100)}% of the quote invoiced</span>
           {v.notInvoiced > 0 && <span>{fmtCompact(v.notInvoiced, "MGA")} not yet invoiced</span>}
         </div>
@@ -175,7 +175,7 @@ function VarianceSection({ v }: { v: QuoteInvoiceVariance }) {
         </div>
 
         {v.partialDetail && (
-          <p className="text-[11px] text-muted-foreground">
+          <p className="t-label text-muted-foreground">
             Some documents have no line detail — the split below covers only documents with lines.
           </p>
         )}
@@ -190,7 +190,7 @@ function VarianceSection({ v }: { v: QuoteInvoiceVariance }) {
           <LineGroup title="Amount changed" lines={v.changed} />
         )}
         {v.missing.length === 0 && v.extra.length === 0 && v.changed.length === 0 && (
-          <p className="text-[11px] text-muted-foreground">Every quoted line matches an invoiced line.</p>
+          <p className="t-label text-muted-foreground">Every quoted line matches an invoiced line.</p>
         )}
       </div>
     </Section>
@@ -200,8 +200,8 @@ function VarianceSection({ v }: { v: QuoteInvoiceVariance }) {
 function Bucket({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-md border border-border bg-surface-elevated px-2 py-1.5">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="text-xs font-tnum">
+      <div className="t-micro uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="t-label font-tnum">
         <SignedAmount value={value} formatted={`${value > 0 ? "+" : ""}${fmtCompact(value, "MGA")}`} />
       </div>
     </div>
@@ -211,9 +211,9 @@ function Bucket({ label, value }: { label: string; value: number }) {
 function LineGroup({ title, lines, tone }: { title: string; lines: VarianceLine[]; tone?: "success" | "destructive" }) {
   return (
     <div className="space-y-1">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{title}</div>
+      <div className="t-micro uppercase tracking-wider text-muted-foreground">{title}</div>
       {lines.slice(0, 8).map((l) => (
-        <div key={l.key} className="flex items-center gap-2 text-[11px] border-t border-border/60 pt-1">
+        <div key={l.key} className="flex items-center gap-2 t-label border-t border-border/60 pt-1">
           <div className="min-w-0 flex-1">
             <div className="truncate">{l.description}</div>
             <div className="text-muted-foreground truncate">
@@ -229,7 +229,7 @@ function LineGroup({ title, lines, tone }: { title: string; lines: VarianceLine[
         </div>
       ))}
       {lines.length > 8 && (
-        <div className="text-[11px] text-muted-foreground">+{lines.length - 8} more</div>
+        <div className="t-label text-muted-foreground">+{lines.length - 8} more</div>
       )}
     </div>
   );

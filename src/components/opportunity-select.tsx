@@ -60,7 +60,7 @@ export function OpportunitySelect({
         <button
           type="button"
           onClick={() => onChange(suggestion.id)}
-          className="mt-1 inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
+          className="mt-1 inline-flex items-center gap-1 t-label text-primary hover:underline"
         >
           <Sparkles className="h-3 w-3" /> Suggested: {suggestion.name} ({suggestion.stage})
         </button>

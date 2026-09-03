@@ -73,23 +73,23 @@ export function TableExportMenu({
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
           </button>
         ) : (
-          <Button variant="outline" size="sm" className={className ?? "h-8 px-2.5 text-xs gap-1.5"} disabled={busy}>
+          <Button variant="outline" size="sm" className={className ?? "h-8 px-2.5 t-label gap-1.5"} disabled={busy}>
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
             Export
           </Button>
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="text-xs">Export current view</DropdownMenuLabel>
+        <DropdownMenuLabel className="t-label">Export current view</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-xs" onSelect={() => doCsv()}>
+        <DropdownMenuItem className="t-label" onSelect={() => doCsv()}>
           <FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> CSV
         </DropdownMenuItem>
-        <DropdownMenuItem className="text-xs" onSelect={() => void doPdf()}>
+        <DropdownMenuItem className="t-label" onSelect={() => void doPdf()}>
           <FileText className="h-3.5 w-3.5 mr-2" /> PDF (landscape)
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <div className="px-2 py-1.5 text-[10px] leading-snug text-muted-foreground">
+        <div className="px-2 py-1.5 t-micro leading-snug text-muted-foreground">
           Uses the visible columns, their order and widths, plus the active filters and sort. Amounts export in full.
         </div>
       </DropdownMenuContent>

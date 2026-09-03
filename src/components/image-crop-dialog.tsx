@@ -127,11 +127,11 @@ export function ImageCropDialog({ open, onOpenChange, sourceUrl, size = 512, fol
             </div>
           </div>
           <div>
-            <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">Zoom</div>
+            <div className="t-label uppercase tracking-wider text-muted-foreground mb-2">Zoom</div>
             <Slider value={[zoom]} min={1} max={4} step={0.01} onValueChange={([v]) => setZoom(v ?? 1)} aria-label="Zoom" />
           </div>
-          <p className="text-xs text-muted-foreground text-center">Drag the picture to reposition it.</p>
-          {error && <p className="text-xs text-destructive text-center">{error}</p>}
+          <p className="t-label text-muted-foreground text-center">Drag the picture to reposition it.</p>
+          {error && <p className="t-label text-destructive text-center">{error}</p>}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>Cancel</Button>

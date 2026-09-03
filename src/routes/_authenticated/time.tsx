@@ -80,7 +80,7 @@ function TimePage() {
         }
       />
       <div className="p-5 sm:p-10 lg:p-12 pt-0 space-y-6">
-        <div className="inline-flex rounded-full bg-[var(--surface-container)] p-1 text-xs">
+        <div className="inline-flex rounded-full bg-[var(--surface-container)] p-1 t-label">
           {tabs.filter((t) => !t.admin || canManage).map((t) => (
             <button key={t.id} onClick={() => setTab(t.id)}
               className={cn("px-4 py-1.5 rounded-full inline-flex items-center gap-1.5 transition",

@@ -46,7 +46,7 @@ export function NextActionsPanel() {
       {/* Money journey */}
       <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4 sm:p-5">
         <div className="flex items-center gap-2 mb-3">
-          <h2 className="text-sm font-semibold">How money moves through your business</h2>
+          <h2 className="t-body font-semibold">How money moves through your business</h2>
           <Explain text="Every deal walks left to right. If a stage is stuck, the stages after it stay empty and cash never arrives." />
         </div>
         <ol className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2">
@@ -56,13 +56,13 @@ export function NextActionsPanel() {
                 to={stage.to}
                 className="group flex h-full flex-col gap-1 rounded-lg border border-border/70 bg-surface/60 p-3 transition-all hover-lift press-scale"
               >
-                <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="flex items-center gap-1.5 t-label font-medium uppercase tracking-wide text-muted-foreground">
                   <span className="tabular-nums">{idx + 1}</span>
                   {stage.label}
                   <Explain text={stage.hint} />
                 </span>
-                <span className="text-base font-semibold tabular-nums">{money(stage.amountMGA)}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="t-subtitle font-semibold tabular-nums">{money(stage.amountMGA)}</span>
+                <span className="t-label text-muted-foreground">
                   {stage.count} document{stage.count === 1 ? "" : "s"}
                 </span>
               </Link>
@@ -74,7 +74,7 @@ export function NextActionsPanel() {
       {/* To-do list */}
       <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4 sm:p-5">
         <div className="flex items-center gap-2 mb-3">
-          <h2 className="text-sm font-semibold">What to do next</h2>
+          <h2 className="t-body font-semibold">What to do next</h2>
           <Explain text="This list is built from your own data and refreshes on its own. Work from the top: the first items cost you the most money." />
         </div>
 
@@ -82,8 +82,8 @@ export function NextActionsPanel() {
           <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-surface/60 p-4">
             <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
             <div>
-              <p className="text-sm font-medium">Nothing needs you right now</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="t-body font-medium">Nothing needs you right now</p>
+              <p className="t-label text-muted-foreground">
                 Every quotation is sent, every accepted deal is invoiced and no invoice is late. Good place to be.
               </p>
             </div>
@@ -101,16 +101,16 @@ export function NextActionsPanel() {
                   <Icon className={cn("h-4 w-4 shrink-0", tone.text)} />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-medium leading-snug">{a.title}</p>
-                      <span className={cn("inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide", tone.text)}>
+                      <p className="t-body font-medium leading-snug">{a.title}</p>
+                      <span className={cn("inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 t-micro font-medium uppercase tracking-wide", tone.text)}>
                         <span className={cn("h-1.5 w-1.5 rounded-full", tone.dot)} />
                         {tone.label}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{a.why}</p>
+                    <p className="t-label text-muted-foreground leading-relaxed">{a.why}</p>
                   </div>
                   {a.amountMGA !== undefined && (
-                    <span className="text-sm font-semibold tabular-nums shrink-0">{money(a.amountMGA)}</span>
+                    <span className="t-body font-semibold tabular-nums shrink-0">{money(a.amountMGA)}</span>
                   )}
                   <Button asChild size="sm" variant="outline" className="shrink-0 press-scale">
                     <Link to={a.to} search={a.search as never}>

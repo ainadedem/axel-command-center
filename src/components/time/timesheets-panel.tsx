@@ -99,13 +99,13 @@ export function TimesheetsPanel({
   return (
     <section className="rounded-3xl bg-[var(--surface-container)] p-5 sm:p-7 space-y-5">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-sm font-medium">Timesheet</h2>
+        <h2 className="t-body font-medium">Timesheet</h2>
         <div className="flex items-center gap-1">
           <button onClick={() => step(-1)} className="h-8 w-8 grid place-items-center rounded-full hover:bg-muted/50" aria-label="Previous period"><ChevronLeft className="h-4 w-4" /></button>
-          <span className="text-xs font-tnum text-muted-foreground px-1">{from} → {to}</span>
+          <span className="t-label font-tnum text-muted-foreground px-1">{from} → {to}</span>
           <button onClick={() => step(1)} className="h-8 w-8 grid place-items-center rounded-full hover:bg-muted/50" aria-label="Next period"><ChevronRight className="h-4 w-4" /></button>
         </div>
-        <div className="inline-flex rounded-full bg-muted/40 p-0.5 text-xs">
+        <div className="inline-flex rounded-full bg-muted/40 p-0.5 t-label">
           {(["week", "month"] as const).map((k) => (
             <button key={k} onClick={() => setKind(k)}
               className={cn("px-3 py-1 rounded-full capitalize transition", kind === k ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
@@ -116,7 +116,7 @@ export function TimesheetsPanel({
         <div className="flex-1" />
         {canManage && (
           <Select value={employee?.userId ?? ""} onValueChange={setEmployeeId}>
-            <SelectTrigger className="h-9 w-56 rounded-full text-xs"><SelectValue placeholder="Employee" /></SelectTrigger>
+            <SelectTrigger className="h-9 w-56 rounded-full t-label"><SelectValue placeholder="Employee" /></SelectTrigger>
             <SelectContent>
               {visible.map((m) => <SelectItem key={m.userId} value={m.userId}>{m.name}</SelectItem>)}
             </SelectContent>
@@ -133,16 +133,16 @@ export function TimesheetsPanel({
       </div>
 
       {totals.missingClockOuts > 0 && (
-        <div className="flex items-center gap-2 text-xs text-warning">
+        <div className="flex items-center gap-2 t-label text-warning">
           <AlertTriangle className="h-3.5 w-3.5" />
           {totals.missingClockOuts} day{totals.missingClockOuts > 1 ? "s" : ""} with a missing clock-out — fix before submitting.
         </div>
       )}
 
       <div className="overflow-x-auto">
-        <table className="sheet w-full text-sm">
+        <table className="sheet w-full t-body">
           <thead>
-            <tr className="text-[11px] uppercase tracking-wider text-muted-foreground text-left">
+            <tr className="t-label uppercase tracking-wider text-muted-foreground text-left">
               <th className="py-2 font-normal">Day</th>
               <th className="py-2 font-normal">Entries</th>
               <th className="py-2 font-normal text-right">Worked</th>
@@ -155,11 +155,11 @@ export function TimesheetsPanel({
             {days.map((d) => (
               <tr key={d.key} className={cn("border-t border-border/30", !d.isWorkingDay && "text-muted-foreground")}>
                 <td className="py-1.5 font-tnum">{d.key.slice(5)}</td>
-                <td className="py-1.5 text-xs">{d.entries.length}</td>
+                <td className="py-1.5 t-label">{d.entries.length}</td>
                 <td className="py-1.5 text-right font-tnum">{fmtHours(d.workedMinutes)}</td>
                 <td className="py-1.5 text-right font-tnum">{fmtHours(d.regularMinutes)}</td>
                 <td className="py-1.5 text-right font-tnum text-warning">{d.overtimeMinutes ? fmtHours(d.overtimeMinutes) : "—"}</td>
-                <td className="py-1.5 text-xs text-muted-foreground">
+                <td className="py-1.5 t-label text-muted-foreground">
                   {[d.holiday?.name, d.leave ? `${d.leave.kind} leave` : null,
                     d.lateMinutes ? `${d.lateMinutes} min late` : null,
                     d.missingClockOut ? "missing clock-out" : null]
@@ -172,7 +172,7 @@ export function TimesheetsPanel({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <span className={cn("text-[11px] px-2.5 py-1 rounded-full",
+        <span className={cn("t-label px-2.5 py-1 rounded-full",
           locked ? "bg-success/10 text-success" : sheet?.status === "submitted" ? "bg-primary/10 text-primary" : "bg-muted/40 text-muted-foreground")}>
           {locked && <Lock className="h-3 w-3 inline mr-1" />}
           {sheet?.status ?? "not saved"}
@@ -202,8 +202,8 @@ export function TimesheetsPanel({
 function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <div className="rounded-2xl bg-surface/60 px-4 py-3">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className={cn("text-lg font-tnum", tone)}>{value}</div>
+      <div className="t-micro uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={cn("t-title font-tnum", tone)}>{value}</div>
     </div>
   );
 }

@@ -65,7 +65,7 @@ export function ClientTermsFields({
         placeholder="30"
         disabled={disabled}
       />
-      <p className="text-xs text-muted-foreground">
+      <p className="t-label text-muted-foreground">
         Used to match bank receipts to the right invoice when amounts repeat monthly.
       </p>
 
@@ -74,7 +74,7 @@ export function ClientTermsFields({
           type="button"
           disabled={disabled}
           onClick={() => onTermsDays(String(overall.days))}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 h-7 text-xs text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 h-7 t-label text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)] transition-colors disabled:opacity-50"
         >
           <Sparkles className="h-3.5 w-3.5" />
           Suggested {overall.days} days
@@ -86,12 +86,12 @@ export function ClientTermsFields({
 
       {usedCurrencies.length > 0 && (
         <div className="space-y-2 pt-1">
-          <p className="text-[11px] font-medium text-muted-foreground">Per-currency overrides</p>
+          <p className="t-label font-medium text-muted-foreground">Per-currency overrides</p>
           {usedCurrencies.map((cur) => {
             const s = suggestionFor(cur);
             return (
               <div key={cur} className="flex items-center gap-2">
-                <span className="w-12 shrink-0 text-xs font-medium">{cur}</span>
+                <span className="w-12 shrink-0 t-label font-medium">{cur}</span>
                 <Input
                   type="number"
                   min="0"
@@ -105,7 +105,7 @@ export function ClientTermsFields({
                     type="button"
                     disabled={disabled}
                     onClick={() => setCur(cur, String(s.days))}
-                    className="text-xs text-primary hover:underline disabled:opacity-50"
+                    className="t-label text-primary hover:underline disabled:opacity-50"
                   >
                     use {s.days}d ({s.samples})
                   </button>

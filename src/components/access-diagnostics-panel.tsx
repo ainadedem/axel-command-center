@@ -87,8 +87,8 @@ export function AccessDiagnosticsPanel({ companies }: { companies: Array<{ id: s
       <div className="flex flex-wrap items-center gap-3 px-4 py-3">
         <ShieldCheck className="h-4 w-4 text-primary" />
         <div className="flex-1 min-w-[200px]">
-          <p className="text-sm font-medium">Permission diagnostics</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="t-body font-medium">Permission diagnostics</p>
+          <p className="t-label text-muted-foreground">
             {diag ? diag.verdict : "Ask the server how it sees your session before creating users."}
           </p>
         </div>
@@ -104,7 +104,7 @@ export function AccessDiagnosticsPanel({ companies }: { companies: Array<{ id: s
       </div>
 
       {diagError && (
-        <div className="px-4 pb-3 text-xs text-destructive">{diagError}</div>
+        <div className="px-4 pb-3 t-label text-destructive">{diagError}</div>
       )}
 
       {diag && (
@@ -112,7 +112,7 @@ export function AccessDiagnosticsPanel({ companies }: { companies: Array<{ id: s
           <button
             type="button"
             onClick={() => setOpenChecks((v) => !v)}
-            className="w-full flex items-center gap-2 px-4 py-2 text-xs text-muted-foreground hover:bg-muted/40"
+            className="w-full flex items-center gap-2 px-4 py-2 t-label text-muted-foreground hover:bg-muted/40"
           >
             {openChecks ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
             Admin check breakdown ({diag.checks.filter((c) => c.status === "fail").length} failing)
@@ -120,7 +120,7 @@ export function AccessDiagnosticsPanel({ companies }: { companies: Array<{ id: s
           {openChecks && (
             <ul className="px-4 pb-4 space-y-1.5">
               {diag.checks.map((c) => (
-                <li key={c.id} className="flex items-start gap-2 text-xs">
+                <li key={c.id} className="flex items-start gap-2 t-label">
                   {c.status === "pass" ? (
                     <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 text-emerald-500 shrink-0" />
                   ) : c.status === "fail" ? (
@@ -140,7 +140,7 @@ export function AccessDiagnosticsPanel({ companies }: { companies: Array<{ id: s
       {auditOpen && (
         <div className="border-t border-border">
           <div className="flex items-center justify-between px-4 py-2">
-            <p className="text-xs text-muted-foreground">Last 50 user administration attempts</p>
+            <p className="t-label text-muted-foreground">Last 50 user administration attempts</p>
             <Button size="sm" variant="ghost" onClick={loadAudit} disabled={auditLoading}>
               {auditLoading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -150,11 +150,11 @@ export function AccessDiagnosticsPanel({ companies }: { companies: Array<{ id: s
               Refresh
             </Button>
           </div>
-          {auditError && <div className="px-4 pb-3 text-xs text-destructive">{auditError}</div>}
+          {auditError && <div className="px-4 pb-3 t-label text-destructive">{auditError}</div>}
           <div className="overflow-x-auto">
             <div className="overflow-x-auto">
-            <table className="sheet sheet-pin1 w-full min-w-[720px] text-xs">
-              <thead className="bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
+            <table className="sheet sheet-pin1 w-full min-w-[720px] t-label">
+              <thead className="bg-muted/40 t-micro uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="text-left font-medium px-4 py-2">When</th>
                   <th className="text-left font-medium px-4 py-2">Actor</th>

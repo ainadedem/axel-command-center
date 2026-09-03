@@ -496,12 +496,12 @@ export function StatementImportDialog({
               {Math.abs(done.difference) < 1
                 ? <CheckCircle2 className="h-5 w-5 text-success mt-0.5" />
                 : <AlertCircle className="h-5 w-5 text-warning mt-0.5" />}
-              <div className="text-sm">
+              <div className="t-body">
                 <div className="font-medium">
                   {done.rowCount} transactions imported
                   {done.adjustmentAmount ? " · balancing adjustment posted" : ""}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">
+                <div className="t-label text-muted-foreground mt-1">
                   {Math.abs(done.difference) < 1
                     ? "The ledger now matches the bank statement."
                     : `Remaining difference of ${money(Math.abs(done.difference))} vs the bank.`}
@@ -521,7 +521,7 @@ export function StatementImportDialog({
         ) : (
         <>
         {/* Stepper */}
-        <div className="flex items-center gap-2 text-[11px]">
+        <div className="flex items-center gap-2 t-label">
           {STEPS.map((s, i) => (
             <div key={s} className="flex items-center gap-2">
               <span className={cn(
@@ -542,10 +542,10 @@ export function StatementImportDialog({
           {step === 0 && (
             <label className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border bg-surface/40 p-10 cursor-pointer hover:bg-surface-elevated/40 transition">
               <Upload className="h-7 w-7 text-muted-foreground" />
-              <div className="text-sm">
+              <div className="t-body">
                 <span className="font-medium">Click to upload</span> or drop a CSV or Excel file
               </div>
-              <p className="text-[11px] text-muted-foreground text-center max-w-md">
+              <p className="t-label text-muted-foreground text-center max-w-md">
                 Expected columns: <code>date, description, amount</code> — or <code>date, description, debit, credit</code>.
                 The statement period is detected automatically. Rows already in the ledger are skipped, and invoices are
                 auto-matched when their number appears in the description.
@@ -561,18 +561,18 @@ export function StatementImportDialog({
 
           {/* File chip on every later step */}
           {step > 0 && (
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between t-body">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">{fileName}</span>
                 <span className="text-muted-foreground">· {rows.length} rows</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-success/40 text-success bg-success/10">
+                <span className="t-label uppercase tracking-wider px-2 py-0.5 rounded-full border border-success/40 text-success bg-success/10">
                   {matched} matched
                 </span>
                 {duplicates > 0 && (
-                  <span className="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10">
+                  <span className="t-label uppercase tracking-wider px-2 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10">
                     {duplicates} duplicate
                   </span>
                 )}
@@ -586,29 +586,29 @@ export function StatementImportDialog({
             <div className="rounded-lg border border-border bg-surface/40 p-4 space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-[11px] text-muted-foreground">Detected period start</Label>
+                  <Label className="t-label text-muted-foreground">Detected period start</Label>
                   <Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} className="h-8" />
                 </div>
                 <div>
-                  <Label className="text-[11px] text-muted-foreground">Detected period end</Label>
+                  <Label className="t-label text-muted-foreground">Detected period end</Label>
                   <Input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} className="h-8" />
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-[11px] text-muted-foreground">Opening balance</Label>
+                  <Label className="t-label text-muted-foreground">Opening balance</Label>
                   <Input type="number" value={openingInput} onChange={(e) => setOpeningInput(e.target.value)} className="h-8 font-tnum" />
                 </div>
                 <div>
-                  <Label className="text-[11px] text-muted-foreground">Opening balance date</Label>
+                  <Label className="t-label text-muted-foreground">Opening balance date</Label>
                   <Input type="date" value={openingDateInput} onChange={(e) => setOpeningDateInput(e.target.value)} className="h-8" />
                 </div>
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="t-label text-muted-foreground">
                 Ledger balance before this import: <span className="font-tnum text-foreground">{money(ledgerBefore)}</span>
               </div>
               {openingMismatch && (
-                <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-3 text-xs text-warning">
+                <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-3 t-label text-warning">
                   <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
                   <div>
                     The statement starts on {periodStart}, before the opening balance date ({openingDateInput}).
@@ -624,9 +624,9 @@ export function StatementImportDialog({
           {step === 2 && (
             <div className="max-h-[380px] overflow-y-auto rounded-lg border border-border">
               <div className="overflow-x-auto">
-              <table className="sheet sheet-pin1 w-full min-w-[720px] text-xs">
+              <table className="sheet sheet-pin1 w-full min-w-[720px] t-label">
                 <thead className="sticky top-0 bg-surface">
-                  <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                  <tr className="t-micro uppercase tracking-wider text-muted-foreground border-b border-border">
                     <th className="text-left font-medium px-3 py-2 w-8" />
                     <th className="text-left font-medium px-3 py-2">Date</th>
                     <th className="text-left font-medium px-3 py-2">Description</th>
@@ -645,7 +645,7 @@ export function StatementImportDialog({
                         <td className="px-3 py-2 font-tnum text-muted-foreground">{format(parseISO(r.date), "MMM d, yyyy")}</td>
                         <td className="px-3 py-2 truncate max-w-[240px]">
                           {r.description}
-                          {r.duplicate && <span className="ml-2 text-[10px] uppercase tracking-wider text-warning">already in ledger</span>}
+                          {r.duplicate && <span className="ml-2 t-micro uppercase tracking-wider text-warning">already in ledger</span>}
                         </td>
                         <td className="px-3 py-2">
                           {inv ? (
@@ -659,7 +659,7 @@ export function StatementImportDialog({
                                 const fx = r.amount - settledInAcct;
                                 if (Math.abs(fx) < 1) return null;
                                 return (
-                                  <span className={cn("text-[10px] font-tnum", fx > 0 ? "text-success" : "text-destructive")}>
+                                  <span className={cn("t-micro font-tnum", fx > 0 ? "text-success" : "text-destructive")}>
                                     FX {fx > 0 ? "gain" : "loss"} {Math.abs(fx).toLocaleString(undefined, { maximumFractionDigits: 0 })} {account.currency}
                                   </span>
                                 );
@@ -686,11 +686,11 @@ export function StatementImportDialog({
           {step === 3 && (
             <div className="rounded-lg border border-border bg-surface/40 p-4 space-y-3">
               <div>
-                <Label className="text-[11px] text-muted-foreground">Bank closing balance (from the statement)</Label>
+                <Label className="t-label text-muted-foreground">Bank closing balance (from the statement)</Label>
                 <Input type="number" value={closingInput} onChange={(e) => setClosingInput(e.target.value)} placeholder="e.g. 12500000" className="h-9 font-tnum" />
               </div>
 
-              <div className="text-xs space-y-1">
+              <div className="t-label space-y-1">
                 <div className="flex justify-between"><span className="text-muted-foreground">Opening balance ({account?.openingBalanceDate ?? "start"})</span><span className="font-tnum">{money(account ? openingOf(account) : 0)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Ledger balance before import</span><span className="font-tnum">{money(ledgerBefore)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Statement movements ({included.length} rows)</span><span className="font-tnum">{movements >= 0 ? "+" : "−"}{money(Math.abs(movements))}</span></div>
@@ -704,7 +704,7 @@ export function StatementImportDialog({
               </div>
 
               {hasClosing && !balanced && (
-                <label className="flex items-start gap-2 text-xs cursor-pointer">
+                <label className="flex items-start gap-2 t-label cursor-pointer">
                   <input type="checkbox" checked={postAdjustment} onChange={(e) => setPostAdjustment(e.target.checked)} className="mt-0.5" />
                   <span>
                     Post a balancing adjustment of <span className="font-tnum font-medium">{money(Math.abs(difference))}</span> (“Écart de rapprochement”)
@@ -716,7 +716,7 @@ export function StatementImportDialog({
           )}
 
           {error && (
-            <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+            <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 t-label text-destructive">
               <AlertCircle className="h-4 w-4 mt-0.5" />
               <div>{error}</div>
             </div>
@@ -810,7 +810,7 @@ export function RecordPaymentDialog({
         </DialogHeader>
         <div className="space-y-4 py-2">
           {invoice && (
-            <div className="rounded-md border border-border bg-surface/40 p-3 text-xs space-y-1">
+            <div className="rounded-md border border-border bg-surface/40 p-3 t-label space-y-1">
               <div className="flex justify-between"><span className="text-muted-foreground">Invoice total</span><span className="font-tnum">{invoice.amount.toLocaleString()} {invoice.currency}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Already paid</span><span className="font-tnum">{invoice.paid.toLocaleString()} {invoice.currency}</span></div>
               <div className="flex justify-between font-medium"><span>Remaining</span><span className="font-tnum">{remaining.toLocaleString()} {invoice.currency}</span></div>
@@ -820,12 +820,12 @@ export function RecordPaymentDialog({
             <div>
               <Label>Payment date</Label>
               <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-                className="w-full h-9 rounded-md border border-input bg-transparent px-3 text-sm" />
+                className="w-full h-9 rounded-md border border-input bg-transparent px-3 t-body" />
             </div>
             <div>
               <Label>Amount</Label>
               <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)}
-                className="w-full h-9 rounded-md border border-input bg-transparent px-3 text-sm font-tnum" />
+                className="w-full h-9 rounded-md border border-input bg-transparent px-3 t-body font-tnum" />
             </div>
           </div>
         </div>

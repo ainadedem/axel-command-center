@@ -109,12 +109,12 @@ export function BoardHistoryPanel({
         </SheetHeader>
 
         {loading && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">
+          <div className="flex items-center gap-2 t-body text-muted-foreground py-6">
             <Loader2 className="h-4 w-4 animate-spin" /> Loading history…
           </div>
         )}
         {!loading && rows.length === 0 && (
-          <div className="text-sm text-muted-foreground py-6">No moves recorded yet.</div>
+          <div className="t-body text-muted-foreground py-6">No moves recorded yet.</div>
         )}
 
         <ol className="mt-4 space-y-2">
@@ -124,23 +124,23 @@ export function BoardHistoryPanel({
                 <button
                   type="button"
                   onClick={() => onOpenDoc?.(r.docId)}
-                  className="text-xs font-tnum font-medium hover:underline"
+                  className="t-label font-tnum font-medium hover:underline"
                 >
                   {r.docNumber ?? "Document"}
                 </button>
-                <span className="text-[10px] text-muted-foreground">{rel(r.createdAt)}</span>
+                <span className="t-micro text-muted-foreground">{rel(r.createdAt)}</span>
               </div>
               <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                <Badge variant="outline" className="text-[10px] capitalize">{r.from ?? "—"}</Badge>
+                <Badge variant="outline" className="t-micro capitalize">{r.from ?? "—"}</Badge>
                 <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                <Badge variant="outline" className="text-[10px] capitalize">{r.to ?? "—"}</Badge>
+                <Badge variant="outline" className="t-micro capitalize">{r.to ?? "—"}</Badge>
                 {r.blocked && (
-                  <Badge variant="outline" className="text-[10px] gap-1 border-destructive/40 text-destructive">
+                  <Badge variant="outline" className="t-micro gap-1 border-destructive/40 text-destructive">
                     <Ban className="h-3 w-3" /> blocked
                   </Badge>
                 )}
               </div>
-              <div className="text-[11px] text-muted-foreground mt-1.5">
+              <div className="t-label text-muted-foreground mt-1.5">
                 <span title={ownerName(r.actorId ?? undefined)}>{ownerFirstName(r.actorId ?? undefined) || "Unknown user"}</span>
                 {r.blocked && r.reason ? ` · ${r.reason}` : ""}
               </div>

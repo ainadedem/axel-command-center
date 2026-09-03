@@ -56,8 +56,8 @@ export function AttendanceBoard({
   return (
     <section className="rounded-3xl bg-[var(--surface-container)] p-5 sm:p-7 space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-sm font-medium flex-1">Live attendance · today</h2>
-        <div className="flex flex-wrap gap-2 text-[11px]">
+        <h2 className="t-body font-medium flex-1">Live attendance · today</h2>
+        <div className="flex flex-wrap gap-2 t-label">
           {(["in", "late", "out", "leave", "off"] as const).map((k) => (
             <span key={k} className={cn("px-2.5 py-1 rounded-full", TONE[k])}>
               {LABEL[k]} {counts[k] ?? 0}
@@ -70,15 +70,15 @@ export function AttendanceBoard({
       </div>
 
       {rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-8 text-center">No people with access to this workspace yet.</p>
+        <p className="t-body text-muted-foreground py-8 text-center">No people with access to this workspace yet.</p>
       ) : (
         <div className="divide-y divide-border/40">
           {rows.map(({ m, day, open, state, schedule }) => (
             <div key={m.userId} className="flex items-center gap-3 py-2.5 group">
               <Avatar src={m.avatarUrl ?? undefined} name={m.name} size={32} />
               <div className="min-w-0 flex-1">
-                <div className="text-sm truncate">{m.name}</div>
-                <div className="text-[11px] text-muted-foreground truncate">
+                <div className="t-body truncate">{m.name}</div>
+                <div className="t-label text-muted-foreground truncate">
                   {schedule.startTime}–{schedule.endTime}
                   {day?.holiday ? ` · ${day.holiday.name}` : ""}
                   {day?.leave ? ` · ${day.leave.kind} leave` : ""}
@@ -91,14 +91,14 @@ export function AttendanceBoard({
                 {open?.gpsLat != null && <MapPin className="h-3.5 w-3.5" aria-label="Location captured" />}
               </div>
               <div className="text-right w-24 shrink-0">
-                <div className="text-sm font-tnum">
+                <div className="t-body font-tnum">
                   {fmtDuration((day?.workedMinutes ?? 0) + (open ? Math.max(0, entryMinutes(open) - (day?.entries.includes(open) ? entryMinutes(open) : 0)) : 0))}
                 </div>
                 {day && day.lateMinutes > 0 && (
-                  <div className="text-[10px] text-warning">{day.lateMinutes} min late</div>
+                  <div className="t-micro text-warning">{day.lateMinutes} min late</div>
                 )}
               </div>
-              <span className={cn("text-[11px] px-2.5 py-1 rounded-full shrink-0", TONE[state])}>{LABEL[state]}</span>
+              <span className={cn("t-label px-2.5 py-1 rounded-full shrink-0", TONE[state])}>{LABEL[state]}</span>
             </div>
           ))}
         </div>
@@ -117,7 +117,7 @@ export function MyDayStrip({ entries, employeeId }: { entries: TimeEntry[]; empl
   return (
     <div className="flex flex-wrap gap-2">
       {mine.map((e) => (
-        <span key={e.id} className="text-[11px] px-3 py-1.5 rounded-full bg-[var(--surface-container)] text-muted-foreground font-tnum">
+        <span key={e.id} className="t-label px-3 py-1.5 rounded-full bg-[var(--surface-container)] text-muted-foreground font-tnum">
           {hhmm(e.clockIn)} → {e.clockOut ? hhmm(e.clockOut) : "…"} · {fmtDuration(entryMinutes(e))}
           {e.activity ? ` · ${e.activity}` : ""}
         </span>

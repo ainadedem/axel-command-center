@@ -39,7 +39,7 @@ export function KanbanTemplatePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-72 p-1.5">
-        <div className="px-2 py-1 text-[11px] uppercase tracking-wider text-muted-foreground">Templates</div>
+        <div className="px-2 py-1 t-label uppercase tracking-wider text-muted-foreground">Templates</div>
         <div className="max-h-64 overflow-y-auto">
           {templates.map((t) => (
             <div key={t.id} className="flex items-center gap-1 group">
@@ -56,9 +56,9 @@ export function KanbanTemplatePicker({
                     autoFocus
                     value={renameValue}
                     onChange={(e) => setRenameValue(e.target.value)}
-                    className="h-7 text-xs"
+                    className="h-7 t-label"
                   />
-                  <Button type="submit" size="sm" className="h-7 px-2 text-xs">Save</Button>
+                  <Button type="submit" size="sm" className="h-7 px-2 t-label">Save</Button>
                 </form>
               ) : (
                 <>
@@ -66,13 +66,13 @@ export function KanbanTemplatePicker({
                     type="button"
                     onClick={() => { onSelect(t.id); setOpen(false); }}
                     className={cn(
-                      "flex-1 flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-sm hover:bg-[var(--surface-container)] transition-colors",
+                      "flex-1 flex items-center gap-2 px-2 py-1.5 rounded-md text-left t-body hover:bg-[var(--surface-container)] transition-colors",
                       active?.id === t.id && "bg-[var(--surface-container)]",
                     )}
                   >
                     <Check className={cn("h-3.5 w-3.5 shrink-0", active?.id === t.id ? "opacity-100" : "opacity-0")} />
                     <span className="truncate">{t.name}</span>
-                    <span className="ml-auto text-[10px] text-muted-foreground font-tnum">{t.keys.length}</span>
+                    <span className="ml-auto t-micro text-muted-foreground font-tnum">{t.keys.length}</span>
                   </button>
                   {!t.builtin && (
                     <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -114,7 +114,7 @@ export function KanbanTemplatePicker({
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Save current as…"
-            className="h-7 text-xs"
+            className="h-7 t-label"
           />
           <Button type="submit" size="sm" variant="ghost" className="h-7 px-2" aria-label="Save template">
             <Plus className="h-3.5 w-3.5" />

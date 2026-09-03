@@ -67,7 +67,7 @@ export function StatusMenu({
               if (s === status) return;
               onSelect(s);
             }}
-            className="gap-2 text-xs"
+            className="gap-2 t-label"
           >
             <StatusBadge status={s} showLabel />
             {s === status && <Check className="h-3.5 w-3.5 ml-auto text-primary" />}

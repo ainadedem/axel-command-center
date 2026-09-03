@@ -92,7 +92,7 @@ function Body() {
         <PeriodPicker value={period} onChange={setPeriod} />
         <button
           onClick={handleExport}
-          className="flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-surface hover:bg-surface-elevated text-sm transition"
+          className="flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-surface hover:bg-surface-elevated t-body transition"
         >
           <Download className="h-4 w-4" /> Exporter CSV
         </button>
@@ -109,7 +109,7 @@ function Body() {
       </div>
 
       {/* Equilibrium visual indicator */}
-      <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-sm ${balanced ? "border-success/30 bg-success/5 text-success" : "border-destructive/30 bg-destructive/5 text-destructive"}`}>
+      <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border t-body ${balanced ? "border-success/30 bg-success/5 text-success" : "border-destructive/30 bg-destructive/5 text-destructive"}`}>
         {balanced
           ? <><CheckCircle2 className="h-4 w-4" /> La balance est équilibrée — total débit = total crédit sur la période.</>
           : <><AlertTriangle className="h-4 w-4" /> Déséquilibre détecté : écart de {fmtMoney(Math.abs(totD - totC), displayCo.baseCurrency)}. Vérifier les écritures de la période.</>
@@ -124,13 +124,13 @@ function Body() {
         return (
           <div key={cls} className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
             <div className="px-5 py-3 border-b border-border">
-              <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Classe {cls}</div>
-              <div className="font-display text-base font-semibold">{classNames[cls]}</div>
+              <div className="t-label uppercase tracking-[0.16em] text-muted-foreground">Classe {cls}</div>
+              <div className="font-display t-subtitle font-semibold">{classNames[cls]}</div>
             </div>
             <div className="overflow-x-auto sticky-first-col">
-            <table className="sheet sheet-pin1 w-full min-w-[900px] text-sm">
+            <table className="sheet sheet-pin1 w-full min-w-[900px] t-body">
               <thead>
-                <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                <tr className="t-label uppercase tracking-wider text-muted-foreground border-b border-border">
                   <th className="text-left font-medium px-5 py-2 w-24">Compte</th>
                   <th className="text-left font-medium px-5 py-2">Libellé</th>
                   <th className="text-right font-medium px-5 py-2 w-36">Débit</th>
@@ -156,7 +156,7 @@ function Body() {
                 })}
                 <tr className="bg-surface-elevated/40 font-semibold">
                   <td className="px-5 py-2"></td>
-                  <td className="px-5 py-2 text-xs uppercase tracking-wider">Sous-total classe {cls}</td>
+                  <td className="px-5 py-2 t-label uppercase tracking-wider">Sous-total classe {cls}</td>
                   <td className="px-5 py-2 text-right font-tnum">{fmtMoney(subD, displayCo.baseCurrency)}</td>
                   <td className="px-5 py-2 text-right font-tnum">{fmtMoney(subC, displayCo.baseCurrency)}</td>
                   <td className={`px-5 py-2 text-right font-tnum ${(subD - subC) > 0 ? "text-success" : (subD - subC) < 0 ? "text-destructive" : ""}`}>
@@ -173,10 +173,10 @@ function Body() {
       {/* Grand total footer */}
       <div className="rounded-xl border border-border bg-surface-elevated/60 overflow-hidden">
         <div className="overflow-x-auto sticky-first-col">
-        <table className="sheet sheet-pin1 w-full min-w-[900px] text-sm">
+        <table className="sheet sheet-pin1 w-full min-w-[900px] t-body">
           <tbody>
             <tr className="font-bold">
-              <td className="px-5 py-3 text-xs uppercase tracking-wider" colSpan={2}>TOTAL GÉNÉRAL</td>
+              <td className="px-5 py-3 t-label uppercase tracking-wider" colSpan={2}>TOTAL GÉNÉRAL</td>
               <td className="px-5 py-3 text-right font-tnum w-36">{fmtMoney(totD, displayCo.baseCurrency)}</td>
               <td className="px-5 py-3 text-right font-tnum w-36">{fmtMoney(totC, displayCo.baseCurrency)}</td>
               <td className={`px-5 py-3 text-right font-tnum w-36 ${balanced ? "text-success" : "text-destructive"}`}>

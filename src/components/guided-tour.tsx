@@ -99,15 +99,15 @@ export function GuidedTour({ steps, open, onClose }: Props) {
         style={{ top: tooltipTop, left: tooltipLeft }}
       >
         <div className="flex items-start justify-between gap-3">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          <div className="t-micro uppercase tracking-wider text-muted-foreground">
             Step {index + 1} of {steps.length}
           </div>
           <button onClick={onClose} aria-label="Close tour" className="text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4" />
           </button>
         </div>
-        <h3 className="mt-1 font-display text-base font-semibold">{step.title}</h3>
-        <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{step.body}</p>
+        <h3 className="mt-1 font-display t-subtitle font-semibold">{step.title}</h3>
+        <p className="mt-1 t-body text-muted-foreground leading-relaxed">{step.body}</p>
         <div className="mt-4 flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={onClose}>Skip</Button>
           <div className="flex-1" />

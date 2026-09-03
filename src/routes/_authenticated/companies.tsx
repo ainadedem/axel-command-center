@@ -294,7 +294,7 @@ function CompaniesPage() {
                                 <ListTd className="font-medium" title={c.name}>
                                   <span className="flex items-center gap-2 min-w-0">
                                     <span
-                                      className="h-6 w-6 shrink-0 rounded-md grid place-items-center text-[10px] font-display font-bold text-primary-foreground"
+                                      className="h-6 w-6 shrink-0 rounded-md grid place-items-center t-micro font-display font-bold text-primary-foreground"
                                       style={{ background: c.color }}
                                     >
                                       {c.shortName}
@@ -498,7 +498,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
             <div>
               <Label>Logo</Label>
               <div className="mt-2"><AvatarUpload value={logoUrl} onChange={(v) => { setLogoUrl(v); setLogoCrop(undefined); }} name={name || "Logo"} size={72} square /></div>
-              <p className="text-[10px] text-muted-foreground mt-1">Shown on invoice / PO / quote PDFs.</p>
+              <p className="t-micro text-muted-foreground mt-1">Shown on invoice / PO / quote PDFs.</p>
             </div>
             <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="col-span-3"><Label><RequiredLabel>Trading name</RequiredLabel></Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Logia Madagascar" className={invalidFieldClassName(showErrors && !name.trim())} aria-invalid={showErrors && !name.trim()} /></div>
@@ -506,13 +506,13 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               <div>
                 <Label>Code</Label>
                 <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 6))} placeholder={shortName || "LOG"} />
-                <p className="text-[10px] text-muted-foreground mt-1">Used as a compact tag across the app.</p>
+                <p className="t-micro text-muted-foreground mt-1">Used as a compact tag across the app.</p>
               </div>
             </div>
           </div>
           <div className="rounded-lg border border-border p-3 space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Logo on documents</Label>
+              <Label className="t-label uppercase tracking-wide text-muted-foreground">Logo on documents</Label>
               <div className="flex items-center gap-2">
                 <Button type="button" size="sm" variant="outline" disabled={!logoUrl} onClick={() => setCropOpen(true)}>Adjust logo</Button>
                 <Button
@@ -527,22 +527,22 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Height</span><span className="tabular-nums">{logoHeight}px</span></div>
+                <div className="flex items-center justify-between t-label text-muted-foreground"><span>Height</span><span className="tabular-nums">{logoHeight}px</span></div>
                 <Slider value={[logoHeight]} min={24} max={140} step={1} onValueChange={([v]) => setLogoHeight(v)} className="mt-2" />
               </div>
               <div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Max width</span><span className="tabular-nums">{logoMaxWidth}px</span></div>
+                <div className="flex items-center justify-between t-label text-muted-foreground"><span>Max width</span><span className="tabular-nums">{logoMaxWidth}px</span></div>
                 <Slider value={[logoMaxWidth]} min={80} max={360} step={2} onValueChange={([v]) => setLogoMaxWidth(v)} className="mt-2" />
               </div>
               <div>
-                <div className="text-xs text-muted-foreground mb-2">Document language</div>
+                <div className="t-label text-muted-foreground mb-2">Document language</div>
                 <div className="flex rounded-md border border-border overflow-hidden w-fit">
                   {(["en", "fr"] as const).map((l) => (
                     <button
                       key={l}
                       type="button"
                       onClick={() => setDocLanguage(l)}
-                      className={`px-3 py-1 text-xs transition ${docLanguage === l ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                      className={`px-3 py-1 t-label transition ${docLanguage === l ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
                     >
                       {l === "en" ? "English" : "Français"}
                     </button>
@@ -554,15 +554,15 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               {logoPreviewUrl ? (
                 <img src={logoPreviewUrl} alt="Logo preview" style={{ maxHeight: logoHeight, maxWidth: logoMaxWidth, objectFit: "contain" }} />
               ) : (
-                <p className="text-[11px] text-neutral-500">Upload a logo to preview how it prints.</p>
+                <p className="t-label text-neutral-500">Upload a logo to preview how it prints.</p>
               )}
             </div>
           </div>
 
           <div className="rounded-lg border border-border p-3 space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Stamp on documents</Label>
-              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+              <Label className="t-label uppercase tracking-wide text-muted-foreground">Stamp on documents</Label>
+              <label className="flex items-center gap-2 t-label text-muted-foreground cursor-pointer select-none">
                 <Checkbox checked={showStamp} onCheckedChange={(v) => setShowStamp(!!v)} />
                 Print the stamp
               </label>
@@ -570,18 +570,18 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
             <div className="flex items-start gap-4">
               <div>
                 <AvatarUpload value={stampUrl} onChange={setStampUrl} name="Stamp" size={72} square folder="stamps" mark keyOutWhite />
-                <p className="text-[10px] text-muted-foreground mt-1 max-w-[120px]">PNG with a transparent background works best.</p>
+                <p className="t-micro text-muted-foreground mt-1 max-w-[120px]">PNG with a transparent background works best.</p>
               </div>
               <div className="flex-1 space-y-3">
                 <div>
-                  <div className="text-xs text-muted-foreground mb-2">Position</div>
+                  <div className="t-label text-muted-foreground mb-2">Position</div>
                   <div className="flex rounded-md border border-border overflow-hidden w-fit">
                     {([["bottom-right", "Bottom right"], ["bottom-left", "Bottom left"], ["center", "Centered"]] as const).map(([v, label]) => (
                       <button
                         key={v}
                         type="button"
                         onClick={() => setStampPosition(v)}
-                        className={`px-3 py-1 text-xs transition ${stampPosition === v ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                        className={`px-3 py-1 t-label transition ${stampPosition === v ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
                       >
                         {label}
                       </button>
@@ -590,11 +590,11 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Width</span><span className="tabular-nums">{stampWidth}px</span></div>
+                    <div className="flex items-center justify-between t-label text-muted-foreground"><span>Width</span><span className="tabular-nums">{stampWidth}px</span></div>
                     <Slider value={[stampWidth]} min={60} max={280} step={2} onValueChange={([v]) => setStampWidth(v)} className="mt-2" />
                   </div>
                   <div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Opacity</span><span className="tabular-nums">{Math.round(stampOpacity * 100)}%</span></div>
+                    <div className="flex items-center justify-between t-label text-muted-foreground"><span>Opacity</span><span className="tabular-nums">{Math.round(stampOpacity * 100)}%</span></div>
                     <Slider value={[Math.round(stampOpacity * 100)]} min={20} max={100} step={5} onValueChange={([v]) => setStampOpacity(v / 100)} className="mt-2" />
                   </div>
                 </div>
@@ -604,7 +604,7 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               {stampPreviewUrl ? (
                 <img src={stampPreviewUrl} alt="Stamp preview" style={{ width: stampWidth, opacity: stampOpacity, objectFit: "contain" }} />
               ) : (
-                <p className="text-[11px] text-neutral-500">Upload a stamp to preview how it prints.</p>
+                <p className="t-label text-neutral-500">Upload a stamp to preview how it prints.</p>
               )}
             </div>
           </div>
@@ -631,13 +631,13 @@ function CompanyDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
           <div><Label>Tax / VAT ID (intl.)</Label><Input value={taxId} onChange={(e) => setTaxId(e.target.value)} /></div>
           <div className="rounded-lg border border-border p-3 space-y-3">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bank accounts</div>
-              <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+              <div className="t-label font-semibold uppercase tracking-wide text-muted-foreground">Bank accounts</div>
+              <label className="flex items-center gap-2 t-label cursor-pointer select-none">
                 <Checkbox checked={showPaymentDetails} onCheckedChange={(v) => setShowPaymentDetails(!!v)} />
                 Show on documents
               </label>
             </div>
-            <p className="text-[10px] text-muted-foreground">
+            <p className="t-micro text-muted-foreground">
               Add every bank account of this company. The default one is preselected on new invoices, quotes and POs — each document can override it.
             </p>
             <BankAccountsEditor value={bankAccounts} onChange={setBankAccounts} />

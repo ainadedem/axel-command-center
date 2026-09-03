@@ -6,7 +6,7 @@ import type { QuoteInvoiceLink } from "@/lib/quote-accept";
 import type { LinkSource } from "@/lib/doc-number-link";
 
 const base =
-  "inline-flex max-w-full items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium leading-none transition-colors";
+  "inline-flex max-w-full items-center gap-1 rounded-full border px-1.5 py-0.5 t-micro font-medium leading-none transition-colors";
 
 const tones = {
   ok: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",

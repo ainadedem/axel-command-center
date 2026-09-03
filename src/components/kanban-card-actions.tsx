@@ -70,7 +70,7 @@ export function CardCommentAction({
           )}
         >
           <MessageSquarePlus className="h-3.5 w-3.5" />
-          {!!count && <span className="text-[10px] font-tnum">{count}</span>}
+          {!!count && <span className="t-micro font-tnum">{count}</span>}
           {children}
         </button>
       </PopoverTrigger>
@@ -81,13 +81,13 @@ export function CardCommentAction({
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Write a note…"
-          className="text-xs"
+          className="t-label"
         />
         <div className="flex justify-end gap-1.5">
-          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button size="sm" variant="ghost" className="h-7 t-label" onClick={() => setOpen(false)}>Cancel</Button>
           <Button
             size="sm"
-            className="h-7 text-xs"
+            className="h-7 t-label"
             disabled={!text.trim()}
             onClick={async () => {
               await onSubmit(text.trim());

@@ -161,22 +161,22 @@ export function NotificationSettings() {
   return (
     <section className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 space-y-5">
       <header className="space-y-1">
-        <h2 className="font-display text-base font-semibold flex items-center gap-2">
+        <h2 className="font-display t-subtitle font-semibold flex items-center gap-2">
           <Bell className="h-4 w-4 text-primary" /> Notifications
         </h2>
-        <p className="text-xs text-muted-foreground">
+        <p className="t-label text-muted-foreground">
           Choose what reaches you in the app and, optionally, by email. You are never notified about your own actions.
         </p>
       </header>
 
       {loading ? (
-        <div className="text-sm text-muted-foreground flex items-center gap-2">
+        <div className="t-body text-muted-foreground flex items-center gap-2">
           <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading…
         </div>
       ) : (
         <>
           <div className="rounded-lg border border-border overflow-hidden">
-            <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 px-3 py-2 bg-[var(--surface-container)] text-[10px] uppercase tracking-wider text-muted-foreground">
+            <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 px-3 py-2 bg-[var(--surface-container)] t-micro uppercase tracking-wider text-muted-foreground">
               <span>Event</span><span className="text-center w-14">In-app</span><span className="text-center w-32">Email</span>
             </div>
             {EVENT_GROUPS.map((g) => {
@@ -185,17 +185,17 @@ export function NotificationSettings() {
               return (
                 <div key={g.key}>
                   <div className="flex items-center justify-between gap-2 px-3 py-1.5 border-t border-border/60 bg-muted/30">
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{g.label}</span>
+                    <span className="t-micro uppercase tracking-wider text-muted-foreground">{g.label}</span>
                     <span className="flex items-center gap-2">
                       <button
                         onClick={() => setGroup(kinds, !allOn)}
-                        className="text-[11px] text-primary hover:underline"
+                        className="t-label text-primary hover:underline"
                       >
                         {allOn ? "Turn group off" : "Turn group on"}
                       </button>
                       <button
                         onClick={() => muteGroup(kinds)}
-                        className="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
+                        className="t-label text-muted-foreground hover:text-foreground hover:underline"
                       >
                         Mute everywhere
                       </button>
@@ -204,8 +204,8 @@ export function NotificationSettings() {
                   {NOTIFICATION_EVENTS.filter((e) => kinds.includes(e.key)).map((e) => (
                     <div key={e.key} className="grid grid-cols-[1fr_auto_auto] gap-x-4 items-center px-3 py-2.5 border-t border-border/60">
                       <div className="min-w-0">
-                        <div className="text-sm">{e.label}</div>
-                        <div className="text-[11px] text-muted-foreground">{e.description}</div>
+                        <div className="t-body">{e.label}</div>
+                        <div className="t-label text-muted-foreground">{e.description}</div>
                       </div>
                       <div className="w-14 flex justify-center">
                         <Switch
@@ -219,7 +219,7 @@ export function NotificationSettings() {
                           value={modes[e.key]}
                           onChange={(ev) => setMode(e.key, ev.target.value as EmailMode)}
                           aria-label={`${e.label} email delivery`}
-                          className="h-8 w-32 rounded-md border border-border bg-background px-2 text-xs"
+                          className="h-8 w-32 rounded-md border border-border bg-background px-2 t-label"
                         >
                           {(["off", "immediate", "digest"] as EmailMode[]).map((m) => (
                             <option key={m} value={m}>{EMAIL_MODE_LABEL[m]}</option>
@@ -236,8 +236,8 @@ export function NotificationSettings() {
           <div className="rounded-lg border border-border p-3 space-y-3">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <Label htmlFor="quiet-hours" className="text-sm font-normal">Quiet hours</Label>
-                <p className="text-[11px] text-muted-foreground">
+                <Label htmlFor="quiet-hours" className="t-body font-normal">Quiet hours</Label>
+                <p className="t-label text-muted-foreground">
                   In-app alerts always arrive instantly — quiet hours only hold emails back.
                 </p>
               </div>
@@ -248,7 +248,7 @@ export function NotificationSettings() {
               />
             </div>
             <div className={cn("flex flex-wrap items-center gap-3", !quiet.enabled && "opacity-50 pointer-events-none")}>
-              <label className="text-xs text-muted-foreground flex items-center gap-2">
+              <label className="t-label text-muted-foreground flex items-center gap-2">
                 From
                 <Input
                   type="time"
@@ -257,7 +257,7 @@ export function NotificationSettings() {
                   onChange={(e) => setQuiet((q) => ({ ...q, start: e.target.value || q.start }))}
                 />
               </label>
-              <label className="text-xs text-muted-foreground flex items-center gap-2">
+              <label className="t-label text-muted-foreground flex items-center gap-2">
                 To
                 <Input
                   type="time"
@@ -266,9 +266,9 @@ export function NotificationSettings() {
                   onChange={(e) => setQuiet((q) => ({ ...q, end: e.target.value || q.end }))}
                 />
               </label>
-              <span className="text-[11px] text-muted-foreground">{quiet.timeZone ?? localZone}</span>
+              <span className="t-label text-muted-foreground">{quiet.timeZone ?? localZone}</span>
             </div>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="t-label text-muted-foreground">
               {quiet.enabled
                 ? `Emails paused ${quiet.start}–${quiet.end} (${quiet.timeZone ?? localZone}) — held mail and daily digests arrive at ${quiet.end}.`
                 : "Daily digests go out at 08:00 in your timezone."}
@@ -278,9 +278,9 @@ export function NotificationSettings() {
 
           {isAdmin && (
             <div className="rounded-lg border border-border p-3 space-y-3">
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Watch scope</div>
+              <div className="t-label uppercase tracking-wider text-muted-foreground">Watch scope</div>
               <div className="flex items-center justify-between gap-4">
-                <Label htmlFor="watch-unassigned" className="text-sm font-normal">
+                <Label htmlFor="watch-unassigned" className="t-body font-normal">
                   Notify me about documents I am not assigned to
                 </Label>
                 <Switch
@@ -290,7 +290,7 @@ export function NotificationSettings() {
                 />
               </div>
               <div className="flex items-center justify-between gap-4">
-                <Label htmlFor="min-amount" className="text-sm font-normal">Only above this amount</Label>
+                <Label htmlFor="min-amount" className="t-body font-normal">Only above this amount</Label>
                 <Input
                   id="min-amount"
                   type="number"
@@ -304,7 +304,7 @@ export function NotificationSettings() {
                 />
               </div>
               <div className="space-y-1.5">
-                <div className="text-[11px] text-muted-foreground">
+                <div className="t-label text-muted-foreground">
                   Companies to watch — none selected means all companies you can access.
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -318,7 +318,7 @@ export function NotificationSettings() {
                         onClick={() => toggleCompany(dbId)}
                         aria-pressed={on}
                         className={cn(
-                          "px-3 py-1.5 rounded-lg border text-xs transition-all press-scale flex items-center gap-1.5",
+                          "px-3 py-1.5 rounded-lg border t-label transition-all press-scale flex items-center gap-1.5",
                           on ? "border-primary/40 bg-primary/10 text-primary" : "border-border text-muted-foreground hover:text-foreground",
                         )}
                       >
@@ -334,13 +334,13 @@ export function NotificationSettings() {
 
           <div className="rounded-lg border border-border p-3 space-y-3">
             <div className="flex items-center justify-between gap-4">
-              <Label htmlFor="ar-alerts" className="text-sm font-normal">
+              <Label htmlFor="ar-alerts" className="t-body font-normal">
                 Email me when an invoice reaches a new collection step
               </Label>
               <Switch id="ar-alerts" checked={arEnabled} onCheckedChange={setArEnabled} aria-label="Enable receivables alerts" />
             </div>
             <div className={cn("space-y-2", !arEnabled && "opacity-50 pointer-events-none")}>
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Steps to be alerted on</div>
+              <div className="t-label uppercase tracking-wider text-muted-foreground">Steps to be alerted on</div>
               <div className="flex flex-wrap gap-2">
                 {STAGES.map((s) => (
                   <button
@@ -348,14 +348,14 @@ export function NotificationSettings() {
                     onClick={() => toggleStage(s)}
                     aria-pressed={stages.includes(s)}
                     className={cn(
-                      "px-3 py-1.5 rounded-lg border text-xs transition-all press-scale text-left",
+                      "px-3 py-1.5 rounded-lg border t-label transition-all press-scale text-left",
                       stages.includes(s)
                         ? "border-primary/40 bg-primary/10 text-primary"
                         : "border-border text-muted-foreground hover:text-foreground",
                     )}
                   >
                     <span className="font-medium">Day {s}</span>
-                    <span className="block text-[10px] opacity-80">{STAGE_HINT[s]}</span>
+                    <span className="block t-micro opacity-80">{STAGE_HINT[s]}</span>
                   </button>
                 ))}
               </div>

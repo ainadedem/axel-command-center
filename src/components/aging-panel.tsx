@@ -110,14 +110,14 @@ export function AgingPanel({
       <PanelCard bodyClassName="p-0 pb-0 px-0" className="overflow-hidden">
         <div className="px-5 py-2.5 border-b border-border flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground truncate">{tilesTitle}</div>
+            <div className="t-label uppercase tracking-[0.16em] text-muted-foreground truncate">{tilesTitle}</div>
           </div>
           <div className="flex items-center gap-1.5">
             {selected && (
               <button
                 type="button"
                 onClick={() => onSelect(null)}
-                className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+                className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 t-label text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
               >
                 <X className="h-3 w-3" aria-hidden="true" />
                 Clear bucket filter
@@ -127,7 +127,7 @@ export function AgingPanel({
               type="button"
               onClick={toggleChart}
               aria-expanded={chartOpen}
-              className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+              className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 t-label text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
             >
               <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", !chartOpen && "-rotate-90")} aria-hidden="true" />
               {chartOpen ? "Hide chart" : "Show chart"}
@@ -153,7 +153,7 @@ export function AgingPanel({
                 {active && <span className="absolute inset-x-0 top-0 h-0.5 bg-primary" aria-hidden="true" />}
                 <div className="flex items-center gap-1.5">
                   <span className={cn("h-1.5 w-1.5 rounded-full", b.count > 0 ? AGING_TONE_DOT[b.tone] : "bg-muted-foreground/30")} />
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{b.label}</div>
+                  <div className="t-micro uppercase tracking-wider text-muted-foreground">{b.label}</div>
                 </div>
                 <div
                   className={cn(
@@ -163,7 +163,7 @@ export function AgingPanel({
                 >
                   {b.count > 0 ? format(b.amount) : "—"}
                 </div>
-                <div className="text-[10px] text-muted-foreground mt-0.5">
+                <div className="t-micro text-muted-foreground mt-0.5">
                   {b.count} {noun}
                   {b.count !== 1 ? "s" : ""}
                 </div>

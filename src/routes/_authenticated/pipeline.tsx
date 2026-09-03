@@ -248,7 +248,7 @@ function RevenueView({ list, rollups, variances, onDrill }: {
         >
           {onlyVariance ? "Showing deals with variance" : "Only deals with variance"}
         </Button>
-        <div className="text-xs text-muted-foreground">
+        <div className="t-label text-muted-foreground">
           Net variance{" "}
           <SignedAmount
             value={varianceTotal}
@@ -259,9 +259,9 @@ function RevenueView({ list, rollups, variances, onDrill }: {
 
       <div className="rounded-lg border border-border bg-surface overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="sheet w-full text-xs">
+          <table className="sheet w-full t-label">
             <thead>
-              <tr className="border-b border-border text-[10px] uppercase tracking-wider text-muted-foreground">
+              <tr className="border-b border-border t-micro uppercase tracking-wider text-muted-foreground">
                 <th className="text-left font-medium px-3 py-2">Deal</th>
                 <th className="text-left font-medium px-3 py-2 hidden sm:table-cell">Stage</th>
                 <th className="text-right font-medium px-3 py-2">Value</th>
@@ -284,7 +284,7 @@ function RevenueView({ list, rollups, variances, onDrill }: {
                   >
                     <td className="px-3 py-2">
                       <div className="font-medium truncate max-w-[220px]">{o.name}</div>
-                      <div className="text-[11px] text-muted-foreground truncate max-w-[220px]">
+                      <div className="t-label text-muted-foreground truncate max-w-[220px]">
                         {o.client || "—"} · {r.quotes.length} quote{r.quotes.length === 1 ? "" : "s"} · {r.invoices.length} invoice{r.invoices.length === 1 ? "" : "s"}
                       </div>
                       <div className="mt-1 h-1 w-full max-w-[180px] rounded-full bg-surface-elevated overflow-hidden">
@@ -307,7 +307,7 @@ function RevenueView({ list, rollups, variances, onDrill }: {
                         <span className="inline-flex items-center gap-1.5 justify-end">
                           {(v.missing.length > 0 || v.extra.length > 0) && (
                             <span
-                              className="inline-flex items-center rounded-full bg-warning/10 text-warning px-1.5 py-0.5 text-[10px]"
+                              className="inline-flex items-center rounded-full bg-warning/10 text-warning px-1.5 py-0.5 t-micro"
                               title={`${v.missing.length} quoted line(s) not invoiced · ${v.extra.length} unquoted line(s)`}
                             >
                               {v.missing.length + v.extra.length}
@@ -327,7 +327,7 @@ function RevenueView({ list, rollups, variances, onDrill }: {
         </div>
       </div>
       {unlinked > 0 && (
-        <p className="text-[11px] text-muted-foreground">
+        <p className="t-label text-muted-foreground">
           {unlinked} deal{unlinked === 1 ? "" : "s"} have no linked quotation or invoice yet — link them from the document form to track revenue.
         </p>
       )}
@@ -347,8 +347,8 @@ function StageDistribution({ list }: { list: Opportunity[] }) {
   return (
     <div className="rounded-lg border border-border bg-surface p-4">
       <div className="flex items-center justify-between mb-3">
-        <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Stage distribution</div>
-        <div className="text-[11px] text-muted-foreground font-tnum">{fmtCompact(grand, "MGA")}</div>
+        <div className="t-label uppercase tracking-wider text-muted-foreground">Stage distribution</div>
+        <div className="t-label text-muted-foreground font-tnum">{fmtCompact(grand, "MGA")}</div>
       </div>
       <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
         {totals.map((t) => (
@@ -357,7 +357,7 @@ function StageDistribution({ list }: { list: Opportunity[] }) {
       </div>
       <div className="flex flex-wrap gap-4 mt-3">
         {totals.map((t) => (
-          <div key={t.stage} className="flex items-center gap-1.5 text-xs">
+          <div key={t.stage} className="flex items-center gap-1.5 t-label">
             <span className={`h-1.5 w-1.5 rounded-full ${STAGE_STYLES[t.stage].dot}`} />
             <span className="text-muted-foreground">{t.stage}</span>
             <span className="font-tnum text-foreground/80">{t.count}</span>
@@ -418,13 +418,13 @@ function KanbanView({ list, companies, onEdit, acqOf, rollups, onDocs }: { list:
             <div className="flex items-center gap-1.5 min-w-0 pr-6">
               {co && <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: co.color }} title={co.name} />}
               <span className="text-[13px] font-medium leading-tight truncate">{o.name}</span>
-              <span className="text-[11px] text-muted-foreground truncate shrink-0 max-w-[45%]">{o.client}</span>
+              <span className="t-label text-muted-foreground truncate shrink-0 max-w-[45%]">{o.client}</span>
             </div>
             <div className="flex items-center justify-between gap-2 mt-0.5 min-w-0">
-              <span className="font-tnum text-xs font-semibold truncate">{fmtCompact(o.value, o.currency)}</span>
+              <span className="font-tnum t-label font-semibold truncate">{fmtCompact(o.value, o.currency)}</span>
               <CardSignalRow>
                 {u ? (
-                  <span className={`text-[10px] font-tnum inline-flex items-center gap-0.5 shrink-0 ${u.cls}`} title={u.label}>
+                  <span className={`t-micro font-tnum inline-flex items-center gap-0.5 shrink-0 ${u.cls}`} title={u.label}>
                     {u.label.includes("overdue") && <AlertTriangle className="h-3 w-3" />}
                     {u.label}
                   </span>
@@ -445,8 +445,8 @@ function KanbanView({ list, companies, onEdit, acqOf, rollups, onDocs }: { list:
       }}
       renderActions={(o) => (
         <>
-          <button onClick={(e) => { e.stopPropagation(); onEdit(o); }} className="h-7 px-2 text-[11px] rounded hover:bg-surface text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><Pencil className="h-3 w-3" /> Edit</button>
-          <button onClick={(e) => { e.stopPropagation(); if (confirm(`Delete ${o.name}?`)) opportunitiesStore.remove(o.id); }} className="h-7 px-2 text-[11px] rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive inline-flex items-center gap-1"><Trash2 className="h-3 w-3" /> Delete</button>
+          <button onClick={(e) => { e.stopPropagation(); onEdit(o); }} className="h-7 px-2 t-label rounded hover:bg-surface text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><Pencil className="h-3 w-3" /> Edit</button>
+          <button onClick={(e) => { e.stopPropagation(); if (confirm(`Delete ${o.name}?`)) opportunitiesStore.remove(o.id); }} className="h-7 px-2 t-label rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive inline-flex items-center gap-1"><Trash2 className="h-3 w-3" /> Delete</button>
         </>
       )}
     />
@@ -460,7 +460,7 @@ function ListView({ list, onEdit, acqOf, rollups, onDocs }: { list: Opportunity[
   const sorted = [...list].sort((a, b) => toMGA(b.value, b.currency) - toMGA(a.value, a.currency));
   return (
     <div className="rounded-lg border border-border bg-surface overflow-hidden">
-      <div className="grid grid-cols-12 gap-2 px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+      <div className="grid grid-cols-12 gap-2 px-4 py-2.5 t-label uppercase tracking-wider text-muted-foreground border-b border-border">
         <div className="col-span-3">Opportunity</div>
         <div className="col-span-2">Stage</div>
         <div className="col-span-2">Documents</div>
@@ -474,26 +474,26 @@ function ListView({ list, onEdit, acqOf, rollups, onDocs }: { list: Opportunity[
         return (
           <div key={o.id} className="grid grid-cols-12 gap-2 px-4 py-3 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated transition cursor-pointer" onClick={() => onEdit(o)}>
             <div className="col-span-3 min-w-0">
-              <div className="text-sm font-medium truncate">{o.name}</div>
-              <div className="text-xs text-muted-foreground truncate">{o.client}</div>
+              <div className="t-body font-medium truncate">{o.name}</div>
+              <div className="t-label text-muted-foreground truncate">{o.client}</div>
             </div>
             <div className="col-span-2">
-              <span className="inline-flex items-center gap-1.5 text-xs">
+              <span className="inline-flex items-center gap-1.5 t-label">
                 <span className={`h-1.5 w-1.5 rounded-full ${st.dot}`} />
                 <span className={st.text}>{o.stage}</span>
               </span>
             </div>
             <div className="col-span-2 min-w-0">
               <OpportunityDocChips rollup={rollups.get(o.id)} onOpen={(section) => onDocs(o, section)} showOutstanding={false} />
-              <div className="text-[10px] text-muted-foreground truncate mt-0.5">acq: {acqOf(o) || "—"}</div>
+              <div className="t-micro text-muted-foreground truncate mt-0.5">acq: {acqOf(o) || "—"}</div>
             </div>
-            <div className="col-span-1 text-xs text-muted-foreground truncate">{o.closer || "—"}</div>
-            <div className="col-span-2 text-right font-tnum text-sm font-semibold">{fmtCompact(o.value, o.currency)}</div>
+            <div className="col-span-1 t-label text-muted-foreground truncate">{o.closer || "—"}</div>
+            <div className="col-span-2 text-right font-tnum t-body font-semibold">{fmtCompact(o.value, o.currency)}</div>
             <div className="col-span-2 text-right">
               {u ? (
-                <span className={`text-[11px] font-tnum ${u.cls}`}>{u.label}</span>
+                <span className={`t-label font-tnum ${u.cls}`}>{u.label}</span>
               ) : (
-                <span className="text-xs text-muted-foreground font-tnum">{format(parseISO(o.expectedClose), "MMM d, yy")}</span>
+                <span className="t-label text-muted-foreground font-tnum">{format(parseISO(o.expectedClose), "MMM d, yy")}</span>
               )}
             </div>
           </div>
@@ -532,9 +532,9 @@ function PeopleView({ list, onEdit, role, acqOf, rollups, onDocs }: { list: Oppo
           <div key={person} className="rounded-xl border border-border bg-[var(--gradient-surface)] p-4">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{roleLabel}</div>
-                <div className="font-semibold text-sm">{person}</div>
-                <div className="text-[11px] text-muted-foreground font-tnum mt-0.5">{ops.length} · {fmtCompact(total, "MGA")} · ~{fmtCompact(weighted, "MGA")} · won {fmtCompact(won, "MGA")}</div>
+                <div className="t-micro uppercase tracking-wider text-muted-foreground">{roleLabel}</div>
+                <div className="font-semibold t-body">{person}</div>
+                <div className="t-label text-muted-foreground font-tnum mt-0.5">{ops.length} · {fmtCompact(total, "MGA")} · ~{fmtCompact(weighted, "MGA")} · won {fmtCompact(won, "MGA")}</div>
               </div>
             </div>
             <div className="space-y-1.5">
@@ -546,8 +546,8 @@ function PeopleView({ list, onEdit, role, acqOf, rollups, onDocs }: { list: Oppo
                     <div className="min-w-0 flex items-center gap-2">
                       <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${st.dot}`} />
                       <div className="min-w-0">
-                        <div className="text-xs font-medium truncate">{o.name}</div>
-                        <div className="text-[10px] text-muted-foreground truncate">
+                        <div className="t-label font-medium truncate">{o.name}</div>
+                        <div className="t-micro text-muted-foreground truncate">
                           {o.client}
                           {role === "acquisition" && o.closer ? ` · closer: ${o.closer}` : ""}
                           {role === "closer" && otherAcq ? ` · acq: ${otherAcq}` : ""}
@@ -558,8 +558,8 @@ function PeopleView({ list, onEdit, role, acqOf, rollups, onDocs }: { list: Oppo
                       </div>
                     </div>
                     <div className="flex flex-col items-end shrink-0">
-                      <span className={`text-[10px] ${st.text}`}>{o.stage}</span>
-                      <span className="font-tnum text-xs mt-0.5">{fmtCompact(o.value, o.currency)}</span>
+                      <span className={`t-micro ${st.text}`}>{o.stage}</span>
+                      <span className="font-tnum t-label mt-0.5">{fmtCompact(o.value, o.currency)}</span>
                     </div>
                   </button>
 
@@ -589,7 +589,7 @@ function ForecastView({ list }: { list: Opportunity[] }) {
 
   return (
     <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 space-y-3">
-      <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-2">Monthly forecast (by expected close)</div>
+      <div className="t-label uppercase tracking-[0.16em] text-muted-foreground mb-2">Monthly forecast (by expected close)</div>
       {buckets.map(([month, ops]) => {
         const byStage = stages.map((s) => ({
           stage: s,
@@ -599,14 +599,14 @@ function ForecastView({ list }: { list: Opportunity[] }) {
         const weighted = ops.reduce((s, o) => s + toMGA(o.value, o.currency) * (o.probability !== undefined ? o.probability / 100 : stageProbability[o.stage]), 0);
         return (
           <div key={month} className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center justify-between t-label">
               <div className="font-medium">{format(parseISO(`${month}-01`), "MMM yyyy")}</div>
               <div className="text-muted-foreground font-tnum">{ops.length} · {fmtCompact(total, "MGA")} · ~{fmtCompact(weighted, "MGA")}</div>
             </div>
             <div className="flex h-6 rounded-md overflow-hidden bg-surface" style={{ width: `${(total / maxVal) * 100}%`, minWidth: "8%" }}>
               {byStage.map((b) =>
                 b.value > 0 ? (
-                  <div key={b.stage} className={`${STAGE_STYLES[b.stage].dot} flex items-center justify-center text-[10px] font-tnum text-white/90`} style={{ width: `${(b.value / total) * 100}%` }} title={`${b.stage} · ${fmtCompact(b.value, "MGA")}`}>
+                  <div key={b.stage} className={`${STAGE_STYLES[b.stage].dot} flex items-center justify-center t-micro font-tnum text-white/90`} style={{ width: `${(b.value / total) * 100}%` }} title={`${b.stage} · ${fmtCompact(b.value, "MGA")}`}>
                     {(b.value / total) > 0.12 ? b.stage[0] : ""}
                   </div>
                 ) : null
@@ -783,7 +783,7 @@ function OpportunityDialog({ open, onOpenChange, editing, rollup }: { open: bool
                 />
               </div>
             )}
-            <p className="text-[11px] text-muted-foreground mt-1">
+            <p className="t-label text-muted-foreground mt-1">
               Acquisition: <span className="font-medium text-foreground">{acqForClient || "—"}</span>
               {" "}(managed on the <Link to="/clients" className="text-primary underline">Clients</Link> page)
             </p>
@@ -791,7 +791,7 @@ function OpportunityDialog({ open, onOpenChange, editing, rollup }: { open: bool
           <div>
             <Label>Deal Closer</Label>
             {closerOptions.length === 0 ? (
-              <div className="text-xs text-muted-foreground rounded-md border border-dashed border-border px-3 py-2">
+              <div className="t-label text-muted-foreground rounded-md border border-dashed border-border px-3 py-2">
                 No closers in the sales team yet — <Link to="/sales-team" className="text-primary underline">add one</Link>.
               </div>
             ) : (
@@ -803,7 +803,7 @@ function OpportunityDialog({ open, onOpenChange, editing, rollup }: { open: bool
                 </SelectContent>
               </Select>
             )}
-            <p className="text-[11px] text-muted-foreground mt-1">
+            <p className="t-label text-muted-foreground mt-1">
               Sourced from the <Link to="/sales-team" className="text-primary underline">Sales team</Link>.
             </p>
           </div>
@@ -831,15 +831,15 @@ function OpportunityDialog({ open, onOpenChange, editing, rollup }: { open: bool
           <div><Label>Expected close</Label><Input type="date" value={expectedClose} onChange={(e) => setExpectedClose(e.target.value)} /></div>
           {editing && rollup && (rollup.quotes.length > 0 || rollup.invoices.length > 0) && (
             <div className="rounded-lg border border-border bg-surface-elevated/50 p-3 space-y-1.5">
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Linked documents</div>
+              <div className="t-label uppercase tracking-wider text-muted-foreground">Linked documents</div>
               {rollup.quotes.map((q) => (
-                <Link key={q.id} to="/quotations" search={{ focus: q.id }} className="flex items-center justify-between gap-2 text-xs hover:text-primary">
+                <Link key={q.id} to="/quotations" search={{ focus: q.id }} className="flex items-center justify-between gap-2 t-label hover:text-primary">
                   <span className="truncate">Quotation {q.number}</span>
                   <span className="font-tnum shrink-0">{fmtCompact(q.amount, q.currency)}</span>
                 </Link>
               ))}
               {rollup.invoices.map((i) => (
-                <Link key={i.id} to="/invoices" search={{ focus: i.id }} className="flex items-center justify-between gap-2 text-xs hover:text-primary">
+                <Link key={i.id} to="/invoices" search={{ focus: i.id }} className="flex items-center justify-between gap-2 t-label hover:text-primary">
                   <span className="truncate">Invoice {i.number}</span>
                   <span className="font-tnum shrink-0">{fmtCompact(i.amount, i.currency)}</span>
                 </Link>
@@ -847,7 +847,7 @@ function OpportunityDialog({ open, onOpenChange, editing, rollup }: { open: bool
             </div>
           )}
           <div>
-            <Label>Win probability % <span className="ml-1 text-[11px] text-muted-foreground font-normal">(blank = stage default: {Math.round(stageProbability[stage] * 100)}%)</span></Label>
+            <Label>Win probability % <span className="ml-1 t-label text-muted-foreground font-normal">(blank = stage default: {Math.round(stageProbability[stage] * 100)}%)</span></Label>
             <Input type="number" min="0" max="100" value={probability} onChange={(e) => setProbability(e.target.value)} placeholder={String(Math.round(stageProbability[stage] * 100))} />
           </div>
         </div>

@@ -144,8 +144,8 @@ const poStateOf = (i: Invoice): PoState => (i.poId ? "linked" : i.poWaived ? "wa
 function StatItem({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "danger" | "success" }) {
   return (
     <div className="flex items-baseline gap-1.5">
-      <span className="text-[11px] tracking-[0.02em] text-muted-foreground font-medium whitespace-nowrap">{label}</span>
-      <span className={cn("text-sm font-semibold font-tnum whitespace-nowrap", tone === "danger" && "text-destructive", tone === "success" && "text-success")}>
+      <span className="t-label tracking-[0.02em] text-muted-foreground font-medium whitespace-nowrap">{label}</span>
+      <span className={cn("t-body font-semibold font-tnum whitespace-nowrap", tone === "danger" && "text-destructive", tone === "success" && "text-success")}>
         {value}
       </span>
     </div>
@@ -550,26 +550,26 @@ function Body() {
 
     switch (key) {
       case "number":
-        return <ListTd lines={2} className="font-tnum text-xs text-muted-foreground" title={inv.number}>{inv.number}</ListTd>;
+        return <ListTd lines={2} className="font-tnum t-label text-muted-foreground" title={inv.number}>{inv.number}</ListTd>;
       case "client":
         return <ListTd lines={2} className="font-medium" title={clientTitle(cl)}>{clientLabel(cl)}</ListTd>;
       case "project":
         return (
-          <ListTd className="text-xs" title={proj?.name}>
+          <ListTd className="t-label" title={proj?.name}>
             {proj ? <span className="inline-block max-w-full truncate px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 align-middle">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}
           </ListTd>
         );
       case "company":
         return (
           <ListTd title={co?.name}>
-            {co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}
+            {co && <span className="inline-flex items-center gap-2 t-label max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}
           </ListTd>
         );
       case "issued":
-        return <ListTd className="text-muted-foreground text-xs font-tnum">{format(parseISO(inv.issueDate), "MMM d, yyyy")}</ListTd>;
+        return <ListTd className="text-muted-foreground t-label font-tnum">{format(parseISO(inv.issueDate), "MMM d, yyyy")}</ListTd>;
       case "due":
         return (
-          <ListTd className="text-muted-foreground text-xs font-tnum">
+          <ListTd className="text-muted-foreground t-label font-tnum">
             <span className="inline-flex items-center gap-1.5">
               <span>{format(parseISO(inv.dueDate), "MMM d, yyyy")}</span>
               {inv.status !== "paid" && inv.status !== "cancelled" && days < 0 && (
@@ -580,13 +580,13 @@ function Body() {
         );
       case "paidOn":
         return (
-          <ListTd className="text-muted-foreground text-xs font-tnum">
+          <ListTd className="text-muted-foreground t-label font-tnum">
             {inv.paidDate ? format(parseISO(inv.paidDate), "MMM d, yyyy") : <span className="text-muted-foreground/40">—</span>}
           </ListTd>
         );
       case "timing":
         return (
-          <ListTd className="text-xs font-tnum">
+          <ListTd className="t-label font-tnum">
             {timing === null ? <span className="text-muted-foreground/40">—</span>
               : timing <= 0 ? <span className="text-success">{Math.abs(timing)}d early</span>
               : <span className="text-destructive">{timing}d late</span>}
@@ -630,7 +630,7 @@ function Body() {
         );
       case "owner":
         return (
-          <ListTd className="text-xs text-muted-foreground" title={inv.updatedAt ? `Updated by ${ownerName(inv.updatedBy ?? inv.createdBy)} · ${format(parseISO(inv.updatedAt), "MMM d, HH:mm")}` : ownerName(inv.createdBy)}>
+          <ListTd className="t-label text-muted-foreground" title={inv.updatedAt ? `Updated by ${ownerName(inv.updatedBy ?? inv.createdBy)} · ${format(parseISO(inv.updatedAt), "MMM d, HH:mm")}` : ownerName(inv.createdBy)}>
             {ownerFirstName(inv.createdBy)}
           </ListTd>
         );
@@ -775,7 +775,7 @@ function Body() {
             }}
           />
           {!sourceOf(selected).quoteId && !sourceOf(selected).poId && !selected.poWaived && (
-            <span className="text-xs text-muted-foreground">No source quotation or PO</span>
+            <span className="t-label text-muted-foreground">No source quotation or PO</span>
           )}
         </div>
       </DetailSection>
@@ -1024,26 +1024,26 @@ function Body() {
       />
 
       <BulkActionBar count={selection.count} noun="invoice" onClear={selection.clear}>
-        <Button size="sm" className="h-7 px-3 text-xs" onClick={() => setBulkOpen(true)}>
+        <Button size="sm" className="h-7 px-3 t-label" onClick={() => setBulkOpen(true)}>
           Bulk edit
         </Button>
         <Button
-          size="sm" variant="outline" className="h-7 px-3 text-xs"
+          size="sm" variant="outline" className="h-7 px-3 t-label"
           onClick={() => bulkStatus("paid", "Marked paid", (inv) => ({ paid: invoicePayable(inv), paidDate: inv.paidDate ?? new Date().toISOString().slice(0, 10) }))}
         >
           Mark paid
         </Button>
-        <Button size="sm" variant="outline" className="h-7 px-3 text-xs" onClick={() => bulkStatus("sent", "Marked sent")}>
+        <Button size="sm" variant="outline" className="h-7 px-3 t-label" onClick={() => bulkStatus("sent", "Marked sent")}>
           Mark sent
         </Button>
-        <Button size="sm" variant="outline" className="h-7 px-3 text-xs" onClick={() => setMatchOpen(true)}>
+        <Button size="sm" variant="outline" className="h-7 px-3 t-label" onClick={() => setMatchOpen(true)}>
           Match payments
         </Button>
-        <Button size="sm" variant="outline" className="h-7 px-3 text-xs" onClick={() => setBulkStatusOpen(true)}>
+        <Button size="sm" variant="outline" className="h-7 px-3 t-label" onClick={() => setBulkStatusOpen(true)}>
           Change status
         </Button>
         <Button
-          size="sm" variant="outline" className="h-7 px-3 text-xs"
+          size="sm" variant="outline" className="h-7 px-3 t-label"
           onClick={async () => {
             const n = await refreshStampsAndSignatures({
               collection: invoicesStore, docType: "invoice", rows: selection.selectedRows,
@@ -1405,7 +1405,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[min(96vw,1180px)] p-0 gap-0 max-h-[92dvh] overflow-hidden flex flex-col form-compact">
         <DialogHeader className="shrink-0 border-b border-border px-5 py-3">
-          <DialogTitle className="text-base">{editing ? "Edit invoice" : "New invoice"}</DialogTitle>
+          <DialogTitle className="t-subtitle">{editing ? "Edit invoice" : "New invoice"}</DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
@@ -1419,7 +1419,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
             <div>
               <Label><RequiredLabel>Number</RequiredLabel></Label>
               <Input value={number} onChange={(e) => { numberTouched.current = true; setNumber(e.target.value); }} className={invalidFieldClassName((showErrors && !number.trim()) || duplicateNumber)} aria-invalid={(showErrors && !number.trim()) || duplicateNumber} />
-              {duplicateNumber && <p className="text-[11px] text-destructive mt-1">This number is already used by another invoice.</p>}
+              {duplicateNumber && <p className="t-label text-destructive mt-1">This number is already used by another invoice.</p>}
             </div>
             <div>
               <Label>Status</Label>
@@ -1447,7 +1447,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
                 <SelectContent>{companyClients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
               {selectedClient?.acquisition && (
-                <p className="text-[11px] text-muted-foreground mt-1">Sales rep: <span className="text-foreground">{selectedClient.acquisition}</span></p>
+                <p className="t-label text-muted-foreground mt-1">Sales rep: <span className="text-foreground">{selectedClient.acquisition}</span></p>
               )}
             </div>
           </div>
@@ -1470,25 +1470,25 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
               <div className="mt-2 rounded-md border border-warning/40 bg-warning/5 px-3 py-2 space-y-2">
                 <label className="flex items-start gap-2 cursor-pointer">
                   <Checkbox checked={poWaived} onCheckedChange={(v) => setPoWaived(Boolean(v))} className="mt-0.5" />
-                  <span className="text-xs">
+                  <span className="t-label">
                     <span className="font-medium">Invoice without PO (bypass)</span>
-                    <span className="block text-[11px] text-muted-foreground">The invoice will be flagged <strong>PO missing</strong> everywhere in the system.</span>
+                    <span className="block t-label text-muted-foreground">The invoice will be flagged <strong>PO missing</strong> everywhere in the system.</span>
                   </span>
                 </label>
                 {poWaived && (
-                  <Input value={poWaiverReason} onChange={(e) => setPoWaiverReason(e.target.value)} placeholder="Reason (e.g. client confirmed by email)" className="h-7 text-xs" />
+                  <Input value={poWaiverReason} onChange={(e) => setPoWaiverReason(e.target.value)} placeholder="Reason (e.g. client confirmed by email)" className="h-7 t-label" />
                 )}
               </div>
             )}
 
             {blocked && (
-              <p className="text-[11px] text-destructive mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Link a client PO — or tick the bypass above — before sending the invoice.</p>
+              <p className="t-label text-destructive mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Link a client PO — or tick the bypass above — before sending the invoice.</p>
             )}
             {!blocked && poId && (
-              <p className="text-[11px] text-success mt-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Quote → PO → Invoice process complete.</p>
+              <p className="t-label text-success mt-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Quote → PO → Invoice process complete.</p>
             )}
             {!poId && poWaived && (
-              <p className="text-[11px] text-warning mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> PO missing — bypass recorded.</p>
+              <p className="t-label text-warning mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> PO missing — bypass recorded.</p>
             )}
           </div>
 
@@ -1524,14 +1524,14 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
               <Button type="button" size="sm" variant="outline" onClick={addLine}><Plus className="h-3.5 w-3.5" /> Add line</Button>
             </div>
             {lines.length === 0 ? (
-              <p className="text-xs text-muted-foreground border border-dashed border-border rounded-md py-5 text-center">
+              <p className="t-label text-muted-foreground border border-dashed border-border rounded-md py-5 text-center">
                 No lines — add one, or pick a PO / quote to inherit its lines.
               </p>
             ) : (
               <div className="rounded-md border border-border overflow-hidden">
                 <div className="overflow-auto max-h-[52vh] stacked-table">
-                <table className="sheet-grid w-full min-w-[820px] text-xs">
-                  <thead className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                <table className="sheet-grid w-full min-w-[820px] t-label">
+                  <thead className="t-micro uppercase tracking-wider text-muted-foreground">
                     <tr className="[&>th]:whitespace-nowrap">
                       <th className="w-10" />
                       <th className="text-left px-2 py-1.5 min-w-[260px]">Description</th>
@@ -1554,12 +1554,12 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
                         </td>
 
                         <td className="cell-pad">
-                          <Input className="h-7 text-xs" value={l.description} onChange={(e) => updateLine(l.id, { description: e.target.value })} placeholder="Description" />
+                          <Input className="h-7 t-label" value={l.description} onChange={(e) => updateLine(l.id, { description: e.target.value })} placeholder="Description" />
                           <RichTextField compact collapsible className="mt-0.5" value={l.details ?? ""} onChange={(v) => updateLine(l.id, { details: v })} placeholder="Details (optional)" rows={2} />
                         </td>
                         <td className="cell-pad">
                           <Select value={l.unit} onValueChange={(v) => updateLine(l.id, { unit: v as QuoteLine["unit"] })}>
-                            <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="h-7 t-label"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="hour">Hour</SelectItem>
                               <SelectItem value="day">Day</SelectItem>
@@ -1567,17 +1567,17 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
                             </SelectContent>
                           </Select>
                         </td>
-                        <td className="cell-pad"><Input type="number" className="h-7 text-xs text-right" value={l.quantity} onChange={(e) => updateLine(l.id, { quantity: Number(e.target.value) })} /></td>
-                        <td className="cell-pad"><Input type="number" className="h-7 text-xs text-right" value={l.rate} onChange={(e) => updateLine(l.id, { rate: Number(e.target.value) })} /></td>
+                        <td className="cell-pad"><Input type="number" className="h-7 t-label text-right" value={l.quantity} onChange={(e) => updateLine(l.id, { quantity: Number(e.target.value) })} /></td>
+                        <td className="cell-pad"><Input type="number" className="h-7 t-label text-right" value={l.rate} onChange={(e) => updateLine(l.id, { rate: Number(e.target.value) })} /></td>
                         <td className="cell-pad">
                           <div className="relative">
                             <Input
                               type="number" min={0} max={100} step={0.5}
-                              className="h-7 text-xs text-right pr-6"
+                              className="h-7 t-label text-right pr-6"
                               value={l.discountPct ?? 0}
                               onChange={(e) => updateLine(l.id, { discountPct: Number(e.target.value) })}
                             />
-                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">%</span>
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 t-micro text-muted-foreground pointer-events-none">%</span>
                           </div>
                         </td>
                         <td className="cell-pad text-right font-tnum font-medium">{fmtAmount(lineNet(l), currency)}</td>
@@ -1591,24 +1591,24 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
                   <tfoot>
                     {totals.lineDiscount > 0 && (
                       <tr>
-                        <td colSpan={6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Line discounts</td>
+                        <td colSpan={6} className="px-2 py-2 text-right t-label uppercase tracking-wider text-muted-foreground">Line discounts</td>
 
                         <td className="px-2 py-2 text-right font-tnum text-muted-foreground">−{fmtAmount(totals.lineDiscount, currency)}</td>
                         <td />
                       </tr>
                     )}
                     <tr>
-                      <td colSpan={6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
+                      <td colSpan={6} className="px-2 py-2 text-right t-label uppercase tracking-wider text-muted-foreground">
                         <div className="inline-flex items-center gap-2 justify-end">
                           <span>Global discount</span>
                           <div className="relative">
                             <Input
                               type="number" min={0} max={100} step={0.5}
-                              className="h-7 w-20 text-xs text-right pr-6"
+                              className="h-7 w-20 t-label text-right pr-6"
                               value={discountPct}
                               onChange={(e) => setDiscountPct(Number(e.target.value))}
                             />
-                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">%</span>
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 t-micro text-muted-foreground pointer-events-none">%</span>
                           </div>
                         </div>
                       </td>
@@ -1616,22 +1616,22 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
                       <td />
                     </tr>
                     <tr>
-                      <td colSpan={6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">Subtotal</td>
+                      <td colSpan={6} className="px-2 py-2 text-right t-label uppercase tracking-wider text-muted-foreground">Subtotal</td>
                       <td className="px-2 py-2 text-right font-tnum">{fmtAmount(linesTotal, currency)}</td>
                       <td />
                     </tr>
                     <tr>
-                      <td colSpan={6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
+                      <td colSpan={6} className="px-2 py-2 text-right t-label uppercase tracking-wider text-muted-foreground">
                         <div className="inline-flex items-center gap-2 justify-end">
                           <span>Tax</span>
                           <div className="relative">
                             <Input
                               type="number" min={0} step={0.01}
-                              className="h-7 w-20 text-xs text-right pr-6"
+                              className="h-7 w-20 t-label text-right pr-6"
                               value={taxRate}
                               onChange={(e) => setTaxRate(Number(e.target.value))}
                             />
-                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none">%</span>
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 t-micro text-muted-foreground pointer-events-none">%</span>
                           </div>
                         </div>
                       </td>
@@ -1639,7 +1639,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
                       <td />
                     </tr>
                     <tr>
-                      <td colSpan={6} className="px-2 py-2 text-right text-[11px] uppercase tracking-wider text-foreground font-semibold">Total</td>
+                      <td colSpan={6} className="px-2 py-2 text-right t-label uppercase tracking-wider text-foreground font-semibold">Total</td>
                       <td className="px-2 py-2 text-right font-tnum font-semibold">{fmtAmount(totals.total, currency)}</td>
                       <td />
                     </tr>
@@ -1650,9 +1650,9 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
               </div>
             )}
             <div className="flex items-center justify-between gap-3">
-              <p className="text-[11px] text-muted-foreground">{RICH_TEXT_HINT}</p>
+              <p className="t-label text-muted-foreground">{RICH_TEXT_HINT}</p>
               {lines.length > 0 && (
-                <p className="text-[11px] text-muted-foreground">
+                <p className="t-label text-muted-foreground">
                   Amount is computed from the lines: {fmtAmount(totals.subtotal, currency)} HT · {fmtAmount(totals.total, currency)} payable
                 </p>
               )}
@@ -1675,12 +1675,12 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
                   disabled={lines.length > 0}
                   onChange={(e) => setAmount(e.target.value)}
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 t-label text-muted-foreground pointer-events-none">
                   {currency === "EUR" ? "€" : currency === "USD" ? "$" : "Ar"}
                 </span>
               </div>
               {!lines.length && Number(taxRate) > 0 && (
-                <p className="mt-1 text-[11px] text-muted-foreground">
+                <p className="mt-1 t-label text-muted-foreground">
                   + {fmtAmount(Math.round(((Number(amount) || 0) * (Number(taxRate) || 0)) / 100), currency)} tax · {fmtAmount(Math.round((Number(amount) || 0) * (1 + (Number(taxRate) || 0) / 100)), currency)} payable
                 </p>
               )}
@@ -1690,14 +1690,14 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
               <Label>Paid</Label>
               <div className="relative">
                 <Input type="number" className="pr-10" value={paid} onChange={(e) => setPaid(e.target.value)} />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 t-label text-muted-foreground pointer-events-none">
                   {currency === "EUR" ? "€" : currency === "USD" ? "$" : "Ar"}
                 </span>
               </div>
             </div>
             <div>
               <Label>Currency</Label>
-              <div className="mt-1 inline-flex rounded-md border border-border overflow-hidden text-xs">
+              <div className="mt-1 inline-flex rounded-md border border-border overflow-hidden t-label">
                 {(["EUR", "USD", "MGA"] as Currency[]).map((c) => (
                   <button
                     key={c}
@@ -1723,7 +1723,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
                     value={taxRate}
                     onChange={(e) => setTaxRate(Number(e.target.value))}
                   />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">%</span>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 t-label text-muted-foreground pointer-events-none">%</span>
                 </div>
               </div>
             )}
@@ -1744,11 +1744,11 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
 function ProcessStrip({ hasQuote, hasPO }: { hasQuote: boolean; hasPO: boolean }) {
   const Step = ({ n, label, done, current }: { n: number; label: string; done: boolean; current?: boolean }) => (
     <div className="flex items-center gap-2">
-      <div className={cn("h-6 w-6 rounded-full grid place-items-center text-[11px] font-bold border",
+      <div className={cn("h-6 w-6 rounded-full grid place-items-center t-label font-bold border",
         done ? "bg-success/15 border-success/40 text-success" : current ? "bg-primary/15 border-primary/40 text-primary" : "bg-muted/30 border-border text-muted-foreground")}>
         {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : n}
       </div>
-      <span className={cn("text-xs", done ? "text-success" : current ? "text-foreground" : "text-muted-foreground")}>{label}</span>
+      <span className={cn("t-label", done ? "text-success" : current ? "text-foreground" : "text-muted-foreground")}>{label}</span>
     </div>
   );
   return (
@@ -1771,7 +1771,7 @@ function StatusDiffChip({ id }: { id: string }) {
   return (
     <span
       title={diff}
-      className="inline-flex max-w-[220px] truncate items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary animate-in fade-in"
+      className="inline-flex max-w-[220px] truncate items-center rounded-full bg-primary/10 px-2 py-0.5 t-micro font-medium text-primary animate-in fade-in"
     >
       {diff}
     </span>
@@ -1897,7 +1897,7 @@ function InvoiceBoard({
           <button
             type="button"
             onClick={() => tpl.setActive("full")}
-            className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+            className="t-label text-muted-foreground hover:text-foreground transition-colors"
           >
             {hidden} hidden by this template
           </button>
@@ -1971,7 +1971,7 @@ function InvoiceBoard({
                 <span className="text-[13px] font-medium leading-tight truncate" title={clientTitle(cl)}>{clientLabel(cl)}</span>
               </div>
               <div className="flex items-center justify-between gap-2 mt-0.5 min-w-0">
-                <span className="font-tnum text-xs font-semibold truncate">{fmtCompact(invoicePayable(inv), inv.currency)}</span>
+                <span className="font-tnum t-label font-semibold truncate">{fmtCompact(invoicePayable(inv), inv.currency)}</span>
                 <CardSignalRow>
                   {balance > 0 ? (
                     <CardSignal

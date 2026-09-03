@@ -133,8 +133,8 @@ export function useAcceptQuote() {
         </DialogHeader>
 
         {quote && totals && (
-          <div className="space-y-3 text-sm">
-            <div className="rounded-lg border border-border bg-surface p-3 space-y-1 text-xs">
+          <div className="space-y-3 t-body">
+            <div className="rounded-lg border border-border bg-surface p-3 space-y-1 t-label">
               <Row label="Client" value={client?.displayName || client?.name || "—"} />
               <Row label="Currency" value={quote.currency} />
               <Row label="Subtotal" value={fmtCompact(totals.subtotal, quote.currency)} mono />
@@ -147,7 +147,7 @@ export function useAcceptQuote() {
               <Checkbox checked={makePo} onCheckedChange={(v) => setMakePo(v === true)} className="mt-0.5" />
               <span className="min-w-0">
                 <span className="flex items-center gap-1.5 font-medium"><FileCheck2 className="h-3.5 w-3.5" /> Purchase order {poNumber}</span>
-                <span className="block text-xs text-muted-foreground">
+                <span className="block t-label text-muted-foreground">
                   {existingPo
                     ? `A purchase order (${existingPo.number}) already exists for this quotation.`
                     : "Draft PO with the same client, lines and amount."}
@@ -159,7 +159,7 @@ export function useAcceptQuote() {
               <Checkbox checked={makeInvoice} onCheckedChange={(v) => setMakeInvoice(v === true)} className="mt-0.5" />
               <span className="min-w-0">
                 <span className="flex items-center gap-1.5 font-medium"><ReceiptText className="h-3.5 w-3.5" /> Invoice {invNumber}</span>
-                <span className="block text-xs text-muted-foreground">
+                <span className="block t-label text-muted-foreground">
                   {alreadyInvoiced
                     ? `Already invoiced (${link?.invoices.map((i) => i.number).join(", ")}).`
                     : `Draft invoice issued ${format(new Date(), "MMM d, yyyy")}, due in ${terms} days.`}

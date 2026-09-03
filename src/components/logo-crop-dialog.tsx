@@ -139,7 +139,7 @@ export function LogoCropDialog({ open, onOpenChange, value, crop, onApply, aspec
       <DialogContent className="max-w-lg">
         <DialogHeader><DialogTitle>Adjust logo</DialogTitle></DialogHeader>
         <div className="space-y-4 py-1">
-          <p className="text-xs text-muted-foreground">Drag the image to reposition it and zoom to trim white margins. The frame matches the header area on your documents.</p>
+          <p className="t-label text-muted-foreground">Drag the image to reposition it and zoom to trim white margins. The frame matches the header area on your documents.</p>
           <div
             className="relative mx-auto overflow-hidden rounded-md border border-border bg-white touch-none"
             style={{ width: FRAME_W, height: frameH, maxWidth: "100%" }}
@@ -151,17 +151,17 @@ export function LogoCropDialog({ open, onOpenChange, value, crop, onApply, aspec
             {img ? (
               <canvas ref={canvasRef} style={{ width: FRAME_W, height: frameH, cursor: "grab" }} />
             ) : (
-              <div className="w-full h-full grid place-items-center text-xs text-muted-foreground">
+              <div className="w-full h-full grid place-items-center t-label text-muted-foreground">
                 {error || (sourceUrl ? "Loading…" : "No logo")}
               </div>
             )}
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground w-12">Zoom</span>
+            <span className="t-label text-muted-foreground w-12">Zoom</span>
             <Slider value={[zoom]} min={0.5} max={4} step={0.01} onValueChange={([v]) => setZoom(v)} className="flex-1" />
-            <span className="text-xs tabular-nums w-12 text-right">{zoom.toFixed(2)}×</span>
+            <span className="t-label tabular-nums w-12 text-right">{zoom.toFixed(2)}×</span>
           </div>
-          {error && img && <p className="text-xs text-destructive">{error}</p>}
+          {error && img && <p className="t-label text-destructive">{error}</p>}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}>Reset view</Button>

@@ -42,7 +42,7 @@ export function WriteTrailButton({ onJump }: { onJump?: (entry: JournalEntry) =>
         >
           <ShieldAlert className="h-4 w-4" aria-hidden="true" />
           {unresolved > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 grid place-items-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground font-tnum">
+            <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 grid place-items-center rounded-full bg-destructive t-micro font-semibold text-destructive-foreground font-tnum">
               {unresolved}
             </span>
           )}
@@ -57,7 +57,7 @@ export function WriteTrailButton({ onJump }: { onJump?: (entry: JournalEntry) =>
         </SheetHeader>
 
         {entries.length === 0 ? (
-          <p className="mt-8 text-sm text-muted-foreground">
+          <p className="mt-8 t-body text-muted-foreground">
             No financial writes yet in this session.
           </p>
         ) : (
@@ -66,7 +66,7 @@ export function WriteTrailButton({ onJump }: { onJump?: (entry: JournalEntry) =>
               <button
                 type="button"
                 onClick={clearResolved}
-                className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                className="t-label text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
               >
                 Clear confirmed
               </button>
@@ -83,17 +83,17 @@ export function WriteTrailButton({ onJump }: { onJump?: (entry: JournalEntry) =>
                         aria-hidden
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium capitalize">
+                        <p className="t-body font-medium capitalize">
                           {e.kind} {e.noun}
                         </p>
-                        <p className={cn("text-xs", meta.tone)}>
+                        <p className={cn("t-label", meta.tone)}>
                           {meta.label} · <span className="font-tnum">{timeOf(e.at)}</span>
                         </p>
-                        {e.message && <p className="mt-1 text-xs text-muted-foreground">{e.message}</p>}
+                        {e.message && <p className="mt-1 t-label text-muted-foreground">{e.message}</p>}
                         {e.fields.length > 0 && (
                           <ul className="mt-2 space-y-0.5">
                             {e.fields.map((f) => (
-                              <li key={f.field} className="text-xs">
+                              <li key={f.field} className="t-label">
                                 <span className="text-muted-foreground">{f.field}: </span>
                                 <span className="font-tnum">{formatJournalValue(f.previous)}</span>
                                 <span className="text-muted-foreground"> → </span>
@@ -115,7 +115,7 @@ export function WriteTrailButton({ onJump }: { onJump?: (entry: JournalEntry) =>
                               <button
                                 type="button"
                                 onClick={e.retry}
-                                className="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] active:scale-95"
+                                className="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 t-label font-medium text-primary-foreground transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] active:scale-95"
                               >
                                 <RotateCcw className="h-3 w-3" aria-hidden /> Retry
                               </button>
@@ -124,7 +124,7 @@ export function WriteTrailButton({ onJump }: { onJump?: (entry: JournalEntry) =>
                               <button
                                 type="button"
                                 onClick={() => onJump(e)}
-                                className="rounded-full border border-border px-2.5 py-1 text-xs transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] active:scale-95"
+                                className="rounded-full border border-border px-2.5 py-1 t-label transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] active:scale-95"
                               >
                                 Go to record
                               </button>
@@ -133,7 +133,7 @@ export function WriteTrailButton({ onJump }: { onJump?: (entry: JournalEntry) =>
                               type="button"
                               onClick={() => dismissEntry(e.id)}
                               aria-label="Dismiss"
-                              className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] active:scale-95"
+                              className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 t-label transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] active:scale-95"
                             >
                               <X className="h-3 w-3" aria-hidden /> Discard
                             </button>

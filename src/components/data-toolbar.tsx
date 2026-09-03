@@ -26,7 +26,7 @@ type Props<T> = {
 };
 
 function chipBase() {
-  return "inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs border-0 bg-surface shadow-[0_1px_2px_color-mix(in_oklab,var(--foreground)_6%,transparent)] hover:bg-surface-elevated text-muted-foreground hover:text-foreground transition-all duration-150";
+  return "inline-flex items-center gap-1.5 h-8 px-3 rounded-full t-label border-0 bg-surface shadow-[0_1px_2px_color-mix(in_oklab,var(--foreground)_6%,transparent)] hover:bg-surface-elevated text-muted-foreground hover:text-foreground transition-all duration-150";
 }
 
 /** Square ghost icon button used in iconOnly mode. */
@@ -80,7 +80,7 @@ export function DataToolbar<T>({ view, items, className, iconOnly }: Props<T>) {
                 onChange={(e) => setState((p) => ({ ...p, q: e.target.value }))}
                 placeholder="Search…"
                 autoFocus
-                className="h-8 border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
+                className="h-8 border-0 bg-transparent px-0 t-body shadow-none focus-visible:ring-0"
               />
               {state.q && (
                 <button
@@ -102,7 +102,7 @@ export function DataToolbar<T>({ view, items, className, iconOnly }: Props<T>) {
             value={state.q}
             onChange={(e) => setState((p) => ({ ...p, q: e.target.value }))}
             placeholder="Search…"
-            className="h-8 border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
+            className="h-8 border-0 bg-transparent px-0 t-body shadow-none focus-visible:ring-0"
           />
           {state.q && (
             <button
@@ -124,7 +124,7 @@ export function DataToolbar<T>({ view, items, className, iconOnly }: Props<T>) {
             <button type="button" className={iconBtn(!!sortField)} title={sortTitle} aria-label="Sort">
               <ArrowDownUp className="h-4 w-4" />
               {sortField && (
-                <span className="ml-0.5 text-[10px] leading-none">
+                <span className="ml-0.5 t-micro leading-none">
                   {state.sort?.dir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
                 </span>
               )}
@@ -143,14 +143,14 @@ export function DataToolbar<T>({ view, items, className, iconOnly }: Props<T>) {
           )}
         </PopoverTrigger>
         <PopoverContent className="w-60 p-2" align="start">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground px-2 py-1.5">Sort by</div>
+          <div className="t-micro uppercase tracking-wider text-muted-foreground px-2 py-1.5">Sort by</div>
           <div className="max-h-72 overflow-y-auto">
             <button
               onClick={() => setState((p) => ({ ...p, sort: null }))}
-              className={cn("w-full text-left px-2 py-1.5 rounded text-sm hover:bg-surface-elevated flex items-center justify-between", !state.sort && "text-foreground font-medium")}
+              className={cn("w-full text-left px-2 py-1.5 rounded t-body hover:bg-surface-elevated flex items-center justify-between", !state.sort && "text-foreground font-medium")}
             >
               <span>None</span>
-              {!state.sort && <span className="text-[10px] text-muted-foreground">default</span>}
+              {!state.sort && <span className="t-micro text-muted-foreground">default</span>}
             </button>
             {sortableFields.map((f) => {
               const active = state.sort?.key === f.key;
@@ -165,7 +165,7 @@ export function DataToolbar<T>({ view, items, className, iconOnly }: Props<T>) {
                       ? null
                       : { key: f.key, dir: "asc" },
                   }))}
-                  className={cn("w-full text-left px-2 py-1.5 rounded text-sm hover:bg-surface-elevated flex items-center justify-between", active && "text-foreground font-medium bg-primary/5")}
+                  className={cn("w-full text-left px-2 py-1.5 rounded t-body hover:bg-surface-elevated flex items-center justify-between", active && "text-foreground font-medium bg-primary/5")}
                 >
                   <span>{f.label}</span>
                   {active && (state.sort?.dir === "asc" ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />)}
@@ -193,11 +193,11 @@ export function DataToolbar<T>({ view, items, className, iconOnly }: Props<T>) {
             )}
           </PopoverTrigger>
           <PopoverContent className="w-60 p-2" align="start">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground px-2 py-1.5">Group by</div>
+            <div className="t-micro uppercase tracking-wider text-muted-foreground px-2 py-1.5">Group by</div>
             <div className="max-h-72 overflow-y-auto">
               <button
                 onClick={() => setState((p) => ({ ...p, group: null }))}
-                className={cn("w-full text-left px-2 py-1.5 rounded text-sm hover:bg-surface-elevated flex items-center justify-between", !state.group && "text-foreground font-medium")}
+                className={cn("w-full text-left px-2 py-1.5 rounded t-body hover:bg-surface-elevated flex items-center justify-between", !state.group && "text-foreground font-medium")}
               >
                 <span>None</span>
               </button>
@@ -207,7 +207,7 @@ export function DataToolbar<T>({ view, items, className, iconOnly }: Props<T>) {
                   <button
                     key={f.key}
                     onClick={() => setState((p) => ({ ...p, group: active ? null : { key: f.key } }))}
-                    className={cn("w-full text-left px-2 py-1.5 rounded text-sm hover:bg-surface-elevated", active && "text-foreground font-medium bg-primary/5")}
+                    className={cn("w-full text-left px-2 py-1.5 rounded t-body hover:bg-surface-elevated", active && "text-foreground font-medium bg-primary/5")}
                   >
                     {f.label}
                   </button>
@@ -225,7 +225,7 @@ export function DataToolbar<T>({ view, items, className, iconOnly }: Props<T>) {
             <button type="button" className={cn(iconBtn(activeFilterCount > 0), "relative")} title={filterTitle} aria-label="Filters">
               <Filter className="h-4 w-4" />
               {activeFilterCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] grid place-items-center font-medium border border-surface">
+                <span className="absolute -right-0.5 -top-0.5 h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground t-micro grid place-items-center font-medium border border-surface">
                   {activeFilterCount}
                 </span>
               )}
@@ -235,7 +235,7 @@ export function DataToolbar<T>({ view, items, className, iconOnly }: Props<T>) {
               <Filter className="h-3.5 w-3.5" />
               <span>Filter</span>
               {activeFilterCount > 0 && (
-                <span className="ml-1 h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] grid place-items-center font-medium">
+                <span className="ml-1 h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground t-micro grid place-items-center font-medium">
                   {activeFilterCount}
                 </span>
               )}
@@ -244,9 +244,9 @@ export function DataToolbar<T>({ view, items, className, iconOnly }: Props<T>) {
         </PopoverTrigger>
         <PopoverContent className="w-80 p-3 max-h-[70vh] overflow-y-auto" align="start">
           <div className="flex items-center justify-between mb-2">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Filters</div>
+            <div className="t-micro uppercase tracking-wider text-muted-foreground">Filters</div>
             {activeFilterCount > 0 && (
-              <button onClick={reset} className="text-[11px] text-muted-foreground hover:text-foreground underline">
+              <button onClick={reset} className="t-label text-muted-foreground hover:text-foreground underline">
                 Clear all
               </button>
             )}
@@ -266,7 +266,7 @@ export function DataToolbar<T>({ view, items, className, iconOnly }: Props<T>) {
             <X className="h-4 w-4" />
           </button>
         ) : (
-          <button onClick={reset} className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground">
+          <button onClick={reset} className="inline-flex items-center gap-1 t-label text-muted-foreground hover:text-foreground">
             <X className="h-3 w-3" /> Clear
           </button>
         )
@@ -297,8 +297,8 @@ function FilterField<T>({ field, value, items, onChange }: {
       const v = value?.type === "text" ? value.value : "";
       return (
         <div>
-          <Label className="text-xs">{field.label}</Label>
-          <Input className="h-8 text-xs mt-1" value={v} onChange={(e) =>
+          <Label className="t-label">{field.label}</Label>
+          <Input className="h-8 t-label mt-1" value={v} onChange={(e) =>
             onChange(e.target.value ? { type: "text", value: e.target.value } : undefined)
           } placeholder="contains…" />
         </div>
@@ -312,11 +312,11 @@ function FilterField<T>({ field, value, items, onChange }: {
     };
     return (
       <div>
-        <Label className="text-xs">{field.label}</Label>
+        <Label className="t-label">{field.label}</Label>
         <div className="mt-1 grid grid-cols-1 gap-1 max-h-40 overflow-y-auto pr-1">
-          {options.length === 0 && <div className="text-[11px] text-muted-foreground">No values</div>}
+          {options.length === 0 && <div className="t-label text-muted-foreground">No values</div>}
           {options.map((opt) => (
-            <label key={opt} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-surface-elevated rounded px-1.5 py-1">
+            <label key={opt} className="flex items-center gap-2 t-label cursor-pointer hover:bg-surface-elevated rounded px-1.5 py-1">
               <Checkbox checked={selected.includes(opt)} onCheckedChange={() => toggle(opt)} />
               <span className="truncate">{opt}</span>
             </label>
@@ -335,10 +335,10 @@ function FilterField<T>({ field, value, items, onChange }: {
     };
     return (
       <div>
-        <Label className="text-xs">{field.label}</Label>
+        <Label className="t-label">{field.label}</Label>
         <div className="mt-1 flex gap-2">
-          <Input className="h-8 text-xs" type="number" placeholder="Min" value={v.min ?? ""} onChange={(e) => update({ min: e.target.value === "" ? undefined : Number(e.target.value) })} />
-          <Input className="h-8 text-xs" type="number" placeholder="Max" value={v.max ?? ""} onChange={(e) => update({ max: e.target.value === "" ? undefined : Number(e.target.value) })} />
+          <Input className="h-8 t-label" type="number" placeholder="Min" value={v.min ?? ""} onChange={(e) => update({ min: e.target.value === "" ? undefined : Number(e.target.value) })} />
+          <Input className="h-8 t-label" type="number" placeholder="Max" value={v.max ?? ""} onChange={(e) => update({ max: e.target.value === "" ? undefined : Number(e.target.value) })} />
         </div>
       </div>
     );
@@ -353,10 +353,10 @@ function FilterField<T>({ field, value, items, onChange }: {
     };
     return (
       <div>
-        <Label className="text-xs">{field.label}</Label>
+        <Label className="t-label">{field.label}</Label>
         <div className="mt-1 flex gap-2">
-          <Input className="h-8 text-xs" type="date" value={v.from ?? ""} onChange={(e) => update({ from: e.target.value || undefined })} />
-          <Input className="h-8 text-xs" type="date" value={v.to ?? ""} onChange={(e) => update({ to: e.target.value || undefined })} />
+          <Input className="h-8 t-label" type="date" value={v.from ?? ""} onChange={(e) => update({ from: e.target.value || undefined })} />
+          <Input className="h-8 t-label" type="date" value={v.to ?? ""} onChange={(e) => update({ to: e.target.value || undefined })} />
         </div>
       </div>
     );
@@ -366,10 +366,10 @@ function FilterField<T>({ field, value, items, onChange }: {
     const v = value?.type === "boolean" ? value.value : undefined;
     return (
       <div>
-        <Label className="text-xs">{field.label}</Label>
+        <Label className="t-label">{field.label}</Label>
         <div className="mt-1 flex gap-2">
-          <Button size="sm" variant={v === true ? "default" : "outline"} className="h-7 text-xs" onClick={() => onChange(v === true ? undefined : { type: "boolean", value: true })}>Yes</Button>
-          <Button size="sm" variant={v === false ? "default" : "outline"} className="h-7 text-xs" onClick={() => onChange(v === false ? undefined : { type: "boolean", value: false })}>No</Button>
+          <Button size="sm" variant={v === true ? "default" : "outline"} className="h-7 t-label" onClick={() => onChange(v === true ? undefined : { type: "boolean", value: true })}>Yes</Button>
+          <Button size="sm" variant={v === false ? "default" : "outline"} className="h-7 t-label" onClick={() => onChange(v === false ? undefined : { type: "boolean", value: false })}>No</Button>
         </div>
       </div>
     );
@@ -382,7 +382,7 @@ function FilterField<T>({ field, value, items, onChange }: {
 export function GroupHeaderRow({ label, count, colSpan }: { label: string; count: number; colSpan: number }) {
   return (
     <tr data-group-header className="bg-surface-elevated/40 border-b border-border/60">
-      <td colSpan={colSpan} className="px-5 py-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-medium">
+      <td colSpan={colSpan} className="px-5 py-2 t-label uppercase tracking-[0.16em] text-muted-foreground font-medium">
         {label} <span className="text-muted-foreground/60 ml-1.5">· {count}</span>
       </td>
     </tr>

@@ -46,17 +46,17 @@ function AxelLayout() {
           <div className="p-3 border-b border-border">
             <button
               onClick={onNew}
-              className="btn-new w-full h-9 rounded-md bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90"
+              className="btn-new w-full h-9 rounded-md bg-primary text-primary-foreground t-body font-medium flex items-center justify-center gap-2 hover:opacity-90"
             >
               <Plus className="h-4 w-4" /> New conversation
             </button>
           </div>
-          <div className="px-3 py-2 text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+          <div className="px-3 py-2 t-micro uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
             <Sparkles className="h-3 w-3" /> Axel AI · CFO Analyst
           </div>
           <div className="flex-1 overflow-y-auto px-2 pb-3 space-y-0.5">
             {threads.length === 0 && (
-              <div className="px-3 py-8 text-center text-xs text-muted-foreground">
+              <div className="px-3 py-8 text-center t-label text-muted-foreground">
                 No conversations yet.
               </div>
             )}
@@ -64,7 +64,7 @@ function AxelLayout() {
               <div
                 key={t.id}
                 className={cn(
-                  "group flex items-center gap-2 rounded-md text-sm transition",
+                  "group flex items-center gap-2 rounded-md t-body transition",
                   activeId === t.id ? "bg-accent" : "hover:bg-accent/50",
                 )}
               >

@@ -78,7 +78,7 @@ function Body() {
   return (
     <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8 max-w-5xl">
       <section className="rounded-xl border border-border bg-[var(--gradient-surface)] p-6">
-        <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Account</div>
+        <div className="t-label uppercase tracking-[0.16em] text-muted-foreground">Account</div>
         <div className="mt-4 flex flex-wrap items-start gap-6">
           <div className="flex flex-col items-center gap-2">
             <AvatarUpload
@@ -90,7 +90,7 @@ function Body() {
               crop
               outputSize={512}
             />
-            <span className="text-[10px] text-muted-foreground">Profile picture</span>
+            <span className="t-micro text-muted-foreground">Profile picture</span>
 
           </div>
           <div className="flex flex-col items-center gap-2">
@@ -104,16 +104,16 @@ function Body() {
               mark
               keyOutWhite
             />
-            <span className="text-[10px] text-muted-foreground">Signature</span>
+            <span className="t-micro text-muted-foreground">Signature</span>
             {signature ? (
-              <button type="button" onClick={() => setSignature(undefined)} className="text-[10px] text-muted-foreground underline focus-ring">
+              <button type="button" onClick={() => setSignature(undefined)} className="t-micro text-muted-foreground underline focus-ring">
                 Remove
               </button>
             ) : null}
           </div>
           <div className="flex-1 min-w-[240px] grid sm:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="display-name" className="text-[10px] uppercase tracking-wider text-muted-foreground">Name</Label>
+              <Label htmlFor="display-name" className="t-micro uppercase tracking-wider text-muted-foreground">Name</Label>
               <Input
                 id="display-name"
                 value={name}
@@ -139,7 +139,7 @@ function Body() {
 
 
       <section className="rounded-xl border border-border bg-[var(--gradient-surface)] p-6">
-        <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Appearance</div>
+        <div className="t-label uppercase tracking-[0.16em] text-muted-foreground">Appearance</div>
         <p className="text-caption text-muted-foreground mt-1">
           Theme and text size follow your device by default and are remembered on this browser.
         </p>
@@ -153,7 +153,7 @@ function Body() {
       <DataExportCard />
 
       <section>
-        <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">Workspace</div>
+        <div className="t-label uppercase tracking-[0.16em] text-muted-foreground mb-3">Workspace</div>
         <div className="grid sm:grid-cols-2 gap-3">
           {cards.map((c) => {
             const Icon = c.icon;
@@ -169,7 +169,7 @@ function Body() {
                   </div>
                   <div>
                     <div className="font-medium">{c.label}</div>
-                    <div className="text-xs text-muted-foreground">{c.desc}</div>
+                    <div className="t-label text-muted-foreground">{c.desc}</div>
                   </div>
                 </div>
               </Link>
@@ -184,8 +184,8 @@ function Body() {
 function Field({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className={`mt-1 text-sm ${mono ? "font-mono" : ""}`}>{value}</div>
+      <div className="t-micro uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={`mt-1 t-body ${mono ? "font-mono" : ""}`}>{value}</div>
     </div>
   );
 }

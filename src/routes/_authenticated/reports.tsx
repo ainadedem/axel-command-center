@@ -86,7 +86,7 @@ function Body() {
         <PeriodPicker value={period} onChange={setPeriod} />
         <button
           onClick={handleExport}
-          className="flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-surface hover:bg-surface-elevated text-sm transition"
+          className="flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-surface hover:bg-surface-elevated t-body transition"
         >
           <Download className="h-4 w-4" /> Exporter CSV
         </button>
@@ -151,13 +151,13 @@ function Body() {
 
       {/* Detail table */}
       <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-        <div className="px-5 py-3 border-b border-border text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+        <div className="px-5 py-3 border-b border-border t-label uppercase tracking-[0.16em] text-muted-foreground">
           Détail par société · {period.label}
         </div>
         <div className="overflow-x-auto sticky-first-col">
-        <table className="sheet sheet-pin1 w-full min-w-[900px] text-sm">
+        <table className="sheet sheet-pin1 w-full min-w-[900px] t-body">
           <thead>
-            <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+            <tr className="t-label uppercase tracking-wider text-muted-foreground border-b border-border">
               <th className="text-left font-medium px-5 py-2">Société</th>
               <th className="text-right font-medium px-5 py-2 w-36">Revenus</th>
               <th className="text-right font-medium px-5 py-2 w-36">Charges</th>
@@ -176,20 +176,20 @@ function Body() {
                   <td className={`px-5 py-3 text-right font-tnum font-semibold ${r.Résultat >= 0 ? "text-success" : "text-destructive"}`}>
                     {r.Résultat.toFixed(1)} M
                   </td>
-                  <td className={`px-5 py-3 text-right font-tnum text-xs ${r.Résultat >= 0 ? "text-success" : "text-destructive"}`}>
+                  <td className={`px-5 py-3 text-right font-tnum t-label ${r.Résultat >= 0 ? "text-success" : "text-destructive"}`}>
                     {margin !== "—" ? `${margin}%` : "—"}
                   </td>
                 </tr>
               );
             })}
             <tr className="bg-surface-elevated/40 font-semibold border-t border-border">
-              <td className="px-5 py-3 text-xs uppercase tracking-wider">Total groupe</td>
+              <td className="px-5 py-3 t-label uppercase tracking-wider">Total groupe</td>
               <td className="px-5 py-3 text-right font-tnum text-success">{(totalInc / 1_000_000).toFixed(1)} M</td>
               <td className="px-5 py-3 text-right font-tnum text-destructive">{(totalExp / 1_000_000).toFixed(1)} M</td>
               <td className={`px-5 py-3 text-right font-tnum ${totalProfit >= 0 ? "text-success" : "text-destructive"}`}>
                 {(totalProfit / 1_000_000).toFixed(1)} M
               </td>
-              <td className={`px-5 py-3 text-right font-tnum text-xs ${totalProfit >= 0 ? "text-success" : "text-destructive"}`}>
+              <td className={`px-5 py-3 text-right font-tnum t-label ${totalProfit >= 0 ? "text-success" : "text-destructive"}`}>
                 {totalInc > 0 ? `${((totalProfit / totalInc) * 100).toFixed(1)}%` : "—"}
               </td>
             </tr>
@@ -207,7 +207,7 @@ function TrendBadge({ cur, prev, invertTrend }: { cur: number; prev: number; inv
   const positive = invertTrend ? delta <= 0 : delta >= 0;
   const Icon = Math.abs(delta) < 0.1 ? Minus : positive ? TrendingUp : TrendingDown;
   return (
-    <span className={`inline-flex items-center gap-1 text-[11px] font-medium ${positive ? "text-success" : "text-destructive"}`}>
+    <span className={`inline-flex items-center gap-1 t-label font-medium ${positive ? "text-success" : "text-destructive"}`}>
       <Icon className="h-3 w-3" />
       {delta >= 0 ? "+" : ""}{delta.toFixed(1)}% vs période préc.
     </span>
@@ -221,7 +221,7 @@ function KpiCard({ label, value, cur, prev, tone, invertTrend }: {
   const toneClass = tone === "success" ? "text-success" : tone === "destructive" ? "text-destructive" : "";
   return (
     <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 space-y-1">
-      <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
+      <div className="t-label uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
       <div className={`font-display text-2xl font-bold font-tnum ${toneClass}`}>{value}</div>
       <TrendBadge cur={cur} prev={prev} invertTrend={invertTrend} />
     </div>

@@ -67,10 +67,10 @@ export function DetailPanel({
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
         <div className="min-w-0">
           {eyebrow && (
-            <div className="text-[11px] tracking-[0.06em] text-muted-foreground mb-1 truncate">{eyebrow}</div>
+            <div className="t-label tracking-[0.06em] text-muted-foreground mb-1 truncate">{eyebrow}</div>
           )}
-          <h2 className="font-display text-lg font-semibold tracking-tight break-words">{title}</h2>
-          {subtitle && <p className="text-sm text-muted-foreground mt-1 break-words">{subtitle}</p>}
+          <h2 className="font-display t-title font-semibold tracking-tight break-words">{title}</h2>
+          {subtitle && <p className="t-body text-muted-foreground mt-1 break-words">{subtitle}</p>}
         </div>
         <button
           type="button"
@@ -101,7 +101,7 @@ export function DetailField({
   mono?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-[6.75rem_minmax(0,1fr)] gap-2 py-1 text-xs">
+    <div className="grid grid-cols-[6.75rem_minmax(0,1fr)] gap-2 py-1 t-label">
       <div className="text-muted-foreground truncate">{label}</div>
       <div className={cn("min-w-0 break-words", mono && "font-tnum")}>{value ?? "—"}</div>
     </div>
@@ -113,7 +113,7 @@ export function DetailSection({ title, children }: { title?: string; children: R
   return (
     <section className="rounded-lg bg-[var(--surface-container)]/60 px-3 py-2">
       {title && (
-        <h3 className="text-[11px] tracking-[0.06em] text-muted-foreground mb-1">{title}</h3>
+        <h3 className="t-label tracking-[0.06em] text-muted-foreground mb-1">{title}</h3>
       )}
       {children}
     </section>

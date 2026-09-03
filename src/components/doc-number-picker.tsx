@@ -120,7 +120,7 @@ export function DocNumberPicker({
                     {d.clientName ? <span className="text-muted-foreground"> · {d.clientName}</span> : null}
                     {d.issueDate ? <span className="text-muted-foreground"> · {d.issueDate}</span> : null}
                   </span>
-                  <span className="ml-2 shrink-0 text-xs text-muted-foreground font-tnum">
+                  <span className="ml-2 shrink-0 t-label text-muted-foreground font-tnum">
                     {d.amount != null && d.currency ? fmtCompact(d.amount, d.currency) : ""}
                     {d.status ? ` · ${d.status}` : ""}
                   </span>

@@ -18,7 +18,7 @@ export function FormErrorBanner({ show, message = FORM_ERROR_MESSAGE }: { show: 
   if (!show) return null;
   return (
     <div
-      className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+      className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 t-body text-destructive"
       role="alert"
       aria-live="polite"
     >

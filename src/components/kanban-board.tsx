@@ -123,12 +123,12 @@ export function KanbanBoard<T>({
               <div className="px-2.5 py-1.5 flex items-center justify-between border-b border-border">
                 <div className="flex items-center gap-1.5 min-w-0">
                   {col.dot && <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", col.dot)} />}
-                  <div className="text-[11px] font-medium truncate">{col.label}</div>
+                  <div className="t-label font-medium truncate">{col.label}</div>
                 </div>
-                <div className="text-[10px] text-muted-foreground font-tnum shrink-0">{colItems.length}</div>
+                <div className="t-micro text-muted-foreground font-tnum shrink-0">{colItems.length}</div>
               </div>
               {col.meta !== undefined && (
-                <div className="px-2.5 py-1 text-[10px] text-muted-foreground font-tnum border-b border-border/50">{col.meta}</div>
+                <div className="px-2.5 py-1 t-micro text-muted-foreground font-tnum border-b border-border/50">{col.meta}</div>
               )}
               <div className="p-1.5 space-y-1 flex-1">
                 {colItems.map((item) => {
@@ -212,7 +212,7 @@ export function KanbanBoard<T>({
                   );
                 })}
                 {colItems.length === 0 && (
-                  <div className="rounded-md border border-dashed border-border/60 px-2 py-4 text-center text-[11px] text-muted-foreground">
+                  <div className="rounded-md border border-dashed border-border/60 px-2 py-4 text-center t-label text-muted-foreground">
                     Drop here
                   </div>
                 )}

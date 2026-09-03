@@ -36,7 +36,7 @@ export function BankAccountsEditor({
   return (
     <div className="space-y-3">
       {value.length === 0 && (
-        <p className="text-xs text-muted-foreground">
+        <p className="t-label text-muted-foreground">
           No bank account yet. Add one to print payment details on invoices, quotes and POs.
         </p>
       )}

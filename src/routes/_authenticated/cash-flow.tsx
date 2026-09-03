@@ -102,7 +102,7 @@ function CashFlowBody() {
 
   if (roleResolved && !canSeeFinance) {
     return (
-      <div className="p-8 text-sm text-muted-foreground">
+      <div className="p-8 t-body text-muted-foreground">
         Cash flow figures are only visible to finance and administrator roles.
       </div>
     );
@@ -140,7 +140,7 @@ function CashFlowBody() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search invoice or client"
-              className="h-8 pl-8 text-xs"
+              className="h-8 pl-8 t-label"
             />
           </div>
           <div className="flex flex-wrap items-center gap-1">
@@ -150,7 +150,7 @@ function CashFlowBody() {
                 type="button"
                 onClick={() => setState(s)}
                 className={cn(
-                  "h-8 rounded-full px-3 text-xs transition-colors",
+                  "h-8 rounded-full px-3 t-label transition-colors",
                   state === s ? "bg-primary text-primary-foreground" : "bg-surface text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -285,13 +285,13 @@ function CashFlowBody() {
                       <ListTd />
                       <td colSpan={9} className="px-4 py-2">
                         {r.payments.length === 0 ? (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="t-label text-muted-foreground">
                             No bank transaction linked yet{r.paid > 0.5 ? " — the payment was recorded manually." : "."}
                           </p>
                         ) : (
                           <ul className="space-y-1">
                             {r.payments.map((p) => (
-                              <li key={p.id} className="flex items-center gap-3 text-xs">
+                              <li key={p.id} className="flex items-center gap-3 t-label">
                                 <span className="tabular-nums text-muted-foreground">{p.date}</span>
                                 <span className="truncate">{p.description ?? "Bank transaction"}</span>
                                 <span className="ml-auto tabular-nums">{fmt(Math.abs(p.amount), p.currency)}</span>
@@ -307,7 +307,7 @@ function CashFlowBody() {
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                <td colSpan={10} className="px-4 py-8 text-center t-body text-muted-foreground">
                   No invoices match this view.
                 </td>
               </tr>

@@ -148,7 +148,7 @@ function BilanBody() {
             <PeriodPicker value={period} onChange={setPeriod} />
             <button
               onClick={handleExport}
-              className="flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-surface hover:bg-surface-elevated text-sm transition"
+              className="flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-surface hover:bg-surface-elevated t-body transition"
             >
               <Download className="h-4 w-4" /> CSV
             </button>
@@ -157,7 +157,7 @@ function BilanBody() {
       />
 
       <div className="px-4 sm:px-8 pb-3">
-        <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-sm ${balanced ? "border-success/30 bg-success/5 text-success" : "border-destructive/30 bg-destructive/5 text-destructive"}`}>
+        <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border t-body ${balanced ? "border-success/30 bg-success/5 text-success" : "border-destructive/30 bg-destructive/5 text-destructive"}`}>
           {balanced
             ? <><CheckCircle2 className="h-4 w-4" /> Bilan équilibré — Actif ({fmtMoney(totalActif, co.baseCurrency)}) = Passif ({fmtMoney(totalPassif, co.baseCurrency)})</>
             : <><AlertTriangle className="h-4 w-4" /> Déséquilibre : Actif {fmtMoney(totalActif, co.baseCurrency)} ≠ Passif {fmtMoney(totalPassif, co.baseCurrency)} · écart {fmtMoney(Math.abs(totalActif - totalPassif), co.baseCurrency)}</>
@@ -215,7 +215,7 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
   return (
     <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
       <div className="px-5 py-3 border-b border-border">
-        <div className="font-display text-sm font-bold uppercase tracking-[0.18em] text-muted-foreground">{title}</div>
+        <div className="font-display t-body font-bold uppercase tracking-[0.18em] text-muted-foreground">{title}</div>
       </div>
       <div className="divide-y divide-border/40">{children}</div>
     </div>
@@ -225,8 +225,8 @@ function Group({ title, total, co, children }: any) {
   return (
     <div>
       <div className="flex items-center justify-between px-5 py-2 bg-surface-elevated/40">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground">{title}</div>
-        <div className="text-sm font-tnum font-semibold">{fmtMoney(total, co.baseCurrency)}</div>
+        <div className="t-label uppercase tracking-wider text-muted-foreground">{title}</div>
+        <div className="t-body font-tnum font-semibold">{fmtMoney(total, co.baseCurrency)}</div>
       </div>
       <div>{children}</div>
     </div>
@@ -235,7 +235,7 @@ function Group({ title, total, co, children }: any) {
 function Row({ label, value, co, muted }: any) {
   const tone = value > 0 ? "text-success" : value < 0 ? "text-destructive" : "";
   return (
-    <div className="flex items-center justify-between px-5 py-2 text-sm">
+    <div className="flex items-center justify-between px-5 py-2 t-body">
       <div className={muted ? "text-muted-foreground" : ""}>{label}</div>
       <div className={`font-tnum ${muted ? "text-muted-foreground" : tone}`}>{fmtMoney(value, co.baseCurrency)}</div>
     </div>
@@ -245,8 +245,8 @@ function Total({ label, value, co }: any) {
   const tone = value > 0 ? "text-success" : value < 0 ? "text-destructive" : "";
   return (
     <div className="flex items-center justify-between px-5 py-3 border-t-2 border-border bg-primary/5">
-      <div className="font-display font-bold uppercase tracking-wider text-sm">{label}</div>
-      <div className={`font-tnum font-bold text-lg ${tone}`}>{fmtMoney(value, co.baseCurrency)}</div>
+      <div className="font-display font-bold uppercase tracking-wider t-body">{label}</div>
+      <div className={`font-tnum font-bold t-title ${tone}`}>{fmtMoney(value, co.baseCurrency)}</div>
     </div>
   );
 }

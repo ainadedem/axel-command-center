@@ -46,7 +46,7 @@ function AuthenticatedLayout() {
   if (loading) {
     return (
       <div className="min-h-screen grid place-items-center bg-background">
-        <div className="text-sm text-muted-foreground">Loading…</div>
+        <div className="t-body text-muted-foreground">Loading…</div>
       </div>
     );
   }

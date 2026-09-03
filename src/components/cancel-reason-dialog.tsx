@@ -61,21 +61,21 @@ export function CancelReasonDialog({
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
         <div className="space-y-3 py-1">
-          {description && <p className="text-xs text-muted-foreground">{description}</p>}
+          {description && <p className="t-label text-muted-foreground">{description}</p>}
           <div className="flex flex-wrap gap-1.5">
             {CANCEL_REASON_PRESETS.map((p) => (
               <button
                 key={p}
                 type="button"
                 onClick={() => { setReason(p); setShowError(false); }}
-                className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                className="rounded-full border border-border px-2.5 py-1 t-label text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               >
                 {p}
               </button>
             ))}
           </div>
           <div>
-            <Label htmlFor="cancel-reason" className="text-[11px]">Reason <span className="text-destructive">*</span></Label>
+            <Label htmlFor="cancel-reason" className="t-label">Reason <span className="text-destructive">*</span></Label>
             <Textarea
               id="cancel-reason"
               autoFocus
@@ -86,7 +86,7 @@ export function CancelReasonDialog({
               aria-invalid={showError}
               className={showError ? "border-destructive focus-visible:ring-destructive" : undefined}
             />
-            {showError && <p className="text-[11px] text-destructive mt-1">A reason is required to cancel.</p>}
+            {showError && <p className="t-label text-destructive mt-1">A reason is required to cancel.</p>}
           </div>
         </div>
         <DialogFooter>

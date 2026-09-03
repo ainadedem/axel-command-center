@@ -140,7 +140,7 @@ export function ClockCard({
           ) : (
             <span className="flex flex-col items-center gap-1.5">
               {running ? <Square className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-              <span className="text-xs tracking-wide uppercase">{running ? "Clock out" : "Clock in"}</span>
+              <span className="t-label tracking-wide uppercase">{running ? "Clock out" : "Clock in"}</span>
             </span>
           )}
         </button>
@@ -150,11 +150,11 @@ export function ClockCard({
             <div className="text-3xl font-display tracking-tight font-tnum">
               {running ? fmtDuration(elapsed) : fmtDuration(total)}
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="t-body text-muted-foreground">
               {running ? `since ${hhmm(openEntry!.clockIn)}` : "worked today"}
             </div>
           </div>
-          <div className="text-xs text-muted-foreground">
+          <div className="t-label text-muted-foreground">
             {running
               ? `Today's total so far ${fmtDuration(total)} · Antananarivo time`
               : "You are clocked out · Antananarivo time"}
@@ -163,14 +163,14 @@ export function ClockCard({
           {!running && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
               <Select value={projectId} onValueChange={setProjectId}>
-                <SelectTrigger className="h-9 rounded-full text-xs"><SelectValue placeholder="Project (optional)" /></SelectTrigger>
+                <SelectTrigger className="h-9 rounded-full t-label"><SelectValue placeholder="Project (optional)" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">No project</SelectItem>
                   {projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Input
-                className="h-9 rounded-full text-xs"
+                className="h-9 rounded-full t-label"
                 placeholder="Activity (optional)"
                 value={activity}
                 onChange={(e) => setActivity(e.target.value)}
@@ -178,7 +178,7 @@ export function ClockCard({
             </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-4 pt-1 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-4 pt-1 t-label text-muted-foreground">
             <label className="inline-flex items-center gap-2 cursor-pointer">
               <Switch checked={withPhoto} onCheckedChange={setWithPhoto} /> <Camera className="h-3.5 w-3.5" /> Selfie
             </label>
@@ -197,7 +197,7 @@ export function ClockCard({
 
 export function ClockActionsHint() {
   return (
-    <p className="text-xs text-muted-foreground px-1">
+    <p className="t-label text-muted-foreground px-1">
       Times are recorded in Madagascar time (UTC+3). Selfie and location are optional and stored with the entry for audit.
     </p>
   );

@@ -99,7 +99,7 @@ export function PaymentDetailsFields({
 
   return (
     <div className="rounded-lg border border-border bg-surface p-3 space-y-3">
-      <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">{title}</div>
+      <div className="t-label font-mono uppercase tracking-wider text-muted-foreground">{title}</div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label>Account holder (Titulaire)</Label>
@@ -132,11 +132,11 @@ export function PaymentDetailsFields({
             onChange={(e) => set({ ribKey: digits(e.target.value, 2) })} />
         </div>
       </div>
-      <p className="text-[10px] font-tnum text-muted-foreground">
+      <p className="t-micro font-tnum text-muted-foreground">
         RIB: {formatRib(value.bankCode, value.branchCode, value.accountNumber, value.ribKey) || "—"}
       </p>
 
-      <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+      <label className="flex items-center gap-2 t-label cursor-pointer select-none">
         <Checkbox checked={value.intlEnabled} onCheckedChange={(v) => set({ intlEnabled: !!v })} />
         International transfers (SWIFT / IBAN)
       </label>
@@ -153,7 +153,7 @@ export function PaymentDetailsFields({
         </div>
       )}
 
-      <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+      <label className="flex items-center gap-2 t-label cursor-pointer select-none">
         <Checkbox checked={value.mobileEnabled} onCheckedChange={(v) => set({ mobileEnabled: !!v })} />
         Mobile money transfer
       </label>

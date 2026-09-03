@@ -262,8 +262,8 @@ function UsersAccessPage() {
         <div className="px-4 sm:px-8 py-12">
           <div className="max-w-md mx-auto text-center border border-border rounded-lg p-5 sm:p-10 lg:p-12 bg-card">
             <ShieldAlert className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-            <h2 className="font-display text-lg font-semibold">Restricted</h2>
-            <p className="text-sm text-muted-foreground mt-1">
+            <h2 className="font-display t-title font-semibold">Restricted</h2>
+            <p className="t-body text-muted-foreground mt-1">
               Only group administrators can manage user access.
             </p>
           </div>
@@ -289,7 +289,7 @@ function UsersAccessPage() {
               className="pl-9"
             />
           </div>
-          <div className="text-xs text-muted-foreground">
+          <div className="t-label text-muted-foreground">
             {filtered.length} {filtered.length === 1 ? "user" : "users"}
           </div>
           <Button size="sm" onClick={() => setAddOpen(true)}>
@@ -311,8 +311,8 @@ function UsersAccessPage() {
 
         <div className="rounded-lg border border-border bg-card overflow-hidden">
           <div className="stacked-table">
-            <table className="sheet w-full table-fixed text-sm">
-              <thead className="bg-muted/40 text-[11px] uppercase tracking-wider text-muted-foreground">
+            <table className="sheet w-full table-fixed t-body">
+              <thead className="bg-muted/40 t-label uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="text-left font-medium px-4 py-3 w-[42%]">User</th>
                   <th className="text-left font-medium px-4 py-3 w-[24%]">Platform</th>
@@ -347,12 +347,12 @@ function UsersAccessPage() {
                               <div className="font-medium truncate flex items-center gap-2">
                                 <span className="truncate">{row.display_name ?? "—"}</span>
                                 {isSelf && (
-                                  <span className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground border border-border rounded px-1.5 py-0.5">
+                                  <span className="shrink-0 t-micro uppercase tracking-wider text-muted-foreground border border-border rounded px-1.5 py-0.5">
                                     you
                                   </span>
                                 )}
                               </div>
-                              <div className="text-xs text-muted-foreground truncate">{row.email}</div>
+                              <div className="t-label text-muted-foreground truncate">{row.email}</div>
                             </div>
                           </div>
                         </td>
@@ -369,7 +369,7 @@ function UsersAccessPage() {
                             }
                           >
                             <SelectTrigger
-                              className="h-8 text-xs"
+                              className="h-8 t-label"
                               title={isSuperAdmin ? undefined : "Only a super admin can change platform roles."}
                             >
                               <SelectValue />
@@ -383,13 +383,13 @@ function UsersAccessPage() {
                             </SelectContent>
                           </Select>
                         </td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground truncate" title={typeof effectiveAccess(row) === "string" ? (effectiveAccess(row) as string) : undefined}>
+                        <td className="px-4 py-3 t-label text-muted-foreground truncate" title={typeof effectiveAccess(row) === "string" ? (effectiveAccess(row) as string) : undefined}>
                           {effectiveAccess(row)}
                         </td>
                       </tr>
                       <tr data-row-actions className="border-b border-border/40">
                         <td colSpan={3} className="px-4 pb-4 pt-0">
-                          <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+                          <div className="t-micro uppercase tracking-wider text-muted-foreground mb-2">
                             Company access
                           </div>
                           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -406,14 +406,14 @@ function UsersAccessPage() {
                                     >
                                       {(c.short_name ?? c.code ?? c.name.slice(0, 3)).toUpperCase().slice(0, 2)}
                                     </span>
-                                    <span className="text-[11px] truncate" title={c.name}>{c.name}</span>
+                                    <span className="t-label truncate" title={c.name}>{c.name}</span>
                                   </div>
                                   <Select
                                     value={isGroupLevel ? "company_admin" : current}
                                     onValueChange={(v) => setCompanyRole(row, c.id, v as CompanyRole | "none")}
                                     disabled={isGroupLevel || busy === cellKey}
                                   >
-                                    <SelectTrigger className="h-8 text-xs">
+                                    <SelectTrigger className="h-8 t-label">
                                       {isGroupLevel ? (
                                         <span className="text-muted-foreground">all access</span>
                                       ) : (
@@ -450,7 +450,7 @@ function UsersAccessPage() {
         </div>
 
 
-        <div className="text-xs text-muted-foreground space-y-1">
+        <div className="t-label text-muted-foreground space-y-1">
           <p>
             <strong>Platform roles</strong> apply across all companies. Super admin and group admin
             implicitly act as company admin everywhere.
@@ -642,11 +642,11 @@ function AddUserDialog({
                   value={teamSearch}
                   onChange={(e) => setTeamSearch(e.target.value)}
                   placeholder="Search by name, email or job title"
-                  className="h-8 text-xs"
+                  className="h-8 t-label"
                 />
                 <div className="max-h-44 overflow-y-auto space-y-1">
                   {filteredCandidates.length === 0 && (
-                    <p className="text-xs text-muted-foreground px-1 py-2">
+                    <p className="t-label text-muted-foreground px-1 py-2">
                       No unlinked team member matches.
                     </p>
                   )}
@@ -655,7 +655,7 @@ function AddUserDialog({
                       key={m.id}
                       type="button"
                       onClick={() => setTeamMemberId(m.id)}
-                      className={`w-full text-left rounded px-2 py-1.5 text-xs hover:bg-muted/60 ${
+                      className={`w-full text-left rounded px-2 py-1.5 t-label hover:bg-muted/60 ${
                         teamMemberId === m.id ? "bg-primary/10 text-primary" : ""
                       }`}
                     >
@@ -670,7 +670,7 @@ function AddUserDialog({
                 {pickedMember &&
                   email.trim() &&
                   (pickedMember.email ?? "").toLowerCase() !== email.trim().toLowerCase() && (
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="t-label text-muted-foreground">
                       Heads up: {pickedMember.name} is recorded with
                       {pickedMember.email ? ` ${pickedMember.email}` : " no email"}, which differs from the
                       account email.
@@ -754,21 +754,21 @@ function AddUserDialog({
           <div className="space-y-2">
             <Label>Company access</Label>
             {platformRole !== "none" ? (
-              <p className="text-xs text-muted-foreground">
+              <p className="t-label text-muted-foreground">
                 Platform admins already have access to every company.
               </p>
             ) : (
               <div className="space-y-2 rounded-md border border-border p-3">
                 {companies.map((c) => (
                   <div key={c.id} className="flex items-center gap-3">
-                    <span className="text-sm flex-1 truncate">{c.name}</span>
+                    <span className="t-body flex-1 truncate">{c.name}</span>
                     <Select
                       value={roles[c.id] ?? "none"}
                       onValueChange={(v) =>
                         setRoles((prev) => ({ ...prev, [c.id]: v as CompanyRole | "none" }))
                       }
                     >
-                      <SelectTrigger className="h-8 w-[160px] text-xs">
+                      <SelectTrigger className="h-8 w-[160px] t-label">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -783,14 +783,14 @@ function AddUserDialog({
                   </div>
                 ))}
                 {companies.length === 0 && (
-                  <p className="text-xs text-muted-foreground">No companies yet.</p>
+                  <p className="t-label text-muted-foreground">No companies yet.</p>
                 )}
               </div>
             )}
           </div>
 
           {error && (
-            <p className="text-sm text-destructive" role="alert">
+            <p className="t-body text-destructive" role="alert">
               {error}
             </p>
           )}
@@ -823,7 +823,7 @@ function TeamLink({ userId, email, displayName }: { userId: string; email: strin
 
   if (linked) {
     return (
-      <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-primary">
+      <span className="mt-0.5 inline-flex items-center gap-1 t-micro text-primary">
         <ShieldCheck className="h-2.5 w-2.5" /> Team: {linked.name}
       </span>
     );
@@ -850,7 +850,7 @@ function TeamLink({ userId, email, displayName }: { userId: string; email: strin
     <button
       type="button"
       onClick={link}
-      className="mt-0.5 text-[10px] text-muted-foreground underline-offset-2 hover:text-primary hover:underline"
+      className="mt-0.5 t-micro text-muted-foreground underline-offset-2 hover:text-primary hover:underline"
     >
       {byEmail ? `Link to team member ${byEmail.name}` : "Add to team"}
     </button>

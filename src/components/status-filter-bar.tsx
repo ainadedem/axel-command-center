@@ -49,7 +49,7 @@ function Chip({
             aria-pressed={active}
             aria-label={`${label} · ${count}`}
             className={cn(
-              "inline-flex shrink-0 items-center justify-center h-8 w-8 rounded-full border text-xs font-medium relative",
+              "inline-flex shrink-0 items-center justify-center h-8 w-8 rounded-full border t-label font-medium relative",
               "transition-[color,background-color,border-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
               active
@@ -59,12 +59,12 @@ function Chip({
             )}
           >
             {icon}
-            <span className="absolute -right-0.5 -top-0.5 font-tnum text-[9px] leading-none px-1 rounded-full bg-surface border border-border text-muted-foreground">
+            <span className="absolute -right-0.5 -top-0.5 font-tnum t-micro leading-none px-1 rounded-full bg-surface border border-border text-muted-foreground">
               {count}
             </span>
           </button>
         </TooltipTrigger>
-        <TooltipContent side="bottom" className="text-xs">
+        <TooltipContent side="bottom" className="t-label">
           <span className="font-medium">{label}</span>
           {hint ? <span className="text-muted-foreground"> — {hint}</span> : null}
           <span className="font-tnum"> · {count}</span>
@@ -79,7 +79,7 @@ function Chip({
       aria-pressed={active}
       title={hint ? `${label} — ${hint}` : label}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1.5 h-8 px-3 rounded-full border text-xs font-medium",
+        "inline-flex shrink-0 items-center gap-1.5 h-8 px-3 rounded-full border t-label font-medium",
         "transition-[color,background-color,border-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
         active
@@ -90,7 +90,7 @@ function Chip({
     >
       {icon}
       <span>{label}</span>
-      <span className="font-tnum text-[10px] opacity-70">{count}</span>
+      <span className="font-tnum t-micro opacity-70">{count}</span>
     </button>
   );
 }
@@ -204,7 +204,7 @@ export function StatusFilterBar({
         "inline-flex shrink-0 items-center justify-center rounded-full transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
         iconOnly
           ? "h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)]"
-          : "gap-1 h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)]",
+          : "gap-1 h-8 px-2.5 t-label text-muted-foreground hover:text-foreground hover:bg-[var(--surface-container)]",
       )}
     >
       <X className={iconOnly ? "h-4 w-4" : "h-3.5 w-3.5"} />
@@ -288,14 +288,14 @@ function OverflowRow({
             >
               <MoreHorizontal className="h-4 w-4" />
               {hiddenActive > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground text-[9px] grid place-items-center font-medium">
+                <span className="absolute -right-0.5 -top-0.5 h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground t-micro grid place-items-center font-medium">
                   {hiddenActive}
                 </span>
               )}
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-64 p-2 max-h-[60vh] overflow-y-auto" align="start">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground px-2 py-1.5">More filters</div>
+            <div className="t-micro uppercase tracking-wider text-muted-foreground px-2 py-1.5">More filters</div>
             <div className="space-y-0.5">
               {hidden.map((e) => (
                 <button
@@ -304,7 +304,7 @@ function OverflowRow({
                   onClick={e.onClick}
                   aria-pressed={e.active}
                   className={cn(
-                    "w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-left hover:bg-surface-elevated",
+                    "w-full flex items-center gap-2 px-2 py-1.5 rounded-lg t-label text-left hover:bg-surface-elevated",
                     e.active && "bg-primary/10 text-foreground font-medium",
                   )}
                 >
@@ -313,7 +313,7 @@ function OverflowRow({
                     {e.label}
                     {e.hint && <span className="text-muted-foreground"> — {e.hint}</span>}
                   </span>
-                  <span className="font-tnum text-[10px] text-muted-foreground">{e.count}</span>
+                  <span className="font-tnum t-micro text-muted-foreground">{e.count}</span>
                 </button>
               ))}
             </div>

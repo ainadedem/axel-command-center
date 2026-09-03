@@ -52,11 +52,11 @@ function Body() {
     <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={() => setJournalFilter("ALL")} className={`h-8 px-3 rounded-md text-xs border ${journalFilter === "ALL" ? "bg-primary text-primary-foreground border-primary" : "bg-surface border-border"}`}>
+          <button onClick={() => setJournalFilter("ALL")} className={`h-8 px-3 rounded-md t-label border ${journalFilter === "ALL" ? "bg-primary text-primary-foreground border-primary" : "bg-surface border-border"}`}>
             Tous les journaux
           </button>
           {journals.map((j) => (
-            <button key={j.code} onClick={() => setJournalFilter(j.code)} className={`h-8 px-3 rounded-md text-xs border ${journalFilter === j.code ? "bg-primary text-primary-foreground border-primary" : "bg-surface border-border"}`} title={j.name}>
+            <button key={j.code} onClick={() => setJournalFilter(j.code)} className={`h-8 px-3 rounded-md t-label border ${journalFilter === j.code ? "bg-primary text-primary-foreground border-primary" : "bg-surface border-border"}`} title={j.name}>
               {j.code}
             </button>
           ))}
@@ -75,15 +75,15 @@ function Body() {
             return (
               <div key={e.id} className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden group">
                 <div className="flex items-center gap-3 px-5 py-3 border-b border-border">
-                  <span className="h-6 px-2 rounded text-[10px] font-bold tracking-wider grid place-items-center bg-surface-elevated">{e.journal}</span>
+                  <span className="h-6 px-2 rounded t-micro font-bold tracking-wider grid place-items-center bg-surface-elevated">{e.journal}</span>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{e.description}</div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-2">
+                    <div className="t-label text-muted-foreground mt-0.5 flex items-center gap-2">
                       <span>Pièce {e.piece}</span><span>·</span><span>{fmtDateFR(e.date)}</span>
                       {co && (<><span>·</span><span className="inline-flex items-center gap-1.5 font-mono" title={co.name}><span className="h-1.5 w-1.5 rounded-full" style={{ background: co.color }} />{co.code || co.shortName}</span></>)}
                     </div>
                   </div>
-                  <span className={`text-[10px] uppercase tracking-wider px-2 py-1 rounded ${equilibre ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10" : "text-red-600 bg-red-50"}`}>
+                  <span className={`t-micro uppercase tracking-wider px-2 py-1 rounded ${equilibre ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10" : "text-red-600 bg-red-50"}`}>
                     {equilibre ? "Équilibrée" : "Déséquilibrée"}
                   </span>
                   <div className="opacity-0 group-hover:opacity-100 flex gap-1">
@@ -92,9 +92,9 @@ function Body() {
                   </div>
                 </div>
                 <div className="overflow-x-auto sticky-first-col">
-                <table className="sheet sheet-pin1 w-full min-w-[900px] text-sm">
+                <table className="sheet sheet-pin1 w-full min-w-[900px] t-body">
                   <thead>
-                    <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                    <tr className="t-label uppercase tracking-wider text-muted-foreground border-b border-border">
                       <th className="text-left font-medium px-5 py-2 w-24">Compte</th>
                       <th className="text-left font-medium px-5 py-2">Libellé</th>
                       <th className="text-right font-medium px-5 py-2 w-36">Débit</th>
@@ -109,7 +109,7 @@ function Body() {
                           <td className="px-5 py-2 font-tnum">{l.account}</td>
                           <td className="px-5 py-2">
                             <span className="text-muted-foreground">{acc?.name ?? "—"}</span>
-                            {l.label && <span className="ml-2 text-xs">· {l.label}</span>}
+                            {l.label && <span className="ml-2 t-label">· {l.label}</span>}
                           </td>
                           <td className="px-5 py-2 text-right font-tnum">{l.debit ? fmtMoney(l.debit, co?.baseCurrency ?? "MGA") : ""}</td>
                           <td className="px-5 py-2 text-right font-tnum">{l.credit ? fmtMoney(l.credit, co?.baseCurrency ?? "MGA") : ""}</td>
@@ -118,7 +118,7 @@ function Body() {
                     })}
                     <tr className="bg-surface-elevated/40">
                       <td className="px-5 py-2"></td>
-                      <td className="px-5 py-2 text-xs uppercase tracking-wider text-muted-foreground">Total</td>
+                      <td className="px-5 py-2 t-label uppercase tracking-wider text-muted-foreground">Total</td>
                       <td className="px-5 py-2 text-right font-tnum font-semibold">{fmtMoney(tot, co?.baseCurrency ?? "MGA")}</td>
                       <td className="px-5 py-2 text-right font-tnum font-semibold">{fmtMoney(tot, co?.baseCurrency ?? "MGA")}</td>
                     </tr>
@@ -206,7 +206,7 @@ function JournalEntryDialog({ open, onOpenChange, editing }: { open: boolean; on
           <div><Label>Libellé</Label><Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Facture client — Octobre" /></div>
 
           <div className="rounded-lg border border-border overflow-hidden">
-            <div className="grid grid-cols-12 gap-2 px-3 py-2 text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-elevated/40">
+            <div className="grid grid-cols-12 gap-2 px-3 py-2 t-label uppercase tracking-wider text-muted-foreground bg-surface-elevated/40">
               <div className="col-span-3">Compte PCG</div>
               <div className="col-span-4">Libellé</div>
               <div className="col-span-2 text-right">Débit</div>
@@ -226,12 +226,12 @@ function JournalEntryDialog({ open, onOpenChange, editing }: { open: boolean; on
                 </div>
               </div>
             ))}
-            <button type="button" onClick={() => setLines((ls) => [...ls, emptyLine()])} className="w-full text-xs px-3 py-2 border-t border-border/40 hover:bg-surface-elevated/40 inline-flex items-center justify-center gap-1.5 text-muted-foreground">
+            <button type="button" onClick={() => setLines((ls) => [...ls, emptyLine()])} className="w-full t-label px-3 py-2 border-t border-border/40 hover:bg-surface-elevated/40 inline-flex items-center justify-center gap-1.5 text-muted-foreground">
               <Plus className="h-3.5 w-3.5" /> Ajouter une ligne
             </button>
           </div>
 
-          <div className="flex items-center justify-between text-xs px-1">
+          <div className="flex items-center justify-between t-label px-1">
             <div className="text-muted-foreground">Total débit · <span className="font-tnum text-foreground">{totalDebit.toLocaleString("fr-FR")}</span> &nbsp;|&nbsp; Total crédit · <span className="font-tnum text-foreground">{totalCredit.toLocaleString("fr-FR")}</span></div>
             <span className={`uppercase tracking-wider px-2 py-1 rounded ${balanced ? "text-emerald-600 bg-emerald-500/10" : "text-destructive bg-destructive/10"}`}>
               {balanced ? "Équilibrée" : "Déséquilibrée"}

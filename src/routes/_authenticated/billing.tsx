@@ -127,7 +127,7 @@ function Body() {
         <EmptyState label="recurring schedules" onCreate={openCreate} />
       ) : (
         <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-          <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+          <div className="grid grid-cols-12 gap-2 px-4 py-2 t-label uppercase tracking-wider text-muted-foreground border-b border-border">
             <div className="col-span-3">Name</div>
             <div className="col-span-2">Client</div>
             <div className="col-span-1">Company</div>
@@ -150,29 +150,29 @@ function Body() {
             return (
               <div key={b.id} className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated/60 transition group">
                 <div className="col-span-3 min-w-0">
-                  <div className="text-sm font-medium truncate flex items-center gap-2">
+                  <div className="t-body font-medium truncate flex items-center gap-2">
                     <Repeat className="h-3.5 w-3.5 text-muted-foreground" />
                     {b.name}
                   </div>
-                  {project && <div className="text-[11px] text-muted-foreground truncate ml-5">{project.name}</div>}
+                  {project && <div className="t-label text-muted-foreground truncate ml-5">{project.name}</div>}
                 </div>
-                <div className="col-span-2 text-sm truncate">{client?.name ?? "—"}</div>
-                <div className="col-span-1 text-[11px] font-mono text-muted-foreground">{companyCode(company)}</div>
+                <div className="col-span-2 t-body truncate">{client?.name ?? "—"}</div>
+                <div className="col-span-1 t-label font-mono text-muted-foreground">{companyCode(company)}</div>
                 <div className="col-span-1">
-                  <span className="text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider border border-border/60 text-muted-foreground">{b.frequency}</span>
+                  <span className="t-micro px-1.5 py-0.5 rounded uppercase tracking-wider border border-border/60 text-muted-foreground">{b.frequency}</span>
                 </div>
-                <div className="col-span-1 text-right text-sm font-tnum font-medium">{fmtAmount(b.amount, b.currency)}</div>
-                <div className="col-span-1 text-xs font-tnum">
+                <div className="col-span-1 text-right t-body font-tnum font-medium">{fmtAmount(b.amount, b.currency)}</div>
+                <div className="col-span-1 t-label font-tnum">
                   <div className={cn(isDue && "text-warning font-medium")}>{format(parseISO(b.nextRunDate), "MMM d")}</div>
-                  <div className="text-[10px] text-muted-foreground">{days < 0 ? `${-days}d overdue` : days === 0 ? "today" : `in ${days}d`}</div>
+                  <div className="t-micro text-muted-foreground">{days < 0 ? `${-days}d overdue` : days === 0 ? "today" : `in ${days}d`}</div>
                 </div>
-                <div className="col-span-1 text-[11px] text-muted-foreground">
+                <div className="col-span-1 t-label text-muted-foreground">
                   {b.lastGeneratedAt ? format(parseISO(b.lastGeneratedAt), "MMM d") : "—"}
-                  {generatedCount > 0 && <div className="text-[10px]">{generatedCount} inv.</div>}
+                  {generatedCount > 0 && <div className="t-micro">{generatedCount} inv.</div>}
                 </div>
                 <div className="col-span-1">
                   <span className={cn(
-                    "text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider border inline-flex items-center gap-1",
+                    "t-micro px-1.5 py-0.5 rounded uppercase tracking-wider border inline-flex items-center gap-1",
                     b.active ? "border-success/40 text-success bg-success/10" : "border-muted text-muted-foreground bg-muted/30",
                   )}>
                     {b.active ? "Active" : "Paused"}
@@ -398,7 +398,7 @@ function BillingDialog({
             <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Used as the invoice line description." />
           </div>
 
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <label className="flex items-center gap-2 t-body cursor-pointer">
             <Switch checked={active} onCheckedChange={setActive} />
             <span>Active (generates invoices on next run)</span>
           </label>

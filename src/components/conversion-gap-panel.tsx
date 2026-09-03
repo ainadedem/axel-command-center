@@ -23,7 +23,7 @@ const money = (n: number) => fmtCompact(n, "MGA");
 function DocList({ quotes, invoices }: { quotes: Quote[]; invoices: Invoice[] }) {
   if (!quotes.length && !invoices.length) return null;
   return (
-    <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+    <ul className="mt-2 space-y-1 t-label text-muted-foreground">
       {quotes.map((q) => (
         <li key={q.id}>
           <Link to="/quotations" search={{ focus: q.id }} className="hover:underline">
@@ -45,11 +45,11 @@ function DocList({ quotes, invoices }: { quotes: Quote[]; invoices: Invoice[] })
 function GapTable({ rows, unit }: { rows: GapRow[]; unit: string }) {
   const [open, setOpen] = useState<string | null>(null);
   if (!rows.length) {
-    return <p className="text-sm text-muted-foreground py-6">Nothing waiting — every quotation is invoiced.</p>;
+    return <p className="t-body text-muted-foreground py-6">Nothing waiting — every quotation is invoiced.</p>;
   }
   return (
     <div className="divide-y divide-border rounded-xl border border-border overflow-hidden">
-      <div className="hidden sm:grid grid-cols-[1.6fr_repeat(4,1fr)] gap-2 px-3 py-2 text-[11px] uppercase tracking-wide text-muted-foreground bg-muted/40">
+      <div className="hidden sm:grid grid-cols-[1.6fr_repeat(4,1fr)] gap-2 px-3 py-2 t-label uppercase tracking-wide text-muted-foreground bg-muted/40">
         <span>{unit}</span>
         <span className="text-right">Not sent</span>
         <span className="text-right">Awaiting invoicing</span>
@@ -64,7 +64,7 @@ function GapTable({ rows, unit }: { rows: GapRow[]; unit: string }) {
               type="button"
               onClick={() => setOpen(expanded ? null : r.key)}
               aria-expanded={expanded}
-              className="w-full grid grid-cols-2 sm:grid-cols-[1.6fr_repeat(4,1fr)] gap-2 px-3 py-2 text-sm text-left hover:bg-muted/50 transition-colors"
+              className="w-full grid grid-cols-2 sm:grid-cols-[1.6fr_repeat(4,1fr)] gap-2 px-3 py-2 t-body text-left hover:bg-muted/50 transition-colors"
             >
               <span className="flex items-center gap-1.5 font-medium truncate">
                 {expanded ? <ChevronDown className="size-3.5 shrink-0" /> : <ChevronRight className="size-3.5 shrink-0" />}
@@ -112,8 +112,8 @@ export function ConversionGapPanel({ className }: { className?: string }) {
     <section className={cn("space-y-4", className)} aria-label="Conversion gap">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold">Quotation → invoice conversion</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="t-subtitle font-semibold">Quotation → invoice conversion</h2>
+          <p className="t-body text-muted-foreground">
             Revenue that exists on paper but has not been billed yet.
           </p>
         </div>

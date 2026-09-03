@@ -62,16 +62,16 @@ export function ProjectWorkflowPanel({
   const { stages, progress } = workflow;
   const elapsed = workflowElapsedDays(stages);
   if (stages.length === 0) {
-    return <p className="text-xs text-muted-foreground">No workflow yet for this project.</p>;
+    return <p className="t-label text-muted-foreground">No workflow yet for this project.</p>;
   }
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
         <StageProgressBar pct={progress.pct} done={progress.done} total={progress.total} className="flex-1" />
-        <span className="text-xs font-medium tabular-nums">{progress.pct}%</span>
+        <span className="t-label font-medium tabular-nums">{progress.pct}%</span>
       </div>
       {progress.current && (
-        <p className="text-xs text-muted-foreground">
+        <p className="t-label text-muted-foreground">
           Next up: <span className="font-medium text-foreground">{progress.current.name}</span> — {stageHint(progress.current.key)}
         </p>
       )}
