@@ -4,18 +4,19 @@ Today the app mixes three different sizing systems: Tailwind steps (`text-xs`, `
 
 ## The type scale
 
-Six roles, defined once as CSS tokens and exposed as utility classes:
+Six roles, defined once as CSS tokens and exposed as utility classes. The scale stays deliberately small and condensed — the goal is consistency, not bigger text:
 
 | Role | Size | Used for |
 | --- | --- | --- |
-| Display | 24-30px fluid | Page hero numbers, big KPIs |
-| Title | 18px | Page titles, dialog titles |
-| Subtitle | 15px | Section headings, card headers |
+| Display | 22-26px fluid | Page hero numbers, big KPIs |
+| Title | 16px | Page titles, dialog titles |
+| Subtitle | 14px | Section headings, card headers |
 | Body | 13px | Default reading text, inputs, buttons |
-| Label | 12px | Form labels, table headers, secondary text |
-| Micro | 11px | Badges, chips, timestamps, captions |
+| Label | 11px | Form labels, table headers, secondary text |
+| Micro | 10px | Badges, chips, timestamps, captions |
 
-Nothing smaller than 11px stays in the UI (the current 9px and 10px text is below comfortable reading size). The two density modes (compact / comfortable) shift Body and Label by 1px only, as they already do for tables.
+Existing 10px and 11px text keeps its size — it just gets a role name instead of an arbitrary value. Only the stray 9px cases move up to 10px. The two density modes (compact / comfortable) shift Body and Label by 1px only, as they already do for tables.
+
 
 ## Forms
 
