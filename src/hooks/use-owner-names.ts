@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 export function useOwnerNames(ids: (string | undefined)[]): {
   owners: Record<string, string>;
   ownerName: (id?: string) => string;
+  /** First name only — for dense tables and boards. */
+  ownerFirstName: (id?: string) => string;
 } {
   const [owners, setOwners] = useState<Record<string, string>>({});
 
