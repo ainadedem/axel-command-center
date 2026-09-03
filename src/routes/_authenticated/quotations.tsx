@@ -660,6 +660,7 @@ function Body() {
                             closer={opportunities.find((o) => o.id === q.opportunityId)?.closer}
                             opportunityId={q.opportunityId}
                             size="xs"
+                            firstNameOnly
                           />
                         </div>
                       </ListTd>
