@@ -1797,13 +1797,13 @@ input[type="number"] {
 :root {
   --tbl-row-h: 1.75rem;
   --tbl-head-h: 1.625rem;
-  --tbl-font: 0.75rem;
+  --tbl-font: var(--text-body);
   --tbl-pad-x: 0.5rem;
 }
 :root[data-density="comfortable"] {
   --tbl-row-h: 2.125rem;
   --tbl-head-h: 2rem;
-  --tbl-font: 0.8125rem;
+  --tbl-font: var(--text-body);
   --tbl-pad-x: 0.625rem;
 }
 
