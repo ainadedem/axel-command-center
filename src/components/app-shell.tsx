@@ -229,49 +229,16 @@ function SidebarModuleGroup({
       <CollapsibleContent className="overflow-hidden data-[state=open]:animate-[accordion-down_240ms_cubic-bezier(0.22,1,0.36,1)] data-[state=closed]:animate-[accordion-up_200ms_cubic-bezier(0.22,1,0.36,1)]">
         <div className="pt-1 pb-2 pl-3">
           {mod.sections.map((section) => (
-            <div key={section.label} className="mt-1 first:mt-0">
-              {!single && (
-                <div className="flex items-center gap-2 px-2 pt-1.5 pb-1">
-                  <span className="h-px w-3 shrink-0 rounded-full bg-border" aria-hidden="true" />
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/60">
-                    {section.label}
-                  </span>
-                </div>
-              )}
-              <div className="space-y-0.5 border-l border-border/70 pl-1.5">
-                {section.items.map((item) => {
-                  const itemActive = pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to));
-                  const Ico = item.icon;
-                  return (
-                    <Link
-                      key={item.to}
-                      to={item.to}
-                      onClick={onNavigate}
-                      aria-current={itemActive ? "page" : undefined}
-                      className={cn(
-                        "group focus-ring flex items-center gap-2.5 pl-2.5 pr-3 py-[7px] rounded-lg text-[13px] relative transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
-                        itemActive
-                          ? "bg-[var(--primary-container)] text-[var(--on-primary-container)] font-semibold"
-                          : "text-foreground/75 hover:text-foreground hover:bg-[var(--surface-container-high)]",
-                      )}
-                    >
-                      <Ico
-                        className={cn(
-                          "h-4 w-4 shrink-0 transition-colors duration-150",
-                          itemActive ? "text-[var(--on-primary-container)]" : "text-foreground/50 group-hover:text-foreground/80",
-                        )}
-                        aria-hidden="true"
-                      />
-                      <span className="truncate">{item.label}</span>
-                      {itemActive && (
-                        <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
+            <SidebarSection
+              key={section.label}
+              modId={mod.id}
+              section={section}
+              hideHeader={single}
+              pathname={pathname}
+              onNavigate={onNavigate}
+            />
           ))}
+
         </div>
       </CollapsibleContent>
     </Collapsible>
