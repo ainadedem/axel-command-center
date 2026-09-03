@@ -433,7 +433,7 @@ function RailNav({ onExpand }: { onExpand?: () => void }) {
                   {mod.sections.map((section) => (
                     <div key={section.label}>
                       {mod.sections.length > 1 && (
-                        <div className="px-3 pt-1.5 pb-0.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
+                        <div className="px-3 pt-1.5 pb-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/60">
                           {section.label}
                         </div>
                       )}
