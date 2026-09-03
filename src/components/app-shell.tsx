@@ -285,7 +285,7 @@ function ModuleHeader({ onNavigate }: { onNavigate?: () => void }) {
   const mod = useActiveModule();
   const Icon = mod?.icon ?? LayoutDashboard;
   return (
-    <div className="px-3 pb-2">
+    <div className="px-3 pb-3 border-b border-sidebar-border">
       <Link
         to="/"
         onClick={onNavigate}
