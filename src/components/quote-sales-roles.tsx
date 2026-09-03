@@ -1,6 +1,7 @@
 import { Target, Handshake } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
+import { firstName } from "@/lib/person-name";
 
 /**
  * Role-tagged chips showing who acquired the client and who closes the deal
@@ -13,12 +14,15 @@ export function QuoteSalesRoles({
   closer,
   opportunityId,
   size = "sm",
+  firstNameOnly = false,
   className = "",
 }: {
   acquisition?: string;
   closer?: string;
   opportunityId?: string;
   size?: "xs" | "sm";
+  /** Dense tables show only the first name; the full name stays in the tooltip. */
+  firstNameOnly?: boolean;
   className?: string;
 }) {
   const text = size === "xs" ? "text-[10px]" : "text-[11px]";
@@ -39,6 +43,7 @@ export function QuoteSalesRoles({
   ) => {
     const inner = (
       <span
+        title={value}
         className={cn(
           "inline-flex items-center gap-1 rounded-full border",
           pad,
@@ -48,7 +53,7 @@ export function QuoteSalesRoles({
         )}
       >
         <Icon className={icon} />
-        <span className="truncate max-w-[8rem]">{value}</span>
+        <span className="truncate max-w-[8rem]">{firstNameOnly ? firstName(value, value) : value}</span>
       </span>
     );
     if (asLink && opportunityId) {
