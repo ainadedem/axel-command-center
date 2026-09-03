@@ -1012,7 +1012,12 @@ export function accountClass(code: string): PcgClass | undefined {
 
 /** Human label for an account (sub-account label, then PCG root, then code). */
 export function accountLabel(code: string): string {
-  return accountLabels[code] ?? pcgRoot(code)?.name ?? code;
+  return (
+    accountLabels[code] ??
+    customAccountsStore.items.find((a) => a.code === code)?.name ??
+    pcgRoot(code)?.name ??
+    code
+  );
 }
 
 export const pcgCompanyIds = new Set(["log", "axi"]);
