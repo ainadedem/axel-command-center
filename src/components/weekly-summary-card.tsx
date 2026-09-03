@@ -97,7 +97,7 @@ export function WeeklySummaryCard({ summary, ownerName }: Props) {
           ) : (
             owners.map((o) => (
               <div key={o.ownerId} className="flex items-center gap-3 px-3 py-2 border-b border-border/40 last:border-0">
-                <div className="text-sm flex-1 truncate">{ownerName(o.ownerId)}</div>
+                <div className="text-sm flex-1 truncate" title={ownerName(o.ownerId)}>{firstName(ownerName(o.ownerId))}</div>
                 {o.criticals > 0 && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded border border-destructive/40 text-destructive bg-destructive/10 uppercase tracking-wider">
                     {o.criticals} critical
