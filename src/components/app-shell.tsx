@@ -412,8 +412,9 @@ function RailNav({ onExpand }: { onExpand?: () => void }) {
                 className={cn(
                   "h-11 w-11 grid place-items-center rounded-full focus-ring transition-colors duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
                   active
-                    ? "bg-[var(--primary-container)] text-[var(--on-primary-container)]"
-                    : "text-foreground/60 hover:bg-[var(--surface-container)] hover:text-foreground",
+                    ? "bg-[var(--primary-container)] text-[var(--on-primary-container)] ring-1 ring-primary/30"
+                    : "text-foreground/70 hover:bg-[var(--surface-container-high)] hover:text-foreground",
+
                 )}
               >
                 <ModIcon className="h-[18px] w-[18px]" aria-hidden="true" />
