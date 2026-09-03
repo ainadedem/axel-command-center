@@ -776,10 +776,15 @@
   .stacked-table tbody > tr > td.row-actions-cell {
     position: static;
     display: block;
+    width: auto !important;
+    max-width: none;
     order: 99;
     padding: 0.5rem 0.875rem 0.25rem !important;
     border-top: 1px solid var(--border);
     margin-top: 0.5rem;
+  }
+  .stacked-table tbody > tr > td.row-actions-cell .row-actions-inner {
+    position: static;
   }
   .stacked-table tbody > tr > td.row-actions-cell::before {
     content: none;
