@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium cursor-pointer select-none transition-[color,background-color,border-color,box-shadow,transform,opacity] duration-150 ease-[cubic-bezier(0.2,0,0,1)] will-change-transform motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.98] active:duration-[90ms] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:transition-transform [&_svg]:duration-150",
+  "relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full t-body font-medium cursor-pointer select-none transition-[color,background-color,border-color,box-shadow,transform,opacity] duration-150 ease-[cubic-bezier(0.2,0,0,1)] will-change-transform motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.98] active:duration-[90ms] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:transition-transform [&_svg]:duration-150",
   {
     variants: {
       variant: {
@@ -26,10 +26,10 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-10 px-5 py-2",
-        sm: "h-8 px-4 text-xs",
+        default: "h-[var(--field-h)] px-4 py-2",
+        sm: "h-8 px-3 t-label",
         lg: "h-12 px-7",
-        icon: "h-10 w-10 tap-target",
+        icon: "h-[var(--field-h)] w-[var(--field-h)] tap-target",
       },
     },
     defaultVariants: {
