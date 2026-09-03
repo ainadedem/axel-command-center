@@ -200,31 +200,45 @@ function SidebarModuleGroup({
   const single = mod.sections.length === 1;
 
   return (
-    <Collapsible open={open} onOpenChange={change}>
+    <Collapsible open={open} onOpenChange={change} className="nav-module">
       <CollapsibleTrigger
         aria-label={`${mod.label} module`}
         className={cn(
-          "w-full focus-ring rounded-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.1em] transition cursor-pointer select-none group/mod",
-          active ? "text-foreground" : "text-foreground/55 hover:text-foreground",
+          "w-full focus-ring rounded-lg flex items-center gap-2.5 pl-2 pr-2.5 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors duration-150 cursor-pointer select-none group/mod relative",
+          active
+            ? "bg-[var(--surface-container-high)] text-foreground before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[3px] before:rounded-full before:bg-primary"
+            : "bg-[var(--surface-container)]/60 text-foreground/70 hover:bg-[var(--surface-container)] hover:text-foreground",
         )}
       >
-        <Icon className={cn("h-4 w-4 shrink-0", active ? "text-primary" : "text-foreground/45")} aria-hidden="true" />
+        <span
+          className={cn(
+            "grid h-6 w-6 shrink-0 place-items-center rounded-md transition-colors duration-150",
+            active
+              ? "bg-[var(--primary-container)] text-[var(--on-primary-container)]"
+              : "bg-[var(--surface-container-high)] text-foreground/60",
+          )}
+        >
+          <Icon className="h-[14px] w-[14px]" aria-hidden="true" />
+        </span>
         <span className="min-w-0 flex-1 truncate text-left">{mod.label}</span>
         <ChevronDown
           aria-hidden="true"
-          className={cn("h-3 w-3 shrink-0 transition-transform duration-300 ease-in-out", open ? "rotate-0" : "-rotate-90")}
+          className={cn("h-3 w-3 shrink-0 opacity-70 transition-transform duration-300 ease-in-out", open ? "rotate-0" : "-rotate-90")}
         />
       </CollapsibleTrigger>
       <CollapsibleContent className="overflow-hidden data-[state=open]:animate-[accordion-down_240ms_cubic-bezier(0.22,1,0.36,1)] data-[state=closed]:animate-[accordion-up_200ms_cubic-bezier(0.22,1,0.36,1)]">
-        <div className="pb-1.5">
+        <div className="pt-1 pb-2 pl-3">
           {mod.sections.map((section) => (
-            <div key={section.label}>
+            <div key={section.label} className="mt-1 first:mt-0">
               {!single && (
-                <div className="px-4 pt-1.5 pb-0.5 text-[10px] uppercase tracking-[0.14em] text-foreground/45">
-                  {section.label}
+                <div className="flex items-center gap-2 px-2 pt-1.5 pb-1">
+                  <span className="h-px w-3 shrink-0 rounded-full bg-border" aria-hidden="true" />
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/60">
+                    {section.label}
+                  </span>
                 </div>
               )}
-              <div className="space-y-0.5">
+              <div className="space-y-0.5 border-l border-border/70 pl-1.5">
                 {section.items.map((item) => {
                   const itemActive = pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to));
                   const Ico = item.icon;
@@ -235,20 +249,23 @@ function SidebarModuleGroup({
                       onClick={onNavigate}
                       aria-current={itemActive ? "page" : undefined}
                       className={cn(
-                        "group focus-ring flex items-center gap-3 pl-4 pr-3 py-2 rounded-full text-sm relative transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
+                        "group focus-ring flex items-center gap-2.5 pl-2.5 pr-3 py-[7px] rounded-lg text-[13px] relative transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
                         itemActive
-                          ? "bg-[var(--primary-container)] text-[var(--on-primary-container)] font-medium"
-                          : "text-foreground/80 hover:text-foreground hover:bg-[var(--surface-container)]",
+                          ? "bg-[var(--primary-container)] text-[var(--on-primary-container)] font-semibold"
+                          : "text-foreground/75 hover:text-foreground hover:bg-[var(--surface-container-high)]",
                       )}
                     >
                       <Ico
                         className={cn(
-                          "h-[18px] w-[18px] shrink-0 transition-colors duration-150",
-                          itemActive ? "text-[var(--on-primary-container)]" : "text-foreground/55",
+                          "h-4 w-4 shrink-0 transition-colors duration-150",
+                          itemActive ? "text-[var(--on-primary-container)]" : "text-foreground/50 group-hover:text-foreground/80",
                         )}
                         aria-hidden="true"
                       />
                       <span className="truncate">{item.label}</span>
+                      {itemActive && (
+                        <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />
+                      )}
                     </Link>
                   );
                 })}
@@ -260,6 +277,7 @@ function SidebarModuleGroup({
     </Collapsible>
   );
 }
+
 
 
 /** Shows which Axel you are in, with a way back to the launcher. */
