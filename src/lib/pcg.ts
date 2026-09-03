@@ -129,6 +129,32 @@ export const pcgAccounts: PcgAccount[] = [
 
 export const pcgIndex = new Map(pcgAccounts.map((a) => [a.code, a]));
 
+/** Sub-accounts created in-app by the finance team (persisted locally). */
+export interface CustomPcgAccount extends PcgAccount {
+  id: string;
+  createdAt: string;
+  createdBy?: string;
+}
+
+export const customAccountsStore = createCollection<CustomPcgAccount>("pcg-custom-accounts", []);
+export const useCustomAccounts = () => useCollection(customAccountsStore);
+
+/** Built-in PCG accounts + custom sub-accounts, sorted by code. */
+export function allPcgAccounts(): PcgAccount[] {
+  return [...pcgAccounts, ...customAccountsStore.items].sort((a, b) => a.code.localeCompare(b.code));
+}
+
+/** Reactive version of `allPcgAccounts()` for components. */
+export function useAllPcgAccounts(): PcgAccount[] {
+  const custom = useCustomAccounts();
+  return [...pcgAccounts, ...custom].sort((a, b) => a.code.localeCompare(b.code));
+}
+
+/** Exact lookup across built-in and custom accounts. */
+export function findAccount(code: string): PcgAccount | undefined {
+  return pcgIndex.get(code) ?? customAccountsStore.items.find((a) => a.code === code);
+}
+
 export const classNames: Record<PcgClass, string> = {
   1: "Comptes de capitaux",
   2: "Comptes d'immobilisations",
