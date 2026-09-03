@@ -163,6 +163,115 @@ const moduleHasActive = (mod: VisibleModule, pathname: string) =>
   );
 
 const MODULE_OPEN_KEY = "axel.navModuleOpen.v1";
+const SECTION_OPEN_KEY = "axel.navSectionOpen.v1";
+
+const readOpenMap = (key: string): Record<string, boolean> => {
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+  } catch {
+    return {};
+  }
+};
+
+const writeOpenState = (key: string, id: string, next: boolean) => {
+  try {
+    const map = readOpenMap(key);
+    map[id] = next;
+    window.localStorage.setItem(key, JSON.stringify(map));
+  } catch { /* storage unavailable */ }
+};
+
+/** One collapsible section of links inside a module. */
+function SidebarSection({
+  modId,
+  section,
+  hideHeader,
+  pathname,
+  onNavigate,
+}: {
+  modId: string;
+  section: NavSection;
+  hideHeader: boolean;
+  pathname: string;
+  onNavigate?: () => void;
+}) {
+  const isItemActive = (to: string) => pathname === to || (to !== "/" && pathname.startsWith(to));
+  const active = section.items.some((item) => isItemActive(item.to));
+  const storageId = `${modId}:${section.label}`;
+  const [open, setOpen] = useState(true);
+
+  useEffect(() => {
+    if (active) { setOpen(true); return; }
+    const stored = readOpenMap(SECTION_OPEN_KEY)[storageId];
+    if (typeof stored === "boolean") setOpen(stored);
+  }, [active, storageId]);
+
+  const change = (next: boolean) => {
+    setOpen(next);
+    writeOpenState(SECTION_OPEN_KEY, storageId, next);
+  };
+
+  const links = (
+    <div className="space-y-0.5 border-l border-border/70 pl-1.5">
+      {section.items.map((item) => {
+        const itemActive = isItemActive(item.to);
+        const Ico = item.icon;
+        return (
+          <Link
+            key={item.to}
+            to={item.to}
+            onClick={onNavigate}
+            aria-current={itemActive ? "page" : undefined}
+            className={cn(
+              "group focus-ring flex items-center gap-2.5 pl-2.5 pr-3 py-[7px] rounded-lg text-[13px] relative transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
+              itemActive
+                ? "bg-[var(--primary-container)] text-[var(--on-primary-container)] font-semibold"
+                : "text-foreground/75 hover:text-foreground hover:bg-[var(--surface-container-high)]",
+            )}
+          >
+            <Ico
+              className={cn(
+                "h-4 w-4 shrink-0 transition-colors duration-150",
+                itemActive ? "text-[var(--on-primary-container)]" : "text-foreground/50 group-hover:text-foreground/80",
+              )}
+              aria-hidden="true"
+            />
+            <span className="truncate">{item.label}</span>
+            {itemActive && <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />}
+          </Link>
+        );
+      })}
+    </div>
+  );
+
+  if (hideHeader) return <div className="mt-1 first:mt-0">{links}</div>;
+
+  return (
+    <Collapsible open={open} onOpenChange={change} className="mt-1 first:mt-0">
+      <CollapsibleTrigger
+        className={cn(
+          "w-full focus-ring rounded-md flex items-center gap-2 px-2 pt-1.5 pb-1 cursor-pointer select-none transition-colors duration-150",
+          active ? "text-foreground" : "text-foreground/60 hover:text-foreground",
+        )}
+      >
+        <span className="h-px w-3 shrink-0 rounded-full bg-border" aria-hidden="true" />
+        <span className="min-w-0 flex-1 truncate text-left text-[10px] font-semibold uppercase tracking-[0.14em]">
+          {section.label}
+        </span>
+        <ChevronDown
+          aria-hidden="true"
+          className={cn("h-3 w-3 shrink-0 opacity-70 transition-transform duration-300 ease-in-out", open ? "rotate-0" : "-rotate-90")}
+        />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="overflow-hidden data-[state=open]:animate-[accordion-down_200ms_cubic-bezier(0.22,1,0.36,1)] data-[state=closed]:animate-[accordion-up_180ms_cubic-bezier(0.22,1,0.36,1)]">
+        {links}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+
 
 /** One collapsible group per Axel module, remembering its open state. */
 function SidebarModuleGroup({
