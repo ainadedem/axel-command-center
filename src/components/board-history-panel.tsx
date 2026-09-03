@@ -96,7 +96,7 @@ export function BoardHistoryPanel({
     return () => { cancelled = true; };
   }, [open, docType, idKey, tick]);
 
-  const { ownerName } = useOwnerNames(useMemo(() => rows.map((r) => r.actorId ?? undefined), [rows]));
+  const { ownerName, ownerFirstName } = useOwnerNames(useMemo(() => rows.map((r) => r.actorId ?? undefined), [rows]));
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -141,7 +141,7 @@ export function BoardHistoryPanel({
                 )}
               </div>
               <div className="text-[11px] text-muted-foreground mt-1.5">
-                {ownerName(r.actorId ?? undefined) || "Unknown user"}
+                <span title={ownerName(r.actorId ?? undefined)}>{ownerFirstName(r.actorId ?? undefined) || "Unknown user"}</span>
                 {r.blocked && r.reason ? ` · ${r.reason}` : ""}
               </div>
             </li>

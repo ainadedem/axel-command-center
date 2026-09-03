@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { firstName } from "@/lib/person-name";
 
 /**
  * Resolves user ids (document creators) to readable names.
@@ -8,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 export function useOwnerNames(ids: (string | undefined)[]): {
   owners: Record<string, string>;
   ownerName: (id?: string) => string;
+  /** First name only — for dense tables and boards. */
+  ownerFirstName: (id?: string) => string;
 } {
   const [owners, setOwners] = useState<Record<string, string>>({});
 
@@ -39,5 +42,6 @@ export function useOwnerNames(ids: (string | undefined)[]): {
     return () => { cancelled = true; };
   }, [key]);
 
-  return { owners, ownerName: (id?: string) => (id ? owners[id] || "—" : "—") };
+  const ownerName = (id?: string) => (id ? owners[id] || "—" : "—");
+  return { owners, ownerName, ownerFirstName: (id?: string) => firstName(id ? owners[id] : "", "—") };
 }

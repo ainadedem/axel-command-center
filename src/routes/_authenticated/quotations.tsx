@@ -215,7 +215,7 @@ function Body() {
   const openCreate = () => { setEditing(null); setOpen(true); };
 
   // Resolve quotation owners to readable names (colleagues sharing a company).
-  const { ownerName: nameOf } = useOwnerNames(baseList.map((q) => q.createdBy));
+  const { ownerName: nameOf, ownerFirstName: firstNameOf } = useOwnerNames(baseList.map((q) => q.createdBy));
   const ownerName = (q: Quote) => nameOf(q.createdBy);
 
 
@@ -619,7 +619,7 @@ function Body() {
                     {cp.on("company") && (
                       <ListTd title={co?.name}>{co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}</ListTd>
                     )}
-                    {cp.on("owner") && <ListTd className="text-xs text-muted-foreground" title={ownerName(q)}>{ownerName(q)}</ListTd>}
+                    {cp.on("owner") && <ListTd className="text-xs text-muted-foreground" title={ownerName(q)}>{firstNameOf(q.createdBy)}</ListTd>}
                     {cp.on("followup") && (
                       <ListTd wrap>
                         <button

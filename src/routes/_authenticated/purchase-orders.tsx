@@ -113,7 +113,7 @@ function Body() {
   const [editing, setEditing] = useState<PurchaseOrder | null>(null);
   const [historyOf, setHistoryOf] = useState<PurchaseOrder | null>(null);
   const openCreate = () => { setEditing(null); setOpen(true); };
-  const { ownerName } = useOwnerNames(baseList.map((p) => p.createdBy));
+  const { ownerName, ownerFirstName } = useOwnerNames(baseList.map((p) => p.createdBy));
 
   const fields: FieldDef<PurchaseOrder>[] = [
     { key: "number", label: "Number", type: "string", accessor: (p) => p.number, noGroup: true },
@@ -358,7 +358,7 @@ function Body() {
                     <ListTd align="right" className="font-tnum">{fmtCompact(po.amount, po.currency)}</ListTd>
                     {cp.on("owner") && (
                       <ListTd className="text-xs text-muted-foreground" title={po.updatedAt ? `Updated by ${ownerName(po.updatedBy ?? po.createdBy)} · ${format(parseISO(po.updatedAt), "MMM d, HH:mm")}` : ownerName(po.createdBy)}>
-                        {ownerName(po.createdBy)}
+                        {ownerFirstName(po.createdBy)}
                       </ListTd>
                     )}
                   </tr>

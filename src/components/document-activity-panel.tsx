@@ -67,7 +67,7 @@ interface Props {
 export function DocumentActivityPanel({ open, onOpenChange, docType, docId, docNumber }: Props) {
   const { entries, loading } = useDocumentActivity(docType, open ? docId : undefined);
   const actorIds = useMemo(() => entries.map((e) => e.actorId), [entries]);
-  const { ownerName } = useOwnerNames(actorIds);
+  const { ownerName, ownerFirstName } = useOwnerNames(actorIds);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -108,7 +108,7 @@ export function DocumentActivityPanel({ open, onOpenChange, docType, docId, docN
                   </div>
                   {e.summary && <p className="text-xs text-muted-foreground mt-0.5">{e.summary}</p>}
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    {ownerName(e.actorId)} · {fmt(e.createdAt)}
+                    <span title={ownerName(e.actorId)}>{ownerFirstName(e.actorId)}</span> · {fmt(e.createdAt)}
                   </p>
                 </li>
               );
