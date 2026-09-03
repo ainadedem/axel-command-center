@@ -45,11 +45,11 @@ function Row({
   const body = (
     <div className="flex min-w-0 items-center gap-2.5 py-1.5">
       <span className={missing ? "text-muted-foreground" : "text-primary"}>{icon}</span>
-      <span className="w-20 shrink-0 text-xs text-muted-foreground">{label}</span>
-      <span className={`min-w-0 flex-1 truncate text-sm ${missing ? "text-muted-foreground italic" : ""}`}>
+      <span className="w-20 shrink-0 t-label text-muted-foreground">{label}</span>
+      <span className={`min-w-0 flex-1 truncate t-body ${missing ? "text-muted-foreground italic" : ""}`}>
         {primary}
       </span>
-      {secondary && <span className="shrink-0 font-tnum text-sm text-muted-foreground">{secondary}</span>}
+      {secondary && <span className="shrink-0 font-tnum t-body text-muted-foreground">{secondary}</span>}
       {href && <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
     </div>
   );
@@ -93,7 +93,7 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
   return (
     <section className="rounded-2xl bg-[var(--surface-container)]/60 px-4 py-3">
       <div className="mb-1 flex items-center justify-between gap-2">
-        <h3 className="text-[11px] tracking-[0.06em] text-muted-foreground">Payment proof</h3>
+        <h3 className="t-label tracking-[0.06em] text-muted-foreground">Payment proof</h3>
         <VerifiedBadge state={badgeState(proof.verification)} showLabel />
       </div>
 
@@ -131,7 +131,7 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
       ) : (
         <>
           {multi && canUnlink && (
-            <div className="flex items-center justify-between gap-2 px-1 pb-1 pt-1 text-[11px] text-muted-foreground">
+            <div className="flex items-center justify-between gap-2 px-1 pb-1 pt-1 t-label text-muted-foreground">
               <button
                 type="button"
                 className="rounded px-1.5 py-0.5 hover:bg-[var(--surface-container)] hover:text-foreground"
@@ -149,7 +149,7 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-6 gap-1 px-2 text-xs text-destructive"
+                  className="h-6 gap-1 px-2 t-label text-destructive"
                   onClick={() => setBulkUnlink(true)}
                 >
                   <Unlink className="h-3.5 w-3.5" /> Unlink {picked.length} payment
@@ -194,7 +194,7 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
                   href={{ to: "/transactions", search: { q: it.transaction.description.slice(0, 40) } }}
                 />
                 {multi && (
-                  <p className="pl-[7.1rem] text-[11px] text-muted-foreground">
+                  <p className="pl-[7.1rem] t-label text-muted-foreground">
                     covered {money(it.runningCovered, invoice.currency)} · remaining{" "}
                     {money(it.remainingAfter, invoice.currency)}
                   </p>
@@ -206,7 +206,7 @@ export function PaymentProofBlock({ invoice }: { invoice: Invoice }) {
       )}
 
       {proof.verification === "installment" && (
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-warning">
+        <div className="mt-1 flex flex-wrap items-center gap-2 t-label text-warning">
           <span>
             Part-paid: {money(proof.covered, invoice.currency)} of{" "}
             {money(proof.payable, invoice.currency)} matched — {money(proof.outstanding, invoice.currency)}{" "}
@@ -297,7 +297,7 @@ function VerificationHistory({ invoiceId }: { invoiceId: string }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+        className="flex items-center gap-1.5 t-label text-muted-foreground transition-colors hover:text-foreground"
       >
         <History className="h-3.5 w-3.5" />
         Verification history ({entries.length})
@@ -308,7 +308,7 @@ function VerificationHistory({ invoiceId }: { invoiceId: string }) {
             <li
               key={e.id}
               data-entry={e.id}
-              className={`rounded-md text-xs transition-colors ${
+              className={`rounded-md t-label transition-colors ${
                 highlight === e.id ? "bg-primary/10 px-1.5 py-1 ring-1 ring-primary/40" : ""
               }`}
             >
@@ -322,7 +322,7 @@ function VerificationHistory({ invoiceId }: { invoiceId: string }) {
                 </span>
               </div>
               {describeMatchedFields(e.details) && (
-                <div className="text-[11px] text-muted-foreground">{describeMatchedFields(e.details)}</div>
+                <div className="t-label text-muted-foreground">{describeMatchedFields(e.details)}</div>
               )}
             </li>
           ))}

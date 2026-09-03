@@ -145,7 +145,7 @@ function Body() {
 
       </div>
 
-      <div className="flex items-start gap-2 rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+      <div className="flex items-start gap-2 rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 t-label text-muted-foreground">
         <Info className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
         <span>
           Hover a row to reveal its actions. The{" "}
@@ -162,10 +162,10 @@ function Body() {
         <>
           <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 flex items-center justify-between">
             <div>
-              <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Total liquidity</div>
+              <div className="t-label uppercase tracking-[0.16em] text-muted-foreground">Total liquidity</div>
               <div className="font-display text-3xl font-bold mt-1 font-tnum">{fmtCompact(totalMGA, "MGA")}</div>
             </div>
-            <div className="text-xs text-muted-foreground">{baseList.length} accounts</div>
+            <div className="t-label text-muted-foreground">{baseList.length} accounts</div>
           </div>
 
           <ListTableShell>
@@ -208,7 +208,7 @@ function Body() {
                               <div className="h-8 w-8 shrink-0 rounded-md bg-surface-elevated grid place-items-center text-muted-foreground"><Icon className="h-4 w-4" /></div>
                               <div className="min-w-0">
                                 <div className="font-medium truncate">{a.name}</div>
-                                <div className="text-xs text-muted-foreground uppercase">{a.currency}</div>
+                                <div className="t-label text-muted-foreground uppercase">{a.currency}</div>
                               </div>
                             </div>
                           </ListTd>
@@ -217,11 +217,11 @@ function Body() {
                           </ListTd>
                           {cp.on("type") && <ListTd className="capitalize text-muted-foreground">{a.type}</ListTd>}
                           {cp.on("statement") && (
-                            <ListTd className="text-xs text-muted-foreground" title={a.statementName}>
+                            <ListTd className="t-label text-muted-foreground" title={a.statementName}>
                               {a.statementUploadedAt ? (
                                 <div className="flex flex-col min-w-0">
                                   <span className="font-tnum">{format(parseISO(a.statementUploadedAt), "MMM d, yyyy")}</span>
-                                  {a.statementName && <span className="text-[10px] text-muted-foreground/70 truncate">{a.statementName}</span>}
+                                  {a.statementName && <span className="t-micro text-muted-foreground/70 truncate">{a.statementName}</span>}
                                 </div>
                               ) : <span className="text-muted-foreground/40">—</span>}
                             </ListTd>
@@ -230,14 +230,14 @@ function Body() {
                             <ListTd align="right" className="font-tnum text-muted-foreground">
                               <div className="flex flex-col items-end">
                                 <span>{fmtCompact(openingOf(a), a.currency)}</span>
-                                {a.openingBalanceDate && <span className="text-[10px] text-muted-foreground/70">as of {format(parseISO(a.openingBalanceDate), "MMM d, yyyy")}</span>}
+                                {a.openingBalanceDate && <span className="t-micro text-muted-foreground/70">as of {format(parseISO(a.openingBalanceDate), "MMM d, yyyy")}</span>}
                               </div>
                             </ListTd>
                           )}
                           <ListTd align="right" className="font-tnum">
                             <div className="flex flex-col items-end">
                               <span>{fmtCompact(balanceOf(a), a.currency)}</span>
-                              <span className="text-[10px] text-muted-foreground/70">{balances.get(a.id)?.txCount ?? 0} movements</span>
+                              <span className="t-micro text-muted-foreground/70">{balances.get(a.id)?.txCount ?? 0} movements</span>
                             </div>
                           </ListTd>
                           {cp.on("mga") && <ListTd align="right" className="font-tnum text-muted-foreground">{fmtCompact(toMGA(balanceOf(a), a.currency), "MGA")}</ListTd>}
@@ -347,7 +347,7 @@ function AccountDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
             <div><Label>Opening balance</Label><Input type="number" value={balance} onChange={(e) => setBalance(e.target.value)} /></div>
             <div><Label>Opening balance date</Label><Input type="date" value={openingDate} onChange={(e) => setOpeningDate(e.target.value)} /></div>
           </div>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="t-label text-muted-foreground">
             The displayed balance is computed: opening balance plus every transaction recorded on this account from the opening date onwards.
             Reconcile it against a bank statement to confirm it is accurate.
           </p>
@@ -425,18 +425,18 @@ function ReconciliationHistoryDialog({ open, onOpenChange, account }: { open: bo
         <div className="flex flex-wrap items-end gap-2">
           <div className="relative flex-1 min-w-[180px]">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search file name…" className="h-8 pl-8 text-xs" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search file name…" className="h-8 pl-8 t-label" />
           </div>
           <div>
-            <Label className="text-[10px] text-muted-foreground">From</Label>
-            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-8 text-xs" />
+            <Label className="t-micro text-muted-foreground">From</Label>
+            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-8 t-label" />
           </div>
           <div>
-            <Label className="text-[10px] text-muted-foreground">To</Label>
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-8 text-xs" />
+            <Label className="t-micro text-muted-foreground">To</Label>
+            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-8 t-label" />
           </div>
           <Select value={status} onValueChange={(v) => setStatus(v as ReconStatus)}>
-            <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-8 w-[140px] t-label"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="balanced">Balanced</SelectItem>
@@ -445,27 +445,27 @@ function ReconciliationHistoryDialog({ open, onOpenChange, account }: { open: bo
             </SelectContent>
           </Select>
           {(q || from || to || status !== "all") && (
-            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setQ(""); setFrom(""); setTo(""); setStatus("all"); }}>Clear</Button>
+            <Button variant="ghost" size="sm" className="h-8 t-label" onClick={() => { setQ(""); setFrom(""); setTo(""); setStatus("all"); }}>Clear</Button>
           )}
         </div>
 
         <div className="py-1">
           {loading ? (
-            <div className="text-sm text-muted-foreground py-6 text-center">Loading…</div>
+            <div className="t-body text-muted-foreground py-6 text-center">Loading…</div>
           ) : rows.length === 0 ? (
-            <div className="text-sm text-muted-foreground py-6 text-center">
+            <div className="t-body text-muted-foreground py-6 text-center">
               This account has never been reconciled. Upload a bank statement to prove the balance is accurate.
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-sm text-muted-foreground py-6 text-center">No reconciliation matches these filters.</div>
+            <div className="t-body text-muted-foreground py-6 text-center">No reconciliation matches these filters.</div>
           ) : (
             <>
-              <div className="text-[11px] text-muted-foreground mb-2">{filtered.length} of {rows.length} reconciliations</div>
+              <div className="t-label text-muted-foreground mb-2">{filtered.length} of {rows.length} reconciliations</div>
               <div className="rounded-lg border border-border overflow-hidden">
                 <div className="overflow-x-auto stacked-table">
-                <table className="sheet sheet-pin1 w-full min-w-[720px] text-xs">
+                <table className="sheet sheet-pin1 w-full min-w-[720px] t-label">
                   <thead>
-                    <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                    <tr className="t-micro uppercase tracking-wider text-muted-foreground border-b border-border">
                       <th className="text-left font-medium px-3 py-2">Period</th>
                       <th className="text-left font-medium px-3 py-2">Statement</th>
                       <th className="text-right font-medium px-3 py-2">Rows</th>
@@ -484,7 +484,7 @@ function ReconciliationHistoryDialog({ open, onOpenChange, account }: { open: bo
                           </td>
                           <td className="px-3 py-2 truncate max-w-[200px]">
                             {r.statementName ?? "—"}
-                            {r.adjustmentAmount ? <span className="ml-2 text-[10px] uppercase tracking-wider text-warning">adjusted</span> : null}
+                            {r.adjustmentAmount ? <span className="ml-2 t-micro uppercase tracking-wider text-warning">adjusted</span> : null}
                           </td>
                           <td className="px-3 py-2 text-right font-tnum">{r.rowCount}</td>
                           <td className="px-3 py-2 text-right font-tnum">{account ? fmtCompact(r.statementClosingBalance, account.currency) : r.statementClosingBalance}</td>

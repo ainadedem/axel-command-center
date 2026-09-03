@@ -58,13 +58,13 @@ function CompanySwitcher() {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-full bg-[var(--surface-container)] hover:bg-[var(--surface-container-high)] border-0 text-sm transition-all duration-150 ease-[cubic-bezier(0.2,0,0,1)] active:scale-[0.99] group/ws"
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-full bg-[var(--surface-container)] hover:bg-[var(--surface-container-high)] border-0 t-body transition-all duration-150 ease-[cubic-bezier(0.2,0,0,1)] active:scale-[0.99] group/ws"
       >
-        <div className="h-7 w-7 rounded-md bg-gradient-to-br from-primary to-chart-2 grid place-items-center text-[10px] font-display font-bold text-primary-foreground">
+        <div className="h-7 w-7 rounded-md bg-gradient-to-br from-primary to-chart-2 grid place-items-center t-micro font-display font-bold text-primary-foreground">
           {scope.id === "group" ? "GR" : companies.find((c) => c.id === scope.companyId)?.shortName}
         </div>
         <div className="flex-1 text-left min-w-0">
-          <div className="text-[10px] uppercase tracking-wider text-foreground/60">Workspace</div>
+          <div className="t-micro uppercase tracking-wider text-foreground/60">Workspace</div>
           <div className="truncate font-medium">{label}</div>
         </div>
         <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -77,9 +77,9 @@ function CompanySwitcher() {
               <>
                 <button
                   onClick={() => { setScope({ id: "group" }); setOpen(false); }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-accent hover:pl-4 text-sm transition-all duration-200"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-accent hover:pl-4 t-body transition-all duration-200"
                 >
-                  <div className="h-6 w-6 rounded bg-gradient-to-br from-primary to-chart-2 grid place-items-center text-[9px] font-bold text-primary-foreground">GR</div>
+                  <div className="h-6 w-6 rounded bg-gradient-to-br from-primary to-chart-2 grid place-items-center t-micro font-bold text-primary-foreground">GR</div>
                   <span className="flex-1 text-left">Group · All companies</span>
                   {scope.id === "group" && <Check className="h-4 w-4 text-primary" />}
                 </button>
@@ -90,9 +90,9 @@ function CompanySwitcher() {
               <button
                 key={company.id}
                 onClick={() => { setScope({ id: "company", companyId: company.id }); setOpen(false); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-accent text-sm"
+                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-accent t-body"
               >
-                <div className="h-6 w-6 rounded grid place-items-center text-[9px] font-bold text-primary-foreground" style={{ background: company.color }}>
+                <div className="h-6 w-6 rounded grid place-items-center t-micro font-bold text-primary-foreground" style={{ background: company.color }}>
                   {company.shortName}
                 </div>
                 <span className="flex-1 text-left">{company.name}</span>
@@ -256,7 +256,7 @@ function SidebarSection({
         )}
       >
         <span className="h-px w-3 shrink-0 rounded-full bg-border" aria-hidden="true" />
-        <span className="min-w-0 flex-1 truncate text-left text-[10px] font-semibold uppercase tracking-[0.14em]">
+        <span className="min-w-0 flex-1 truncate text-left t-micro font-semibold uppercase tracking-[0.14em]">
           {section.label}
         </span>
         <ChevronDown
@@ -313,7 +313,7 @@ function SidebarModuleGroup({
       <CollapsibleTrigger
         aria-label={`${mod.label} module`}
         className={cn(
-          "w-full focus-ring rounded-lg flex items-center gap-2.5 pl-2 pr-2.5 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors duration-150 cursor-pointer select-none group/mod relative",
+          "w-full focus-ring rounded-lg flex items-center gap-2.5 pl-2 pr-2.5 py-2 t-label font-semibold uppercase tracking-[0.1em] transition-colors duration-150 cursor-pointer select-none group/mod relative",
           active
             ? "bg-[var(--surface-container-high)] text-foreground before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[3px] before:rounded-full before:bg-primary"
             : "bg-[var(--surface-container)]/60 text-foreground/70 hover:bg-[var(--surface-container)] hover:text-foreground",
@@ -366,14 +366,14 @@ function ModuleHeader({ onNavigate }: { onNavigate?: () => void }) {
         to="/"
         onClick={onNavigate}
         title="Switch module"
-        className="focus-ring group flex items-center gap-3 rounded-2xl px-3 py-2 text-sm hover:bg-[var(--surface-container)] transition-colors duration-150"
+        className="focus-ring group flex items-center gap-3 rounded-2xl px-3 py-2 t-body hover:bg-[var(--surface-container)] transition-colors duration-150"
       >
         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[var(--primary-container)] text-[var(--on-primary-container)]">
           <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate font-medium">{mod?.label ?? "Axel"}</span>
-          <span className="block text-[10px] uppercase tracking-[0.14em] text-foreground/55">Switch module</span>
+          <span className="block t-micro uppercase tracking-[0.14em] text-foreground/55">Switch module</span>
         </span>
         <ChevronRight className="h-4 w-4 shrink-0 text-foreground/45 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
       </Link>
@@ -391,7 +391,7 @@ function SidebarInner({ onNavigate, onCollapse }: { onNavigate?: () => void; onC
       <div className="px-5 py-5 flex items-start justify-between gap-2">
         <div className="flex flex-col gap-1.5 min-w-0">
           <AxelWordmark title="AXEL Business Platform" className="h-7 w-auto self-start text-foreground" />
-          <span className="text-[11px] font-medium tracking-wide text-foreground/80">The Axiom Winford Group</span>
+          <span className="t-label font-medium tracking-wide text-foreground/80">The Axiom Winford Group</span>
         </div>
         {onCollapse && (
           <button
@@ -419,7 +419,7 @@ function SidebarInner({ onNavigate, onCollapse }: { onNavigate?: () => void; onC
         <Link
           to="/settings"
           onClick={onNavigate}
-          className="group focus-ring flex items-center gap-3 px-4 py-2.5 rounded-full text-sm text-foreground/80 hover:bg-[var(--surface-container)] hover:text-foreground transition-all duration-150"
+          className="group focus-ring flex items-center gap-3 px-4 py-2.5 rounded-full t-body text-foreground/80 hover:bg-[var(--surface-container)] hover:text-foreground transition-all duration-150"
         >
           <Settings className="h-4 w-4 transition-transform duration-500 group-hover:rotate-90" /> Settings
         </Link>
@@ -503,13 +503,13 @@ function RailNav({ onExpand }: { onExpand?: () => void }) {
                   onMouseEnter={() => show(mod.id)}
                   onMouseLeave={scheduleClose}
                 >
-                  <div className="px-3 pt-1.5 pb-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  <div className="px-3 pt-1.5 pb-2 t-micro uppercase tracking-[0.14em] text-muted-foreground">
                     {mod.label}
                   </div>
                   {mod.sections.map((section) => (
                     <div key={section.label}>
                       {mod.sections.length > 1 && (
-                        <div className="px-3 pt-1.5 pb-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/60">
+                        <div className="px-3 pt-1.5 pb-0.5 t-micro font-semibold uppercase tracking-[0.14em] text-foreground/60">
                           {section.label}
                         </div>
                       )}
@@ -524,7 +524,7 @@ function RailNav({ onExpand }: { onExpand?: () => void }) {
                             onClick={() => setOpen(null)}
                             aria-current={itemActive ? "page" : undefined}
                             className={cn(
-                              "flex items-center gap-3 px-3 py-2 rounded-2xl text-sm focus-ring transition-colors duration-150",
+                              "flex items-center gap-3 px-3 py-2 rounded-2xl t-body focus-ring transition-colors duration-150",
                               itemActive
                                 ? "bg-[var(--primary-container)] text-[var(--on-primary-container)] font-medium"
                                 : "text-foreground/80 hover:bg-[var(--surface-container)] hover:text-foreground",
@@ -555,7 +555,7 @@ function RailNav({ onExpand }: { onExpand?: () => void }) {
       <Link
         to="/settings"
         aria-label="Your profile"
-        className="focus-ring h-9 w-9 rounded-full overflow-hidden bg-gradient-to-br from-chart-2 to-chart-4 grid place-items-center text-[11px] font-display font-bold text-primary-foreground"
+        className="focus-ring h-9 w-9 rounded-full overflow-hidden bg-gradient-to-br from-chart-2 to-chart-4 grid place-items-center t-label font-display font-bold text-primary-foreground"
       >
         {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initials || "?"}
       </Link>
@@ -606,7 +606,7 @@ function WorkspaceRailButton() {
         title={label}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="h-9 w-9 rounded-2xl bg-gradient-to-br from-primary to-chart-2 grid place-items-center text-[10px] font-display font-bold text-primary-foreground focus-ring transition-transform duration-150 hover:scale-105 active:scale-95"
+        className="h-9 w-9 rounded-2xl bg-gradient-to-br from-primary to-chart-2 grid place-items-center t-micro font-display font-bold text-primary-foreground focus-ring transition-transform duration-150 hover:scale-105 active:scale-95"
       >
         {mark}
       </button>
@@ -618,9 +618,9 @@ function WorkspaceRailButton() {
               <button
                 role="menuitem"
                 onClick={() => { setScope({ id: "group" }); setOpen(false); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-[var(--surface-container)] text-sm transition-colors duration-150"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-[var(--surface-container)] t-body transition-colors duration-150"
               >
-                <span className="h-6 w-6 rounded-lg bg-gradient-to-br from-primary to-chart-2 grid place-items-center text-[9px] font-bold text-primary-foreground">GR</span>
+                <span className="h-6 w-6 rounded-lg bg-gradient-to-br from-primary to-chart-2 grid place-items-center t-micro font-bold text-primary-foreground">GR</span>
                 <span className="flex-1 text-left">Group · All companies</span>
                 {scope.id === "group" && <Check className="h-4 w-4 text-primary" />}
               </button>
@@ -630,9 +630,9 @@ function WorkspaceRailButton() {
                 key={company.id}
                 role="menuitem"
                 onClick={() => { setScope({ id: "company", companyId: company.id }); setOpen(false); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-[var(--surface-container)] text-sm transition-colors duration-150"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-[var(--surface-container)] t-body transition-colors duration-150"
               >
-                <span className="h-6 w-6 rounded-lg grid place-items-center text-[9px] font-bold text-primary-foreground" style={{ background: company.color }}>
+                <span className="h-6 w-6 rounded-lg grid place-items-center t-micro font-bold text-primary-foreground" style={{ background: company.color }}>
                   {company.shortName}
                 </span>
                 <span className="flex-1 text-left truncate">{company.name}</span>
@@ -885,14 +885,14 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
                 {isLast ? (
                   <span
                     aria-current="page"
-                    className="truncate max-w-[20ch] text-sm font-medium text-foreground"
+                    className="truncate max-w-[20ch] t-body font-medium text-foreground"
                   >
                     {crumb.label}
                   </span>
                 ) : (
                   <Link
                     to={crumb.to as never}
-                    className="truncate max-w-[20ch] text-sm text-muted-foreground hover:text-foreground transition-colors duration-150"
+                    className="truncate max-w-[20ch] t-body text-muted-foreground hover:text-foreground transition-colors duration-150"
                   >
                     {crumb.label}
                   </Link>
@@ -912,9 +912,9 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
           placeholder="Search..."
           aria-label="Search transactions, invoices and clients"
           type="search"
-          className="w-full h-10 pl-11 pr-3 md:pr-12 rounded-lg bg-surface border border-border text-sm text-foreground placeholder:text-muted-foreground shadow-none transition-[background-color,border-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)] focus:outline-none focus:border-primary"
+          className="w-full h-10 pl-11 pr-3 md:pr-12 rounded-lg bg-surface border border-border t-body text-foreground placeholder:text-muted-foreground shadow-none transition-[background-color,border-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)] focus:outline-none focus:border-primary"
         />
-        <kbd className="hidden md:block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
+        <kbd className="hidden md:block absolute right-3 top-1/2 -translate-y-1/2 t-micro text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
       </form>
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         <div className="hidden sm:flex items-center gap-0.5">
@@ -946,7 +946,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             onClick={handleNew}
             aria-label={newLabel}
             title={newLabel}
-            className="h-10 w-10 sm:w-auto sm:px-4 focus-ring tap-target rounded-lg text-sm font-medium bg-surface text-primary border border-border shadow-none hover:bg-[var(--surface-container)] active:scale-[0.98] transition-all duration-150 ease-[cubic-bezier(0.2,0,0,1)] flex items-center justify-center gap-2 group"
+            className="h-10 w-10 sm:w-auto sm:px-4 focus-ring tap-target rounded-lg t-body font-medium bg-surface text-primary border border-border shadow-none hover:bg-[var(--surface-container)] active:scale-[0.98] transition-all duration-150 ease-[cubic-bezier(0.2,0,0,1)] flex items-center justify-center gap-2 group"
           >
             <Plus className="h-5 w-5 shrink-0 transition-transform duration-200 group-hover:rotate-90" />
             <span className="hidden sm:inline">{newLabel}</span>
@@ -969,7 +969,7 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             aria-label="Account menu"
             aria-haspopup="menu"
             aria-expanded={menuOpen}
-            className="h-8 w-8 rounded-full overflow-hidden bg-gradient-to-br from-chart-2 to-chart-4 grid place-items-center text-xs font-display font-bold text-primary-foreground focus-ring transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-110 active:scale-95"
+            className="h-8 w-8 rounded-full overflow-hidden bg-gradient-to-br from-chart-2 to-chart-4 grid place-items-center t-label font-display font-bold text-primary-foreground focus-ring transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-110 active:scale-95"
           >
             {avatarUrl ? (
               <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
@@ -982,9 +982,9 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
               <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
               <div role="menu" aria-label="Account" className="absolute right-0 mt-2 w-72 rounded-2xl border-0 bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-150">
                 <div className="px-3 py-3 border-b border-border">
-                  <div className="text-sm font-medium truncate">{name}</div>
-                  <div className="text-[11px] text-muted-foreground truncate">{user?.email}</div>
-                  <div className="text-[10px] uppercase tracking-wider text-primary mt-1">{role}</div>
+                  <div className="t-body font-medium truncate">{name}</div>
+                  <div className="t-label text-muted-foreground truncate">{user?.email}</div>
+                  <div className="t-micro uppercase tracking-wider text-primary mt-1">{role}</div>
                 </div>
                 <div className="px-3 py-3 border-b border-border">
                   <ThemeControls />
@@ -992,14 +992,14 @@ function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
                 <button
                   role="menuitem"
                   onClick={() => { setMenuOpen(false); navigate({ to: "/settings" }); }}
-                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-accent hover:pl-4 focus-ring transition-all duration-200"
+                  className="w-full flex items-center gap-2 px-3 py-2.5 t-body hover:bg-accent hover:pl-4 focus-ring transition-all duration-200"
                 >
                   <Settings className="h-4 w-4" aria-hidden="true" /> Settings
                 </button>
                 <button
                   role="menuitem"
                   onClick={async () => { await signOut(); navigate({ to: "/login", search: { redirect: "/" } }); }}
-                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-accent focus-ring"
+                  className="w-full flex items-center gap-2 px-3 py-2.5 t-body hover:bg-accent focus-ring"
                 >
                   <LogOut className="h-4 w-4" aria-hidden="true" /> Sign out
                 </button>
@@ -1033,7 +1033,7 @@ function FxBadge() {
         aria-label={`Foreign exchange rates, updated ${stamp}`}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className="hidden md:flex items-center gap-1.5 h-9 px-3.5 rounded-full border-0 bg-[var(--surface-container)] hover:bg-[var(--surface-container-high)] active:scale-[0.98] transition-all duration-150 text-[11px] font-tnum text-muted-foreground"
+        className="hidden md:flex items-center gap-1.5 h-9 px-3.5 rounded-full border-0 bg-[var(--surface-container)] hover:bg-[var(--surface-container-high)] active:scale-[0.98] transition-all duration-150 t-label font-tnum text-muted-foreground"
       >
         <span className="text-foreground/80">€</span>
         <span>{rates.EUR.toLocaleString()}</span>
@@ -1046,7 +1046,7 @@ function FxBadge() {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 mt-2 w-64 rounded-2xl border-0 bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-150">
             <div className="px-3 py-2.5 border-b border-border flex items-center justify-between">
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">FX rates (per MGA)</div>
+              <div className="t-label uppercase tracking-wider text-muted-foreground">FX rates (per MGA)</div>
               <button
                 onClick={onRefresh}
                 disabled={busy}
@@ -1057,12 +1057,12 @@ function FxBadge() {
                 <RefreshCw className={cn("h-3.5 w-3.5", busy && "animate-spin")} />
               </button>
             </div>
-            <div className="p-3 text-xs space-y-1.5 font-tnum">
+            <div className="p-3 t-label space-y-1.5 font-tnum">
               <div className="flex justify-between"><span className="text-muted-foreground">1 EUR</span><span>{rates.EUR.toLocaleString()} MGA</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">1 USD</span><span>{rates.USD.toLocaleString()} MGA</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">1 MGA</span><span>1 MGA</span></div>
             </div>
-            <div className="px-3 py-2 border-t border-border text-[10px] text-muted-foreground flex items-center justify-between">
+            <div className="px-3 py-2 border-t border-border t-micro text-muted-foreground flex items-center justify-between">
               <span className="uppercase tracking-wider">{source}</span>
               <span>updated {stamp}</span>
             </div>
@@ -1080,8 +1080,8 @@ function AppShellLoading() {
         <div className="flex items-center gap-3">
           <AxelBraceMark title="AXEL Business Platform" className="h-9 w-9 text-primary" />
           <div>
-            <div className="font-display text-base font-semibold">Axel Command Center</div>
-            <div className="text-sm text-muted-foreground">Loading your workspace access and data...</div>
+            <div className="font-display t-subtitle font-semibold">Axel Command Center</div>
+            <div className="t-body text-muted-foreground">Loading your workspace access and data...</div>
           </div>
         </div>
         <div className="mt-6 space-y-3">
@@ -1101,13 +1101,13 @@ function AppShellError({ message, onRetry }: { message: string; onRetry: () => v
         <div className="flex items-center gap-3">
           <AxelBraceMark title="AXEL Business Platform" className="h-9 w-9 text-primary" />
           <div>
-            <div className="font-display text-base font-semibold">Couldn't load your workspace</div>
-            <div className="text-sm text-muted-foreground">{message}</div>
+            <div className="font-display t-subtitle font-semibold">Couldn't load your workspace</div>
+            <div className="t-body text-muted-foreground">{message}</div>
           </div>
         </div>
         <button
           onClick={onRetry}
-          className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+          className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 t-body font-medium text-primary-foreground transition hover:opacity-90"
         >
           Retry
         </button>
@@ -1144,7 +1144,7 @@ function AppShellFrame({ children }: { children: ReactNode }) {
         </main>
 
 
-        <footer className="shrink-0 px-5 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+        <footer className="shrink-0 px-5 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 t-label text-muted-foreground">
           <span>© {new Date().getFullYear()} AXEL by WeAxiom</span>
           <div className="flex items-center gap-4">
             <Link to="/about" className="hover:text-foreground transition underline-grow">About</Link>
@@ -1168,7 +1168,7 @@ function RefreshMarker() {
   return (
     <span
       aria-live="polite"
-      className="hidden sm:inline-flex items-center gap-1.5 text-[11px] text-muted-foreground transition-opacity duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
+      className="hidden sm:inline-flex items-center gap-1.5 t-label text-muted-foreground transition-opacity duration-150 ease-[cubic-bezier(0.2,0,0,1)]"
       style={{ opacity: refreshing ? 1 : 0 }}
     >
       <span className="save-dot" aria-hidden />

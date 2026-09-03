@@ -41,7 +41,7 @@ function Launcher() {
         <header className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <AxelWordmark title="AXEL Business Platform" className="h-7 w-auto text-foreground" />
-            <p className="mt-2 text-[11px] tracking-[0.06em] text-muted-foreground">{label}</p>
+            <p className="mt-2 t-label tracking-[0.06em] text-muted-foreground">{label}</p>
           </div>
           <ThemeControls />
         </header>
@@ -50,7 +50,7 @@ function Launcher() {
           <h1 className="font-display text-[1.75rem] sm:text-[2.25rem] font-medium tracking-[-0.01em] leading-tight">
             {firstName ? `Welcome back, ${firstName}.` : "Welcome back."}
           </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-2 max-w-2xl t-body leading-relaxed text-muted-foreground">
             Choose which Axel you want to work in. You can switch at any time from the sidebar.
           </p>
 
@@ -58,7 +58,7 @@ function Launcher() {
             <button
               type="button"
               onClick={() => navigate({ to: resume.defaultTo })}
-              className="focus-ring press-scale mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+              className="focus-ring press-scale mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 t-body font-medium text-primary-foreground transition hover:opacity-90"
             >
               Continue in {resume.label}
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -87,9 +87,9 @@ function Launcher() {
                     aria-hidden="true"
                   />
                 </div>
-                <h2 className="mt-4 font-display text-base font-semibold">{mod.label}</h2>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{mod.description}</p>
-                <p className="mt-4 text-[11px] uppercase tracking-[0.12em] text-foreground/45">
+                <h2 className="mt-4 font-display t-subtitle font-semibold">{mod.label}</h2>
+                <p className="mt-1 t-label leading-relaxed text-muted-foreground">{mod.description}</p>
+                <p className="mt-4 t-label uppercase tracking-[0.12em] text-foreground/45">
                   {mod.items.length} {mod.items.length === 1 ? "page" : "pages"}
                 </p>
               </Link>

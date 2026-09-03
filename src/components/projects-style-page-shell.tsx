@@ -71,7 +71,7 @@ export function RecordCountChip({
     <span
       title={title}
       aria-label={title}
-      className={cn("inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-surface px-2.5 text-xs font-tnum text-muted-foreground", className)}
+      className={cn("inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-surface px-2.5 t-label font-tnum text-muted-foreground", className)}
     >
       <ListFilter className="h-3.5 w-3.5" aria-hidden="true" />
       <span>{value}</span>

@@ -16,7 +16,7 @@ export const ALL_CATEGORIES: ContactCategory[] = ["client", "supplier", "referra
 /** Read-only chips shown on a card/list row. */
 export function CategoryChips({ value, size = "sm" }: { value?: ContactCategory[]; size?: "xs" | "sm" }) {
   if (!value || value.length === 0) return null;
-  const text = size === "xs" ? "text-[9px]" : "text-[10px]";
+  const text = size === "xs" ? "t-micro" : "t-micro";
   return (
     <div className="flex flex-wrap items-center gap-1">
       {value.map((c) => {
@@ -40,7 +40,7 @@ export function CompanyTag({
 }: { code?: string | null; name?: string | null; color?: string | null; size?: "xs" | "sm" }) {
   const label = (code || name || "").trim();
   if (!label) return null;
-  const text = size === "xs" ? "text-[9px]" : "text-[10px]";
+  const text = size === "xs" ? "t-micro" : "t-micro";
   return (
     <span
       className={`inline-flex items-center gap-1 ${text} uppercase tracking-wider px-1.5 py-0.5 rounded-full font-mono font-semibold border border-border bg-surface text-muted-foreground`}
@@ -91,7 +91,7 @@ export function CategoryMultiSelect({
             key={c}
             type="button"
             onClick={() => toggle(c)}
-            className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium transition ${on ? m.activeCls : "bg-transparent text-muted-foreground border border-border hover:bg-surface-elevated"}`}
+            className={`inline-flex items-center gap-1.5 t-label px-2.5 py-1 rounded-full font-medium transition ${on ? m.activeCls : "bg-transparent text-muted-foreground border border-border hover:bg-surface-elevated"}`}
           >
             <Icon className="h-3 w-3" />
             {m.label}
@@ -108,7 +108,7 @@ export function CategoryFilterTabs({
 }: { value: ContactCategory | "all"; onChange: (v: ContactCategory | "all") => void; counts: Record<ContactCategory | "all", number> }) {
   const tabs: Array<ContactCategory | "all"> = ["all", ...ALL_CATEGORIES];
   return (
-    <div className="inline-flex rounded-md border border-border overflow-hidden text-xs">
+    <div className="inline-flex rounded-md border border-border overflow-hidden t-label">
       {tabs.map((t, i) => {
         const on = value === t;
         const label = t === "all" ? "All" : CATEGORY_META[t].label;
@@ -120,7 +120,7 @@ export function CategoryFilterTabs({
             className={`px-3 py-1.5 ${i > 0 ? "border-l border-border" : ""} ${on ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-surface-elevated"}`}
           >
             {label}
-            <span className="ml-1.5 text-[10px] opacity-70 font-tnum">{counts[t]}</span>
+            <span className="ml-1.5 t-micro opacity-70 font-tnum">{counts[t]}</span>
           </button>
         );
       })}

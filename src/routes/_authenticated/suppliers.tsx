@@ -208,7 +208,7 @@ function Body() {
       </DetailSection>
       {selected.notes && (
         <DetailSection title="Notes">
-          <p className="text-sm text-muted-foreground break-words">{selected.notes}</p>
+          <p className="t-body text-muted-foreground break-words">{selected.notes}</p>
         </DetailSection>
       )}
     </DetailPanel>
@@ -312,12 +312,12 @@ function Body() {
                             {cp.on("categories") && <ListTd><CategoryChips value={defaultCategoriesFor("supplier", s.categories)} size="xs" /></ListTd>}
                             {cp.on("company") && (
                               <ListTd title={co?.name}>
-                                {co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}
+                                {co && <span className="inline-flex items-center gap-2 t-label max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}
                               </ListTd>
                             )}
-                            {cp.on("kind") && <ListTd className="text-xs text-muted-foreground">{s.kind === "internal" ? "Internal" : "External"}</ListTd>}
-                            {cp.on("country") && <ListTd className="text-xs text-muted-foreground" title={s.country}>{s.country || <span className="text-muted-foreground/50">—</span>}</ListTd>}
-                            {cp.on("email") && <ListTd className="text-xs text-muted-foreground" title={s.email}>{s.email || <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                            {cp.on("kind") && <ListTd className="t-label text-muted-foreground">{s.kind === "internal" ? "Internal" : "External"}</ListTd>}
+                            {cp.on("country") && <ListTd className="t-label text-muted-foreground" title={s.country}>{s.country || <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                            {cp.on("email") && <ListTd className="t-label text-muted-foreground" title={s.email}>{s.email || <span className="text-muted-foreground/50">—</span>}</ListTd>}
                             {cp.on("account") && <ListTd align="right" className="font-tnum text-muted-foreground">{s.account}</ListTd>}
                             {cp.on("outstanding") && <ListTd align="right" className={cn("font-tnum", bal > 0 && "text-warning font-medium")}>{fmtAr(bal)}</ListTd>}
                           </tr>
@@ -355,8 +355,8 @@ function SupplierGridView({
         {grouped.map((g) => (
           <div key={g.key}>
             <div className="flex items-center gap-2 mb-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{g.label}</h3>
-              <span className="text-[10px] text-muted-foreground/60 font-tnum">{g.items.length}</span>
+              <h3 className="t-label font-semibold uppercase tracking-wider text-muted-foreground">{g.label}</h3>
+              <span className="t-micro text-muted-foreground/60 font-tnum">{g.items.length}</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
               {g.items.map((s) => (
@@ -403,11 +403,11 @@ function SupplierCard({
             {s.name}
             {fromClient && <span className="ml-1 text-[8px] uppercase tracking-wider px-1 py-px rounded bg-accent/60 text-muted-foreground font-mono" title="Linked from Clients">from clients</span>}
           </div>
-          <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
+          <div className="t-label text-muted-foreground mt-0.5 truncate">
             {[s.kind === "internal" ? "Interne" : "Externe", s.country].filter(Boolean).join(" · ")}
           </div>
           {(s.email || s.phone) && (
-            <div className="text-[10px] text-muted-foreground/70 mt-0.5 truncate">
+            <div className="t-micro text-muted-foreground/70 mt-0.5 truncate">
               {s.email} {s.phone && `· ${s.phone}`}
             </div>
           )}
@@ -422,12 +422,12 @@ function SupplierCard({
       </div>
       <div className="mt-2 border-t border-border/50 pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
-          <div className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground font-semibold">Outstanding</div>
-          <div className={`font-tnum font-semibold mt-0.5 text-xs ${bal > 0 ? "text-amber-600" : "text-foreground"}`}>{fmtAr(bal)}</div>
+          <div className="t-micro uppercase tracking-[0.14em] text-muted-foreground font-semibold">Outstanding</div>
+          <div className={`font-tnum font-semibold mt-0.5 t-label ${bal > 0 ? "text-amber-600" : "text-foreground"}`}>{fmtAr(bal)}</div>
         </div>
         <div>
-          <div className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground font-semibold">PCG account</div>
-          <div className="font-tnum text-xs mt-0.5">{s.account}</div>
+          <div className="t-micro uppercase tracking-[0.14em] text-muted-foreground font-semibold">PCG account</div>
+          <div className="font-tnum t-label mt-0.5">{s.account}</div>
         </div>
       </div>
     </div>
@@ -533,7 +533,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
           <div>
             <Label><RequiredLabel>Categories</RequiredLabel></Label>
             <div className="mt-1.5"><CategoryMultiSelect value={categories} onChange={setCategories} /></div>
-            <p className="text-[11px] text-muted-foreground mt-1.5">Tag this contact with one or more roles. Defaults to <span className="font-medium text-foreground">Supplier</span>.</p>
+            <p className="t-label text-muted-foreground mt-1.5">Tag this contact with one or more roles. Defaults to <span className="font-medium text-foreground">Supplier</span>.</p>
           </div>
           <div>
             <Label><RequiredLabel>Linked companies</RequiredLabel></Label>
@@ -557,16 +557,16 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
                     }}
                     onDoubleClick={() => active && setCompanyId(c.id)}
                     title={isPrimary ? "Primary company" : active ? "Double-click to make primary" : "Click to link"}
-                    className={`inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider px-2 py-1 rounded-full border transition ${active ? "border-primary bg-primary/10 text-foreground" : "border-border bg-surface text-muted-foreground hover:bg-surface-elevated"}`}
+                    className={`inline-flex items-center gap-1.5 t-label font-mono uppercase tracking-wider px-2 py-1 rounded-full border transition ${active ? "border-primary bg-primary/10 text-foreground" : "border-border bg-surface text-muted-foreground hover:bg-surface-elevated"}`}
                   >
                     <span className="h-1.5 w-1.5 rounded-full" style={{ background: c.color }} />
                     {c.code || c.shortName}
-                    {isPrimary && <span className="text-[9px] text-primary">★</span>}
+                    {isPrimary && <span className="t-micro text-primary">★</span>}
                   </button>
                 );
               })}
             </div>
-            <p className="text-[10px] text-muted-foreground mt-1">Click to link, double-click to set primary (★).</p>
+            <p className="t-micro text-muted-foreground mt-1">Click to link, double-click to set primary (★).</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Kind</Label>
@@ -583,7 +583,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
             <div><Label>PCG account</Label><Input value={account} onChange={(e) => setAccount(e.target.value)} /></div>
             <div><Label>Payment terms (days)</Label><Input type="number" value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} placeholder="30" /></div>
           </div>
-          <div className="pt-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Contact</div>
+          <div className="pt-2 t-label uppercase tracking-[0.16em] text-muted-foreground">Contact</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>Contact person</Label><Input value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} /></div>
             <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
@@ -592,7 +592,7 @@ function SupplierDialog({ open, onOpenChange, editing }: { open: boolean; onOpen
             <div className="col-span-2"><Label>Address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} /></div>
             <div><Label>Country</Label><Input value={country} onChange={(e) => setCountry(e.target.value)} /></div>
           </div>
-          <div className="pt-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Legal IDs</div>
+          <div className="pt-2 t-label uppercase tracking-[0.16em] text-muted-foreground">Legal IDs</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><Label>NIF</Label><Input value={nif} onChange={(e) => setNif(e.target.value)} /></div>
             <div><Label>STAT</Label><Input value={stat} onChange={(e) => setStat(e.target.value)} /></div>

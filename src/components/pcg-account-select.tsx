@@ -35,7 +35,7 @@ export function PcgAccountSelect({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "flex h-8 w-full items-center justify-between gap-1 rounded-md border border-input bg-background px-2 text-xs text-left transition hover:bg-surface-elevated/50 focus:outline-none focus:ring-1 focus:ring-ring",
+            "flex h-8 w-full items-center justify-between gap-1 rounded-md border border-input bg-background px-2 t-label text-left transition hover:bg-surface-elevated/50 focus:outline-none focus:ring-1 focus:ring-ring",
             !selected && "text-muted-foreground",
             className,
           )}
@@ -58,7 +58,7 @@ export function PcgAccountSelect({
             return 0;
           }}
         >
-          <CommandInput placeholder="Rechercher un compte…" className="h-9 text-xs" />
+          <CommandInput placeholder="Rechercher un compte…" className="h-9 t-label" />
           <CommandList>
             <CommandEmpty>Aucun compte trouvé.</CommandEmpty>
             <CommandGroup>
@@ -70,7 +70,7 @@ export function PcgAccountSelect({
                     onChange(a.code);
                     setOpen(false);
                   }}
-                  className="text-xs"
+                  className="t-label"
                 >
                   <Check
                     className={cn(

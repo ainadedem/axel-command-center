@@ -28,7 +28,7 @@ export function CardSignal({
       title={label}
       aria-label={label}
       className={cn(
-        "inline-flex items-center gap-0.5 shrink-0 text-[10px] font-tnum leading-none",
+        "inline-flex items-center gap-0.5 shrink-0 t-micro font-tnum leading-none",
         tone === "muted" && "text-muted-foreground",
         tone === "danger" && "text-destructive",
         tone === "warning" && "text-amber-600 dark:text-amber-400",

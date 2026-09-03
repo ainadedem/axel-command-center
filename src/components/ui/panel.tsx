@@ -90,7 +90,7 @@ export function EmptyState({
           <Icon className="h-5 w-5" aria-hidden="true" />
         </div>
       )}
-      <p className="text-sm font-medium">{title}</p>
+      <p className="t-body font-medium">{title}</p>
       {description && <p className="mt-1 text-caption text-muted-foreground">{description}</p>}
       {action && <div className="mt-4 flex justify-center">{action}</div>}
     </div>

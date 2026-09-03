@@ -82,10 +82,10 @@ export function QuoteFollowupPanel({ quote }: { quote: Quote }) {
       <div className="rounded-lg border border-border p-3 space-y-3">
         <div className="flex items-end gap-3 flex-wrap">
           <div className="min-w-[9rem]">
-            <Label className="text-[11px]">Next follow-up</Label>
+            <Label className="t-label">Next follow-up</Label>
             <Input type="date" value={next} onChange={(e) => saveNext(e.target.value)} />
           </div>
-          <span className={cn("text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border inline-flex items-center gap-1", followUpToneClass[tone])}>
+          <span className={cn("t-micro uppercase tracking-wider px-2 py-1 rounded-full border inline-flex items-center gap-1", followUpToneClass[tone])}>
             <CalendarClock className="h-3 w-3" />
             {tone === "overdue" ? "Overdue" : tone === "today" ? "Due today" : tone === "upcoming" ? "Scheduled" : "Not scheduled"}
           </span>
@@ -95,7 +95,7 @@ export function QuoteFollowupPanel({ quote }: { quote: Quote }) {
       <div className="rounded-lg border border-border p-3 space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-[10rem_10rem] gap-3">
           <div>
-            <Label className="text-[11px]">Type</Label>
+            <Label className="t-label">Type</Label>
             <Select value={kind} onValueChange={(v) => setKind(v as QuoteFollowupKind)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -104,12 +104,12 @@ export function QuoteFollowupPanel({ quote }: { quote: Quote }) {
             </Select>
           </div>
           <div>
-            <Label className="text-[11px]">Date</Label>
+            <Label className="t-label">Date</Label>
             <Input type="date" value={when} onChange={(e) => setWhen(e.target.value)} />
           </div>
         </div>
         <div>
-          <Label className="text-[11px]">What happened</Label>
+          <Label className="t-label">What happened</Label>
           <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Called the client, waiting on budget confirmation…" />
         </div>
         <Button size="sm" onClick={add} disabled={!note.trim()}>
@@ -118,7 +118,7 @@ export function QuoteFollowupPanel({ quote }: { quote: Quote }) {
       </div>
 
       {entries.length === 0 ? (
-        <p className="text-xs text-muted-foreground">No follow-up logged yet.</p>
+        <p className="t-label text-muted-foreground">No follow-up logged yet.</p>
       ) : (
         <ul className="space-y-2">
           {entries.map((e) => {
@@ -131,13 +131,13 @@ export function QuoteFollowupPanel({ quote }: { quote: Quote }) {
                   <Icon className="h-3.5 w-3.5" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[11px] text-muted-foreground flex items-center gap-2 flex-wrap">
+                  <div className="t-label text-muted-foreground flex items-center gap-2 flex-wrap">
                     <span className="uppercase tracking-wider">{meta.label}</span>
                     <span>·</span>
                     <span className="font-tnum">{format(parseISO(e.happenedAt), "MMM d, yyyy")}</span>
                     {ownerName(e.createdBy) && <><span>·</span><span>{ownerName(e.createdBy)}</span></>}
                   </div>
-                  <p className="text-sm whitespace-pre-wrap break-words mt-0.5">{e.note}</p>
+                  <p className="t-body whitespace-pre-wrap break-words mt-0.5">{e.note}</p>
                 </div>
                 {mine && (
                   <button

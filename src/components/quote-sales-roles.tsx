@@ -25,7 +25,7 @@ export function QuoteSalesRoles({
   firstNameOnly?: boolean;
   className?: string;
 }) {
-  const text = size === "xs" ? "text-[10px]" : "text-[11px]";
+  const text = size === "xs" ? "t-micro" : "t-label";
   const icon = size === "xs" ? "h-2.5 w-2.5" : "h-3 w-3";
   const pad = size === "xs" ? "px-1.5 py-0" : "px-1.5 py-0.5";
   const acq = acquisition?.trim();

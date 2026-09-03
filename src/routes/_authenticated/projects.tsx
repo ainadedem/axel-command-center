@@ -348,10 +348,10 @@ function Body() {
                                   {(() => { const wf = workflows.get(p.id); return wf ? <StageProgressBar pct={wf.progress.pct} done={wf.progress.done} total={wf.progress.total} /> : <span className="text-muted-foreground/50">—</span>; })()}
                                 </ListTd>
                               )}
-                              {cp.on("salesRep") && <ListTd className="text-xs text-muted-foreground" title={cl?.acquisition}>{cl?.acquisition ?? <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                              {cp.on("salesRep") && <ListTd className="t-label text-muted-foreground" title={cl?.acquisition}>{cl?.acquisition ?? <span className="text-muted-foreground/50">—</span>}</ListTd>}
                               {cp.on("company") && (
                                 <ListTd title={co?.name}>
-                                  {co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}
+                                  {co && <span className="inline-flex items-center gap-2 t-label max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}
                                 </ListTd>
                               )}
                               {!salesOnly && <>
@@ -359,11 +359,11 @@ function Body() {
                               {cp.on("cost") && <ListTd align="right" className="font-tnum text-muted-foreground">{fmtCompact(p.cost, p.currency)}</ListTd>}
                               {cp.on("profit") && <ListTd align="right" className={cn("font-tnum font-medium", profit > 0 ? "text-success" : profit < 0 ? "text-destructive" : "")}>{fmtCompact(profit, p.currency)}</ListTd>}
                               {cp.on("margin") && <ListTd align="right"><span className="font-display text-primary font-tnum">{margin.toFixed(0)}%</span></ListTd>}
-                              {cp.on("invoiced") && <ListTd align="right" className="font-tnum text-xs">{invoiced > 0 ? fmtCompact(invoiced, p.currency) : <span className="text-muted-foreground/50">—</span>}</ListTd>}
-                              {cp.on("collected") && <ListTd align="right" className="font-tnum text-xs text-success">{collected > 0 ? fmtCompact(collected, p.currency) : <span className="text-muted-foreground/50">—</span>}</ListTd>}
-                              {cp.on("spend") && <ListTd align="right" className="font-tnum text-xs text-destructive">{spend > 0 ? fmtCompact(spend, p.currency) : <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                              {cp.on("invoiced") && <ListTd align="right" className="font-tnum t-label">{invoiced > 0 ? fmtCompact(invoiced, p.currency) : <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                              {cp.on("collected") && <ListTd align="right" className="font-tnum t-label text-success">{collected > 0 ? fmtCompact(collected, p.currency) : <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                              {cp.on("spend") && <ListTd align="right" className="font-tnum t-label text-destructive">{spend > 0 ? fmtCompact(spend, p.currency) : <span className="text-muted-foreground/50">—</span>}</ListTd>}
                               {cp.on("netpl") && (
-                                <ListTd align="right" className="font-tnum text-xs font-medium">
+                                <ListTd align="right" className="font-tnum t-label font-medium">
                                   {projTx.length > 0
                                     ? <span className={netPL >= 0 ? "text-success" : "text-destructive"}>{fmtCompact(netPL, p.currency)}</span>
                                     : <span className="text-muted-foreground/50">—</span>}
@@ -390,7 +390,7 @@ function Body() {
           ) : (
             /* Client P&L rollup */
             clientRollup.length === 0 ? (
-              <div className="rounded-xl border border-border bg-[var(--gradient-surface)] px-5 py-8 text-center text-sm text-muted-foreground">
+              <div className="rounded-xl border border-border bg-[var(--gradient-surface)] px-5 py-8 text-center t-body text-muted-foreground">
                 No client data. Link invoices and transactions to projects to see profitability by client.
               </div>
             ) : (
@@ -415,7 +415,7 @@ function Body() {
                         <tr key={row.clientId} className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/40">
                           <ListTd className="font-medium" title={row.cl?.name}>{row.cl?.name ?? <span className="text-muted-foreground/50">—</span>}</ListTd>
                           <ListTd title={row.co?.name}>
-                            {row.co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: row.co.color }} /><span className="truncate">{row.co.shortName}</span></span>}
+                            {row.co && <span className="inline-flex items-center gap-2 t-label max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: row.co.color }} /><span className="truncate">{row.co.shortName}</span></span>}
                           </ListTd>
                           <ListTd align="right" className="font-tnum text-muted-foreground">{row.projects.length}</ListTd>
                           <ListTd align="right" className="font-tnum">{row.invoicedMGA > 0 ? fmtCompact(row.invoicedMGA, "MGA") : <span className="text-muted-foreground/50">—</span>}</ListTd>
@@ -478,16 +478,16 @@ function ProjectDetail({
   const grossMargin = totalInvoiced > 0 ? ((totalInvoiced - totalSpend) / totalInvoiced) * 100 : 0;
 
   return (
-    <div className="px-5 py-5 grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm border-t border-border">
+    <div className="px-5 py-5 grid grid-cols-1 sm:grid-cols-3 gap-6 t-body border-t border-border">
       {/* Mini P&L */}
       <div>
-        <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">P&L summary</div>
+        <div className="t-label uppercase tracking-[0.16em] text-muted-foreground mb-3">P&L summary</div>
         <div className="space-y-2">
-          <div className="flex justify-between text-xs"><span className="text-muted-foreground">Invoiced</span><span className="font-tnum">{fmtCompact(totalInvoiced, "MGA")}</span></div>
-          <div className="flex justify-between text-xs"><span className="text-muted-foreground">Collected</span><span className="font-tnum text-success">{fmtCompact(totalCollected, "MGA")}</span></div>
-          <div className="flex justify-between text-xs"><span className="text-muted-foreground">Outstanding</span><span className="font-tnum text-warning">{fmtCompact(Math.max(0, totalInvoiced - totalCollected), "MGA")}</span></div>
-          <div className="flex justify-between text-xs"><span className="text-muted-foreground">Expenses logged</span><span className="font-tnum text-destructive">{fmtCompact(totalSpend, "MGA")}</span></div>
-          <div className="flex justify-between text-xs border-t border-border/40 pt-2 font-semibold">
+          <div className="flex justify-between t-label"><span className="text-muted-foreground">Invoiced</span><span className="font-tnum">{fmtCompact(totalInvoiced, "MGA")}</span></div>
+          <div className="flex justify-between t-label"><span className="text-muted-foreground">Collected</span><span className="font-tnum text-success">{fmtCompact(totalCollected, "MGA")}</span></div>
+          <div className="flex justify-between t-label"><span className="text-muted-foreground">Outstanding</span><span className="font-tnum text-warning">{fmtCompact(Math.max(0, totalInvoiced - totalCollected), "MGA")}</span></div>
+          <div className="flex justify-between t-label"><span className="text-muted-foreground">Expenses logged</span><span className="font-tnum text-destructive">{fmtCompact(totalSpend, "MGA")}</span></div>
+          <div className="flex justify-between t-label border-t border-border/40 pt-2 font-semibold">
             <span>Gross margin</span>
             <span className={cn("font-tnum", grossMargin >= 30 ? "text-success" : grossMargin >= 0 ? "" : "text-destructive")}>
               {totalInvoiced > 0 ? `${grossMargin.toFixed(0)}%` : "—"}
@@ -498,22 +498,22 @@ function ProjectDetail({
 
       {/* Invoices */}
       <div>
-        <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">
+        <div className="t-label uppercase tracking-[0.16em] text-muted-foreground mb-3">
           Invoices {projInvoices.length > 0 && <span className="font-tnum">({projInvoices.length})</span>}
         </div>
         {projInvoices.length === 0 ? (
-          <div className="text-xs text-muted-foreground/50">None linked</div>
+          <div className="t-label text-muted-foreground/50">None linked</div>
         ) : (
           <div className="space-y-1.5">
             {projInvoices.slice(0, 7).map((inv) => (
-              <div key={inv.id} className="flex items-center gap-2 text-xs">
+              <div key={inv.id} className="flex items-center gap-2 t-label">
                 <span className="font-tnum text-muted-foreground w-28 shrink-0">{inv.number}</span>
-                <span className={cn("text-[9px] uppercase font-semibold tracking-wide", INV_STATUS_TONE[inv.status])}>{inv.status}</span>
+                <span className={cn("t-micro uppercase font-semibold tracking-wide", INV_STATUS_TONE[inv.status])}>{inv.status}</span>
                 <span className="font-tnum ml-auto shrink-0">{fmtCompact(inv.amount, inv.currency)}</span>
               </div>
             ))}
             {projInvoices.length > 7 && (
-              <div className="text-[11px] text-muted-foreground mt-0.5">+{projInvoices.length - 7} more</div>
+              <div className="t-label text-muted-foreground mt-0.5">+{projInvoices.length - 7} more</div>
             )}
           </div>
         )}
@@ -521,18 +521,18 @@ function ProjectDetail({
 
       {/* Expense breakdown */}
       <div>
-        <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">
+        <div className="t-label uppercase tracking-[0.16em] text-muted-foreground mb-3">
           Expenses by category {byCategory.size > 0 && <span className="font-tnum">({expenses.length} tx)</span>}
         </div>
         {byCategory.size === 0 ? (
-          <div className="text-xs text-muted-foreground/50">
+          <div className="t-label text-muted-foreground/50">
             No expense transactions linked yet.<br />
             Tag transactions with this project in the Transactions page.
           </div>
         ) : (
           <div className="space-y-1.5">
             {[...byCategory.entries()].sort((a, b) => b[1] - a[1]).map(([cat, amt]) => (
-              <div key={cat} className="flex items-center justify-between text-xs">
+              <div key={cat} className="flex items-center justify-between t-label">
                 <span className="text-muted-foreground truncate mr-2">{cat}</span>
                 <span className="font-tnum text-destructive/80 shrink-0">{fmtCompact(amt, "MGA")}</span>
               </div>

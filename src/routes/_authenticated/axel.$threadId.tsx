@@ -108,7 +108,7 @@ function AxelThread() {
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-8">
         <div className="max-w-3xl mx-auto space-y-6">
           {isLoading && messages.length === 0 && (
-            <div className="text-sm text-muted-foreground">Loading…</div>
+            <div className="t-body text-muted-foreground">Loading…</div>
           )}
           {!isLoading && messages.length === 0 && (
             <div className="text-center py-16">
@@ -116,7 +116,7 @@ function AxelThread() {
                 <Sparkles className="h-6 w-6 text-primary-foreground" />
               </div>
               <h2 className="font-display text-xl mb-2">Ask Axel anything</h2>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              <p className="t-body text-muted-foreground max-w-md mx-auto">
                 Try: "What's my cash position this quarter?", "Which clients are overdue?",
                 "Where am I bleeding margin?"
               </p>
@@ -138,7 +138,7 @@ function AxelThread() {
                 )}
                 <div
                   className={cn(
-                    "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap leading-relaxed",
+                    "max-w-[80%] rounded-2xl px-4 py-2.5 t-body whitespace-pre-wrap leading-relaxed",
                     m.role === "user"
                       ? "bg-primary text-primary-foreground"
                       : "bg-surface border border-border",
@@ -150,7 +150,7 @@ function AxelThread() {
             );
           })}
           {busy && (
-            <div className="flex gap-3 items-center text-xs text-muted-foreground">
+            <div className="flex gap-3 items-center t-label text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin" /> Axel is thinking…
             </div>
           )}
@@ -173,7 +173,7 @@ function AxelThread() {
             }}
             rows={1}
             placeholder="Ask your CFO analyst… (Enter to send, Shift+Enter for newline)"
-            className="flex-1 resize-none rounded-lg bg-surface border border-border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring max-h-40"
+            className="flex-1 resize-none rounded-lg bg-surface border border-border px-3 py-2.5 t-body focus:outline-none focus:ring-2 focus:ring-ring max-h-40"
           />
           <button
             type="submit"

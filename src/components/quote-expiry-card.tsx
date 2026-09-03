@@ -42,8 +42,8 @@ export function QuoteExpiryCard({ windowDays = 7 }: { windowDays?: number }) {
     <section className="panel p-4 space-y-3">
       <header className="flex items-center gap-2">
         <CalendarClock className="h-4 w-4 text-primary" />
-        <h2 className="text-sm font-medium">Quotations to chase</h2>
-        <span className="text-xs text-muted-foreground">
+        <h2 className="t-body font-medium">Quotations to chase</h2>
+        <span className="t-label text-muted-foreground">
           {expiringSoon.length} expiring soon · {recentlyExpired.length} expired
         </span>
       </header>
@@ -53,23 +53,23 @@ export function QuoteExpiryCard({ windowDays = 7 }: { windowDays?: number }) {
           const expired = q.status === "expired" || left < 0;
           return (
             <li key={q.id} className="flex flex-wrap items-center gap-2 py-2">
-              <a href={docDeepLink("/quotations", q.id)} className="text-sm font-medium hover:underline">
+              <a href={docDeepLink("/quotations", q.id)} className="t-body font-medium hover:underline">
                 {q.number}
               </a>
-              <span className="text-xs tabular-nums text-muted-foreground">{fmt(q.amount, q.currency)}</span>
-              <span className={cn("text-xs", expired ? "text-destructive" : "text-muted-foreground")}>
+              <span className="t-label tabular-nums text-muted-foreground">{fmt(q.amount, q.currency)}</span>
+              <span className={cn("t-label", expired ? "text-destructive" : "text-muted-foreground")}>
                 {expired
                   ? `expired ${Math.abs(left)}d ago`
                   : left === 0 ? "expires today" : `expires in ${left}d`}
               </span>
               <span className="flex-1" />
-              <Button size="sm" variant="ghost" className="h-7 gap-1 px-2 text-xs" onClick={() => extend(q)}>
+              <Button size="sm" variant="ghost" className="h-7 gap-1 px-2 t-label" onClick={() => extend(q)}>
                 <TimerReset className="h-3.5 w-3.5" /> Extend 30d
               </Button>
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-7 px-2 text-xs"
+                className="h-7 px-2 t-label"
                 onClick={() => applyQuoteStatus(q, "accepted", { userId: user?.id })}
               >
                 Accepted
@@ -77,7 +77,7 @@ export function QuoteExpiryCard({ windowDays = 7 }: { windowDays?: number }) {
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-7 px-2 text-xs text-muted-foreground"
+                className="h-7 px-2 t-label text-muted-foreground"
                 onClick={() => applyQuoteStatus(q, "rejected", { userId: user?.id })}
               >
                 Close

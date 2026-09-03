@@ -87,23 +87,23 @@ export function RichTextField({ value, onChange, placeholder, rows = 3, classNam
         className={cn(
           "resize-y border-0 shadow-none focus-visible:ring-0 rounded-none",
           collapsible
-            ? "text-[11px] min-h-[24px] h-6 py-0.5 leading-5 group-focus-within:min-h-[56px] group-focus-within:h-auto group-focus-within:py-1.5"
+            ? "t-label min-h-[24px] h-6 py-0.5 leading-5 group-focus-within:min-h-[56px] group-focus-within:h-auto group-focus-within:py-1.5"
             : compact
-              ? "text-[11px] min-h-[44px]"
-              : "text-xs min-h-[56px]",
+              ? "t-label min-h-[44px]"
+              : "t-label min-h-[56px]",
         )}
       />
 
       {preview && (
         <div className="border-t border-border px-3 py-2">
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Preview</div>
+          <div className="t-micro uppercase tracking-wide text-muted-foreground mb-1">Preview</div>
           {html ? (
             <div
-              className="rt-preview text-xs leading-relaxed [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-4 [&_ol]:pl-4 [&_li]:my-0.5 [&_div+div]:mt-1"
+              className="rt-preview t-label leading-relaxed [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-4 [&_ol]:pl-4 [&_li]:my-0.5 [&_div+div]:mt-1"
               dangerouslySetInnerHTML={{ __html: html }}
             />
           ) : (
-            <div className="text-xs text-muted-foreground italic">Nothing to preview yet.</div>
+            <div className="t-label text-muted-foreground italic">Nothing to preview yet.</div>
           )}
         </div>
       )}

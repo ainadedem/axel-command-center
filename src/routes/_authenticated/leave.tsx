@@ -93,12 +93,12 @@ function LeavePage() {
       <PageHeader title="Leave" description="Time off requests, approvals and the Madagascar holiday calendar." />
       <div className="p-5 sm:p-10 lg:p-12 pt-0 space-y-5">
         <section className="rounded-3xl bg-[var(--surface-container)] p-5 sm:p-7 space-y-4">
-          <h2 className="text-sm font-medium">Request time off</h2>
+          <h2 className="t-body font-medium">Request time off</h2>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 items-end">
             <div>
-              <Label className="text-xs">Type</Label>
+              <Label className="t-label">Type</Label>
               <Select value={kind} onValueChange={(v) => setKind(v as LeaveRequest["kind"])}>
-                <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-9 t-label"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="paid">Paid leave</SelectItem>
                   <SelectItem value="unpaid">Unpaid leave</SelectItem>
@@ -107,18 +107,18 @@ function LeavePage() {
                 </SelectContent>
               </Select>
             </div>
-            <div><Label className="text-xs">From</Label><Input type="date" className="h-9" value={start} onChange={(e) => setStart(e.target.value)} /></div>
-            <div><Label className="text-xs">To</Label><Input type="date" className="h-9" value={end} onChange={(e) => setEnd(e.target.value)} /></div>
-            <label className="flex items-center gap-2 text-xs h-9 cursor-pointer">
+            <div><Label className="t-label">From</Label><Input type="date" className="h-9" value={start} onChange={(e) => setStart(e.target.value)} /></div>
+            <div><Label className="t-label">To</Label><Input type="date" className="h-9" value={end} onChange={(e) => setEnd(e.target.value)} /></div>
+            <label className="flex items-center gap-2 t-label h-9 cursor-pointer">
               <Switch checked={halfDay} onCheckedChange={setHalfDay} /> Half day
             </label>
             <div className="col-span-2 sm:col-span-1">
-              <Label className="text-xs">Note</Label>
+              <Label className="t-label">Note</Label>
               <Input className="h-9" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional" />
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground">
+            <span className="t-label text-muted-foreground">
               {workingDaysRequested} working day{workingDaysRequested === 1 ? "" : "s"} · weekends and holidays excluded
             </span>
             <div className="flex-1" />
@@ -129,8 +129,8 @@ function LeavePage() {
         </section>
 
         <section className="rounded-3xl bg-[var(--surface-container)] p-5 sm:p-7 space-y-3">
-          <h2 className="text-sm font-medium">Pending {canManage ? "approvals" : "requests"}</h2>
-          {pending.length === 0 && <p className="text-sm text-muted-foreground py-4">Nothing waiting.</p>}
+          <h2 className="t-body font-medium">Pending {canManage ? "approvals" : "requests"}</h2>
+          {pending.length === 0 && <p className="t-body text-muted-foreground py-4">Nothing waiting.</p>}
           <div className="divide-y divide-border/30">
             {pending.map((l) => (
               <LeaveRow key={l.id} leave={l} name={nameOf.get(l.employeeId) ?? "—"} canManage={canManage} meId={user?.id}
@@ -144,8 +144,8 @@ function LeavePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <section className="lg:col-span-2 rounded-3xl bg-[var(--surface-container)] p-5 sm:p-7 space-y-3">
-            <h2 className="text-sm font-medium">History</h2>
-            {others.length === 0 && <p className="text-sm text-muted-foreground py-4">No past requests yet.</p>}
+            <h2 className="t-body font-medium">History</h2>
+            {others.length === 0 && <p className="t-body text-muted-foreground py-4">No past requests yet.</p>}
             <div className="divide-y divide-border/30">
               {others.sort((a, b) => b.startDate.localeCompare(a.startDate)).map((l) => (
                 <LeaveRow key={l.id} leave={l} name={nameOf.get(l.employeeId) ?? "—"} canManage={canManage} meId={user?.id}
@@ -155,13 +155,13 @@ function LeavePage() {
           </section>
 
           <section className="rounded-3xl bg-[var(--surface-container)] p-5 sm:p-7 space-y-3">
-            <h2 className="text-sm font-medium">Upcoming holidays</h2>
+            <h2 className="t-body font-medium">Upcoming holidays</h2>
             {upcomingHolidays.length === 0 && (
-              <p className="text-xs text-muted-foreground">No holidays loaded. An admin can seed them from Time &amp; Attendance settings.</p>
+              <p className="t-label text-muted-foreground">No holidays loaded. An admin can seed them from Time &amp; Attendance settings.</p>
             )}
             <div className="divide-y divide-border/30">
               {upcomingHolidays.map((h) => (
-                <div key={h.id} className="py-2 flex items-center gap-3 text-sm">
+                <div key={h.id} className="py-2 flex items-center gap-3 t-body">
                   <span className="font-tnum text-muted-foreground w-24">{h.date}</span>
                   <span className="truncate">{h.name}</span>
                 </div>
@@ -188,15 +188,15 @@ function LeaveRow({
 }) {
   const mine = leave.employeeId === meId;
   return (
-    <div className="py-2.5 flex items-center gap-3 text-sm">
+    <div className="py-2.5 flex items-center gap-3 t-body">
       <div className="min-w-0 flex-1">
         <div className="truncate">{name}{mine ? " (you)" : ""}</div>
-        <div className="text-[11px] text-muted-foreground font-tnum">
+        <div className="t-label text-muted-foreground font-tnum">
           {leave.startDate} → {leave.endDate}{leave.halfDay ? " · half day" : ""} · {leave.kind}
           {leave.note ? ` · ${leave.note}` : ""}
         </div>
       </div>
-      <span className={cn("text-[11px] px-2.5 py-1 rounded-full shrink-0", TONE[leave.status])}>{leave.status}</span>
+      <span className={cn("t-label px-2.5 py-1 rounded-full shrink-0", TONE[leave.status])}>{leave.status}</span>
       {canManage && leave.status === "pending" && (
         <>
           <button disabled={busy} onClick={onApprove} title="Approve"

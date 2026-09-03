@@ -82,12 +82,12 @@ export function DocumentActivityPanel({ open, onOpenChange, docType, docId, docN
 
         <div className="mt-6">
           {loading && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 t-body text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Loading history…
             </div>
           )}
           {!loading && entries.length === 0 && (
-            <p className="text-sm text-muted-foreground">No activity recorded yet for this document.</p>
+            <p className="t-body text-muted-foreground">No activity recorded yet for this document.</p>
           )}
           <ol className="relative space-y-5">
             {entries.map((e, i) => {
@@ -101,13 +101,13 @@ export function DocumentActivityPanel({ open, onOpenChange, docType, docId, docN
                     <Icon className="h-3.5 w-3.5" aria-hidden="true" />
                   </span>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium">{TITLES[e.action] ?? e.action}</span>
+                    <span className="t-body font-medium">{TITLES[e.action] ?? e.action}</span>
                     {e.action === "status_changed" && typeof e.details.to === "string" && (
-                      <Badge variant="secondary" className="text-[10px]">{String(e.details.to)}</Badge>
+                      <Badge variant="secondary" className="t-micro">{String(e.details.to)}</Badge>
                     )}
                   </div>
-                  {e.summary && <p className="text-xs text-muted-foreground mt-0.5">{e.summary}</p>}
-                  <p className="text-[11px] text-muted-foreground mt-1">
+                  {e.summary && <p className="t-label text-muted-foreground mt-0.5">{e.summary}</p>}
+                  <p className="t-label text-muted-foreground mt-1">
                     <span title={ownerName(e.actorId)}>{ownerFirstName(e.actorId)}</span> · {fmt(e.createdAt)}
                   </p>
                 </li>

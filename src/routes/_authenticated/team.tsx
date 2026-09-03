@@ -135,20 +135,20 @@ function TeamPage() {
           <div className="flex min-w-0 items-center gap-2.5">
             <Avatar src={m.avatarUrl} name={m.name} size={24} />
             <div className="min-w-0">
-              <div className="truncate text-sm font-medium">{m.firstName || m.name}</div>
-              {m.userId && <div className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-primary"><ShieldCheck className="h-2.5 w-2.5" /> App user</div>}
+              <div className="truncate t-body font-medium">{m.firstName || m.name}</div>
+              {m.userId && <div className="mt-0.5 inline-flex items-center gap-1 t-micro text-primary"><ShieldCheck className="h-2.5 w-2.5" /> App user</div>}
             </div>
           </div>
         </ListTd>
         {cp.on("lastName") && <ListTd title={m.lastName}>{m.lastName || "—"}</ListTd>}
-        {cp.on("email") && <ListTd className="text-xs text-muted-foreground" title={m.email}>{m.email || "—"}</ListTd>}
-        {cp.on("phone") && <ListTd className="text-xs text-muted-foreground font-tnum" title={m.phone}>{m.phone || "—"}</ListTd>}
-        {cp.on("jobTitle") && <ListTd className="text-xs" title={m.jobTitle}>{m.jobTitle || "—"}</ListTd>}
-        {cp.on("department") && <ListTd className="text-xs text-muted-foreground" title={m.department}>{m.department || "—"}</ListTd>}
+        {cp.on("email") && <ListTd className="t-label text-muted-foreground" title={m.email}>{m.email || "—"}</ListTd>}
+        {cp.on("phone") && <ListTd className="t-label text-muted-foreground font-tnum" title={m.phone}>{m.phone || "—"}</ListTd>}
+        {cp.on("jobTitle") && <ListTd className="t-label" title={m.jobTitle}>{m.jobTitle || "—"}</ListTd>}
+        {cp.on("department") && <ListTd className="t-label text-muted-foreground" title={m.department}>{m.department || "—"}</ListTd>}
         {cp.on("company") && <ListTd title={companyLabel(m.companyId)}><CompanyChip value={companyLabel(m.companyId)} /></ListTd>}
         {cp.on("salesRole") && (
           <ListTd>
-            {s ? <span className="inline-flex items-center gap-1 rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary"><Users className="h-2.5 w-2.5" /> {s.role}</span> : <span className="text-muted-foreground">—</span>}
+            {s ? <span className="inline-flex items-center gap-1 rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 t-micro text-primary"><Users className="h-2.5 w-2.5" /> {s.role}</span> : <span className="text-muted-foreground">—</span>}
           </ListTd>
         )}
       </tr>
@@ -189,12 +189,12 @@ function TeamPage() {
           isAdmin ? (
             <EmptyState label="team members" onCreate={openCreate} />
           ) : (
-            <div className="rounded-xl border border-dashed border-border bg-surface/40 p-12 text-center text-sm text-muted-foreground">
+            <div className="rounded-xl border border-dashed border-border bg-surface/40 p-12 text-center t-body text-muted-foreground">
               No team members yet. Ask an administrator to add people.
             </div>
           )
         ) : total === 0 ? (
-          <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 sm:p-10 lg:p-12 text-center text-sm text-muted-foreground">
+          <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5 sm:p-10 lg:p-12 text-center t-body text-muted-foreground">
             No people match the current filters.
           </div>
         ) : grouped ? (
@@ -227,7 +227,7 @@ function TeamPage() {
 }
 
 function CompanyChip({ value }: { value: string }) {
-  return <span className="inline-flex max-w-full items-center rounded border border-border bg-surface px-1.5 py-0.5 text-[10px] text-muted-foreground"><span className="truncate">{value}</span></span>;
+  return <span className="inline-flex max-w-full items-center rounded border border-border bg-surface px-1.5 py-0.5 t-micro text-muted-foreground"><span className="truncate">{value}</span></span>;
 }
 
 function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (v: boolean) => void; editing: TeamMember | null }) {
@@ -333,7 +333,7 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-[11px] text-muted-foreground mt-1">
+            <p className="t-label text-muted-foreground mt-1">
               "All companies" shows the person in every company view. "No company" keeps them unassigned and only visible in the group view. A specific company limits them to that company.
             </p>
           </div>
@@ -352,13 +352,13 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
             {userId === "none" && emailMatch && (
               <button
                 type="button"
-                className="mt-1 text-[11px] text-primary underline-offset-2 hover:underline"
+                className="mt-1 t-label text-primary underline-offset-2 hover:underline"
                 onClick={() => setUserId(emailMatch.userId)}
               >
                 Link to {emailMatch.name} (same email)
               </button>
             )}
-            <p className="text-[11px] text-muted-foreground mt-1">
+            <p className="t-label text-muted-foreground mt-1">
               Linking lets this person's login be recognised as this team member on documents and assignments.
             </p>
           </div>
@@ -367,7 +367,7 @@ function TeamDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChan
             <div><Label>Job title</Label><Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} /></div>
             <div><Label>Department</Label><Input value={department} onChange={(e) => setDepartment(e.target.value)} /></div>
           </div>
-          <p className="text-[11px] text-muted-foreground">Add this person to the Sales team from the Sales team page to make them available as an Acquisition or Closer.</p>
+          <p className="t-label text-muted-foreground">Add this person to the Sales team from the Sales team page to make them available as an Acquisition or Closer.</p>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>

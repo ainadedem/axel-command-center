@@ -204,12 +204,12 @@ export function PaymentMatchDialog({
         </DialogHeader>
 
         {proposals.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">
+          <p className="py-6 text-center t-body text-muted-foreground">
             No candidate bank transaction found for the selected invoice(s).
           </p>
         ) : (
           <>
-            <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center justify-between gap-2 t-label text-muted-foreground">
               <span>{proposals.length} proposal{proposals.length > 1 ? "s" : ""}</span>
               <Button
                 size="sm"
@@ -242,25 +242,25 @@ export function PaymentMatchDialog({
                       className="mt-1"
                     />
                     <div className="min-w-0 flex-1 space-y-1">
-                      <div className="flex flex-wrap items-center gap-x-2 text-sm">
+                      <div className="flex flex-wrap items-center gap-x-2 t-body">
                         <span className="font-medium">{p.invoice.number}</span>
                         <span className="font-tnum text-muted-foreground">
                           {money(invoicePayable(p.invoice), p.invoice.currency)}
                         </span>
-                        <span className={`text-xs ${toneOf(c.confidence)}`}>{c.confidence} confidence</span>
+                        <span className={`t-label ${toneOf(c.confidence)}`}>{c.confidence} confidence</span>
                         {c.ambiguousWith && !c.narrativeMatch ? (
-                          <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[11px] font-medium text-warning">
+                          <span className="rounded-full bg-warning/10 px-2 py-0.5 t-label font-medium text-warning">
                             Check: {c.ambiguousWith + 1} invoices share this amount
                           </span>
                         ) : null}
                       </div>
-                      <div className="truncate text-sm text-muted-foreground">
+                      <div className="truncate t-body text-muted-foreground">
                         {c.transaction.date} · {c.transaction.description} ·{" "}
                         <span className="font-tnum">
                           {money(c.transaction.amount, c.transaction.currency)}
                         </span>
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="t-label text-muted-foreground">
                         {c.reasons.join(" · ")}
                         {c.amountDelta > 1 &&
                           ` · delta ${money(c.amountDelta, p.invoice.currency)}`}

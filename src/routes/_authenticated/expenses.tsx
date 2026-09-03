@@ -312,7 +312,7 @@ function Body() {
       />
 
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="inline-flex rounded-md border border-border bg-surface p-0.5 text-xs">
+        <div className="inline-flex rounded-md border border-border bg-surface p-0.5 t-label">
           {([
             { id: "all" as const, label: "All", icon: Receipt },
             { id: "bill" as const, label: "Bills", icon: FileText },
@@ -396,22 +396,22 @@ function Body() {
                         <ListTd className="font-medium" title={payeeName(e)}>{payeeName(e)}</ListTd>
                         {cp.on("type") && (
                           <ListTd>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider border border-border/60 text-muted-foreground">
+                            <span className="t-micro px-1.5 py-0.5 rounded uppercase tracking-wider border border-border/60 text-muted-foreground">
                               {e.kind === "bill" ? "Bill" : "Ad-hoc"}
                             </span>
                           </ListTd>
                         )}
-                        {cp.on("number") && <ListTd className="text-xs font-tnum text-muted-foreground" title={e.number}>{e.number || <span className="text-muted-foreground/50">—</span>}</ListTd>}
-                        {cp.on("company") && <ListTd className="text-[11px] font-mono text-muted-foreground" title={company?.name}>{companyCode(company)}</ListTd>}
-                        {cp.on("issued") && <ListTd className="text-xs font-tnum">{format(parseISO(e.issueDate), "MMM d")}</ListTd>}
+                        {cp.on("number") && <ListTd className="t-label font-tnum text-muted-foreground" title={e.number}>{e.number || <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                        {cp.on("company") && <ListTd className="t-label font-mono text-muted-foreground" title={company?.name}>{companyCode(company)}</ListTd>}
+                        {cp.on("issued") && <ListTd className="t-label font-tnum">{format(parseISO(e.issueDate), "MMM d")}</ListTd>}
                         {cp.on("due") && (
-                          <ListTd className="text-xs font-tnum">
+                          <ListTd className="t-label font-tnum">
                             {e.dueDate ? <span className={cn(st === "overdue" && "text-destructive font-medium")}>{format(parseISO(e.dueDate), "MMM d")}</span> : <span className="text-muted-foreground/50">—</span>}
                           </ListTd>
                         )}
-                        {cp.on("description") && <ListTd className="text-xs text-muted-foreground" title={e.description || e.category}>{e.description || e.category || <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                        {cp.on("description") && <ListTd className="t-label text-muted-foreground" title={e.description || e.category}>{e.description || e.category || <span className="text-muted-foreground/50">—</span>}</ListTd>}
                         {cp.on("account") && (
-                          <ListTd className="text-xs" title={acc?.name}>
+                          <ListTd className="t-label" title={acc?.name}>
                             {acc
                               ? <span className="inline-flex px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 truncate max-w-full">{acc.name}</span>
                               : <span className="text-muted-foreground/50">—</span>}
@@ -420,7 +420,7 @@ function Body() {
                         {cp.on("amount") && <ListTd align="right" className="font-tnum font-medium">{fmtAmount(e.amount, e.currency)}</ListTd>}
                         {cp.on("status") && (
                           <ListTd>
-                            <span className={cn("text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider border inline-flex items-center gap-1", statusStyles[st])}>
+                            <span className={cn("t-micro px-1.5 py-0.5 rounded uppercase tracking-wider border inline-flex items-center gap-1", statusStyles[st])}>
                               {st === "overdue" && <AlertTriangle className="h-2.5 w-2.5" />} {st}
                             </span>
                           </ListTd>

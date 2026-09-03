@@ -56,23 +56,23 @@ export function ProjectTimePanel() {
 
   return (
     <section className="rounded-3xl bg-[var(--surface-container)] p-5 sm:p-7 space-y-3">
-      <h2 className="text-sm font-medium flex items-center gap-2">
+      <h2 className="t-body font-medium flex items-center gap-2">
         <Clock className="h-4 w-4 text-muted-foreground" /> Time on projects · this month
       </h2>
       <div className="divide-y divide-border/30">
         {rows.map((r) => (
-          <div key={r.project!.id} className="py-2 flex items-center gap-3 text-sm">
+          <div key={r.project!.id} className="py-2 flex items-center gap-3 t-body">
             <div className="flex-1 min-w-0 truncate">{r.project!.name}</div>
-            <div className="text-xs text-muted-foreground font-tnum">
+            <div className="t-label text-muted-foreground font-tnum">
               {fmtHours(r.minutes)}h · {fmtHours(r.billable)}h billable
             </div>
-            <div className="w-32 text-right font-tnum text-xs">
+            <div className="w-32 text-right font-tnum t-label">
               {fmtAmount(Math.round(r.cost), (r.project!.currency ?? "MGA") as Currency)}
             </div>
           </div>
         ))}
       </div>
-      <p className="text-[11px] text-muted-foreground">
+      <p className="t-label text-muted-foreground">
         Labour cost is indicative: hours × the person's salary-register hourly rate (173.33 h month).
       </p>
     </section>

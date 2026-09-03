@@ -143,7 +143,7 @@ function TasksBody() {
                   key={f.key}
                   onClick={() => setFilter(f.key)}
                   className={cn(
-                    "h-8 px-3 rounded-md text-xs border transition press-scale",
+                    "h-8 px-3 rounded-md t-label border transition press-scale",
                     filter === f.key ? "bg-primary text-primary-foreground border-primary" : "bg-surface border-border",
                   )}
                 >
@@ -151,7 +151,7 @@ function TasksBody() {
                 </button>
               ))}
             </div>
-            <span className="text-[11px] text-muted-foreground ml-auto">{rows.length} tasks</span>
+            <span className="t-label text-muted-foreground ml-auto">{rows.length} tasks</span>
             <Button size="sm" className="h-8" onClick={openCreate}>
               <Plus className="h-3.5 w-3.5 mr-1" /> New task
             </Button>
@@ -175,11 +175,11 @@ function TasksBody() {
               onClose={() => setSelectedId(null)}
               actions={
                 <div className="flex gap-1.5">
-                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setEditing(selected); setOpen(true); }}>
+                  <Button size="sm" variant="outline" className="h-7 t-label" onClick={() => { setEditing(selected); setOpen(true); }}>
                     <Pencil className="h-3 w-3 mr-1" /> Edit
                   </Button>
                   {selected.status !== "done" && (
-                    <Button size="sm" className="h-7 text-xs" onClick={() => setTaskStatus(selected, "done")}>
+                    <Button size="sm" className="h-7 t-label" onClick={() => setTaskStatus(selected, "done")}>
                       <CheckCircle2 className="h-3 w-3 mr-1" /> Complete
                     </Button>
                   )}
@@ -200,7 +200,7 @@ function TasksBody() {
               </DetailSection>
               {selected.notes && (
                 <DetailSection title="Notes">
-                  <p className="text-xs whitespace-pre-wrap">{selected.notes}</p>
+                  <p className="t-label whitespace-pre-wrap">{selected.notes}</p>
                 </DetailSection>
               )}
             </DetailPanel>
@@ -239,7 +239,7 @@ function TasksBody() {
                     <ListTd>
                       <span onClick={(e) => e.stopPropagation()}>
                         <Select value={t.status} onValueChange={(v) => setTaskStatus(t, v as Task["status"])}>
-                          <SelectTrigger className={cn("h-6 px-2 text-[11px] border-0 rounded", TASK_STATUS_TONE[t.status])}>
+                          <SelectTrigger className={cn("h-6 px-2 t-label border-0 rounded", TASK_STATUS_TONE[t.status])}>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -251,18 +251,18 @@ function TasksBody() {
                       </span>
                     </ListTd>
                     <ListTd>
-                      <span className={cn("px-2 py-0.5 rounded text-[11px]", TASK_PRIORITY_TONE[t.priority])}>
+                      <span className={cn("px-2 py-0.5 rounded t-label", TASK_PRIORITY_TONE[t.priority])}>
                         {TASK_PRIORITY_LABEL[t.priority]}
                       </span>
                     </ListTd>
                     <ListTd>
-                      <span className={cn("font-tnum text-xs", isOverdue(t) && "text-destructive font-medium")}>
+                      <span className={cn("font-tnum t-label", isOverdue(t) && "text-destructive font-medium")}>
                         {t.dueDate ?? "—"}
                       </span>
                     </ListTd>
                     <ListTd title={projectName(t.projectId)}>
                       {t.projectId ? (
-                        <span className="inline-flex items-center gap-1 text-xs">
+                        <span className="inline-flex items-center gap-1 t-label">
                           <FolderKanban className="h-3 w-3 text-muted-foreground" />
                           {projectName(t.projectId) ?? "—"}
                         </span>
@@ -369,7 +369,7 @@ function TaskDialog({
         </DialogHeader>
 
         <div className="space-y-3">
-          {error && <div className="text-xs text-destructive bg-destructive/10 rounded px-3 py-2">{error}</div>}
+          {error && <div className="t-label text-destructive bg-destructive/10 rounded px-3 py-2">{error}</div>}
 
           <div>
             <Label>Task</Label>

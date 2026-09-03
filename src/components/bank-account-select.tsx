@@ -20,7 +20,7 @@ export function BankAccountSelect({
     return (
       <div>
         <Label>{label}</Label>
-        <p className="text-[11px] text-muted-foreground mt-1">
+        <p className="t-label text-muted-foreground mt-1">
           No bank account configured for this company yet — add one in Companies.
         </p>
       </div>

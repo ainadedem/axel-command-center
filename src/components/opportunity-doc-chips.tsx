@@ -21,7 +21,7 @@ export function OpportunityDocChips({
   const quotes = rollup?.quotes.length ?? 0;
   const invoices = rollup?.invoices.length ?? 0;
   const outstanding = rollup?.outstanding ?? 0;
-  const text = size === "xs" ? "text-[10px]" : "text-[11px]";
+  const text = size === "xs" ? "t-micro" : "t-label";
   const icon = size === "xs" ? "h-2.5 w-2.5" : "h-3 w-3";
 
   if (!quotes && !invoices) {

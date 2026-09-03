@@ -31,8 +31,8 @@ function DrawerEmpty({ noun }: { noun: string }) {
       <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-container)]">
         <Inbox className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
       </div>
-      <div className="font-display text-sm font-semibold">Nothing in this bucket</div>
-      <p className="mt-1 text-xs text-muted-foreground">
+      <div className="font-display t-body font-semibold">Nothing in this bucket</div>
+      <p className="mt-1 t-label text-muted-foreground">
         No {noun}s currently fall in this aging window with the filters you have applied.
       </p>
     </div>
@@ -85,7 +85,7 @@ export function AgingDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col gap-0">
         <SheetHeader className="p-5 border-b border-border space-y-1 text-left">
-          <SheetTitle className="flex items-center gap-2 text-base">
+          <SheetTitle className="flex items-center gap-2 t-subtitle">
             <span className={cn("h-2 w-2 rounded-full", AGING_TONE_DOT[tone])} aria-hidden="true" />
             {bucket?.label ?? "Aging"}
           </SheetTitle>
@@ -129,15 +129,15 @@ export function AgingDrawer({
                         {item.title}
                         <ArrowUpRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 transition-all duration-150 ease-[cubic-bezier(0.2,0,0,1)] group-hover:opacity-100 group-hover:translate-x-0" aria-hidden="true" />
                       </div>
-                      {item.subtitle && <div className="text-xs text-muted-foreground truncate">{item.subtitle}</div>}
+                      {item.subtitle && <div className="t-label text-muted-foreground truncate">{item.subtitle}</div>}
                     </div>
                     <div className="text-right shrink-0">
-                      <div className="font-tnum text-sm font-semibold">{format(item.amount)}</div>
-                      {item.status && <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{item.status}</div>}
+                      <div className="font-tnum t-body font-semibold">{format(item.amount)}</div>
+                      {item.status && <div className="t-micro uppercase tracking-wider text-muted-foreground">{item.status}</div>}
                     </div>
                   </div>
                   {item.due && (
-                    <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <div className="mt-1.5 flex items-center gap-1.5 t-label text-muted-foreground">
                       <CalendarClock className="h-3 w-3" aria-hidden="true" />
                       Due {item.due}
                       {late > 0 && <span className={cn("font-medium", AGING_TONE_TEXT[tone])}>· {late} d late</span>}

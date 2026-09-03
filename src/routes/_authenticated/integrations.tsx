@@ -36,12 +36,12 @@ function IntegrationsPage() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                     <Icon className="h-5 w-5 text-primary" />
                   </div>
-                  <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <span className="rounded-full border border-border px-2 py-0.5 t-micro uppercase tracking-wider text-muted-foreground">
                     Not connected
                   </span>
                 </div>
-                <h3 className="mt-3 text-sm font-semibold text-foreground">{app.name}</h3>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{app.description}</p>
+                <h3 className="mt-3 t-body font-semibold text-foreground">{app.name}</h3>
+                <p className="mt-1 t-label leading-relaxed text-muted-foreground">{app.description}</p>
                 <div className="mt-4">
                   <Button size="sm" variant="outline" disabled>
                     Connect

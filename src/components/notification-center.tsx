@@ -119,7 +119,7 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
       {unread > 0 && (
         <span
           aria-hidden
-          className="pointer-events-none absolute right-1.5 top-1.5 min-w-[15px] h-[15px] px-[3px] rounded-full bg-[var(--destructive,#C5221F)] text-[9px] leading-[15px] text-center font-semibold text-white"
+          className="pointer-events-none absolute right-1.5 top-1.5 min-w-[15px] h-[15px] px-[3px] rounded-full bg-[var(--destructive,#C5221F)] t-micro leading-[15px] text-center font-semibold text-white"
         >
           {unread > 99 ? "99+" : unread}
         </span>
@@ -133,7 +133,7 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
             className="absolute right-0 mt-2 w-[23rem] max-w-[calc(100vw-1.5rem)] rounded-2xl border-0 bg-popover/95 material-panel shadow-[var(--shadow-elevated)] z-50 overflow-hidden origin-top-right animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-150"
           >
             <div className="px-3 py-2.5 border-b border-border flex items-center justify-between gap-2">
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+              <span className="t-label uppercase tracking-wider text-muted-foreground">
                 Notifications{unread > 0 ? ` · ${unread} new` : ""}
               </span>
               <div className="flex items-center gap-1">
@@ -166,7 +166,7 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search client, document number or text…"
                   aria-label="Search notifications"
-                  className="h-8 w-full rounded-full border border-border bg-background pl-8 pr-7 text-xs outline-none focus:border-primary/50"
+                  className="h-8 w-full rounded-full border border-border bg-background pl-8 pr-7 t-label outline-none focus:border-primary/50"
                 />
                 {query && (
                   <button
@@ -179,7 +179,7 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
                 )}
               </div>
               {query.trim() && (
-                <div className="px-1 pt-1 text-[10px] text-muted-foreground font-tnum">
+                <div className="px-1 pt-1 t-micro text-muted-foreground font-tnum">
                   {visible.length} of {items.length} match{visible.length === 1 ? "" : "es"}
                 </div>
               )}
@@ -196,7 +196,7 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
                     onClick={() => setFilter(c.key)}
                     aria-pressed={on}
                     className={cn(
-                      "px-2.5 py-1 rounded-full text-[11px] border transition-colors press-scale",
+                      "px-2.5 py-1 rounded-full t-label border transition-colors press-scale",
                       on
                         ? "border-primary/40 bg-primary/10 text-primary"
                         : "border-border text-muted-foreground hover:text-foreground",
@@ -211,9 +211,9 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
 
             <div className="max-h-[26rem] overflow-y-auto">
               {loading ? (
-                <div className="p-6 text-center text-sm text-muted-foreground">Loading…</div>
+                <div className="p-6 text-center t-body text-muted-foreground">Loading…</div>
               ) : visible.length === 0 ? (
-                <div className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
+                <div className="p-8 text-center t-body text-muted-foreground flex flex-col items-center gap-2">
                   <Bell className="h-5 w-5 opacity-50" />
                   {items.length === 0
                     ? "You're all caught up."
@@ -221,7 +221,7 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
                       ? `No match for "${query.trim()}".`
                       : "Nothing in this filter."}
                   {query.trim() && (
-                    <button onClick={() => setQuery("")} className="text-xs text-primary hover:underline">
+                    <button onClick={() => setQuery("")} className="t-label text-primary hover:underline">
                       Clear search
                     </button>
                   )}
@@ -230,7 +230,7 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
               ) : (
                 groups.map((g) => (
                   <div key={g.label}>
-                    <div className="px-3 pt-2.5 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">{g.label}</div>
+                    <div className="px-3 pt-2.5 pb-1 t-micro uppercase tracking-wider text-muted-foreground">{g.label}</div>
                     {g.rows.map((n) => (
                       <div
                         key={n.id}
@@ -245,13 +245,13 @@ export function NotificationCenter({ open, onClose }: { open: boolean; onClose: 
                         >
                           <span className={cn("mt-1.5 h-1.5 w-1.5 rounded-full shrink-0", n.readAt ? "bg-transparent" : "bg-primary")} />
                           <span className="min-w-0 flex-1">
-                            <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
+                            <span className="block t-micro uppercase tracking-wider text-muted-foreground">
                               {EVENT_LABEL[n.kind] ?? n.kind}
                               {n.docNumber ? ` · ${n.docNumber}` : ""}
                             </span>
-                            <span className="block text-sm truncate">{n.title}</span>
-                            {n.body && <span className="block text-xs text-muted-foreground line-clamp-2">{n.body}</span>}
-                            <span className="block text-[10px] text-muted-foreground mt-0.5">
+                            <span className="block t-body truncate">{n.title}</span>
+                            {n.body && <span className="block t-label text-muted-foreground line-clamp-2">{n.body}</span>}
+                            <span className="block t-micro text-muted-foreground mt-0.5">
                               {n.actorName ? `${n.actorName} · ` : ""}
                               {new Date(n.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
                             </span>

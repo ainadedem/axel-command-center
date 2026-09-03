@@ -77,7 +77,7 @@ export function PeriodPicker({ value, onChange, className }: Props) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 h-9 px-3 rounded-md border border-border bg-surface hover:bg-surface-elevated text-sm transition"
+        className="flex items-center gap-2 h-9 px-3 rounded-md border border-border bg-surface hover:bg-surface-elevated t-body transition"
       >
         <CalendarRange className="h-4 w-4 text-muted-foreground" />
         <span className="font-medium">{value.label}</span>
@@ -86,7 +86,7 @@ export function PeriodPicker({ value, onChange, className }: Props) {
 
       {open && (
         <div className="absolute left-0 mt-2 w-64 z-50 rounded-xl border border-border bg-popover shadow-2xl overflow-hidden">
-          <div className="px-3 py-2 border-b border-border text-[10px] uppercase tracking-wider text-muted-foreground">
+          <div className="px-3 py-2 border-b border-border t-micro uppercase tracking-wider text-muted-foreground">
             Période
           </div>
           <div className="py-1">
@@ -95,7 +95,7 @@ export function PeriodPicker({ value, onChange, className }: Props) {
                 key={p.key}
                 onClick={() => { onChange(p.resolve()); setOpen(false); }}
                 className={cn(
-                  "w-full text-left px-3 py-2 text-sm hover:bg-accent transition",
+                  "w-full text-left px-3 py-2 t-body hover:bg-accent transition",
                   value.label === p.resolve().label && "text-primary font-medium",
                 )}
               >
@@ -104,25 +104,25 @@ export function PeriodPicker({ value, onChange, className }: Props) {
             ))}
           </div>
           <div className="border-t border-border px-3 py-3 space-y-2">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Période personnalisée</div>
+            <div className="t-micro uppercase tracking-wider text-muted-foreground mb-1">Période personnalisée</div>
             <div className="flex gap-2">
               <input
                 type="date"
                 value={customFrom}
                 onChange={(e) => setCustomFrom(e.target.value)}
-                className="flex-1 h-8 px-2 text-xs rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                className="flex-1 h-8 px-2 t-label rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
               />
               <input
                 type="date"
                 value={customTo}
                 onChange={(e) => setCustomTo(e.target.value)}
-                className="flex-1 h-8 px-2 text-xs rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                className="flex-1 h-8 px-2 t-label rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
             <button
               onClick={applyCustom}
               disabled={!customFrom || !customTo}
-              className="w-full h-8 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 disabled:opacity-40"
+              className="w-full h-8 rounded-md bg-primary text-primary-foreground t-label font-medium hover:opacity-90 disabled:opacity-40"
             >
               Appliquer
             </button>

@@ -69,7 +69,7 @@ function PlanComptablePage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Recherche par code ou libellé (ex. 411, TVA, salaires)…"
-          className="w-full max-w-md h-10 px-3 rounded-md bg-surface border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full max-w-md h-10 px-3 rounded-md bg-surface border border-border t-body focus:outline-none focus:ring-2 focus:ring-ring"
         />
 
         {([1, 2, 3, 4, 5, 6, 7] as PcgClass[]).map((cls) => {
@@ -79,15 +79,15 @@ function PlanComptablePage() {
             <div key={cls} className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
               <div className="px-5 py-3 border-b border-border flex items-center justify-between">
                 <div>
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Classe {cls}</div>
-                  <div className="font-display text-lg font-semibold">{classNames[cls]}</div>
+                  <div className="t-label uppercase tracking-[0.16em] text-muted-foreground">Classe {cls}</div>
+                  <div className="font-display t-title font-semibold">{classNames[cls]}</div>
                 </div>
-                <div className="text-xs text-muted-foreground">{list.length} comptes</div>
+                <div className="t-label text-muted-foreground">{list.length} comptes</div>
               </div>
               <div className="overflow-x-auto sticky-first-col">
-              <table className="sheet sheet-pin1 w-full min-w-[900px] text-sm">
+              <table className="sheet sheet-pin1 w-full min-w-[900px] t-body">
                 <thead>
-                  <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                  <tr className="t-label uppercase tracking-wider text-muted-foreground border-b border-border">
                     <th className="text-left font-medium px-5 py-2 w-28">Code</th>
                     <th className="text-left font-medium px-5 py-2">Libellé</th>
                     <th className="text-left font-medium px-5 py-2 w-32">Nature</th>
@@ -103,12 +103,12 @@ function PlanComptablePage() {
                       <td className="px-5 py-2.5">
                         {a.name}
                         {custom.has(a.code) && (
-                          <span className="ml-2 text-[10px] uppercase tracking-wider text-primary bg-primary/10 rounded px-1.5 py-0.5">
+                          <span className="ml-2 t-micro uppercase tracking-wider text-primary bg-primary/10 rounded px-1.5 py-0.5">
                             personnalisé
                           </span>
                         )}
                       </td>
-                      <td className="px-5 py-2.5 text-xs uppercase tracking-wider text-muted-foreground">{a.nature}</td>
+                      <td className="px-5 py-2.5 t-label uppercase tracking-wider text-muted-foreground">{a.nature}</td>
                       <td className="px-5 py-2.5 text-right">
                         {canSeeFinance && custom.has(a.code) && (
                           <button
@@ -197,13 +197,13 @@ function SubAccountDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
               className="font-tnum"
             />
             {trimmed && duplicate && (
-              <p className="text-xs text-destructive mt-1">Ce code existe déjà.</p>
+              <p className="t-label text-destructive mt-1">Ce code existe déjà.</p>
             )}
             {trimmed && !duplicate && !/^\d{3,10}$/.test(trimmed) && (
-              <p className="text-xs text-destructive mt-1">Le code doit contenir au moins 3 chiffres.</p>
+              <p className="t-label text-destructive mt-1">Le code doit contenir au moins 3 chiffres.</p>
             )}
             {trimmed && !duplicate && validClass && (
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="t-label text-muted-foreground mt-1">
                 Classe {cls} · {classNames[cls as PcgClass]}
                 {parent ? ` · rattaché à ${parent} — ${pcgIndex.get(parent)?.name}` : ""}
               </p>

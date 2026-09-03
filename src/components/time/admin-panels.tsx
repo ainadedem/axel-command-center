@@ -94,12 +94,12 @@ export function ReportsPanel({
     <div className="space-y-5">
       <section className="rounded-3xl bg-[var(--surface-container)] p-5 sm:p-7 space-y-4">
         <div className="flex flex-wrap items-end gap-3">
-          <div><Label className="text-xs">From</Label><Input type="date" className="h-9 w-40" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
-          <div><Label className="text-xs">To</Label><Input type="date" className="h-9 w-40" value={to} onChange={(e) => setTo(e.target.value)} /></div>
+          <div><Label className="t-label">From</Label><Input type="date" className="h-9 w-40" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
+          <div><Label className="t-label">To</Label><Input type="date" className="h-9 w-40" value={to} onChange={(e) => setTo(e.target.value)} /></div>
           <div>
-            <Label className="text-xs">Employee</Label>
+            <Label className="t-label">Employee</Label>
             <Select value={employeeId} onValueChange={setEmployeeId}>
-              <SelectTrigger className="h-9 w-52 text-xs"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 w-52 t-label"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All employees</SelectItem>
                 {members.map((m) => <SelectItem key={m.userId} value={m.userId}>{m.name}</SelectItem>)}
@@ -107,9 +107,9 @@ export function ReportsPanel({
             </Select>
           </div>
           <div>
-            <Label className="text-xs">Project</Label>
+            <Label className="t-label">Project</Label>
             <Select value={projectId} onValueChange={setProjectId}>
-              <SelectTrigger className="h-9 w-52 text-xs"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 w-52 t-label"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All projects</SelectItem>
                 {projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
@@ -128,8 +128,8 @@ export function ReportsPanel({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {perEmployee.map((r) => (
             <div key={r.id} className="rounded-2xl bg-surface/60 px-4 py-3 flex items-center gap-3">
-              <div className="flex-1 min-w-0 truncate text-sm">{r.name}</div>
-              <div className="text-xs text-muted-foreground font-tnum">
+              <div className="flex-1 min-w-0 truncate t-body">{r.name}</div>
+              <div className="t-label text-muted-foreground font-tnum">
                 {fmtHours(r.totals.regularMinutes)}h reg · <span className="text-warning">{fmtHours(r.totals.overtimeMinutes)}h OT</span>
               </div>
             </div>
@@ -137,15 +137,15 @@ export function ReportsPanel({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="sheet w-full text-sm">
+          <table className="sheet w-full t-body">
             <thead>
-              <tr className="text-[11px] uppercase tracking-wider text-muted-foreground text-left">
+              <tr className="t-label uppercase tracking-wider text-muted-foreground text-left">
                 {headers.map((h) => <th key={h} className="py-2 font-normal whitespace-nowrap">{h}</th>)}
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 && (
-                <tr><td colSpan={headers.length} className="py-8 text-center text-muted-foreground text-sm">No entries in this range.</td></tr>
+                <tr><td colSpan={headers.length} className="py-8 text-center text-muted-foreground t-body">No entries in this range.</td></tr>
               )}
               {rows.map((r, i) => (
                 <tr key={filtered[i].id} className="border-t border-border/30">
@@ -158,12 +158,12 @@ export function ReportsPanel({
       </section>
 
       <section className="rounded-3xl bg-[var(--surface-container)] p-5 sm:p-7 space-y-3">
-        <h2 className="text-sm font-medium flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-muted-foreground" /> Audit trail</h2>
-        <p className="text-xs text-muted-foreground">Every punch and edit is recorded with its author, method and timestamp.</p>
+        <h2 className="t-body font-medium flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-muted-foreground" /> Audit trail</h2>
+        <p className="t-label text-muted-foreground">Every punch and edit is recorded with its author, method and timestamp.</p>
         <div className="divide-y divide-border/30 max-h-80 overflow-y-auto">
-          {audit.length === 0 && <p className="py-6 text-sm text-muted-foreground text-center">No activity recorded yet.</p>}
+          {audit.length === 0 && <p className="py-6 t-body text-muted-foreground text-center">No activity recorded yet.</p>}
           {audit.map((a) => (
-            <div key={a.id} className="py-2 text-xs flex items-center gap-3">
+            <div key={a.id} className="py-2 t-label flex items-center gap-3">
               <span className="font-tnum text-muted-foreground w-32 shrink-0">{a.createdAt.slice(0, 16).replace("T", " ")}</span>
               <span className="px-2 py-0.5 rounded-full bg-muted/40 shrink-0">{a.action}</span>
               <span className="truncate">{a.actorName ?? "—"}</span>
@@ -218,15 +218,15 @@ export function AttendanceSettings({
   return (
     <div className="space-y-5">
       <section className="rounded-3xl bg-[var(--surface-container)] p-5 sm:p-7 space-y-4">
-        <h2 className="text-sm font-medium">Work schedules</h2>
+        <h2 className="t-body font-medium">Work schedules</h2>
         <div className="divide-y divide-border/30">
-          {schedules.length === 0 && <p className="py-4 text-sm text-muted-foreground">No schedule yet — the default 08:00–17:00, Mon–Fri applies.</p>}
+          {schedules.length === 0 && <p className="py-4 t-body text-muted-foreground">No schedule yet — the default 08:00–17:00, Mon–Fri applies.</p>}
           {schedules.map((s) => (
-            <div key={s.id} className="py-2 flex items-center gap-3 text-sm">
+            <div key={s.id} className="py-2 flex items-center gap-3 t-body">
               <div className="flex-1 min-w-0 truncate">
                 {s.name ?? "Shift"} · {s.employeeId ? members.find((m) => m.userId === s.employeeId)?.name ?? "Employee" : "Everyone"}
               </div>
-              <div className="text-xs text-muted-foreground font-tnum">
+              <div className="t-label text-muted-foreground font-tnum">
                 {s.startTime}–{s.endTime} · {s.workingDays.map((d) => DAY_LABELS[d - 1]).join(" ")} · {s.breakMinutes}m break
               </div>
               <button onClick={() => void run(() => deleteSchedule(s.id), "Schedule removed")}
@@ -238,24 +238,24 @@ export function AttendanceSettings({
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 items-end">
           <div className="col-span-2">
-            <Label className="text-xs">Applies to</Label>
+            <Label className="t-label">Applies to</Label>
             <Select value={form.employeeId} onValueChange={(v) => setForm((f) => ({ ...f, employeeId: v }))}>
-              <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 t-label"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Everyone</SelectItem>
                 {members.map((m) => <SelectItem key={m.userId} value={m.userId}>{m.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
-          <div><Label className="text-xs">Start</Label><Input type="time" className="h-9" value={form.startTime} onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))} /></div>
-          <div><Label className="text-xs">End</Label><Input type="time" className="h-9" value={form.endTime} onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))} /></div>
-          <div><Label className="text-xs">Break (min)</Label><Input type="number" className="h-9" value={form.breakMinutes} onChange={(e) => setForm((f) => ({ ...f, breakMinutes: Number(e.target.value) }))} /></div>
-          <div><Label className="text-xs">Grace (min)</Label><Input type="number" className="h-9" value={form.graceMinutes} onChange={(e) => setForm((f) => ({ ...f, graceMinutes: Number(e.target.value) }))} /></div>
+          <div><Label className="t-label">Start</Label><Input type="time" className="h-9" value={form.startTime} onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))} /></div>
+          <div><Label className="t-label">End</Label><Input type="time" className="h-9" value={form.endTime} onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))} /></div>
+          <div><Label className="t-label">Break (min)</Label><Input type="number" className="h-9" value={form.breakMinutes} onChange={(e) => setForm((f) => ({ ...f, breakMinutes: Number(e.target.value) }))} /></div>
+          <div><Label className="t-label">Grace (min)</Label><Input type="number" className="h-9" value={form.graceMinutes} onChange={(e) => setForm((f) => ({ ...f, graceMinutes: Number(e.target.value) }))} /></div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {DAY_LABELS.map((d, i) => (
             <button key={d} onClick={() => toggleDay(i + 1)}
-              className={cn("px-3 py-1 rounded-full text-xs transition",
+              className={cn("px-3 py-1 rounded-full t-label transition",
                 form.workingDays.includes(i + 1) ? "bg-primary text-primary-foreground" : "bg-muted/40 text-muted-foreground")}>
               {d}
             </button>
@@ -274,7 +274,7 @@ export function AttendanceSettings({
 
       <section className="rounded-3xl bg-[var(--surface-container)] p-5 sm:p-7 space-y-4">
         <div className="flex flex-wrap items-center gap-3">
-          <h2 className="text-sm font-medium flex-1">Public holidays · Madagascar</h2>
+          <h2 className="t-body font-medium flex-1">Public holidays · Madagascar</h2>
           <Input type="number" className="h-9 w-24" value={year} onChange={(e) => setYear(Number(e.target.value))} />
           <Button size="sm" variant="outline" disabled={busy} className="gap-1.5"
             onClick={() => void run(async () => { await seedHolidays(companyDbId!, year); }, `Seeded ${year} holidays`)}>
@@ -282,12 +282,12 @@ export function AttendanceSettings({
           </Button>
         </div>
         <div className="divide-y divide-border/30 max-h-72 overflow-y-auto">
-          {holidays.length === 0 && <p className="py-4 text-sm text-muted-foreground">No holidays yet — seed the Madagascar calendar.</p>}
+          {holidays.length === 0 && <p className="py-4 t-body text-muted-foreground">No holidays yet — seed the Madagascar calendar.</p>}
           {[...holidays].sort((a, b) => a.date.localeCompare(b.date)).map((h) => (
-            <div key={h.id} className="py-2 flex items-center gap-3 text-sm">
+            <div key={h.id} className="py-2 flex items-center gap-3 t-body">
               <span className="font-tnum text-muted-foreground w-28">{h.date}</span>
               <span className="flex-1 truncate">{h.name}</span>
-              {h.recurring && <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted/40 text-muted-foreground">yearly</span>}
+              {h.recurring && <span className="t-micro px-2 py-0.5 rounded-full bg-muted/40 text-muted-foreground">yearly</span>}
               <button onClick={() => void run(() => deleteHoliday(h.id), "Holiday removed")}
                 className="h-8 w-8 grid place-items-center rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
                 <Trash2 className="h-3.5 w-3.5" />
@@ -296,8 +296,8 @@ export function AttendanceSettings({
           ))}
         </div>
         <div className="flex flex-wrap items-end gap-3">
-          <div><Label className="text-xs">Date</Label><Input type="date" className="h-9 w-40" value={holDate} onChange={(e) => setHolDate(e.target.value)} /></div>
-          <div className="flex-1 min-w-40"><Label className="text-xs">Name</Label><Input className="h-9" value={holName} onChange={(e) => setHolName(e.target.value)} placeholder="Holiday name" /></div>
+          <div><Label className="t-label">Date</Label><Input type="date" className="h-9 w-40" value={holDate} onChange={(e) => setHolDate(e.target.value)} /></div>
+          <div className="flex-1 min-w-40"><Label className="t-label">Name</Label><Input className="h-9" value={holName} onChange={(e) => setHolName(e.target.value)} placeholder="Holiday name" /></div>
           <Button size="sm" disabled={busy || !holName.trim()} className="gap-1.5"
             onClick={() => void run(async () => { await saveHoliday({ companyId: companyDbId!, name: holName.trim(), date: holDate, recurring: false }); setHolName(""); }, "Holiday added")}>
             <Plus className="h-3.5 w-3.5" /> Add
@@ -306,19 +306,19 @@ export function AttendanceSettings({
       </section>
 
       <section className="rounded-3xl bg-[var(--surface-container)] p-5 sm:p-7 space-y-4">
-        <h2 className="text-sm font-medium flex items-center gap-2"><KeyRound className="h-4 w-4 text-muted-foreground" /> Kiosk PINs</h2>
-        <p className="text-xs text-muted-foreground">Employees punch on the shared kiosk with a 4–8 digit PIN. PINs are hashed and never readable.</p>
+        <h2 className="t-body font-medium flex items-center gap-2"><KeyRound className="h-4 w-4 text-muted-foreground" /> Kiosk PINs</h2>
+        <p className="t-label text-muted-foreground">Employees punch on the shared kiosk with a 4–8 digit PIN. PINs are hashed and never readable.</p>
         <div className="flex flex-wrap items-end gap-3">
           <div>
-            <Label className="text-xs">Employee</Label>
+            <Label className="t-label">Employee</Label>
             <Select value={pinEmployee} onValueChange={setPinEmployee}>
-              <SelectTrigger className="h-9 w-56 text-xs"><SelectValue placeholder="Choose…" /></SelectTrigger>
+              <SelectTrigger className="h-9 w-56 t-label"><SelectValue placeholder="Choose…" /></SelectTrigger>
               <SelectContent>
                 {members.map((m) => <SelectItem key={m.userId} value={m.userId}>{m.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
-          <div><Label className="text-xs">PIN</Label><Input className="h-9 w-32 font-tnum" inputMode="numeric" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 8))} /></div>
+          <div><Label className="t-label">PIN</Label><Input className="h-9 w-32 font-tnum" inputMode="numeric" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 8))} /></div>
           <Button size="sm" disabled={busy || !pinEmployee || pin.length < 4} className="gap-1.5"
             onClick={() => void run(async () => { await setKioskPin({ data: { companyId: companyDbId!, employeeId: pinEmployee, pin } }); setPin(""); }, "PIN saved")}>
             Set PIN

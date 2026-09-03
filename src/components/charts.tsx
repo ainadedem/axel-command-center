@@ -92,7 +92,7 @@ export function ChartTooltip({ active, label, payload, formatter }: ChartTooltip
       )}
       <div className="space-y-1">
         {payload.map((entry, i) => (
-          <div key={`${entry.dataKey ?? i}`} className="flex items-center justify-between gap-4 text-xs">
+          <div key={`${entry.dataKey ?? i}`} className="flex items-center justify-between gap-4 t-label">
             <span className="flex items-center gap-1.5 text-muted-foreground">
               <span
                 className="h-2 w-2 rounded-full shrink-0"

@@ -115,7 +115,7 @@ export function DataExportCard() {
 
   return (
     <section className="rounded-xl border border-border bg-[var(--gradient-surface)] p-6">
-      <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Data export</div>
+      <div className="t-label uppercase tracking-[0.16em] text-muted-foreground">Data export</div>
       <p className="text-caption text-muted-foreground mt-1">
         Download everything you can access — {nonEmpty.length} datasets, {total.toLocaleString()} records — as CSV.
         Exports reflect your current company access and permissions.

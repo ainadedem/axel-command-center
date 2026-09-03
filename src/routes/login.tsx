@@ -83,7 +83,7 @@ function LoginPage() {
             <h1 className="font-display text-3xl font-bold tracking-tight">
               Welcome back
             </h1>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="t-body text-muted-foreground mt-2">
               Sign in to your Axel account
             </p>
           </div>
@@ -91,7 +91,7 @@ function LoginPage() {
           {/* Login form */}
           <form onSubmit={handleEmail} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+              <label className="block t-label font-medium text-muted-foreground mb-1.5">
                 Email
               </label>
               <input
@@ -99,13 +99,13 @@ function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-11 px-4 rounded-xl bg-surface border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring transition placeholder:text-muted-foreground/50"
+                className="w-full h-11 px-4 rounded-xl bg-surface border border-border t-body focus:outline-none focus:ring-2 focus:ring-ring transition placeholder:text-muted-foreground/50"
                 placeholder="you@company.com"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+              <label className="block t-label font-medium text-muted-foreground mb-1.5">
                 Password
               </label>
               <input
@@ -114,13 +114,13 @@ function LoginPage() {
                 minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-11 px-4 rounded-xl bg-surface border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring transition placeholder:text-muted-foreground/50"
+                className="w-full h-11 px-4 rounded-xl bg-surface border border-border t-body focus:outline-none focus:ring-2 focus:ring-ring transition placeholder:text-muted-foreground/50"
                 placeholder="••••••••"
               />
             </div>
 
             {error && (
-              <div className="text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-xl px-4 py-2.5">
+              <div className="t-label text-destructive bg-destructive/10 border border-destructive/30 rounded-xl px-4 py-2.5">
                 {error}
               </div>
             )}
@@ -128,7 +128,7 @@ function LoginPage() {
             <button
               type="submit"
               disabled={busy}
-              className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition disabled:opacity-50 shadow-[0_4px_14px_-4px_oklch(0.47_0.31_293/0.45)]"
+              className="w-full h-11 rounded-xl bg-primary text-primary-foreground t-body font-semibold hover:opacity-90 transition disabled:opacity-50 shadow-[0_4px_14px_-4px_oklch(0.47_0.31_293/0.45)]"
             >
               {busy ? "Signing in…" : "Sign in"}
             </button>
@@ -140,7 +140,7 @@ function LoginPage() {
       <div className="relative z-10">
         <div className="h-1 w-full bg-gradient-to-r from-transparent via-primary to-transparent opacity-60" />
         <div className="px-6 py-6 text-center">
-          <p className="text-[11px] text-muted-foreground/60 tracking-wide">
+          <p className="t-label text-muted-foreground/60 tracking-wide">
             Axel Business Platform ® by The Axiom Winford Group
           </p>
         </div>

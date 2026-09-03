@@ -47,7 +47,7 @@ function SalesTeamPage() {
         <div className="flex items-center justify-between">
           <CrudToolbar createLabel="Add sales member" count={sales.length} label="sales people" onCreate={() => { if (team.length > 0) { setEditing(null); setOpen(true); } }} />
           {team.length === 0 && (
-            <div className="text-xs text-muted-foreground">
+            <div className="t-label text-muted-foreground">
               No people yet - <Link to="/team" className="text-primary underline">add team members</Link> first.
             </div>
           )}
@@ -79,17 +79,17 @@ function SalesTeamPage() {
                     <div className="flex items-center gap-3 min-w-0">
                       <Avatar src={tm.avatarUrl} name={tm.name} size={40} />
                       <div className="min-w-0">
-                        <div className="font-medium text-sm truncate">{tm.name}</div>
-                        <div className="text-[11px] text-muted-foreground truncate">{tm.jobTitle || tm.email || "-"}</div>
+                        <div className="font-medium t-body truncate">{tm.name}</div>
+                        <div className="t-label text-muted-foreground truncate">{tm.jobTitle || tm.email || "-"}</div>
                         <div className="mt-1 flex items-center gap-1.5">
                           {tm.userId ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                            <span className="inline-flex items-center gap-1 t-micro px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
                               <ShieldCheck className="h-2.5 w-2.5" /> App user
                             </span>
                           ) : (
-                            <span className="text-[10px] text-muted-foreground">Manual entry</span>
+                            <span className="t-micro text-muted-foreground">Manual entry</span>
                           )}
-                          <Link to="/team" className="text-[10px] text-primary hover:underline">Team profile</Link>
+                          <Link to="/team" className="t-micro text-primary hover:underline">Team profile</Link>
                         </div>
                       </div>
                     </div>
@@ -105,10 +105,10 @@ function SalesTeamPage() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded ${styles.cls}`}>
+                    <span className={`inline-flex items-center gap-1 t-label px-2 py-1 rounded ${styles.cls}`}>
                       <Icon className="h-3 w-3" /> {styles.label}
                     </span>
-                    <div className="flex gap-3 text-[11px] text-muted-foreground font-tnum">
+                    <div className="flex gap-3 t-label text-muted-foreground font-tnum">
                       {s.role !== "closer" && <div><span className="text-foreground font-semibold">{acqClients}</span> clients</div>}
                       {s.role !== "acquisition" && <div><span className="text-foreground font-semibold">{closerOpps}</span> deals</div>}
                       <Link
@@ -178,7 +178,7 @@ function SalesDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCha
                 {available.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            <p className="text-[11px] text-muted-foreground mt-1">Only people in the Team database can be added.</p>
+            <p className="t-label text-muted-foreground mt-1">Only people in the Team database can be added.</p>
           </div>
           <div>
             <Label>Sales role</Label>

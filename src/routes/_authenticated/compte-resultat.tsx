@@ -127,7 +127,7 @@ function CompteResultatBody() {
             <PeriodPicker value={period} onChange={setPeriod} />
             <button
               onClick={handleExport}
-              className="flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-surface hover:bg-surface-elevated text-sm transition"
+              className="flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-surface hover:bg-surface-elevated t-body transition"
             >
               <Download className="h-4 w-4" /> CSV
             </button>
@@ -174,7 +174,7 @@ function Stat({ label, value, prev, tone, co, invertTrend }: any) {
 function PrevBadge({ prevVal, co, invertTrend, cur: _cur }: any) {
   if (prevVal === 0) return null;
   return (
-    <div className="text-[11px] text-muted-foreground mt-1 font-tnum">
+    <div className="t-label text-muted-foreground mt-1 font-tnum">
       Préc. {fmtMoney(prevVal, co.baseCurrency)}
     </div>
   );
@@ -186,7 +186,7 @@ function Section({ title, rows, prevRows, co }: any) {
   return (
     <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
       <div className="px-5 py-3 border-b border-border">
-        <div className="grid grid-cols-[1fr_auto_auto_auto] text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-semibold gap-4">
+        <div className="grid grid-cols-[1fr_auto_auto_auto] t-label uppercase tracking-[0.16em] text-muted-foreground font-semibold gap-4">
           <span>{title}</span>
           {prevRows && <span className="text-right w-28">Période préc.</span>}
           <span className="text-right w-28">Période act.</span>
@@ -194,10 +194,10 @@ function Section({ title, rows, prevRows, co }: any) {
         </div>
       </div>
       <div className="overflow-x-auto sticky-first-col">
-      <table className="sheet sheet-pin1 w-full min-w-[900px] text-sm">
+      <table className="sheet sheet-pin1 w-full min-w-[900px] t-body">
         <tbody>
           {filtered.length === 0 && (
-            <tr><td className="px-5 py-3 text-muted-foreground text-xs" colSpan={5}>—</td></tr>
+            <tr><td className="px-5 py-3 text-muted-foreground t-label" colSpan={5}>—</td></tr>
           )}
           {filtered.map((r: any) => {
             const pv = prevMap.get(r.code) as number | undefined;
@@ -215,7 +215,7 @@ function Section({ title, rows, prevRows, co }: any) {
                   {fmtMoney(r.value, co.baseCurrency)}
                 </td>
                 {prevRows && (
-                  <td className={`px-5 py-2 text-right font-tnum w-20 text-xs ${v === null ? "" : v >= 0 ? "text-success" : "text-destructive"}`}>
+                  <td className={`px-5 py-2 text-right font-tnum w-20 t-label ${v === null ? "" : v >= 0 ? "text-success" : "text-destructive"}`}>
                     {v !== null ? `${v >= 0 ? "+" : ""}${v.toFixed(0)}%` : "—"}
                   </td>
                 )}
@@ -232,16 +232,16 @@ function Section({ title, rows, prevRows, co }: any) {
 function SubTotal({ label, value, prev, co }: any) {
   const v = varPct(value, prev ?? 0);
   return (
-    <div className="flex items-center justify-between px-5 py-2 text-sm bg-surface-elevated/40 rounded-md border border-border/40 gap-4">
-      <div className="font-semibold uppercase tracking-wider text-xs flex-1">{label}</div>
+    <div className="flex items-center justify-between px-5 py-2 t-body bg-surface-elevated/40 rounded-md border border-border/40 gap-4">
+      <div className="font-semibold uppercase tracking-wider t-label flex-1">{label}</div>
       {prev !== undefined && (
-        <div className="text-muted-foreground font-tnum text-xs w-32 text-right">{fmtMoney(prev, co.baseCurrency)}</div>
+        <div className="text-muted-foreground font-tnum t-label w-32 text-right">{fmtMoney(prev, co.baseCurrency)}</div>
       )}
       <div className={`font-tnum font-semibold w-32 text-right ${value > 0 ? "text-success" : value < 0 ? "text-destructive" : ""}`}>
         {fmtMoney(value, co.baseCurrency)}
       </div>
       {prev !== undefined && (
-        <div className={`font-tnum text-xs w-16 text-right ${v !== null && v >= 0 ? "text-success" : "text-destructive"}`}>
+        <div className={`font-tnum t-label w-16 text-right ${v !== null && v >= 0 ? "text-success" : "text-destructive"}`}>
           {v !== null ? `${v >= 0 ? "+" : ""}${v.toFixed(0)}%` : "—"}
         </div>
       )}
@@ -254,17 +254,17 @@ function SummaryLine({ label, value, prev, co, bold, highlight }: any) {
   const v = prev !== undefined ? varPct(value, prev) : null;
   return (
     <div className={`flex items-center gap-4 px-5 py-3 ${highlight ? "bg-primary/5" : ""}`}>
-      <div className={`flex-1 ${bold || highlight ? "font-display font-bold uppercase tracking-wider text-sm" : "text-sm"}`}>
+      <div className={`flex-1 ${bold || highlight ? "font-display font-bold uppercase tracking-wider t-body" : "t-body"}`}>
         {label}
       </div>
       {prev !== undefined && (
-        <div className="text-muted-foreground font-tnum text-sm w-32 text-right">{fmtMoney(prev, co.baseCurrency)}</div>
+        <div className="text-muted-foreground font-tnum t-body w-32 text-right">{fmtMoney(prev, co.baseCurrency)}</div>
       )}
-      <div className={`font-tnum w-32 text-right ${highlight ? "font-bold text-lg" : bold ? "font-semibold" : ""} ${tone}`}>
+      <div className={`font-tnum w-32 text-right ${highlight ? "font-bold t-title" : bold ? "font-semibold" : ""} ${tone}`}>
         {fmtMoney(value, co.baseCurrency)}
       </div>
       {prev !== undefined && (
-        <div className={`font-tnum text-xs w-16 text-right ${v !== null && v >= 0 ? "text-success" : "text-destructive"}`}>
+        <div className={`font-tnum t-label w-16 text-right ${v !== null && v >= 0 ? "text-success" : "text-destructive"}`}>
           {v !== null ? `${v >= 0 ? "+" : ""}${v.toFixed(0)}%` : "—"}
         </div>
       )}

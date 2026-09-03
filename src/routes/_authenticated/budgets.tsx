@@ -89,7 +89,7 @@ function Body() {
     <div className="p-5 sm:p-10 lg:p-12 space-y-6 sm:space-y-8">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
-          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Year</Label>
+          <Label className="t-label uppercase tracking-wider text-muted-foreground">Year</Label>
           <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
             <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
             <SelectContent>{years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
@@ -141,13 +141,13 @@ function pct(a: number, b: number) {
 function Kpi({ label, value, sub, tone = "default" }: { label: string; value: number; sub: string; tone?: "default" | "success" | "danger" }) {
   return (
     <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
-      <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
+      <div className="t-micro uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
       <div className={cn(
         "mt-2 font-display text-2xl font-bold tabular-nums",
         tone === "success" && "text-success",
         tone === "danger" && "text-destructive",
       )}>{fmtCompact(value, "MGA")}</div>
-      <div className="text-[11px] text-muted-foreground mt-1">{sub}</div>
+      <div className="t-label text-muted-foreground mt-1">{sub}</div>
     </div>
   );
 }
@@ -165,7 +165,7 @@ function CategorySection({
   if (cats.length === 0) return null;
   return (
     <section className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-      <div className="px-5 py-3 border-b border-border text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+      <div className="px-5 py-3 border-b border-border t-label uppercase tracking-[0.16em] text-muted-foreground">
         {title} · {cats.length}
       </div>
       <div className="divide-y divide-border/40">
@@ -241,7 +241,7 @@ function CategoryRow({ cat, year, spent, company, onEdit }: {
     <div className="px-5 py-4 grid grid-cols-12 gap-4 items-center hover:bg-surface-elevated/40 group">
       <div className="col-span-3 min-w-0">
         <div className="font-medium truncate">{cat.name}</div>
-        <div className="text-[11px] text-muted-foreground flex items-center gap-2">
+        <div className="t-label text-muted-foreground flex items-center gap-2">
           {company && <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full" style={{ background: company.color }} />{company.shortName}</span>}
           {cat.account && <span className="font-mono">{cat.account}</span>}
         </div>
@@ -266,7 +266,7 @@ function CategoryRow({ cat, year, spent, company, onEdit }: {
             onClick={() => setEditing(true)}
             className="text-left"
           >
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Budget {year}</div>
+            <div className="t-micro uppercase tracking-wider text-muted-foreground">Budget {year}</div>
             <div className="font-tnum font-medium hover:text-primary transition">
               {existing ? fmtCompact(existing.amount, existing.currency) : <span className="text-muted-foreground/60">set budget</span>}
             </div>
@@ -275,7 +275,7 @@ function CategoryRow({ cat, year, spent, company, onEdit }: {
       </div>
 
       <div className="col-span-2">
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{isIncome ? "Earned" : "Spent"}</div>
+        <div className="t-micro uppercase tracking-wider text-muted-foreground">{isIncome ? "Earned" : "Spent"}</div>
         <div className={cn("font-tnum font-medium", over && !isIncome && "text-destructive", isIncome && spent > 0 && "text-success")}>
           {fmtCompact(spent, "MGA")}
         </div>
@@ -293,7 +293,7 @@ function CategoryRow({ cat, year, spent, company, onEdit }: {
                 style={{ width: `${Math.min(ratio * 100, 100)}%` }}
               />
             </div>
-            <div className="text-[11px] mt-1 text-muted-foreground flex justify-between">
+            <div className="t-label mt-1 text-muted-foreground flex justify-between">
               <span>{Math.round((spent / budgetMGA) * 100)}%</span>
               <span className={cn(over && !isIncome && "text-destructive")}>
                 {over ? "+" : ""}{fmtCompact(spent - budgetMGA, "MGA")}
@@ -301,17 +301,17 @@ function CategoryRow({ cat, year, spent, company, onEdit }: {
             </div>
             {statusBadge && (
               <div className="flex items-center justify-between mt-1.5">
-                <span className={cn("text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full border font-semibold", statusBadge.cls)}>
+                <span className={cn("t-micro uppercase tracking-wider px-1.5 py-0.5 rounded-full border font-semibold", statusBadge.cls)}>
                   {statusBadge.label}
                 </span>
                 {projected !== null && (
-                  <span className="text-[10px] text-muted-foreground font-tnum">Proj. {fmtCompact(projected, "MGA")}</span>
+                  <span className="t-micro text-muted-foreground font-tnum">Proj. {fmtCompact(projected, "MGA")}</span>
                 )}
               </div>
             )}
           </>
         ) : (
-          <div className="text-[11px] text-muted-foreground italic">No budget set</div>
+          <div className="t-label text-muted-foreground italic">No budget set</div>
         )}
       </div>
 

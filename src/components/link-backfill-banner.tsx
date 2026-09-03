@@ -20,7 +20,7 @@ export function LinkBackfillBanner({
   if (!candidates.length) return null;
 
   return (
-    <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+    <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 t-body">
       <div className="flex flex-wrap items-center gap-2">
         <Link2 className="h-4 w-4 text-primary" aria-hidden="true" />
         <span className="min-w-0 flex-1">
@@ -40,9 +40,9 @@ export function LinkBackfillBanner({
       {openList && (
         <ul className="mt-2 space-y-1 border-t border-border pt-2">
           {candidates.map((c) => (
-            <li key={`${c.kind}-${c.targetId}-${c.linkId}`} className="flex items-center gap-2 text-xs">
+            <li key={`${c.kind}-${c.targetId}-${c.linkId}`} className="flex items-center gap-2 t-label">
               <span className="min-w-0 flex-1 truncate">{c.label}</span>
-              <Button variant="outline" size="sm" className="h-6 px-2 text-[11px]" onClick={() => confirmLink(c, companyIdOf(c))}>
+              <Button variant="outline" size="sm" className="h-6 px-2 t-label" onClick={() => confirmLink(c, companyIdOf(c))}>
                 Link
               </Button>
             </li>

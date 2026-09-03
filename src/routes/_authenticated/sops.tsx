@@ -158,7 +158,7 @@ function Body() {
             key={id}
             onClick={() => setTab(id)}
             className={cn(
-              "px-3.5 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-all",
+              "px-3.5 py-1.5 rounded-lg t-body flex items-center gap-2 transition-all",
               tab === id ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated",
             )}
           >
@@ -302,12 +302,12 @@ function ComplianceTab({ violations, summary }: { violations: Violation[]; summa
       {list.length === 0 ? (
         <div className="rounded-xl border border-success/30 bg-success/5 p-10 text-center">
           <CheckCircle2 className="h-8 w-8 mx-auto text-success" />
-          <div className="mt-3 font-display text-lg font-semibold">All checks pass</div>
-          <p className="text-sm text-muted-foreground mt-1">No SOP violations in the current workspace.</p>
+          <div className="mt-3 font-display t-title font-semibold">All checks pass</div>
+          <p className="t-body text-muted-foreground mt-1">No SOP violations in the current workspace.</p>
         </div>
       ) : (
         <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-          <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+          <div className="grid grid-cols-12 gap-2 px-4 py-2 t-label uppercase tracking-wider text-muted-foreground border-b border-border">
             <div className="col-span-2">Rule</div>
             <div className="col-span-2">Reference</div>
             <div className="col-span-2">Client</div>
@@ -321,8 +321,8 @@ function ComplianceTab({ violations, summary }: { violations: Violation[]; summa
             const client = clients.find((c) => c.id === v.clientId);
             return (
               <div key={`${v.ruleId}-${v.entityId}-${idx}`} className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated/60 transition">
-                <div className="col-span-2 text-sm font-medium truncate">{v.ruleLabel}</div>
-                <div className="col-span-2 text-sm font-tnum truncate">
+                <div className="col-span-2 t-body font-medium truncate">{v.ruleLabel}</div>
+                <div className="col-span-2 t-body font-tnum truncate">
                   {target ? (
                     <Link
                       to={target.to}
@@ -337,7 +337,7 @@ function ComplianceTab({ violations, summary }: { violations: Violation[]; summa
                     v.reference
                   )}
                 </div>
-                <div className="col-span-2 text-sm truncate">
+                <div className="col-span-2 t-body truncate">
                   {client ? (
                     <Link
                       to="/clients"
@@ -351,16 +351,16 @@ function ComplianceTab({ violations, summary }: { violations: Violation[]; summa
                     <span className="text-muted-foreground">—</span>
                   )}
                 </div>
-                <div className="col-span-1 text-[11px] font-mono text-muted-foreground truncate">
+                <div className="col-span-1 t-label font-mono text-muted-foreground truncate">
                   {companies.find((c) => c.id === v.companyId)?.shortName ?? "—"}
                 </div>
-                <div className="col-span-3 text-xs text-muted-foreground">{v.detail}</div>
-                <div className="col-span-1 text-right text-sm font-tnum">
+                <div className="col-span-3 t-label text-muted-foreground">{v.detail}</div>
+                <div className="col-span-1 text-right t-body font-tnum">
                   {v.amount != null && v.currency ? fmtAmount(v.amount, v.currency as never) : "—"}
                 </div>
                 <div className="col-span-1 flex justify-end">
                   <span className={cn(
-                    "text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider border inline-flex items-center gap-1",
+                    "t-micro px-1.5 py-0.5 rounded uppercase tracking-wider border inline-flex items-center gap-1",
                     v.severity === "critical"
                       ? "border-destructive/40 text-destructive bg-destructive/10"
                       : "border-warning/40 text-warning bg-warning/10",
@@ -419,12 +419,12 @@ function EscalationsTab({
   return (
     <div className="space-y-4">
       {rows.length === 0 ? (
-        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-10 text-center text-sm text-muted-foreground">
+        <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-10 text-center t-body text-muted-foreground">
           No open invoice has reached day 15 yet.
         </div>
       ) : (
         <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-          <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+          <div className="grid grid-cols-12 gap-2 px-4 py-2 t-label uppercase tracking-wider text-muted-foreground border-b border-border">
             <div className="col-span-2">Invoice</div>
             <div className="col-span-3">Client</div>
             <div className="col-span-2 text-right">Balance</div>
@@ -435,24 +435,24 @@ function EscalationsTab({
             const client = clients.find((c) => c.id === inv.clientId);
             return (
             <div key={inv.id} className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center border-b border-border/40 last:border-0 hover:bg-surface-elevated/60 transition">
-              <div className="col-span-2 text-sm font-tnum truncate">
+              <div className="col-span-2 t-body font-tnum truncate">
                 <Link to="/invoices" search={{ focus: inv.id }} title={`Open invoice ${inv.number}`} className="text-primary hover:underline underline-offset-2 inline-flex items-center gap-1">
                   {inv.number}
                   <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
                 </Link>
               </div>
-              <div className="col-span-3 text-sm truncate">
+              <div className="col-span-3 t-body truncate">
                 {client ? (
                   <Link to="/clients" search={{ focus: client.id }} title={`Open ${client.name}`} className="text-primary hover:underline underline-offset-2">
                     {client.name}
                   </Link>
                 ) : "—"}
               </div>
-              <div className="col-span-2 text-right text-sm font-tnum">{fmtAmount(invoiceBalance(inv), inv.currency)}</div>
-              <div className={cn("col-span-1 text-right text-sm font-tnum", days >= 60 ? "text-destructive" : days >= 30 ? "text-warning" : "")}>
+              <div className="col-span-2 text-right t-body font-tnum">{fmtAmount(invoiceBalance(inv), inv.currency)}</div>
+              <div className={cn("col-span-1 text-right t-body font-tnum", days >= 60 ? "text-destructive" : days >= 30 ? "text-warning" : "")}>
                 {days}d
                 {lastAt && (
-                  <div className="text-[10px] text-muted-foreground font-normal">{format(parseISO(lastAt), "MMM d")}</div>
+                  <div className="t-micro text-muted-foreground font-normal">{format(parseISO(lastAt), "MMM d")}</div>
                 )}
               </div>
               <div className="col-span-4 flex flex-wrap gap-1">
@@ -471,7 +471,7 @@ function EscalationsTab({
                           : isDue ? `Log day ${s} action` : `Due at day ${s}`
                       }
                       className={cn(
-                        "text-[10px] px-2 py-0.5 rounded border uppercase tracking-wider transition-all inline-flex items-center gap-1",
+                        "t-micro px-2 py-0.5 rounded border uppercase tracking-wider transition-all inline-flex items-center gap-1",
                         isDone && "border-success/40 text-success bg-success/10 hover:bg-success/20 press-scale",
                         !isDone && isDue && "border-destructive/40 text-destructive bg-destructive/10 hover:bg-destructive/20 press-scale",
                         !isDone && !isDue && "border-border text-muted-foreground opacity-60",
@@ -487,7 +487,7 @@ function EscalationsTab({
                   <button
                     onClick={() => setDrafting({ invoice: inv, stage })}
                     title={`Draft the day ${stage} follow-up message`}
-                    className="text-[10px] px-2 py-0.5 rounded border border-primary/40 text-primary bg-primary/10 hover:bg-primary/20 uppercase tracking-wider transition-all press-scale inline-flex items-center gap-1"
+                    className="t-micro px-2 py-0.5 rounded border border-primary/40 text-primary bg-primary/10 hover:bg-primary/20 uppercase tracking-wider transition-all press-scale inline-flex items-center gap-1"
                   >
                     <Mail className="h-3 w-3" /> Draft
                   </button>
@@ -501,23 +501,23 @@ function EscalationsTab({
       )}
 
       <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
-        <div className="px-4 py-2.5 text-sm font-medium border-b border-border">Logged actions</div>
+        <div className="px-4 py-2.5 t-body font-medium border-b border-border">Logged actions</div>
         {escalations.length === 0 ? (
-          <div className="px-4 py-6 text-sm text-muted-foreground">Nothing logged yet.</div>
+          <div className="px-4 py-6 t-body text-muted-foreground">Nothing logged yet.</div>
         ) : (
           [...escalations]
             .sort((a, b) => b.performedAt.localeCompare(a.performedAt))
             .slice(0, 40)
             .map((e) => (
               <div key={e.id} className="px-4 py-2.5 border-b border-border/40 last:border-0 flex items-start gap-3">
-                <span className="text-[10px] px-1.5 py-0.5 rounded border border-primary/30 text-primary bg-primary/10 uppercase tracking-wider shrink-0">D{e.stage}</span>
+                <span className="t-micro px-1.5 py-0.5 rounded border border-primary/30 text-primary bg-primary/10 uppercase tracking-wider shrink-0">D{e.stage}</span>
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm truncate">
+                  <div className="t-body truncate">
                     {invoices.find((i) => i.id === e.invoiceId)?.number ?? "—"} — {e.action}
                   </div>
-                  {e.notes && <div className="text-xs text-muted-foreground">{e.notes}</div>}
+                  {e.notes && <div className="t-label text-muted-foreground">{e.notes}</div>}
                 </div>
-                <div className="text-[11px] text-muted-foreground shrink-0">
+                <div className="t-label text-muted-foreground shrink-0">
                   {format(parseISO(e.performedAt), "MMM d, yyyy")}
                   {e.performedByName ? ` · ${e.performedByName}` : ""}
                 </div>
@@ -608,7 +608,7 @@ function LogEscalationDialog({
         </DialogHeader>
         <div className="space-y-3">
           {existing && (
-            <div className="rounded-lg border border-success/30 bg-success/5 px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
+            <div className="rounded-lg border border-success/30 bg-success/5 px-3 py-2 t-label text-muted-foreground flex items-center gap-2">
               <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" aria-hidden />
               Done {format(parseISO(existing.performedAt), "MMM d, yyyy 'at' HH:mm")}
               {existing.performedByName ? ` · ${existing.performedByName}` : ""}
@@ -623,7 +623,7 @@ function LogEscalationDialog({
             <Textarea id="esc-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Who was contacted, response received, next step…" />
           </div>
           {error && (
-            <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 t-label text-destructive">
               {error}
             </div>
           )}
@@ -664,9 +664,9 @@ function LibraryTab() {
               s.id === openId ? "bg-primary/10" : "hover:bg-surface-elevated/60",
             )}
           >
-            <div className="text-[10px] font-mono text-muted-foreground">{s.code}</div>
-            <div className="text-sm font-medium">{s.title}</div>
-            <div className="text-[10px] text-muted-foreground mt-0.5">v{s.version} · {s.effectiveDate}</div>
+            <div className="t-micro font-mono text-muted-foreground">{s.code}</div>
+            <div className="t-body font-medium">{s.title}</div>
+            <div className="t-micro text-muted-foreground mt-0.5">v{s.version} · {s.effectiveDate}</div>
           </button>
         ))}
       </div>
@@ -679,30 +679,30 @@ function SopBody({ doc }: { doc: SopDoc }) {
   return (
     <article className="rounded-xl border border-border bg-[var(--gradient-surface)] p-6 space-y-5">
       <header className="space-y-2 pb-4 border-b border-border/60">
-        <div className="text-[11px] font-mono text-muted-foreground">{doc.code} · v{doc.version} · effective {doc.effectiveDate}</div>
+        <div className="t-label font-mono text-muted-foreground">{doc.code} · v{doc.version} · effective {doc.effectiveDate}</div>
         <h2 className="font-display text-2xl font-bold tracking-tight">{doc.title}</h2>
-        <div className="text-sm text-muted-foreground">Owner: {doc.owner}</div>
+        <div className="t-body text-muted-foreground">Owner: {doc.owner}</div>
       </header>
       <section className="space-y-1">
-        <h3 className="text-xs uppercase tracking-wider text-muted-foreground">Purpose</h3>
-        <p className="text-sm leading-relaxed">{doc.purpose}</p>
+        <h3 className="t-label uppercase tracking-wider text-muted-foreground">Purpose</h3>
+        <p className="t-body leading-relaxed">{doc.purpose}</p>
       </section>
       <section className="space-y-1">
-        <h3 className="text-xs uppercase tracking-wider text-muted-foreground">Scope</h3>
-        <p className="text-sm leading-relaxed">{doc.scope}</p>
+        <h3 className="t-label uppercase tracking-wider text-muted-foreground">Scope</h3>
+        <p className="t-body leading-relaxed">{doc.scope}</p>
       </section>
       {doc.sections.map((s) => (
         <section key={s.heading} className="space-y-2">
-          <h3 className="font-display text-base font-semibold">{s.heading}</h3>
+          <h3 className="font-display t-subtitle font-semibold">{s.heading}</h3>
           <div className="space-y-1.5">
             {s.body.map((line, i) =>
               line.startsWith("- ") ? (
-                <div key={i} className="flex gap-2 text-sm leading-relaxed">
+                <div key={i} className="flex gap-2 t-body leading-relaxed">
                   <span className="text-primary mt-1.5 h-1 w-1 rounded-full bg-primary shrink-0" aria-hidden />
                   <span>{line.slice(2)}</span>
                 </div>
               ) : (
-                <p key={i} className="text-sm leading-relaxed text-muted-foreground">{line}</p>
+                <p key={i} className="t-body leading-relaxed text-muted-foreground">{line}</p>
               ),
             )}
           </div>

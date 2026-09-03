@@ -20,8 +20,8 @@ export function NextStepHint({ step, className }: { step: DocNextStep; className
     <div className={cn("flex items-start gap-2 rounded-lg border px-3 py-2", s.cls, className)}>
       <Icon className="mt-0.5 h-4 w-4 shrink-0" />
       <div className="min-w-0">
-        <p className="text-[11px] font-medium uppercase tracking-wide opacity-80">{s.label}</p>
-        <p className="text-xs leading-relaxed text-foreground">{step.step}</p>
+        <p className="t-label font-medium uppercase tracking-wide opacity-80">{s.label}</p>
+        <p className="t-label leading-relaxed text-foreground">{step.step}</p>
       </div>
     </div>
   );

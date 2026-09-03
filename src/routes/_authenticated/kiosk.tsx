@@ -60,7 +60,7 @@ function KioskPage() {
             <Link to="/time"><ArrowLeft className="h-4 w-4" /> Back</Link>
           </Button>
           <div className="flex-1 text-right">
-            <div className="text-[11px] text-muted-foreground">{label}</div>
+            <div className="t-label text-muted-foreground">{label}</div>
             <h1 className="font-display text-xl">Attendance kiosk</h1>
           </div>
         </header>
@@ -78,10 +78,10 @@ function KioskPage() {
                 <button key={m.userId} onClick={() => setSelected(m.userId)}
                   className="flex items-center gap-3 p-3 rounded-2xl bg-surface/60 hover:bg-surface transition text-left">
                   <Avatar src={m.avatarUrl ?? undefined} name={m.name} size={36} />
-                  <span className="truncate text-sm">{m.name}</span>
+                  <span className="truncate t-body">{m.name}</span>
                 </button>
               ))}
-              {list.length === 0 && <p className="text-sm text-muted-foreground py-6 text-center col-span-full">No one found.</p>}
+              {list.length === 0 && <p className="t-body text-muted-foreground py-6 text-center col-span-full">No one found.</p>}
             </div>
           </section>
         ) : (
@@ -89,8 +89,8 @@ function KioskPage() {
             <div className="flex items-center gap-3">
               <Avatar src={person.avatarUrl ?? undefined} name={person.name} size={44} />
               <div className="flex-1 min-w-0">
-                <div className="text-sm">{person.name}</div>
-                <div className="text-[11px] text-muted-foreground">Enter your PIN to clock in or out</div>
+                <div className="t-body">{person.name}</div>
+                <div className="t-label text-muted-foreground">Enter your PIN to clock in or out</div>
               </div>
               <Button size="sm" variant="ghost" onClick={reset}>Change</Button>
             </div>
@@ -106,7 +106,7 @@ function KioskPage() {
                 <button key={d} onClick={() => key(d)}
                   className="h-16 rounded-2xl bg-surface/70 hover:bg-surface text-xl font-tnum transition active:scale-[0.97]">{d}</button>
               ))}
-              <button onClick={() => setPin("")} className="h-16 rounded-2xl bg-surface/40 text-xs text-muted-foreground">Clear</button>
+              <button onClick={() => setPin("")} className="h-16 rounded-2xl bg-surface/40 t-label text-muted-foreground">Clear</button>
               <button onClick={() => key("0")} className="h-16 rounded-2xl bg-surface/70 hover:bg-surface text-xl font-tnum transition active:scale-[0.97]">0</button>
               <button onClick={() => setPin((p) => p.slice(0, -1))} className="h-16 rounded-2xl bg-surface/40 grid place-items-center text-muted-foreground">
                 <Delete className="h-5 w-5" />
@@ -119,7 +119,7 @@ function KioskPage() {
           </section>
         )}
 
-        <p className="text-center text-xs text-muted-foreground">
+        <p className="text-center t-label text-muted-foreground">
           Shared device · Madagascar time (UTC+3). PINs are managed in Time &amp; Attendance settings.
         </p>
       </div>

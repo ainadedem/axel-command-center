@@ -84,12 +84,12 @@ export function KpiCard({
       <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 [background:radial-gradient(120%_80%_at_100%_0%,color-mix(in_oklab,var(--primary)_12%,transparent),transparent_60%)]" />
       <div className="relative flex items-center justify-between mb-3 gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="text-[11px] tracking-[0.02em] text-muted-foreground font-medium truncate transition-colors duration-300 group-hover:text-foreground/70">{label}</div>
+          <div className="t-label tracking-[0.02em] text-muted-foreground font-medium truncate transition-colors duration-300 group-hover:text-foreground/70">{label}</div>
           {badge}
         </div>
         {trend && (
           <div className={cn(
-            "text-[11px] flex items-center gap-0.5 font-medium font-tnum shrink-0 rounded-full px-2 py-0.5 transition-transform duration-300 group-hover:-translate-y-px",
+            "t-label flex items-center gap-0.5 font-medium font-tnum shrink-0 rounded-full px-2 py-0.5 transition-transform duration-300 group-hover:-translate-y-px",
             trendDir === "up" && "text-success bg-success/10",
             trendDir === "down" && "text-destructive bg-destructive/10",
             trendDir === "flat" && "text-muted-foreground bg-muted",
@@ -107,7 +107,7 @@ export function KpiCard({
       )}>
         {typeof value === "number" ? <AnimatedNumber value={value} /> : <FlashOnChange value={value} />}
       </div>
-      {sub && <div className="relative text-xs text-muted-foreground mt-2 font-tnum">{sub}</div>}
+      {sub && <div className="relative t-label text-muted-foreground mt-2 font-tnum">{sub}</div>}
       {children}
     </div>
   );

@@ -608,10 +608,77 @@
 
 @utility text-caption {
   font-family: var(--font-sans);
-  font-size: 0.6875rem;
+  font-size: var(--text-label);
   line-height: 1.35;
   letter-spacing: 0.01em;
 }
+
+/* ---------------------------------------------------------------
+   ONE type scale for the whole app (condensed by design).
+   Every page, table, form and panel picks one of these six roles
+   instead of an ad-hoc `text-[11px]` / `text-xs` / `text-sm`.
+   Sizes follow the active density; document preview and printed
+   PDF layouts are deliberately excluded (export parity).
+   --------------------------------------------------------------- */
+:root {
+  --text-display: clamp(1.375rem, 2vw, 1.625rem);
+  --text-title: 1rem;
+  --text-subtitle: 0.875rem;
+  --text-body: 0.75rem;
+  --text-label: 0.6875rem;
+  --text-micro: 0.625rem;
+  --field-h: 2rem;
+}
+:root[data-density="comfortable"] {
+  --text-body: 0.8125rem;
+  --text-label: 0.6875rem;
+  --field-h: 2.25rem;
+}
+
+@utility t-display {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  line-height: 1.15;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  font-variant-numeric: tabular-nums;
+}
+
+@utility t-title {
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+@utility t-subtitle {
+  font-family: var(--font-display);
+  font-size: var(--text-subtitle);
+  line-height: 1.35;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+@utility t-body {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.45;
+}
+
+@utility t-label {
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  line-height: 1.35;
+}
+
+@utility t-micro {
+  font-family: var(--font-sans);
+  font-size: var(--text-micro);
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+}
+
 
 
 /* ---------- Accessibility & interaction primitives ---------- */
@@ -1730,13 +1797,13 @@ input[type="number"] {
 :root {
   --tbl-row-h: 1.75rem;
   --tbl-head-h: 1.625rem;
-  --tbl-font: 0.75rem;
+  --tbl-font: var(--text-body);
   --tbl-pad-x: 0.5rem;
 }
 :root[data-density="comfortable"] {
   --tbl-row-h: 2.125rem;
   --tbl-head-h: 2rem;
-  --tbl-font: 0.8125rem;
+  --tbl-font: var(--text-body);
   --tbl-pad-x: 0.625rem;
 }
 
@@ -1764,7 +1831,12 @@ input[type="number"] {
     padding-top: 0.125rem;
     padding-bottom: 0.125rem;
     white-space: nowrap;
+    /* One header voice for every table in the app. */
+    font-size: var(--text-label);
+    font-weight: 600;
+    letter-spacing: 0.02em;
   }
+
 
   /* Numbers, amounts and dates line up like a sheet. */
   .list-aligned table :is(th, td),

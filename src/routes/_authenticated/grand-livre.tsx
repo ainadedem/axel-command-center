@@ -44,7 +44,7 @@ function GrandLivrePage() {
               });
             }}
 
-            className="text-xs px-3 py-1.5 rounded-md border border-border hover:bg-surface-elevated"
+            className="t-label px-3 py-1.5 rounded-md border border-border hover:bg-surface-elevated"
           >
             Recharger depuis Drive
           </button>
@@ -148,11 +148,11 @@ function Body() {
         <button
           onClick={handleExport}
           disabled={movements.length === 0}
-          className="flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-surface hover:bg-surface-elevated text-sm transition disabled:opacity-40"
+          className="flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-surface hover:bg-surface-elevated t-body transition disabled:opacity-40"
         >
           <Download className="h-4 w-4" /> Exporter CSV
         </button>
-        <span className="text-xs text-muted-foreground ml-auto">
+        <span className="t-label text-muted-foreground ml-auto">
           {movements.length} mouvement{movements.length !== 1 ? "s" : ""} · {period.label}
         </span>
       </div>
@@ -166,26 +166,26 @@ function Body() {
                 value={accountSearch}
                 onChange={(e) => setAccountSearch(e.target.value)}
                 placeholder="Rechercher un compte…"
-                className="w-full h-8 pl-8 pr-3 rounded-md bg-background border border-border text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                className="w-full h-8 pl-8 pr-3 rounded-md bg-background border border-border t-label focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
-            <div className="text-[10px] text-muted-foreground mt-1.5 px-0.5">
+            <div className="t-micro text-muted-foreground mt-1.5 px-0.5">
               {filteredAccountList.length} / {accountList.length} comptes
             </div>
           </div>
           <div className="overflow-y-auto flex-1">
             {filteredAccountList.length === 0 && (
-              <div className="px-4 py-6 text-sm text-muted-foreground">Aucun compte trouvé.</div>
+              <div className="px-4 py-6 t-body text-muted-foreground">Aucun compte trouvé.</div>
             )}
             {filteredAccountList.map((a) => (
               <button
                 key={a.code}
                 onClick={() => setSelected(a.code)}
-                className={`w-full text-left px-4 py-2 text-sm border-b border-border/30 hover:bg-surface-elevated/50 ${
+                className={`w-full text-left px-4 py-2 t-body border-b border-border/30 hover:bg-surface-elevated/50 ${
                   activeCode === a.code ? "bg-surface-elevated border-l-2 border-l-primary" : ""
                 }`}
               >
-                <div className="font-tnum text-xs text-muted-foreground">
+                <div className="font-tnum t-label text-muted-foreground">
                   {a.code} {a.cls ? `· cl.${a.cls}` : ""}
                 </div>
                 <div className="truncate">{a.name}</div>
@@ -197,23 +197,23 @@ function Body() {
         <div className="rounded-xl border border-border bg-[var(--gradient-surface)] overflow-hidden">
           <div className="px-5 py-3 border-b border-border flex items-center justify-between gap-3">
             <div>
-              <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+              <div className="t-label uppercase tracking-[0.16em] text-muted-foreground">
                 Compte sélectionné {activeCls ? `— ${classNames[activeCls]}` : ""}
               </div>
-              <div className="font-display text-lg font-semibold">
+              <div className="font-display t-title font-semibold">
                 {activeCode} — {activeLabel}
               </div>
             </div>
-            <div className="text-xs text-muted-foreground text-right shrink-0">
+            <div className="t-label text-muted-foreground text-right shrink-0">
               <div className="font-tnum">D {fmtMoney(totD, co.baseCurrency)}</div>
               <div className="font-tnum">C {fmtMoney(totC, co.baseCurrency)}</div>
             </div>
           </div>
           <div className="max-h-[68vh] overflow-y-auto">
             <div className="overflow-x-auto sticky-first-col">
-            <table className="sheet sheet-pin1 w-full min-w-[900px] text-sm">
+            <table className="sheet sheet-pin1 w-full min-w-[900px] t-body">
               <thead className="sticky top-0 bg-[var(--gradient-surface)] z-10">
-                <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                <tr className="t-label uppercase tracking-wider text-muted-foreground border-b border-border">
                   <th className="text-left font-medium px-5 py-2 w-28">Date</th>
                   <th className="text-left font-medium px-5 py-2 w-16">Jrnl</th>
                   <th className="text-left font-medium px-5 py-2 w-40">Pièce</th>
@@ -226,7 +226,7 @@ function Body() {
               <tbody>
                 {movements.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-5 py-8 text-center text-muted-foreground text-sm">
+                    <td colSpan={7} className="px-5 py-8 text-center text-muted-foreground t-body">
                       Aucun mouvement sur ce compte pour la période sélectionnée.
                     </td>
                   </tr>
@@ -238,12 +238,12 @@ function Body() {
                     return (
                       <tr key={i} className="border-b border-border/30 last:border-0">
                         <td className="px-5 py-2 font-tnum">{fmtDateFR(m.date)}</td>
-                        <td className="px-5 py-2 text-xs">{m.journal}</td>
-                        <td className="px-5 py-2 text-xs text-muted-foreground">{m.piece}</td>
+                        <td className="px-5 py-2 t-label">{m.journal}</td>
+                        <td className="px-5 py-2 t-label text-muted-foreground">{m.piece}</td>
                         <td className="px-5 py-2">
                           <div className="truncate">{m.description}</div>
                           {m.partner && (
-                            <div className="text-[11px] text-muted-foreground truncate">{m.partner}</div>
+                            <div className="t-label text-muted-foreground truncate">{m.partner}</div>
                           )}
                         </td>
                         <td className="px-5 py-2 text-right font-tnum">{m.debit ? fmtMoney(m.debit, co.baseCurrency) : ""}</td>

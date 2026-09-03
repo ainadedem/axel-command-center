@@ -188,7 +188,7 @@ export function PaymentUnlinkDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 t-body">
           <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
             {groups.map((g) => (
               <div key={g.invoice.id} className="rounded-lg border border-border bg-[var(--surface-container)] p-3">
@@ -208,7 +208,7 @@ export function PaymentUnlinkDialog({
                     </span>
                   </div>
                 ))}
-                <p className="mt-2 text-xs text-muted-foreground">
+                <p className="mt-2 t-label text-muted-foreground">
                   {VERDICT_LABEL[g.before.verification] ?? g.before.verification} →{" "}
                   <span className="font-medium text-warning">
                     {VERDICT_LABEL[g.after.verification] ?? g.after.verification}
@@ -221,7 +221,7 @@ export function PaymentUnlinkDialog({
             ))}
           </div>
 
-          <p className="text-xs text-muted-foreground">
+          <p className="t-label text-muted-foreground">
             {many
               ? `${money(total, pairs[0].transaction.currency)} of evidence is withdrawn across ${groups.length} invoice${groups.length !== 1 ? "s" : ""}. `
               : ""}
@@ -230,7 +230,7 @@ export function PaymentUnlinkDialog({
           </p>
 
           {!allowed && (
-            <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+            <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 t-label text-destructive">
               {UNLINK_DENIED_MESSAGE(perm.companyName(blocked[0]?.invoice.companyId))} Only {UNLINK_ROLES_LABEL.toLowerCase()} may break a payment's evidence chain
               {blocked.length !== groups.length
                 ? ` — including invoice${blocked.length > 1 ? "s" : ""} ${blocked.map((g) => g.invoice.number).join(", ")}.`
@@ -239,7 +239,7 @@ export function PaymentUnlinkDialog({
           )}
 
           <div className="space-y-1.5">
-            <label htmlFor="unlink-reason" className="text-xs text-muted-foreground">
+            <label htmlFor="unlink-reason" className="t-label text-muted-foreground">
               Reason (optional)
             </label>
             <Input

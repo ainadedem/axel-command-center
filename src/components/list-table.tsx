@@ -44,12 +44,12 @@ export function ListTableShell({ children, className, scrollX, announcement, sti
 
 
 export function ListTable({ children, className, style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
-  return <table style={style} className={cn("w-full table-fixed text-sm", className)}>{children}</table>;
+  return <table style={style} className={cn("w-full table-fixed t-body", className)}>{children}</table>;
 }
 
 export function ListHeadRow({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <tr className={cn("text-[11px] tracking-[0.04em] text-muted-foreground border-b border-border/70", className)}>
+    <tr className={cn("t-label tracking-[0.04em] text-muted-foreground border-b border-border/70", className)}>
       {children}
     </tr>
   );
@@ -260,28 +260,28 @@ export function ColumnPicker({ prefs, className, onResetWidths, onResetOrder, ic
           >
             <Columns3 className="h-4 w-4" />
             {hidden > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 rounded-full bg-primary/10 text-primary px-1 text-[10px] leading-4 border border-surface">{hidden}</span>
+              <span className="absolute -right-0.5 -top-0.5 rounded-full bg-primary/10 text-primary px-1 t-micro leading-4 border border-surface">{hidden}</span>
             )}
           </button>
         ) : (
-          <Button variant="outline" size="sm" className={cn("h-8 px-2.5 text-xs gap-1.5", className)}>
+          <Button variant="outline" size="sm" className={cn("h-8 px-2.5 t-label gap-1.5", className)}>
             <Columns3 className="h-3.5 w-3.5" />
             Columns
             {hidden > 0 && (
-              <span className="ml-0.5 rounded-full bg-primary/10 text-primary px-1.5 text-[10px] leading-4">{hidden}</span>
+              <span className="ml-0.5 rounded-full bg-primary/10 text-primary px-1.5 t-micro leading-4">{hidden}</span>
             )}
           </Button>
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60 max-h-[70vh] overflow-y-auto">
-        <DropdownMenuLabel className="text-xs">Visible columns</DropdownMenuLabel>
+        <DropdownMenuLabel className="t-label">Visible columns</DropdownMenuLabel>
         {prefs.setAll && (
           <>
             <div className="flex items-center gap-1.5 px-2 pb-1.5">
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 flex-1 text-[11px]"
+                className="h-7 flex-1 t-label"
                 onClick={() => prefs.setAll?.(true)}
               >
                 Show all
@@ -289,7 +289,7 @@ export function ColumnPicker({ prefs, className, onResetWidths, onResetOrder, ic
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 flex-1 text-[11px]"
+                className="h-7 flex-1 t-label"
                 onClick={() => prefs.setAll?.(false)}
               >
                 Hide optional
@@ -307,26 +307,26 @@ export function ColumnPicker({ prefs, className, onResetWidths, onResetOrder, ic
               disabled={locked}
               onSelect={(e) => e.preventDefault()}
               onCheckedChange={() => prefs.toggle(c.key)}
-              className="text-xs"
+              className="t-label"
             >
               <span className="flex w-full items-center justify-between gap-2">
                 {c.label}
-                {locked && <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Locked</span>}
+                {locked && <span className="t-micro uppercase tracking-wide text-muted-foreground">Locked</span>}
               </span>
             </DropdownMenuCheckboxItem>
           );
         })}
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-xs" onSelect={() => prefs.reset()} disabled={prefs.isDefault}>
+        <DropdownMenuItem className="t-label" onSelect={() => prefs.reset()} disabled={prefs.isDefault}>
           <RotateCcw className="h-3.5 w-3.5 mr-2" /> Reset to default
         </DropdownMenuItem>
         {onResetWidths && (
-          <DropdownMenuItem className="text-xs" onSelect={() => onResetWidths()}>
+          <DropdownMenuItem className="t-label" onSelect={() => onResetWidths()}>
             <MoveHorizontal className="h-3.5 w-3.5 mr-2" /> Reset column widths
           </DropdownMenuItem>
         )}
         {onResetOrder && (
-          <DropdownMenuItem className="text-xs" onSelect={() => onResetOrder()}>
+          <DropdownMenuItem className="t-label" onSelect={() => onResetOrder()}>
             <ArrowLeftRight className="h-3.5 w-3.5 mr-2" /> Reset column order
           </DropdownMenuItem>
         )}

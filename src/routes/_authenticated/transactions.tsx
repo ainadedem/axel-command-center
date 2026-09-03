@@ -198,7 +198,7 @@ function Body() {
       <div className="space-y-6">
 
       {q && (
-        <div className="text-xs text-muted-foreground">
+        <div className="t-label text-muted-foreground">
           Filtered by <span className="text-foreground font-medium">"{q}"</span> · {list.length} match{list.length === 1 ? "" : "es"}
         </div>
       )}
@@ -209,7 +209,7 @@ function Body() {
               key={t}
               onClick={() => setFilter(t)}
               className={cn(
-                "px-3 py-1.5 rounded-md text-sm capitalize transition border",
+                "px-3 py-1.5 rounded-md t-body capitalize transition border",
                 filter === t
                   ? "bg-primary text-primary-foreground border-primary"
                   : "border-border bg-surface hover:bg-surface-elevated text-muted-foreground hover:text-foreground",
@@ -221,7 +221,7 @@ function Body() {
           <button
             onClick={() => setUnlinkedOnly((v) => !v)}
             className={cn(
-              "px-3 py-1.5 rounded-md text-sm transition border",
+              "px-3 py-1.5 rounded-md t-body transition border",
               unlinkedOnly
                 ? "bg-primary text-primary-foreground border-primary"
                 : "border-border bg-surface hover:bg-surface-elevated text-muted-foreground hover:text-foreground",
@@ -411,7 +411,7 @@ function Body() {
                           disabled={!t.invoiceId}
                           label={`Select transaction ${t.description}`}
                         />
-                        <ListTd className="text-muted-foreground font-tnum text-xs">{format(parseISO(t.date), "MMM d, yyyy")}</ListTd>
+                        <ListTd className="text-muted-foreground font-tnum t-label">{format(parseISO(t.date), "MMM d, yyyy")}</ListTd>
                         <ListTd className="font-medium" title={t.description}>
                           <span className="inline-flex items-center gap-1.5 max-w-full">
                             <span className="truncate">{t.description}</span>
@@ -420,25 +420,25 @@ function Body() {
                         </ListTd>
                         {cp.on("company") && (
                           <ListTd title={co?.name}>
-                            {co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}
+                            {co && <span className="inline-flex items-center gap-2 t-label max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}
                           </ListTd>
                         )}
                         {cp.on("counterparty") && (
-                          <ListTd className="text-xs" title={cli?.name ?? sup?.name}>
+                          <ListTd className="t-label" title={cli?.name ?? sup?.name}>
                             {cli ? <span className="text-success">↑ {cli.name}</span>
                               : sup ? <span className="text-muted-foreground">↓ {sup.name}</span>
                               : <span className="text-muted-foreground/50">—</span>}
                           </ListTd>
                         )}
                         {cp.on("project") && (
-                          <ListTd className="text-xs" title={proj?.name}>
+                          <ListTd className="t-label" title={proj?.name}>
                             {proj
                               ? <span className="inline-block max-w-full truncate px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 align-middle">{proj.name}</span>
                               : <span className="text-muted-foreground/50">—</span>}
                           </ListTd>
                         )}
                         {cp.on("account") && (
-                          <ListTd className="text-xs" title={acc?.name}>
+                          <ListTd className="t-label" title={acc?.name}>
                             {acc
                               ? <span className="inline-block max-w-full truncate px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 align-middle">{acc.name}</span>
                               : <span className="text-muted-foreground/50">—</span>}
@@ -448,7 +448,7 @@ function Body() {
                         {cp.on("type") && (
                           <ListTd>
                             <span className={cn(
-                              "inline-block text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                              "inline-block t-micro uppercase tracking-wider px-2 py-0.5 rounded-full border",
                               t.type === "income" && "border-success/40 text-success bg-success/10",
                               t.type === "expense" && "border-destructive/30 text-destructive bg-destructive/10",
                               t.type === "transfer" && "border-chart-2/30 text-chart-2 bg-chart-2/10",
@@ -457,7 +457,7 @@ function Body() {
                           </ListTd>
                         )}
                         {cp.on("linked") && (
-                          <ListTd className="text-xs">
+                          <ListTd className="t-label">
                             {(() => {
                               const link = linkOf(t);
                               if (!link) {
@@ -521,7 +521,7 @@ function Body() {
       <BulkActionBar count={selection.count} noun="payment" onClear={selection.clear}>
         {unlinkPerm.canAny && (
           <Button
-            size="sm" variant="outline" className="h-7 px-3 text-xs text-destructive"
+            size="sm" variant="outline" className="h-7 px-3 t-label text-destructive"
             disabled={unlinkPairs.length === 0}
             onClick={() => setBulkUnlink(true)}
           >
@@ -838,7 +838,7 @@ function TransactionDialog({ open, onOpenChange, editing }: { open: boolean; onO
                     {companyProjects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <p className="text-[11px] text-muted-foreground mt-1">Used to track P&L per project (sales & expenses).</p>
+                <p className="t-label text-muted-foreground mt-1">Used to track P&L per project (sales & expenses).</p>
               </div>
             );
           })()}

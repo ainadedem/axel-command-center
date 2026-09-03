@@ -79,7 +79,7 @@ export function AvatarUpload({ value, onChange, name, size = 64, square, folder 
         onClick={pick}
         disabled={busy}
         className={cn(
-          "relative overflow-hidden border border-border bg-gradient-to-br from-primary/20 to-chart-2/20 grid place-items-center text-xs font-semibold hover:border-primary/50 transition w-full h-full",
+          "relative overflow-hidden border border-border bg-gradient-to-br from-primary/20 to-chart-2/20 grid place-items-center t-label font-semibold hover:border-primary/50 transition w-full h-full",
           square ? "rounded-lg" : "rounded-full",
         )}
         aria-label="Change profile picture"
@@ -99,7 +99,7 @@ export function AvatarUpload({ value, onChange, name, size = 64, square, folder 
         </span>
       </button>
       {error && (
-        <div className="absolute top-full left-0 mt-1 text-[10px] text-destructive whitespace-nowrap">{error}</div>
+        <div className="absolute top-full left-0 mt-1 t-micro text-destructive whitespace-nowrap">{error}</div>
       )}
       {value && (
         <button

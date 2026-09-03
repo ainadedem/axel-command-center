@@ -326,13 +326,13 @@ function Body() {
                     <RowAction icon={<Trash2 className="h-3.5 w-3.5" />} label="Delete" tone="danger" onClick={() => { if (confirm(`Delete PO ${po.number}?`)) purchaseOrdersStore.remove(po.id); }} />
                   </ListRowActions>
 
-                    <ListTd className="font-tnum text-xs text-muted-foreground" title={po.number}>{po.number}</ListTd>
-                    {cp.on("clientRef") && <ListTd className="text-xs" title={po.clientReference}>{po.clientReference || <span className="text-muted-foreground/50">—</span>}</ListTd>}
-                    {cp.on("fromQuote") && <ListTd className="text-xs text-muted-foreground">{q?.number ?? <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                    <ListTd className="font-tnum t-label text-muted-foreground" title={po.number}>{po.number}</ListTd>
+                    {cp.on("clientRef") && <ListTd className="t-label" title={po.clientReference}>{po.clientReference || <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                    {cp.on("fromQuote") && <ListTd className="t-label text-muted-foreground">{q?.number ?? <span className="text-muted-foreground/50">—</span>}</ListTd>}
                     <ListTd className="font-medium" title={cl?.name}>{cl?.name ?? "—"}</ListTd>
-                    {cp.on("project") && <ListTd className="text-xs" title={proj?.name}>{proj ? <span className="inline-block max-w-full truncate px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 align-middle">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}</ListTd>}
-                    {cp.on("company") && <ListTd title={co?.name}>{co && <span className="inline-flex items-center gap-2 text-xs max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}</ListTd>}
-                    {cp.on("issued") && <ListTd className="text-muted-foreground text-xs font-tnum">{format(parseISO(po.issueDate), "MMM d, yyyy")}</ListTd>}
+                    {cp.on("project") && <ListTd className="t-label" title={proj?.name}>{proj ? <span className="inline-block max-w-full truncate px-2 py-0.5 rounded border border-primary/30 text-primary bg-primary/5 align-middle">{proj.name}</span> : <span className="text-muted-foreground/50">—</span>}</ListTd>}
+                    {cp.on("company") && <ListTd title={co?.name}>{co && <span className="inline-flex items-center gap-2 t-label max-w-full"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: co.color }} /><span className="truncate">{co.shortName}</span></span>}</ListTd>}
+                    {cp.on("issued") && <ListTd className="text-muted-foreground t-label font-tnum">{format(parseISO(po.issueDate), "MMM d, yyyy")}</ListTd>}
                     {cp.on("status") && (
                       <ListTd wrap>
                         <StatusMenu
@@ -343,13 +343,13 @@ function Body() {
                       </ListTd>
                     )}
                     {cp.on("document") && (
-                      <ListTd className="text-xs" title={po.documentName}>
+                      <ListTd className="t-label" title={po.documentName}>
                         {po.documentUrl ? (
                           <button type="button" onClick={() => openStoredFile(po.documentUrl)} className="inline-flex items-center gap-1.5 text-primary hover:underline max-w-full">
                             <FileText className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{po.documentName ?? "PO file"}</span>
                           </button>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10" title="No client PO document uploaded">
+                          <span className="inline-flex items-center gap-1 t-micro uppercase tracking-wider px-2 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10" title="No client PO document uploaded">
                             <AlertTriangle className="h-2.5 w-2.5" /> Missing
                           </span>
                         )}
@@ -357,7 +357,7 @@ function Body() {
                     )}
                     <ListTd align="right" className="font-tnum">{fmtCompact(po.amount, po.currency)}</ListTd>
                     {cp.on("owner") && (
-                      <ListTd className="text-xs text-muted-foreground" title={po.updatedAt ? `Updated by ${ownerName(po.updatedBy ?? po.createdBy)} · ${format(parseISO(po.updatedAt), "MMM d, HH:mm")}` : ownerName(po.createdBy)}>
+                      <ListTd className="t-label text-muted-foreground" title={po.updatedAt ? `Updated by ${ownerName(po.updatedBy ?? po.createdBy)} · ${format(parseISO(po.updatedAt), "MMM d, HH:mm")}` : ownerName(po.createdBy)}>
                         {ownerFirstName(po.createdBy)}
                       </ListTd>
                     )}
@@ -582,7 +582,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
         <DialogHeader><DialogTitle>{editing ? "Edit client PO" : "Record client PO"}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
           <FormErrorBanner show={showErrors} />
-          <p className="text-[11px] text-muted-foreground -mt-1">Enter the purchase order details exactly as issued by your client, then attach their document.</p>
+          <p className="t-label text-muted-foreground -mt-1">Enter the purchase order details exactly as issued by your client, then attach their document.</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label><RequiredLabel>Client PO number</RequiredLabel></Label>
@@ -617,7 +617,7 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
               placeholder={clientId ? "Search quote by number, client or amount" : "Select client first"}
               companyLabel={companies.find((c) => c.id === companyId)?.name}
             />
-            <p className="text-[11px] text-muted-foreground mt-1">A PO should descend from an accepted quote.</p>
+            <p className="t-label text-muted-foreground mt-1">A PO should descend from an accepted quote.</p>
           </div>
           <div>
             <Label>Project</Label>
@@ -660,22 +660,22 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
             <Label><RequiredLabel>Client PO document</RequiredLabel></Label>
             {documentUrl ? (
               <div className="space-y-1.5">
-                <div className="flex items-center gap-2 rounded-md border border-border bg-surface-elevated/40 px-3 py-2 text-sm">
+                <div className="flex items-center gap-2 rounded-md border border-border bg-surface-elevated/40 px-3 py-2 t-body">
                   <FileText className="h-4 w-4 text-primary shrink-0" />
                   <div className="flex-1 min-w-0">
                     <button type="button" onClick={() => openStoredFile(documentUrl)} className="block w-full text-left truncate text-primary hover:underline">{documentName}</button>
                     {documentUploadedAt && (
-                      <p className="text-[10px] text-muted-foreground font-tnum">Uploaded {format(parseISO(documentUploadedAt), "MMM d, yyyy · HH:mm")}{documentHistory.length > 0 && ` · v${documentHistory.length + 1}`}</p>
+                      <p className="t-micro text-muted-foreground font-tnum">Uploaded {format(parseISO(documentUploadedAt), "MMM d, yyyy · HH:mm")}{documentHistory.length > 0 && ` · v${documentHistory.length + 1}`}</p>
                     )}
                   </div>
-                  <label className="h-7 px-2 inline-flex items-center gap-1 cursor-pointer rounded text-[11px] text-muted-foreground hover:text-foreground hover:bg-surface-elevated" title="Replace document">
+                  <label className="h-7 px-2 inline-flex items-center gap-1 cursor-pointer rounded t-label text-muted-foreground hover:text-foreground hover:bg-surface-elevated" title="Replace document">
                     <RefreshCw className="h-3.5 w-3.5" /> Replace
                     <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
                   </label>
                   <button type="button" onClick={() => { setDocumentUrl(undefined); setDocumentName(undefined); setDocumentType(undefined); setDocumentUploadedAt(undefined); }} className="h-7 w-7 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive" title="Remove current version"><X className="h-3.5 w-3.5" /></button>
                 </div>
                 {documentHistory.length > 0 && (
-                  <details className="rounded-md border border-border/60 bg-surface-elevated/20 px-3 py-2 text-xs">
+                  <details className="rounded-md border border-border/60 bg-surface-elevated/20 px-3 py-2 t-label">
                     <summary className="cursor-pointer text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5">
                       <History className="h-3.5 w-3.5" /> Version history ({documentHistory.length})
                     </summary>
@@ -684,10 +684,10 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
                         const versionNumber = documentHistory.length - i; // newest entry = highest prior version
                         return (
                           <li key={i} className="flex items-center gap-2 py-1 border-t border-border/40 first:border-0">
-                            <span className="text-[10px] text-muted-foreground font-tnum w-8 shrink-0">v{versionNumber}</span>
+                            <span className="t-micro text-muted-foreground font-tnum w-8 shrink-0">v{versionNumber}</span>
                             <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                             <button type="button" onClick={() => openStoredFile(v.url)} className="flex-1 truncate text-left text-primary hover:underline">{v.name ?? "PO file"}</button>
-                            <span className="text-[10px] text-muted-foreground font-tnum">{format(parseISO(v.uploadedAt), "MMM d, yyyy · HH:mm")}</span>
+                            <span className="t-micro text-muted-foreground font-tnum">{format(parseISO(v.uploadedAt), "MMM d, yyyy · HH:mm")}</span>
                             <button type="button" onClick={() => setDocumentHistory((h) => h.filter((_, idx) => idx !== i))} className="h-6 w-6 grid place-items-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive" title="Delete this version"><X className="h-3 w-3" /></button>
                           </li>
                         );
@@ -698,15 +698,15 @@ function PODialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange
               </div>
             ) : (
               <>
-                <label className={cn("flex items-center gap-2 rounded-md border border-dashed border-warning/50 bg-warning/5 hover:bg-warning/10 px-3 py-2.5 text-sm text-muted-foreground transition-colors", uploading ? "opacity-60 cursor-wait" : "cursor-pointer")}>
+                <label className={cn("flex items-center gap-2 rounded-md border border-dashed border-warning/50 bg-warning/5 hover:bg-warning/10 px-3 py-2.5 t-body text-muted-foreground transition-colors", uploading ? "opacity-60 cursor-wait" : "cursor-pointer")}>
                   <Upload className="h-4 w-4" />
                   <span>{uploading ? "Uploading…" : "Upload the client's PO — PDF or image (max 10 MB)"}</span>
                   <input type="file" accept=".pdf,image/*" disabled={uploading} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
                 </label>
-                <p className="text-[11px] text-warning mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Without a file this PO stays flagged “File missing”.</p>
+                <p className="t-label text-warning mt-1 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Without a file this PO stays flagged “File missing”.</p>
               </>
             )}
-            {uploadError && <p className="text-[11px] text-destructive mt-1">{uploadError}</p>}
+            {uploadError && <p className="t-label text-destructive mt-1">{uploadError}</p>}
 
           </div>
         </div>

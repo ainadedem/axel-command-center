@@ -69,7 +69,7 @@ export function BulkStatusDialog<T extends BulkStatusRow>({
 
         <div className="space-y-3 py-1">
           <div>
-            <Label className="text-[11px]">New status</Label>
+            <Label className="t-label">New status</Label>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
               {statuses.map((s) => (
                 <button
@@ -90,7 +90,7 @@ export function BulkStatusDialog<T extends BulkStatusRow>({
 
           {needsReason && (
             <div>
-              <Label htmlFor="bulk-cancel-reason" className="text-[11px]">
+              <Label htmlFor="bulk-cancel-reason" className="t-label">
                 Cancellation reason <span className="text-destructive">*</span>
               </Label>
               <div className="flex flex-wrap gap-1.5 my-1.5">
@@ -99,7 +99,7 @@ export function BulkStatusDialog<T extends BulkStatusRow>({
                     key={p}
                     type="button"
                     onClick={() => setReason(p)}
-                    className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground"
+                    className="rounded-full border border-border px-2.5 py-1 t-label text-muted-foreground hover:bg-muted hover:text-foreground"
                   >
                     {p}
                   </button>
@@ -116,7 +116,7 @@ export function BulkStatusDialog<T extends BulkStatusRow>({
           )}
 
           {plan && (
-            <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs space-y-1.5">
+            <div className="rounded-lg border border-border bg-muted/30 p-3 t-label space-y-1.5">
               <div className="flex items-center gap-2">
                 <Check className="h-3.5 w-3.5 text-success" />
                 <span><span className="font-medium">{plan.change.length}</span> will change to {STATUS_META[next]?.label ?? next}</span>

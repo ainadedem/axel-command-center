@@ -315,7 +315,7 @@ function DashboardBody() {
           trendDir={profitPct > 0.1 ? "up" : profitPct < -0.1 ? "down" : "flat"}
           tone={profitMGA < 0 ? "danger" : profitMGA > 0 ? "success" : "default"}
           badge={profitMGA < 0 ? (
-            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-destructive/15 text-destructive border border-destructive/30">
+            <span className="inline-flex items-center gap-1 t-micro font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-destructive/15 text-destructive border border-destructive/30">
               <AlertOctagon className="h-3 w-3" /> Danger
             </span>
           ) : undefined}
@@ -328,7 +328,7 @@ function DashboardBody() {
           trendDir={overdueCount > 0 ? "down" : receivablesPct < 0 ? "up" : "flat"}
           tone={overdueCount >= 5 ? "warning" : "default"}
           badge={overdueCount >= 5 ? (
-            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500 border border-amber-500/30">
+            <span className="inline-flex items-center gap-1 t-micro font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500 border border-amber-500/30">
               <AlertTriangle className="h-3 w-3" /> Warning
             </span>
           ) : undefined}
@@ -347,15 +347,15 @@ function DashboardBody() {
           tone={runwayTone}
           badge={
             profitMGA < 0 ? (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-destructive/15 text-destructive border border-destructive/30">
+              <span className="inline-flex items-center gap-1 t-micro font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-destructive/15 text-destructive border border-destructive/30">
                 <AlertOctagon className="h-3 w-3" /> Danger Zone
               </span>
             ) : runwayMonths < 4 ? (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500 border border-amber-500/30">
+              <span className="inline-flex items-center gap-1 t-micro font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500 border border-amber-500/30">
                 <AlertTriangle className="h-3 w-3" /> Warning Zone
               </span>
             ) : runwayMonths >= 6 ? (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-success/15 text-success border border-success/30">
+              <span className="inline-flex items-center gap-1 t-micro font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-success/15 text-success border border-success/30">
                 <ShieldCheck className="h-3 w-3" /> Healthy
               </span>
             ) : undefined
@@ -387,9 +387,9 @@ function DashboardBody() {
           actions={
             <Tabs value={cashView} onValueChange={(v) => setCashView(v as "daily" | "monthly" | "yearly")}>
               <TabsList className="h-8">
-                <TabsTrigger value="daily" className="text-xs px-2.5 py-1">Daily</TabsTrigger>
-                <TabsTrigger value="monthly" className="text-xs px-2.5 py-1">Monthly</TabsTrigger>
-                <TabsTrigger value="yearly" className="text-xs px-2.5 py-1">Yearly</TabsTrigger>
+                <TabsTrigger value="daily" className="t-label px-2.5 py-1">Daily</TabsTrigger>
+                <TabsTrigger value="monthly" className="t-label px-2.5 py-1">Monthly</TabsTrigger>
+                <TabsTrigger value="yearly" className="t-label px-2.5 py-1">Yearly</TabsTrigger>
               </TabsList>
             </Tabs>
           }
@@ -472,55 +472,55 @@ function DashboardBody() {
         <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <div>
-              <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+              <div className="t-label uppercase tracking-[0.16em] text-muted-foreground">
                 Axiom pipeline · future expected revenue
               </div>
-              <div className="font-display text-lg font-semibold mt-1">
+              <div className="font-display t-title font-semibold mt-1">
                 Open deals weighted by stage probability · FX-converted to MGA
               </div>
             </div>
-            <Link to="/pipeline" className="text-xs text-primary hover:underline">
+            <Link to="/pipeline" className="t-label text-primary hover:underline">
               Open pipeline →
             </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 mb-5">
             <div className="rounded-lg border border-border/60 bg-card p-4">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              <div className="t-micro uppercase tracking-[0.16em] text-muted-foreground">
                 Gross open pipeline
               </div>
               <div className="font-display text-2xl font-bold tracking-tight font-tnum mt-1">
                 {fmtCompact(axiomGrossMGA, "MGA")}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
+              <div className="t-label text-muted-foreground mt-1">
                 {axiomOpenOpp.length} open deals
               </div>
             </div>
             <div className="rounded-lg border border-primary/30 bg-accent/40 p-4">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-primary">
+              <div className="t-micro uppercase tracking-[0.16em] text-primary">
                 Weighted expected revenue
               </div>
               <div className="font-display text-2xl font-bold tracking-tight font-tnum mt-1 text-primary">
                 {fmtCompact(axiomWeightedMGA, "MGA")}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
+              <div className="t-label text-muted-foreground mt-1">
                 {axiomGrossMGA > 0
                   ? `${((axiomWeightedMGA / axiomGrossMGA) * 100).toFixed(0)}% blended win rate`
                   : "—"}
               </div>
             </div>
             <div className="rounded-lg border border-border/60 bg-card p-4">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              <div className="t-micro uppercase tracking-[0.16em] text-muted-foreground">
                 Runway impact
               </div>
               <div className="font-display text-2xl font-bold tracking-tight font-tnum mt-1 flex items-baseline gap-2">
                 <span>{runwayWithPipeline.toFixed(1)} mo</span>
-                <span className="text-xs font-medium text-success font-tnum">
+                <span className="t-label font-medium text-success font-tnum">
                   {runwayAddedMonths >= 0 ? "+" : ""}
                   {runwayAddedMonths.toFixed(1)} mo
                 </span>
               </div>
-              <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+              <div className="t-label text-muted-foreground mt-1 flex items-center gap-1">
                 <Rocket className="h-3 w-3" />
                 from {runwayMonths.toFixed(1)} mo today
               </div>
@@ -529,8 +529,8 @@ function DashboardBody() {
 
           {/* Currency mix — shows the FX conversion that feeds the totals */}
           {Object.keys(axiomByCurrency).length > 0 && (
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground mb-4">
-              <span className="uppercase tracking-[0.16em] text-[10px]">FX mix</span>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 t-label text-muted-foreground mb-4">
+              <span className="uppercase tracking-[0.16em] t-micro">FX mix</span>
               {(Object.entries(axiomByCurrency) as [Currency, { native: number; mga: number }][])
                 .sort((a, b) => b[1].mga - a[1].mga)
                 .map(([cur, v]) => (
@@ -539,7 +539,7 @@ function DashboardBody() {
                     <span className="text-foreground">{fmtCompact(v.native, cur)}</span>
                     <span className="text-muted-foreground">→ {fmtCompact(v.mga, "MGA")}</span>
                     {cur !== "MGA" && (
-                      <span className="text-[10px] text-muted-foreground/70">
+                      <span className="t-micro text-muted-foreground/70">
                         @ {FX[cur].toLocaleString()} MGA/{cur}
                       </span>
                     )}
@@ -584,18 +584,18 @@ function DashboardBody() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 sm:gap-6">
         <div className="rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
           <div className="flex items-center justify-between mb-1">
-            <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Pipeline</div>
-            <Link to="/pipeline" className="text-xs text-primary hover:underline">View →</Link>
+            <div className="t-label uppercase tracking-[0.16em] text-muted-foreground">Pipeline</div>
+            <Link to="/pipeline" className="t-label text-primary hover:underline">View →</Link>
           </div>
           <div className="font-display text-3xl font-bold tracking-tight font-tnum">{fmtCompact(pipelineMGA, "MGA")}</div>
-          <div className="text-xs text-muted-foreground font-tnum mt-1">Weighted {fmtCompact(weightedMGA, "MGA")}</div>
+          <div className="t-label text-muted-foreground font-tnum mt-1">Weighted {fmtCompact(weightedMGA, "MGA")}</div>
           <div className="mt-4 space-y-2">
             {(["Lead", "Qualified", "Proposal", "Negotiation"] as const).map((s) => {
               const v = opp.filter(o => o.stage === s).reduce((sum, o) => sum + toMGA(o.value, o.currency), 0);
               const pct = pipelineMGA > 0 ? (v / pipelineMGA) * 100 : 0;
               return (
                 <div key={s}>
-                  <div className="flex justify-between text-xs mb-1">
+                  <div className="flex justify-between t-label mb-1">
                     <span className="text-muted-foreground">{s}</span>
                     <span className="font-tnum">{fmtCompact(v, "MGA")}</span>
                   </div>
@@ -610,22 +610,22 @@ function DashboardBody() {
 
         <div className="xl:col-span-2 rounded-xl border border-border bg-[var(--gradient-surface)] p-5">
           <div className="flex items-center justify-between mb-4">
-            <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Recent activity</div>
-            <Link to="/transactions" search={{ q: "" }} className="text-xs text-primary hover:underline">All transactions →</Link>
+            <div className="t-label uppercase tracking-[0.16em] text-muted-foreground">Recent activity</div>
+            <Link to="/transactions" search={{ q: "" }} className="t-label text-primary hover:underline">All transactions →</Link>
           </div>
           <div className="divide-y divide-border/60">
             {tx.slice(0, 6).map((t) => {
               const co = companies.find((c) => c.id === t.companyId)!;
               return (
                 <div key={t.id} className="flex items-center gap-4 py-3">
-                  <div className="h-8 w-8 rounded-md grid place-items-center text-[10px] font-bold font-display text-primary-foreground" style={{ background: co.color }}>
+                  <div className="h-8 w-8 rounded-md grid place-items-center t-micro font-bold font-display text-primary-foreground" style={{ background: co.color }}>
                     {co.shortName}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm truncate">{t.description}</div>
-                    <div className="text-xs text-muted-foreground">{format(parseISO(t.date), "MMM d")} · {t.category}</div>
+                    <div className="t-body truncate">{t.description}</div>
+                    <div className="t-label text-muted-foreground">{format(parseISO(t.date), "MMM d")} · {t.category}</div>
                   </div>
-                  <div className={`font-tnum text-sm font-medium ${t.type === "income" ? "text-success" : t.type === "expense" ? "text-destructive" : "text-chart-2"}`}>
+                  <div className={`font-tnum t-body font-medium ${t.type === "income" ? "text-success" : t.type === "expense" ? "text-destructive" : "text-chart-2"}`}>
                     {t.type === "income" ? "+" : t.type === "expense" ? "−" : "↔"} {fmtCompact(t.amount, t.currency)}
                   </div>
                 </div>

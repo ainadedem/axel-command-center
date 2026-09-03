@@ -23,7 +23,7 @@ export interface BulkEditRow extends BulkDoc {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-3">
-      <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</h3>
+      <h3 className="t-micro font-semibold uppercase tracking-wider text-muted-foreground">{title}</h3>
       <div className="space-y-3">{children}</div>
     </section>
   );
@@ -215,7 +215,7 @@ export function BulkEditDocDialog({
                 </SelectContent>
               </Select>
               {availableClients.length === 0 && (
-                <p className="text-[11px] text-muted-foreground">No client is shared by every selected company.</p>
+                <p className="t-label text-muted-foreground">No client is shared by every selected company.</p>
               )}
             </div>
 
@@ -252,7 +252,7 @@ export function BulkEditDocDialog({
                       value={assigneeIds}
                       onChange={setAssigneeIds}
                     />
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="t-label text-muted-foreground">
                       Max {MAX_QUOTE_ASSIGNEES} per quotation — quotes that would exceed it are skipped.
                     </p>
                   </>
@@ -351,7 +351,7 @@ export function BulkEditDocDialog({
                   <SelectItem value="USD">USD</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="t-label text-muted-foreground">
                 Paid, cancelled or part-paid documents are skipped for money and tax changes.
               </p>
             </div>
@@ -383,7 +383,7 @@ export function BulkEditDocDialog({
                 </SelectContent>
               </Select>
               {!singleCompanyId && (
-                <p className="text-[11px] text-muted-foreground">Select documents from a single company to change the bank account.</p>
+                <p className="t-label text-muted-foreground">Select documents from a single company to change the bank account.</p>
               )}
             </div>
 
@@ -400,7 +400,7 @@ export function BulkEditDocDialog({
                 </SelectContent>
               </Select>
               {signer !== KEEP && (
-                <p className="text-[11px] text-muted-foreground">The stamp is marked for refresh on every touched document.</p>
+                <p className="t-label text-muted-foreground">The stamp is marked for refresh on every touched document.</p>
               )}
             </div>
 
@@ -420,7 +420,7 @@ export function BulkEditDocDialog({
             </div>
           </Section>
 
-          <div className="rounded-lg border border-border bg-surface-elevated/40 px-3 py-2.5 text-[11px] text-muted-foreground space-y-1.5">
+          <div className="rounded-lg border border-border bg-surface-elevated/40 px-3 py-2.5 t-label text-muted-foreground space-y-1.5">
             <div className="text-foreground font-medium">
               {targets.length > 0 ? `${plural(targets.length)} will change` : "Nothing to change yet"}
               {skipped.length > 0 && ` · ${skipped.length} skipped`}

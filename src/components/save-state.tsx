@@ -36,21 +36,21 @@ export function RowSaveState({
             <button
               type="button"
               title={status.message ?? "This change was not saved"}
-              className="inline-flex items-center gap-1 rounded-full border border-destructive/40 bg-destructive/10 px-1.5 text-[10px] font-medium uppercase tracking-wider transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] hover:bg-destructive/15 active:scale-95"
+              className="inline-flex items-center gap-1 rounded-full border border-destructive/40 bg-destructive/10 px-1.5 t-micro font-medium uppercase tracking-wider transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] hover:bg-destructive/15 active:scale-95"
             >
               <AlertTriangle className="h-3 w-3" aria-hidden />
               Not saved
             </button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-80 p-3 text-left">
-            <p className="text-xs font-semibold text-destructive">Rejected by the server</p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="t-label font-semibold text-destructive">Rejected by the server</p>
+            <p className="mt-1 t-label text-muted-foreground">
               {rejection?.message ?? status.message ?? "The database did not confirm this change."}
             </p>
             {rejection && rejection.fields.length > 0 && (
               <ul className="mt-2 space-y-1">
                 {rejection.fields.map((f) => (
-                  <li key={f.field} className="text-xs">
+                  <li key={f.field} className="t-label">
                     <span className="text-muted-foreground">{f.field}: </span>
                     <span className="font-tnum">{formatJournalValue(f.previous)}</span>
                     <span className="text-muted-foreground"> → </span>
@@ -61,7 +61,7 @@ export function RowSaveState({
                 ))}
               </ul>
             )}
-            <p className="mt-2 text-[11px] text-muted-foreground">
+            <p className="mt-2 t-label text-muted-foreground">
               The value shown in the table is the last one the database confirmed.
             </p>
             <div className="mt-3 flex items-center gap-2">
@@ -69,7 +69,7 @@ export function RowSaveState({
                 <button
                   type="button"
                   onClick={status.retry}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] active:scale-95"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 t-label font-medium text-primary-foreground transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] active:scale-95"
                 >
                   <RotateCcw className="h-3 w-3" aria-hidden /> Retry
                 </button>
@@ -78,7 +78,7 @@ export function RowSaveState({
                 <button
                   type="button"
                   onClick={() => dismissEntry(rejection.id)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] active:scale-95"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 t-label transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] active:scale-95"
                 >
                   <X className="h-3 w-3" aria-hidden /> Discard
                 </button>

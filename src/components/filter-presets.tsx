@@ -22,7 +22,7 @@ function sameSet(a: string[], b: string[]) {
 
 function presetBtnBase(active?: boolean) {
   return cn(
-    "inline-flex items-center gap-1.5 h-8 pl-3 pr-2 rounded-l-full border border-r-0 text-xs font-medium",
+    "inline-flex items-center gap-1.5 h-8 pl-3 pr-2 rounded-l-full border border-r-0 t-label font-medium",
     "transition-[color,background-color,border-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
     active
@@ -90,17 +90,17 @@ export function FilterPresetBar({
           >
             <Bookmark className="h-4 w-4" />
             {api.presets.length > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 font-tnum text-[9px] leading-none px-1 rounded-full bg-surface border border-border text-muted-foreground">
+              <span className="absolute -right-0.5 -top-0.5 font-tnum t-micro leading-none px-1 rounded-full bg-surface border border-border text-muted-foreground">
                 {api.presets.length}
               </span>
             )}
           </button>
         </PopoverTrigger>
         <PopoverContent align="start" className="w-64 p-2">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground px-1 py-1.5">Filter presets</div>
+          <div className="t-micro uppercase tracking-wider text-muted-foreground px-1 py-1.5">Filter presets</div>
           <div className="max-h-56 overflow-y-auto space-y-1">
             {api.presets.length === 0 && (
-              <div className="text-[11px] text-muted-foreground px-1 py-3 text-center">No saved presets yet</div>
+              <div className="t-label text-muted-foreground px-1 py-3 text-center">No saved presets yet</div>
             )}
             {api.presets.map((p) => {
               const active = sameSet(p.statuses, statuses) && sameSet(p.po, po);
@@ -117,7 +117,7 @@ export function FilterPresetBar({
                         if (e.key === "Escape") { setRenamingId(null); setRenameValue(""); }
                       }}
                       aria-label={`Rename preset ${p.name}`}
-                      className="h-8 flex-1 rounded-full text-xs"
+                      className="h-8 flex-1 rounded-full t-label"
                     />
                     <button
                       type="button"
@@ -154,19 +154,19 @@ export function FilterPresetBar({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
                       <DropdownMenuItem
-                        className="text-xs"
+                        className="t-label"
                         onSelect={() => { setRenamingId(p.id); setRenameValue(p.name); }}
                       >
                         <Pencil className="h-3.5 w-3.5 mr-2" /> Rename
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        className="text-xs"
+                        className="t-label"
                         disabled={!canSave}
                         onSelect={() => api.update(p.id, statuses, po)}
                       >
                         <RefreshCw className="h-3.5 w-3.5 mr-2" /> Update from filters
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-xs text-destructive" onSelect={() => api.remove(p.id)}>
+                      <DropdownMenuItem className="t-label text-destructive" onSelect={() => api.remove(p.id)}>
                         <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -189,12 +189,12 @@ export function FilterPresetBar({
                   setOpen(false);
                 }
               }}
-              className="h-8 rounded-full text-xs"
+              className="h-8 rounded-full t-label"
             />
             <Button
               size="sm"
               disabled={!canSave || !name.trim()}
-              className="w-full h-8 text-xs mt-1.5 gap-1.5"
+              className="w-full h-8 t-label mt-1.5 gap-1.5"
               onClick={() => {
                 api.save(name, statuses, po);
                 setName("");
@@ -213,7 +213,7 @@ export function FilterPresetBar({
   return (
     <div className={cn(flat ? "[display:contents]" : "flex flex-wrap items-center gap-1.5", className)}>
       {api.presets.length > 0 && (
-        <span className="text-[11px] uppercase tracking-wider text-muted-foreground mr-0.5">Presets</span>
+        <span className="t-label uppercase tracking-wider text-muted-foreground mr-0.5">Presets</span>
       )}
       {api.presets.map((p) => {
         const active = sameSet(p.statuses, statuses) && sameSet(p.po, po);
@@ -231,7 +231,7 @@ export function FilterPresetBar({
                   if (e.key === "Escape") { setRenamingId(null); setRenameValue(""); }
                 }}
                 aria-label={`Rename preset ${p.name}`}
-                className="h-8 w-36 rounded-full text-xs"
+                className="h-8 w-36 rounded-full t-label"
               />
               <button
                 type="button"
@@ -269,19 +269,19 @@ export function FilterPresetBar({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48">
                 <DropdownMenuItem
-                  className="text-xs"
+                  className="t-label"
                   onSelect={() => { setRenamingId(p.id); setRenameValue(p.name); }}
                 >
                   <Pencil className="h-3.5 w-3.5 mr-2" /> Rename
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="text-xs"
+                  className="t-label"
                   disabled={!canSave}
                   onSelect={() => api.update(p.id, statuses, po)}
                 >
                   <RefreshCw className="h-3.5 w-3.5 mr-2" /> Update from filters
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-xs text-destructive" onSelect={() => api.remove(p.id)}>
+                <DropdownMenuItem className="t-label text-destructive" onSelect={() => api.remove(p.id)}>
                   <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -296,14 +296,14 @@ export function FilterPresetBar({
             variant="ghost"
             size="sm"
             disabled={!canSave}
-            className="h-8 px-2.5 rounded-full text-xs"
+            className="h-8 px-2.5 rounded-full t-label"
             title={canSave ? "Save the current filters as a preset" : "Pick filters first"}
           >
             <BookmarkPlus className="h-3.5 w-3.5 mr-1" /> Save preset
           </Button>
         </PopoverTrigger>
         <PopoverContent align="start" className="w-64 space-y-2">
-          <label htmlFor="preset-name" className="text-xs font-medium">
+          <label htmlFor="preset-name" className="t-label font-medium">
             Preset name
           </label>
           <Input
@@ -322,7 +322,7 @@ export function FilterPresetBar({
           />
           <Button
             size="sm"
-            className="w-full h-8 text-xs"
+            className="w-full h-8 t-label"
             onClick={() => {
               api.save(name, statuses, po);
               setName("");

@@ -24,7 +24,7 @@ export function CrudToolbar({
 
   return (
     <div className="flex items-center justify-between">
-      <div className="text-xs text-muted-foreground font-tnum">
+      <div className="t-label text-muted-foreground font-tnum">
         {count} {label}
       </div>
       <div className="flex items-center gap-2">

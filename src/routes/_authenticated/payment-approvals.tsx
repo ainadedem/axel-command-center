@@ -143,7 +143,7 @@ function ApprovalsBody() {
     // Requesters still see their own requests; everyone else needs finance access.
     if (!scoped.length) {
       return (
-        <div className="p-8 text-sm text-muted-foreground">
+        <div className="p-8 t-body text-muted-foreground">
           You have no payment requests yet. Raise one from an expense to start the approval flow.
         </div>
       );
@@ -227,7 +227,7 @@ function ApprovalsBody() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search payee or subject"
-                className="h-8 pl-8 text-xs"
+                className="h-8 pl-8 t-label"
               />
             </div>
             <div className="flex items-center gap-1">
@@ -237,7 +237,7 @@ function ApprovalsBody() {
                   type="button"
                   onClick={() => setFilter(f)}
                   className={cn(
-                    "h-8 rounded-full px-3 text-xs transition-colors",
+                    "h-8 rounded-full px-3 t-label transition-colors",
                     filter === f ? "bg-primary text-primary-foreground" : "bg-surface text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -253,7 +253,7 @@ function ApprovalsBody() {
         }
       >
         {groups.length === 0 ? (
-          <div className="panel p-8 text-center text-sm text-muted-foreground">
+          <div className="panel p-8 text-center t-body text-muted-foreground">
             Nothing waiting. New requests appear here and are batched into the next Thursday run.
           </div>
         ) : (
@@ -261,8 +261,8 @@ function ApprovalsBody() {
             {groups.map((g) => (
               <div key={g.runDate} className="space-y-1.5">
                 <div className="flex items-center gap-2 px-0.5">
-                  <span className="text-xs font-medium">{runLabel(g.runDate)}</span>
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="t-label font-medium">{runLabel(g.runDate)}</span>
+                  <span className="t-label text-muted-foreground">
                     {isPastCutoff(g.runDate) ? "cut-off passed" : "open until Wednesday 17:00"}
                   </span>
                 </div>
@@ -299,7 +299,7 @@ function ApprovalsBody() {
                           <ListTd align="right">{fmt(r.amount, r.currency)}</ListTd>
                           <ListTd>{r.neededBy ?? "—"}</ListTd>
                           <ListTd>
-                            <span className={cn("rounded-full px-2 py-0.5 text-[11px]", STATUS_TONE[r.status])}>
+                            <span className={cn("rounded-full px-2 py-0.5 t-label", STATUS_TONE[r.status])}>
                               {STATUS_LABEL[r.status]}
                             </span>
                           </ListTd>
@@ -459,8 +459,8 @@ function NewRequestDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
 
           <div className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2">
             <div>
-              <div className="text-xs font-medium">Cannot wait for Thursday</div>
-              <div className="text-[11px] text-muted-foreground">Off-cycle payments need a written reason.</div>
+              <div className="t-label font-medium">Cannot wait for Thursday</div>
+              <div className="t-label text-muted-foreground">Off-cycle payments need a written reason.</div>
             </div>
             <Switch checked={offCycle} onCheckedChange={setOffCycle} />
           </div>
