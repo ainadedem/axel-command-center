@@ -333,7 +333,7 @@ function SidebarInner({ onNavigate, onCollapse }: { onNavigate?: () => void; onC
         <CompanySwitcher />
       </div>
       <ModuleHeader onNavigate={onNavigate} />
-      <nav aria-label="Main" className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
+      <nav aria-label="Main" className="flex-1 px-3 py-3 space-y-1.5 overflow-y-auto">
         {visibleModules.map((mod) => (
           <SidebarModuleGroup key={mod.id} mod={mod} pathname={pathname} onNavigate={onNavigate} />
         ))}
