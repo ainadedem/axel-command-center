@@ -9,7 +9,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { pcgAccounts } from "@/lib/pcg";
+import { useAllPcgAccounts } from "@/lib/pcg";
 import { cn } from "@/lib/utils";
 
 export function PcgAccountSelect({
@@ -24,7 +24,8 @@ export function PcgAccountSelect({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const selected = useMemo(() => pcgAccounts.find((a) => a.code === value), [value]);
+  const accounts = useAllPcgAccounts();
+  const selected = useMemo(() => accounts.find((a) => a.code === value), [accounts, value]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -61,7 +62,7 @@ export function PcgAccountSelect({
           <CommandList>
             <CommandEmpty>Aucun compte trouvé.</CommandEmpty>
             <CommandGroup>
-              {pcgAccounts.map((a) => (
+              {accounts.map((a) => (
                 <CommandItem
                   key={a.code}
                   value={`${a.code}|${a.name.toLowerCase()}`}
