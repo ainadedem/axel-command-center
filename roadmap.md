@@ -6,3 +6,5 @@
 ## Next
 - [ ] CEO task list (to-dos) linked to projects, clients, quotations, invoices — assignable, due dates, visible on the dashboard.
 - [ ] Unlink all invoice ↔ bank transaction matches (reset payment verification chain).
+- [x] Journal: type-to-search PCG account picker.
+- [x] Plan comptable: finance team can add/remove custom sub-accounts.
