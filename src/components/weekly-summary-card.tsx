@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { fmtAmount } from "@/lib/mock-data";
 import { exportCsvRows } from "@/lib/export-csv";
 import type { WeeklySummary } from "@/lib/sop-summary";
+import { firstName } from "@/lib/person-name";
 import { ArrowDownRight, ArrowUpRight, Download, Minus, Users } from "lucide-react";
 
 interface Props {
