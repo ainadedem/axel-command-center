@@ -128,15 +128,21 @@ export function ListTd({
         "px-4 py-1.5 align-middle",
         align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left",
         lines ? "min-w-0 whitespace-normal break-words" : wrap ? "min-w-0" : "truncate",
-        lines === 2 && "line-clamp-2",
-        lines === 3 && "line-clamp-3",
         className,
       )}
     >
-      {children}
+      {/* Line clamping lives on an inner block: applying `display:-webkit-box`
+          to the <td> itself pulls the cell out of the table's column flow and
+          shifts every following cell under the wrong header. */}
+      {lines ? (
+        <span className={cn("block", lines === 2 ? "line-clamp-2" : "line-clamp-3")}>{children}</span>
+      ) : (
+        children
+      )}
     </td>
   );
 }
+
 
 
 /** Header cell above the leading actions column. */

@@ -776,10 +776,15 @@
   .stacked-table tbody > tr > td.row-actions-cell {
     position: static;
     display: block;
+    width: auto !important;
+    max-width: none;
     order: 99;
     padding: 0.5rem 0.875rem 0.25rem !important;
     border-top: 1px solid var(--border);
     margin-top: 0.5rem;
+  }
+  .stacked-table tbody > tr > td.row-actions-cell .row-actions-inner {
+    position: static;
   }
   .stacked-table tbody > tr > td.row-actions-cell::before {
     content: none;
@@ -813,18 +818,25 @@
 .stacked-table tbody > tr {
   position: relative;
 }
+/* The cell stays in the table's column flow (otherwise every following cell
+   shifts one header slot to the left); only the pill inside it floats. */
 td.row-actions-cell {
+  position: static;
+  width: 0 !important;
+  max-width: 0;
+  padding: 0 !important;
+  border-right: 0 !important;
+  overflow: visible;
+}
+td.row-actions-cell .row-actions-inner {
   position: absolute;
   left: 0.5rem;
   bottom: 0.125rem;
-  width: auto !important;
-  padding: 0 !important;
-  border: 0 !important;
   z-index: 5;
 }
 /* On rows with a bulk-select checkbox, shift the action pill clear of the
    checkbox column (w-10 ≈ 2.5rem) so it never covers the checkbox. */
-.stacked-table tbody > tr:has(td.bulk-select-cell) td.row-actions-cell {
+.stacked-table tbody > tr:has(td.bulk-select-cell) td.row-actions-cell .row-actions-inner {
   left: 3rem;
 }
 /* Keep the checkbox above the pill so it stays clickable mid-transition. */
@@ -832,6 +844,7 @@ td.row-actions-cell {
   position: relative;
   z-index: 6;
 }
+
 .row-actions-inner {
   display: inline-flex;
   align-items: center;
