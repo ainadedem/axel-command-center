@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useJournalEntries, journalEntriesStore, journals, pcgAccounts, pcgIndex,
+  useJournalEntries, journalEntriesStore, journals, pcgAccounts, pcgIndex, findAccount,
   fmtMoney, fmtDateFR, usesPcg, type JournalEntry, type JournalLine,
 } from "@/lib/pcg";
 import { useCompanies } from "@/lib/mock-data";

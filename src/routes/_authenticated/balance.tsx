@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
-import { useJournalEntries, pcgAccounts, pcgIndex, fmtMoney, usesPcg, classNames, type PcgClass } from "@/lib/pcg";
+import { useJournalEntries, useAllPcgAccounts, findAccount, fmtMoney, usesPcg, classNames, type PcgClass } from "@/lib/pcg";
 import { useCompanies } from "@/lib/mock-data";
 import { useCompany } from "@/lib/company-context";
 import { PeriodPicker, defaultAccountingPeriod, type Period } from "@/components/period-picker";
@@ -32,6 +32,7 @@ function Body() {
   const { scope } = useCompany();
   const companies = useCompanies();
   const allEntries = useJournalEntries();
+  const allAccounts = useAllPcgAccounts();
 
   const entries = useMemo(() =>
     allEntries.filter((e) => {
@@ -58,7 +59,7 @@ function Body() {
     ? companies.find((c) => c.id === scope.companyId) ?? companies.find((c) => c.id === "log")!
     : companies.find((c) => c.id === "log")!;
 
-  const rows = pcgAccounts
+  const rows = allAccounts
     .filter((a) => totals.has(a.code))
     .sort((a, b) => a.code.localeCompare(b.code));
 
@@ -81,7 +82,7 @@ function Body() {
       ["Compte", "Libellé", "Débit", "Crédit", "Solde"],
       rows.map((a) => {
         const t = totals.get(a.code)!;
-        return [a.code, pcgIndex.get(a.code)?.name ?? a.code, t.debit, t.credit, t.debit - t.credit];
+        return [a.code, findAccount(a.code)?.name ?? a.code, t.debit, t.credit, t.debit - t.credit];
       }),
     );
   };
@@ -145,7 +146,7 @@ function Body() {
                   return (
                     <tr key={a.code} className="border-b border-border/30 last:border-0">
                       <td className="px-5 py-2 font-tnum">{a.code}</td>
-                      <td className="px-5 py-2">{pcgIndex.get(a.code)?.name}</td>
+                      <td className="px-5 py-2">{findAccount(a.code)?.name}</td>
                       <td className="px-5 py-2 text-right font-tnum">{t.debit ? fmtMoney(t.debit, displayCo.baseCurrency) : ""}</td>
                       <td className="px-5 py-2 text-right font-tnum">{t.credit ? fmtMoney(t.credit, displayCo.baseCurrency) : ""}</td>
                       <td className={`px-5 py-2 text-right font-tnum ${solde > 0 ? "text-success" : solde < 0 ? "text-destructive" : ""}`}>
