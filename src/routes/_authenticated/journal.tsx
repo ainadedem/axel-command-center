@@ -103,7 +103,7 @@ function Body() {
                   </thead>
                   <tbody>
                     {e.lines.map((l, i) => {
-                      const acc = pcgIndex.get(l.account);
+                      const acc = findAccount(l.account);
                       return (
                         <tr key={i} className="border-b border-border/30 last:border-0">
                           <td className="px-5 py-2 font-tnum">{l.account}</td>
