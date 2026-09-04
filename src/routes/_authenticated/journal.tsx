@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import {
-  useJournalEntries, journalEntriesStore, journals, pcgAccounts, pcgIndex,
+  useJournalEntries, journalEntriesStore, journals, findAccount,
   fmtMoney, fmtDateFR, usesPcg, type JournalEntry, type JournalLine,
 } from "@/lib/pcg";
 import { useCompanies } from "@/lib/mock-data";
@@ -103,7 +103,7 @@ function Body() {
                   </thead>
                   <tbody>
                     {e.lines.map((l, i) => {
-                      const acc = pcgIndex.get(l.account);
+                      const acc = findAccount(l.account);
                       return (
                         <tr key={i} className="border-b border-border/30 last:border-0">
                           <td className="px-5 py-2 font-tnum">{l.account}</td>
