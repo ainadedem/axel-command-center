@@ -69,7 +69,7 @@ import { LayoutToggle } from "@/components/layout-toggle";
 import { usePersistentState } from "@/lib/persistent-state";
 import { canWriteCompany, dbCompanyId } from "@/lib/db-sync";
 import { refreshStampsAndSignatures } from "@/lib/stamp-refresh";
-import { useCompanySalesUsers } from "@/hooks/use-company-users";
+import { useCompanySalesUsers, useCompanyUsers } from "@/hooks/use-company-users";
 import { useBulkSelection, SelectAllHeaderCell, SelectRowCell, BulkActionBar } from "@/components/bulk-select";
 import { BulkEditDocDialog } from "@/components/bulk-edit-doc-dialog";
 import { bulkUpdateDocuments, bulkResultMessage, type BulkPatch } from "@/lib/bulk-edit";
@@ -314,7 +314,7 @@ function Body() {
       ? { action: { label: "Undo", onClick: () => void result.undo() } }
       : undefined);
   };
-  const { users: previewSigners } = useCompanySalesUsers(previewing?.companyId);
+  const { users: previewSigners } = useCompanyUsers(previewing?.companyId);
 
   const applyBulk = async (patch: BulkPatch) => {
     const rows = selection.selectedRows;

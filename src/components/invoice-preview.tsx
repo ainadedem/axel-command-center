@@ -4,7 +4,7 @@ import { DocumentPreview, type DocumentData } from "./document-preview";
 import { MarkPaidDialog } from "./mark-paid-dialog";
 import { planStatusChange, commitStatusChange } from "@/lib/invoice-status";
 import { invoicesStore, type Invoice, type Company, type Client, type Project, type PurchaseOrder, type Quote } from "@/lib/mock-data";
-import { useCompanySalesUsers } from "@/hooks/use-company-users";
+import { useCompanyUsers } from "@/hooks/use-company-users";
 import { invoicePayable } from "@/lib/invoice-money";
 
 
@@ -52,7 +52,7 @@ export function InvoicePreview({ open, onOpenChange, invoice, company, client, p
         stampScale: invoice.stampScale,
       }
     : null;
-  const { users } = useCompanySalesUsers(invoice?.companyId);
+  const { users } = useCompanyUsers(invoice?.companyId);
   const [markPaid, setMarkPaid] = useState(false);
 
   const handleStatusChange = (next: string) => {
