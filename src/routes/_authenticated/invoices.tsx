@@ -100,6 +100,7 @@ import { StatusFilterBar, type PoState } from "@/components/status-filter-bar";
 import { TableExportMenu } from "@/components/table-export-menu";
 import { invoiceBalance, invoicePayable } from "@/lib/invoice-money";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useCompanyUsers } from "@/hooks/use-company-users";
 
 
 
@@ -1164,6 +1165,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
 
   const [showErrors, setShowErrors] = useState(false);
   const [opportunityId, setOpportunityId] = useState("");
+  const { users: signerOptions } = useCompanyUsers(companyId || undefined);
 
   useEffect(() => {
     if (!open) return;
