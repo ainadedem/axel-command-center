@@ -100,6 +100,7 @@ import { StatusFilterBar, type PoState } from "@/components/status-filter-bar";
 import { TableExportMenu } from "@/components/table-export-menu";
 import { invoiceBalance, invoicePayable } from "@/lib/invoice-money";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useCompanyUsers } from "@/hooks/use-company-users";
 
 
 
@@ -1150,6 +1151,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
   const [poWaiverReason, setPoWaiverReason] = useState("");
   const [subject, setSubject] = useState("");
   const [bankAccountId, setBankAccountId] = useState("");
+  const [signerId, setSignerId] = useState("");
 
   const [issueDate, setIssueDate] = useState(today);
   const [dueDate, setDueDate] = useState(today);
@@ -1163,6 +1165,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
 
   const [showErrors, setShowErrors] = useState(false);
   const [opportunityId, setOpportunityId] = useState("");
+  const { users: signerOptions } = useCompanyUsers(companyId || undefined);
 
   useEffect(() => {
     if (!open) return;
@@ -1173,6 +1176,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
       setPoWaived(Boolean(editing.poWaived)); setPoWaiverReason(editing.poWaiverReason ?? "");
       setSubject(editing.subject ?? "");
       setBankAccountId(editing.bankAccountId ?? "");
+      setSignerId(editing.signerId ?? "");
 
       setIssueDate(editing.issueDate); setDueDate(editing.dueDate);
       setAmount(String(editing.amount)); setPaid(String(editing.paid));
@@ -1190,6 +1194,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
       setClientId(sourcePo?.clientId ?? "");
       setProjectId(sourcePo?.projectId ?? ""); setPoId(sourcePo?.id ?? ""); setPoWaived(false); setPoWaiverReason("");
       setSubject(sourcePo?.subject ?? ""); setBankAccountId(sourcePo?.bankAccountId ?? "");
+      setSignerId("");
 
       setOpportunityId("");
       setIssueDate(today); setDueDate(today);
@@ -1364,6 +1369,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
       quoteId: linkedQuote?.id,
       issueDate, dueDate, amount: a, paid: p, currency, status: finalStatus,
       subject: subject.trim() || undefined,
+      signerId: signerId || undefined,
       bankAccountId: bankAccountId || defaultBankAccount(companies.find((c) => c.id === companyId))?.id,
       lines: lines.length ? lines.map((l) => ({ ...l })) : undefined,
       discountPct: (Number(discountPct) || 0) || undefined,
@@ -1516,6 +1522,22 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
             <Label>Object</Label>
             <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Brand campaign production — Q3 2026" />
           </div>
+          <div>
+            <Label>Signer</Label>
+            <select
+              value={signerId}
+              onChange={(e) => setSignerId(e.target.value)}
+              disabled={signerOptions.length === 0}
+              className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus-ring disabled:opacity-60"
+              aria-label="Document signer"
+            >
+              <option value="">No signature</option>
+              {signerOptions.map((u) => (
+                <option key={u.userId} value={u.userId}>{u.name}</option>
+              ))}
+            </select>
+          </div>
+
 
           {/* Line items */}
           <div className="space-y-2">

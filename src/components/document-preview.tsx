@@ -753,11 +753,12 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
                   ) : null}
                 </div>
 
-                {signers && signers.length > 0 ? (
+                {signers ? (
                   <div className="space-y-1.5">
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Signer</p>
                     <select
                       value={signerId ?? ""}
+                      disabled={signers.length === 0}
                       onChange={(e) => {
                         const v = e.target.value || undefined;
                         const prev = signers.find((u) => u.userId === signerId)?.name ?? "nobody";
@@ -772,7 +773,7 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
                           });
                         }
                       }}
-                      className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-[11px] focus-ring"
+                      className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-[11px] focus-ring disabled:opacity-60"
                       aria-label="Document signer"
                     >
                       <option value="">No signature</option>
@@ -780,8 +781,14 @@ export function DocumentPreview({ open, onOpenChange, doc, company, client, proj
                         <option key={u.userId} value={u.userId}>{u.name}</option>
                       ))}
                     </select>
+                    {signers.length === 0 ? (
+                      <p className="text-[10px] text-muted-foreground">
+                        Nobody has access to this company yet, so there is no one to sign.
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
+
 
                 {company?.stampUrl && showStamp ? (
                   <div className="space-y-1.5">

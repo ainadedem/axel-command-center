@@ -3073,6 +3073,16 @@ export type Database = {
     }
     Functions: {
       can_touch_quote: { Args: { _quote_id: string }; Returns: boolean }
+      company_directory: {
+        Args: { _company_id: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          email: string
+          role: string
+          user_id: string
+        }[]
+      }
       decide_payment_request: {
         Args: { _decision: string; _note?: string; _request_id: string }
         Returns: {
