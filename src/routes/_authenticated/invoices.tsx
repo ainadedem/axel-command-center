@@ -1516,6 +1516,22 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
             <Label>Object</Label>
             <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Brand campaign production — Q3 2026" />
           </div>
+          <div>
+            <Label>Signer</Label>
+            <select
+              value={signerId}
+              onChange={(e) => setSignerId(e.target.value)}
+              disabled={signerOptions.length === 0}
+              className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus-ring disabled:opacity-60"
+              aria-label="Document signer"
+            >
+              <option value="">No signature</option>
+              {signerOptions.map((u) => (
+                <option key={u.userId} value={u.userId}>{u.name}</option>
+              ))}
+            </select>
+          </div>
+
 
           {/* Line items */}
           <div className="space-y-2">
