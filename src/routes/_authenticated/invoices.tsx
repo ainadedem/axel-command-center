@@ -1150,6 +1150,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
   const [poWaiverReason, setPoWaiverReason] = useState("");
   const [subject, setSubject] = useState("");
   const [bankAccountId, setBankAccountId] = useState("");
+  const [signerId, setSignerId] = useState("");
 
   const [issueDate, setIssueDate] = useState(today);
   const [dueDate, setDueDate] = useState(today);
@@ -1173,6 +1174,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
       setPoWaived(Boolean(editing.poWaived)); setPoWaiverReason(editing.poWaiverReason ?? "");
       setSubject(editing.subject ?? "");
       setBankAccountId(editing.bankAccountId ?? "");
+      setSignerId(editing.signerId ?? "");
 
       setIssueDate(editing.issueDate); setDueDate(editing.dueDate);
       setAmount(String(editing.amount)); setPaid(String(editing.paid));
@@ -1190,6 +1192,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
       setClientId(sourcePo?.clientId ?? "");
       setProjectId(sourcePo?.projectId ?? ""); setPoId(sourcePo?.id ?? ""); setPoWaived(false); setPoWaiverReason("");
       setSubject(sourcePo?.subject ?? ""); setBankAccountId(sourcePo?.bankAccountId ?? "");
+      setSignerId("");
 
       setOpportunityId("");
       setIssueDate(today); setDueDate(today);
@@ -1364,6 +1367,7 @@ function InvoiceDialog({ open, onOpenChange, editing, prefillPoId }: { open: boo
       quoteId: linkedQuote?.id,
       issueDate, dueDate, amount: a, paid: p, currency, status: finalStatus,
       subject: subject.trim() || undefined,
+      signerId: signerId || undefined,
       bankAccountId: bankAccountId || defaultBankAccount(companies.find((c) => c.id === companyId))?.id,
       lines: lines.length ? lines.map((l) => ({ ...l })) : undefined,
       discountPct: (Number(discountPct) || 0) || undefined,
