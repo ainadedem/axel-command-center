@@ -16,6 +16,8 @@ const SALES_CAPABLE_ROLES = new Set([
   "company_admin",
   "manager",
   "project_manager",
+  "group_admin",
+  "super_admin",
 ]);
 
 interface DirectoryRow {
