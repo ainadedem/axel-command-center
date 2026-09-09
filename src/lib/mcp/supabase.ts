@@ -79,9 +79,11 @@ export function toolError(message: string) {
   return { content: [{ type: "text" as const, text: message }], isError: true };
 }
 
-export function jsonResult(payload: unknown) {
+type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
+
+export function jsonResult(payload: Record<string, unknown>) {
   return {
     content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }],
-    structuredContent: payload as Record<string, unknown>,
+    structuredContent: payload as unknown as { [key: string]: Json },
   };
 }
