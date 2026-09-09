@@ -56,6 +56,7 @@ import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/about'
 import { Route as AuthenticatedAxelIndexRouteImport } from './routes/_authenticated/axel.index'
 import { Route as AuthenticatedAxelThreadIdRouteImport } from './routes/_authenticated/axel.$threadId'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicHooksNotificationDigestRouteImport } from './routes/api/public/hooks/notification-digest'
 import { Route as ApiPublicHooksArEscalationAlertsRouteImport } from './routes/api/public/hooks/ar-escalation-alerts'
 
@@ -302,6 +303,11 @@ const AuthenticatedAxelThreadIdRoute =
     path: '/$threadId',
     getParentRoute: () => AuthenticatedAxelRoute,
   } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksNotificationDigestRoute =
   ApiPublicHooksNotificationDigestRouteImport.update({
     id: '/api/public/hooks/notification-digest',
@@ -360,6 +366,7 @@ export interface FileRoutesByFullPath {
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/users-access': typeof AuthenticatedUsersAccessRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
   '/axel/': typeof AuthenticatedAxelIndexRoute
   '/api/public/hooks/ar-escalation-alerts': typeof ApiPublicHooksArEscalationAlertsRoute
@@ -409,6 +416,7 @@ export interface FileRoutesByTo {
   '/users-access': typeof AuthenticatedUsersAccessRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
   '/': typeof AuthenticatedIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
   '/axel': typeof AuthenticatedAxelIndexRoute
   '/api/public/hooks/ar-escalation-alerts': typeof ApiPublicHooksArEscalationAlertsRoute
@@ -461,6 +469,7 @@ export interface FileRoutesById {
   '/_authenticated/users-access': typeof AuthenticatedUsersAccessRoute
   '/api/axel-chat': typeof ApiAxelChatRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/axel/$threadId': typeof AuthenticatedAxelThreadIdRoute
   '/_authenticated/axel/': typeof AuthenticatedAxelIndexRoute
   '/api/public/hooks/ar-escalation-alerts': typeof ApiPublicHooksArEscalationAlertsRoute
@@ -513,6 +522,7 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/users-access'
     | '/api/axel-chat'
+    | '/.lovable/oauth/consent'
     | '/axel/$threadId'
     | '/axel/'
     | '/api/public/hooks/ar-escalation-alerts'
@@ -562,6 +572,7 @@ export interface FileRouteTypes {
     | '/users-access'
     | '/api/axel-chat'
     | '/'
+    | '/.lovable/oauth/consent'
     | '/axel/$threadId'
     | '/axel'
     | '/api/public/hooks/ar-escalation-alerts'
@@ -613,6 +624,7 @@ export interface FileRouteTypes {
     | '/_authenticated/users-access'
     | '/api/axel-chat'
     | '/_authenticated/'
+    | '/.lovable/oauth/consent'
     | '/_authenticated/axel/$threadId'
     | '/_authenticated/axel/'
     | '/api/public/hooks/ar-escalation-alerts'
@@ -624,6 +636,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiAxelChatRoute: typeof ApiAxelChatRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPublicHooksArEscalationAlertsRoute: typeof ApiPublicHooksArEscalationAlertsRoute
   ApiPublicHooksNotificationDigestRoute: typeof ApiPublicHooksNotificationDigestRoute
 }
@@ -959,6 +972,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAxelThreadIdRouteImport
       parentRoute: typeof AuthenticatedAxelRoute
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/notification-digest': {
       id: '/api/public/hooks/notification-digest'
       path: '/api/public/hooks/notification-digest'
@@ -1086,6 +1106,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiAxelChatRoute: ApiAxelChatRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPublicHooksArEscalationAlertsRoute: ApiPublicHooksArEscalationAlertsRoute,
   ApiPublicHooksNotificationDigestRoute: ApiPublicHooksNotificationDigestRoute,
 }
